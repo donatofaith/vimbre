@@ -29,10 +29,3 @@ Employee, Cover Person, Manager, HR/Admin. Access will be isolated by company an
 
 Project initialization. Application code and integrations have not yet been implemented.
 
-## Source of truth
-
-The product requirements are defined in the owner's original **Vimbre Handover: Product Notes for No Code Build** (13 October 2026). Preserve its workflows and access rules when implementing the coded application. The original PDF should be stored at `docs/Vimbre-PRD.pdf`.
-
-## Security
-
-Do not commit API keys, credentials or real employee data. Use environment variables for secrets.
