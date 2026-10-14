@@ -1,1 +1,0 @@
-import type {Metadata} from "next";import {SiteHeader} from "@/components/site-header";import {SiteFooter} from "@/components/site-footer";import {PricingSection} from "@/components/pricing";export const metadata:Metadata={title:"Pricing | Vimbre"};export default function PricingPage(){return <><SiteHeader/><PricingSection/><SiteFooter/></>}

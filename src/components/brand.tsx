@@ -1,2 +1,0 @@
-import Link from "next/link";
-export function Brand({href="/",light=false}:{href?:string;light?:boolean}){return <Link href={href} className={`brand inline-flex items-center gap-2 text-xl font-extrabold tracking-tight ${light?"text-white":"text-[#102A43]"}`}><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#2F80ED] to-[#1558CE] text-white shadow-md shadow-blue-300/30">V</span>Vimbre</Link>}
