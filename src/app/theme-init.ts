@@ -1,0 +1,1 @@
+export const themeInit = `(function(){try{var t=localStorage.getItem("vimbre-theme");var theme=t==="dark"||t==="light"?t:(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme="light";}})();`;
