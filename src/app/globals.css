@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #F8FAFC; color: #1F2937; font-family: Inter, Arial, sans-serif; }
+.glass { background: rgba(255,255,255,.77); border: 1px solid rgba(47,128,237,.14); box-shadow: 0 18px 56px rgba(16,42,67,.08); backdrop-filter: blur(20px); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
