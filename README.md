@@ -1,31 +1,18 @@
 # Vimbre Handover
 
-Vimbre is a multi-tenant workforce handover platform for employee leave and resignation. This repository is being prepared for a Next.js and TypeScript application with a REST API.
+Vimbre is a planned SaaS platform for managing employee handovers during leave and resignation.
 
-## MVP scope
+## Status
 
-- Leave and resignation handovers
-- AI-assisted, employee-reviewed handover drafting
-- Responsibilities, deadlines, tasks, contacts and documents
-- Manager review and approval
-- Cover-person acknowledgement and completion
-- Role-specific dashboards and notifications
+**Clean restart — no application code is currently present.** The previous Next.js scaffold, frontend, API placeholders and supporting configuration have been cleared at the project owner's request.
 
-## Planned stack
+The approved UI references and original product requirements will guide the next implementation. No live application is currently maintained by this repository.
 
-- **Application:** Next.js, TypeScript, Tailwind CSS
-- **REST API:** Next.js route handlers
-- **Database, authentication and storage:** Supabase
-- **Transactional email:** Brevo
-- **AI:** OpenAI API
-- **Hosting:** Vercel (proposed)
-- **Billing:** To be confirmed
+## Next steps
 
-## Roles
+- Confirm the approved dark/light visual references and original PRD.
+- Create a fresh, carefully structured application.
+- Build and test the UI against the approved designs before deployment.
+- Integrate Supabase, OpenAI and Brevo after frontend approval.
 
-Employee, Cover Person, Manager, HR/Admin. Access will be isolated by company and enforced server-side and through database row-level security.
-
-## Development status
-
-Project initialization. Application code and integrations have not yet been implemented.
-
+Do not commit credentials or actual employee data.
