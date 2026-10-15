@@ -1,0 +1,34 @@
+/* Single source of visual values from the Vimbre PRD. */
+:root {
+  --navy: #102a43;
+  --blue: #2f80ed;
+  --blue-hover: #2563d9;
+  --blue-soft: #eaf2fe;
+  --navy-secondary: #1b3a57;
+  --success: #27ae60;
+  --warning: #f2994a;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --heading-font: 'Plus Jakarta Sans Variable', sans-serif;
+  --body-font: 'Geist Variable', 'Inter', sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+  --radius-card: 12px; --radius-button: 10px;
+  --font-label: 0.9375rem; --font-body: 1rem; --font-section: 1.125rem;
+  --font-title: clamp(1.75rem, 4vw, 2.25rem);
+  --font-hero: clamp(2.25rem, 6vw, 4.5rem);
+  --line-body: 1.5; --line-heading: 1.2;
+  --weight-normal: 400; --weight-medium: 500; --weight-strong: 650;
+  --motion-fast: 150ms; --motion-medium: 250ms; --motion-slow: 500ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --control-height: 48px; --sidebar-width: 232px; --content-max: 1440px;
+  --border-width: 1px; --focus-width: 3px; --focus-offset: 3px;
+  --disabled-opacity: .45; --tracking: .04em;
+  --hero-width: 960px; --standalone-width: 900px; --tile-width: 240px;
+  --hero-measure: 18ch; --body-measure: 60ch; --overlay-layer: 10;
+  --shadow-small: 0 2px 8px rgb(16 42 67 / 5%);
+}
