@@ -1,0 +1,4 @@
+import Link from "next/link";
+import {Logo} from "@/components/shared";
+import {ThemeToggle} from "@/components/theme";
+export default function Demo(){return <main className="demo-index wrap"><header><Logo/><ThemeToggle/></header><span className="eyebrow">Interactive UI preview</span><h1>Explore Vimbre's workspaces</h1><p>Choose a role to preview its dashboard. All records are fictional until Supabase is connected.</p><div className="demo-options">{[["HR / Admin","Dashboard","hr"],["Employee","My Handovers","employee"],["Manager","Handovers to Review","manager"],["Cover Person","My handovers","cover"],["AI Builder","Organise notes","ai"],["Settings","Company settings","settings"]].map(([title,desc,role])=><Link key={role} href={"/workspace?view="+role} className="glass demo-option"><span>◈</span><h2>{title}</h2><p>{desc}</p><b>Open preview →</b></Link>)}</div><Link href="/" className="back-link">← Back to homepage</Link></main>}

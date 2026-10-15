@@ -1,0 +1,3 @@
+import {Header,Footer,PricingCards} from "@/components/shared";
+import {ThemeToggle} from "@/components/theme";
+export default function Pricing(){return <><div className="pricing-page"><Header/><section className="wrap section"><div className="section-head"><span className="eyebrow">Pricing</span><h1>Simple, flexible pricing</h1><p>Choose the plan that fits your team size.</p><span className="pricing-frequency">Monthly <span>Yearly · Coming later</span></span></div><PricingCards/><p className="pricing-disclaimer">Draft pricing from the PRD. Final billing and plan entitlements are not enabled.</p></section></div><Footer/></>}

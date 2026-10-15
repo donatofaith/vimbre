@@ -1,0 +1,4 @@
+import Link from "next/link";
+import {Logo} from "@/components/shared";
+import {ThemeToggle} from "@/components/theme";
+export default function Register(){return <main className="auth-page"><div className="auth-tools"><ThemeToggle/></div><div className="auth-card glass"><Logo/><h1>Start with Vimbre</h1><p>Create your company workspace</p><form className="auth-fields"><label>Company name<input placeholder="Your company" disabled/></label><label>Work email<input type="email" placeholder="you@company.com" disabled/></label><label>Password<input type="password" placeholder="Choose a password" disabled/></label><button className="btn btn-primary" type="button" disabled>Registration — coming soon</button></form><p className="auth-bottom">Already have an account? <Link href="/login">Sign in</Link></p><Link className="auth-demo" href="/demo">Explore the demo instead →</Link></div></main>}
