@@ -3,7 +3,16 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { navigation } from '../navigation'
 
+import { useAuth } from '../../features/auth/AuthProvider'
+import { supabase } from '../../lib/supabase'
+
 export function AppLayout() {
+  const { company, profile } = useAuth()
+  const [logoutError, setLogoutError] = useState('')
+  async function logout() {
+    const { error } = await supabase.auth.signOut()
+    if (error) setLogoutError('Could not sign out. Please retry.')
+  }
   const [menuOpen, setMenuOpen] = useState(false)
   return <div className="app-shell">
     <a className="skip-link" href="#main">Skip to content</a>
@@ -15,11 +24,11 @@ export function AppLayout() {
       <nav id="workspace-navigation" className={menuOpen ? 'navigation is-open' : 'navigation'} aria-label="Workspace">
         {navigation.map(item => <NavLink key={item.path} to={item.path} end={'end' in item && item.end} onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}
       </nav>
-      <p className="sidebar-note">Project foundation</p>
+      <p className="sidebar-note">{profile?.full_name}<br />{profile?.role.replace('_', ' ')}</p>
     </aside>
     <div className="workspace">
-      <header className="workspace-bar"><span>Workspace foundation</span><Link to="/">Back to homepage</Link></header>
-      <main id="main" className="workspace-content"><Outlet /></main>
+      <header className="workspace-bar"><span>{company?.name}</span><Button variant="secondary" onClick={() => { void logout() }}>Sign out</Button></header>
+      <main id="main" className="workspace-content">{logoutError && <p role="alert">{logoutError}</p>}<Outlet /></main>
     </div>
   </div>
 }

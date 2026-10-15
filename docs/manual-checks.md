@@ -1,23 +1,11 @@
-# Scaffold review
+# Verification
 
-1. Run npm ci, then npm run check. Type checks, lint, tests and production build must pass.
-2. Run npm run dev and open the displayed URL. The homepage uses the fixed PRD positioning.
-3. Open the workspace and follow every navigation link. Each unfinished feature clearly says Coming soon.
-4. Open an unknown URL. A useful not found page must appear.
-5. Set the viewport to 360 pixels. Open and close the mobile menu. Confirm the page has no horizontal scrolling.
-6. Use Tab to navigate and activate links and buttons. Focus is visible. The skip link moves to main content.
-7. Leave Supabase environment values empty. The app must still render without a network request or fake login.
-8. Do not enter a service role, AI or email key in any frontend variable. The environment unit tests check rejection, but cannot undo a secret already shipped in a bundle.
+Run npm ci and npm run check. Lint, six unit tests, TypeScript and the production build must pass. Install Chromium (`npx playwright install chromium`) and run npm run test:browser for browser integration with intercepted Auth/Data API responses. These browser fixtures are never inserted into Supabase.
 
-These are scaffold checks only. Business workflow and database authorisation tests will be added with their features.
+Run supabase/tests/auth_isolation.sql against a development database with administrator SQL access. It creates temporary fixtures inside a transaction and rolls everything back. Verify no test users/companies remain. The tests cover company isolation, HR Admin/Manager/Employee scope, denied role escalation, company reassignment, audit forgery, inactive members and anonymous access. Run security advisors after schema changes.
 
-## Verified for the scaffold
+For live email acceptance, follow docs/auth-setup.md. SMTP, allowed callback URLs and a team-owned inbox are required; email receipt and delivery remain unverified.
 
-- Local lint, TypeScript and production build passed.
-- Four public configuration tests passed, including privileged key rejection.
-- Headless browser checks passed for the homepage, five workspace links, unknown workspace URL, mobile menu and 360 pixel width without horizontal overflow.
-- Browser checks reported no page errors or external network requests with empty environment configuration.
+Review at 360 pixels: account forms, validation messages, navigation menu, company settings and no horizontal scrolling. Use Tab to navigate with visible focus. With reduced motion enabled, entrance animations must stop. Check unknown routes and direct /app links while logged out. Unfinished product features must keep honest availability messages.
 
-## Glass and motion update
-
-Browser checks also verify reduced motion disables entrance animations and the public homepage fits at 360 pixels. Blur is static; decorative motion does not run continuously. Solid surfaces are provided when backdrop filters are unsupported.
+Recorded local checks: all six unit tests, lint, typecheck and production build passed. Browser integration passed account signup metadata/validation, login, profile/company loading, settings save/reload, logout, recovery request, PKCE callback/password update, missing-session reset handling and mobile layout; no page exceptions. Live SQL policy sections passed and the security advisor returned no findings. No real email delivery or production deployment is claimed.

@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { validatePublicConfig } from './env'
-
-const config = validatePublicConfig(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
-/** Null until configured. No network calls or mock records are created by the scaffold. */
-export const supabase = config.ok ? createClient(config.value.url, config.value.key) : null
-export const supabaseConfigurationError = config.ok ? null : config.error
+import { developmentProject } from './public-project'
+import type { Database } from './database.types'
+const config = validatePublicConfig(import.meta.env.VITE_SUPABASE_URL ?? developmentProject.url, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? developmentProject.key)
+if (!config.ok) throw new Error(config.error)
+export const supabase = createClient<Database>(config.value.url, config.value.key, {
+  auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+})

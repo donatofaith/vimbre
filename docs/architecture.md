@@ -1,18 +1,11 @@
 # Architecture
 
-The new build follows the Vimbre PRD dated 15 October 2026. Bolt prompts and previous code are not the implementation baseline.
+React, TypeScript and Vite render the responsive client. React Router separates public account pages from a protected /app layout. Supabase Auth provides verified sessions and PKCE callbacks. The typed Supabase JavaScript client uses the REST Data API for profile and company reads and permitted company updates.
 
-- React, TypeScript and Vite render the responsive client.
-- React Router handles public and workspace routes.
-- Supabase Auth, PostgreSQL, REST Data API and private Storage provide backend services.
-- Edge Functions handle AI, email and inbound webhooks. Multi record workflow changes require atomic database operations.
-- Database policies enforce company, department, owner and active cover permissions. A hidden button is not authorisation.
-- No mock data or pretend authentication. The current workspace is a public, data free foundation page, not a protected application.
+Database RLS and column grants enforce company, department, owner and active membership boundaries. Private helpers read authorization from profiles. Browser role values and editable user metadata never determine access. A database trigger creates the first company and HR Admin atomically. Audit events are created by triggers and cannot be forged through the client.
 
-Public fonts are bundled from local package assets. Colours and design scales live in src/styles/tokens.css. Feature availability is recorded in PROJECT_NOTES.md.
+Company signup is implemented. Invitations and department administration require controlled server operations in the next stage. Capture, AI, email forwarding and handover changes will use Edge Functions and atomic database operations as appropriate. Private Storage and cover assignment access are future features, not deployed capabilities.
 
-Before any private records are added, implement verified sessions, route guards and database isolation. Never rely on browser supplied company or role values. Generate database TypeScript types after the schema exists.
+Browser configuration contains only the development project's public URL and publishable key, with validated environment overrides. Server secrets are never included in the client. Separate production configuration and real email acceptance remain pending; see auth-setup.md.
 
-## Approved visual direction update
-
-On 15 October 2026 the user approved the UI direction and requested glass surfaces, background blur and modern website motion. This supersedes the earlier flat surface restriction for this visual treatment. Use static blur, high opacity reading surfaces, brief opacity and transform entrances and hover feedback. Respect reduced motion, keep solid surface fallbacks and avoid continuous background animation. Product feature availability is unchanged.
+Fonts are bundled locally. Colours, glass and animation tokens live in src/styles/tokens.css. The approved glass, blur and brief motion override the PRD's earlier flat surface restriction. Reduced motion and solid surface fallbacks remain supported. The PRD and later written decisions remain authoritative; Bolt code is not reused.

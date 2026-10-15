@@ -1,3 +1,5 @@
 # Database migrations
 
-No schema is deployed by this scaffold. Create migrations with the Supabase CLI after its local setup is configured. Every company table must include company_id, foreign keys, indexes and row level security in the same change. Add isolation tests before deployment. Do not copy the previous Bolt schema.
+These migrations are applied to development; filenames match its migration history. Files were created with the Supabase CLI and aligned to the versions recorded when applied through the connector. Apply in order only to fresh environments. Never rewrite applied SQL; create a follow-up migration.
+
+Keep foreign keys, indexes, RLS and grants together. Run ../tests/auth_isolation.sql and security advisors after changes. The original Bolt schema is not used.
