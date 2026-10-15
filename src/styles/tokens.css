@@ -1,4 +1,4 @@
-/* Single source of visual values from the Vimbre PRD. */
+/* PRD tokens plus the glass and motion treatment requested on 15 October 2026. */
 :root {
   --navy: #102a43;
   --blue: #2f80ed;
@@ -30,5 +30,29 @@
   --disabled-opacity: .45; --tracking: .04em;
   --hero-width: 960px; --standalone-width: 900px; --tile-width: 240px;
   --hero-measure: 18ch; --body-measure: 60ch; --overlay-layer: 10;
+  --glass-surface: rgb(255 255 255 / 82%);
+  --glass-nav: rgb(16 42 67 / 94%);
+  --glass-border: rgb(255 255 255 / 90%);
+  --glass-edge: rgb(47 128 237 / 13%);
+  --glass-blur: 20px;
+  --ambient-blur: 64px;
+  --ambient-opacity: .35;
+  --ambient-size: clamp(220px, 40vw, 520px);
+  --ambient-offset: -12%;
+  --ambient-top: 18%;
+  --ambient-bottom: 8%;
+  --ambient-scale: .7;
+  --hero-border-radius: 32px;
+  --hero-padding: clamp(24px, 5vw, 64px);
+  --public-inset: clamp(16px, 3vw, 40px);
+  --public-glow: radial-gradient(ellipse at 15% 15%, var(--blue-soft), transparent 65%), radial-gradient(ellipse at 90% 80%, var(--blue-soft), transparent 55%);
+  --glass-shadow: 0 24px 80px rgb(16 42 67 / 7%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --entrance-distance: 18px;
+  --hover-distance: -2px;
+  --press-distance: 1px;
+  --stagger-one: 80ms;
+  --stagger-two: 140ms;
+  --stagger-three: 200ms;
+  --stagger-four: 260ms;
   --shadow-small: 0 2px 8px rgb(16 42 67 / 5%);
 }

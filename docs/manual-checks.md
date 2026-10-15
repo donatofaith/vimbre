@@ -17,3 +17,7 @@ These are scaffold checks only. Business workflow and database authorisation tes
 - Four public configuration tests passed, including privileged key rejection.
 - Headless browser checks passed for the homepage, five workspace links, unknown workspace URL, mobile menu and 360 pixel width without horizontal overflow.
 - Browser checks reported no page errors or external network requests with empty environment configuration.
+
+## Glass and motion update
+
+Browser checks also verify reduced motion disables entrance animations and the public homepage fits at 360 pixels. Blur is static; decorative motion does not run continuously. Solid surfaces are provided when backdrop filters are unsupported.

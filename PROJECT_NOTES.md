@@ -21,3 +21,7 @@ Frontend: VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY only. All other ke
 
 ## Next milestone
 Authentication and company setup with reviewed schema, protected routes and two company isolation tests. Update these notes with every implemented feature and test result. Do not mark a feature Available before it is connected and verified.
+
+## Approved visual direction update
+
+On 15 October 2026 the user approved the UI direction and requested glass surfaces, background blur and modern website motion. This supersedes the earlier flat surface restriction for this visual treatment. Use static blur, high opacity reading surfaces, brief opacity and transform entrances and hover feedback. Respect reduced motion, keep solid surface fallbacks and avoid continuous background animation. Product feature availability is unchanged.

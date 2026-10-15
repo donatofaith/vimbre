@@ -64,4 +64,44 @@ h1:focus { outline: none; }
   .public-header { flex-wrap: wrap; }
   .hero { padding-top: var(--space-10); }
 }
+
+/* Solid surfaces are the fallback when backdrop filters are unavailable. */
+.public-page { position: relative; isolation: isolate; overflow: clip; padding: var(--public-inset); background: var(--public-glow), var(--background); }
+.public-header { position: relative; z-index: 1; border-radius: var(--radius-card); animation: enter-soft var(--motion-slow) var(--ease) both; }
+.glass-surface { background: var(--surface); border: var(--border-width) solid var(--glass-edge); box-shadow: var(--glass-shadow); }
+.hero { position: relative; z-index: 1; padding: var(--hero-padding); margin-block: var(--space-12); border-radius: var(--hero-border-radius); }
+.hero > * { animation: enter-soft var(--motion-slow) var(--ease) both; }
+.hero > :nth-child(2) { animation-delay: var(--stagger-one); }
+.hero > :nth-child(3) { animation-delay: var(--stagger-two); }
+.hero > :nth-child(4) { animation-delay: var(--stagger-three); }
+.hero > :nth-child(5) { animation-delay: var(--stagger-four); }
+.ambient { position: absolute; z-index: 0; pointer-events: none; inline-size: var(--ambient-size); aspect-ratio: 1; border-radius: 50%; background: var(--blue); filter: blur(var(--ambient-blur)); opacity: var(--ambient-opacity); }
+.ambient-one { inset-inline-end: var(--ambient-offset); inset-block-start: var(--ambient-top); }
+.ambient-two { inset-inline-start: var(--ambient-offset); inset-block-end: var(--ambient-bottom); inline-size: calc(var(--ambient-size) * var(--ambient-scale)); background: var(--blue-soft); }
+.app-shell { background: var(--public-glow), var(--background); }
+.sidebar { background: var(--glass-nav); }
+.workspace-bar { border-bottom: var(--border-width) solid var(--border); }
+.workspace-content > * { animation: enter-soft var(--motion-slow) var(--ease) both; }
+.workspace-content > :nth-child(2) { animation-delay: var(--stagger-one); }
+.workspace-content > :nth-child(3) { animation-delay: var(--stagger-two); }
+.card { box-shadow: var(--shadow-small); }
+.feature-grid > .card { animation: enter-soft var(--motion-slow) var(--ease) both; }
+.feature-grid > :nth-child(2) { animation-delay: var(--stagger-one); }
+.feature-grid > :nth-child(3) { animation-delay: var(--stagger-two); }
+.feature-grid > :nth-child(4) { animation-delay: var(--stagger-three); }
+.feature-grid > :nth-child(5) { animation-delay: var(--stagger-four); }
+.button, .navigation a { transition: transform var(--motion-fast) var(--ease); }
+.button:active:not(:disabled) { transform: translateY(var(--press-distance)); }
+.navigation.is-open { animation: enter-soft var(--motion-medium) var(--ease) both; }
+@media (hover: hover) {
+  .button:hover:not(:disabled), .navigation a:hover { transform: translateY(var(--hover-distance)); }
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface, .card, .workspace-bar { background: var(--glass-surface); -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur)); }
+  .glass-surface { border-color: var(--glass-border); }
+}
+@keyframes enter-soft {
+  from { opacity: 0; transform: translateY(var(--entrance-distance)); }
+  to { opacity: 1; transform: translateY(0); }
+}
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
