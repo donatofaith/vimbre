@@ -14,7 +14,7 @@ const assert = require('node:assert/strict');
     const items = [], decisions = [], calls = []; let failRead = false, failSave = false, serial = 0;
     await page.route('https://*.supabase.co/**', async route => {
       const req = route.request(), url = new URL(req.url()); let args = null; try { args = req.postDataJSON(); } catch {}
-      calls.push({ path: url.pathname, method: req.method(), args }); let body = {}, status = 200, total = null;
+      calls.push({ path: url.pathname, params: Object.fromEntries(url.searchParams), method: req.method(), args }); let body = {}, status = 200, total = null;
       if (url.pathname.endsWith('/token')) body = { access_token: 'record-token', refresh_token: 'record-refresh', expires_in: 3600, token_type: 'bearer', user };
       else if (url.pathname.endsWith('/user')) body = user;
       else if (url.pathname.endsWith('/my_invitation')) body = [];
