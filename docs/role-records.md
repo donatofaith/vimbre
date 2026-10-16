@@ -2,7 +2,7 @@
 
 ## Available
 
-At `/app/role-record`, employees can create and edit their own responsibilities, workstreams, external contacts, document links and recurring deadlines. The Decision Log records what was decided, why, who decided, the date, live/replaced/reversed status, an optional workstream, source link and related task link. Decisions may apply to the whole role. Task links point to existing work tools until Vimbre actions are built.
+At `/app/role-record`, employees can create and edit their own responsibilities, workstreams, external contacts, document links and recurring deadlines. The Decision Log records what was decided, why, who decided, the date, live/replaced/reversed status, an optional workstream, source link and related task link. Decisions may apply to the whole role. Task links point to existing work tools and View linked actions opens the related Vimbre actions in My day.
 
 Every list starts empty, searches titles and loads 20 rows per page. Decisions filter by status. Removed records are archived with `deleted_at` and can be restored. Existing decision links survive archiving a workstream; new decisions cannot link to archived workstreams. The owner, company, category and creation fields cannot be changed through the client. Hard delete has no client grant.
 
@@ -35,4 +35,4 @@ The existing glass styling is a working design foundation. Final visual design r
 - Prepend `supabase/tests/team-fixtures.sql` to `supabase/tests/role-records.sql`, then execute against development. The complete transaction rolls back all fixtures. Covers five categories, decision status/links, unsafe URLs, archive/restore, immutable identity, owner-only writes, HR/manager reads, department change, two companies, audit, inactive and anonymous callers.
 - Supabase security advisors: no database findings. The previously known disabled leaked-password-protection warning remains: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-The public page describes only implemented features as Available. AI capture, forwarding, actions and handovers remain Coming soon. No pricing, public contact inbox, testimonial or results statistics have been invented.
+The public page describes only implemented features as Available. AI capture, forwarding and handovers remain Coming soon. Actions are available in My day. No pricing, public contact inbox, testimonial or results statistics have been invented.

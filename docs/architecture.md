@@ -13,3 +13,5 @@ Fonts are bundled locally. Colours, glass and animation tokens live in src/style
 Team details, deployment configuration and acceptance checks are in team-setup.md. All lists are bounded; team modules load separately to keep the initial browser bundle under the build warning threshold.
 
 Role records use role_items and decisions, with owner/company composite keys and RLS. Only the owner can write; managers and HR have scoped read access. The public landing page is separate from the protected workspace and links to account routes. Public and team/records pages load as separate chunks. See role-records.md for the data contract, limitations and acceptance checks. The UI remains a working design foundation ahead of final visual polish.
+
+My day uses the actions table with owner/company and decision composite foreign keys. RLS uses the existing protected-profile scope helper; writes remain owner-only, timestamps are server-controlled and UI-open audit is checked. Date-based views use the browser calendar day. Shared Input hints keep labels and accessible descriptions alongside placeholders. Details and manual checks: actions-my-day.md.

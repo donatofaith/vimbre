@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
 const HomePage = lazy(() => import('../features/public/HomePage').then(module => ({ default: module.HomePage })))
-import { WorkspacePage } from '../features/workspace/WorkspacePage'
+const WorkspacePage = lazy(() => import('../features/workspace/WorkspacePage').then(module => ({ default: module.WorkspacePage })))
 import { FeaturePage } from '../components/ui/FeaturePage'
 
 import { AuthPage, AuthCallback } from '../features/auth/AuthPage'

@@ -45,11 +45,11 @@ const assert = require('node:assert/strict');
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
     await page.goto('http://127.0.0.1:5173/'); await page.getByRole('heading', { name: 'Stop losing what your team already decided' }).waitFor();
-    assert.equal(await page.getByRole('article').filter({ hasText: 'Available' }).count(), 3); assert.equal(await page.getByRole('article').filter({ hasText: 'Coming soon' }).count(), 3);
+    assert.equal(await page.getByRole('article').filter({ hasText: 'Available' }).count(), 4); assert.equal(await page.getByRole('article').filter({ hasText: 'Coming soon' }).count(), 2);
     for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `landing overflow at ${width}`); }
     await page.getByRole('link', { name: 'Create your company', exact: true }).first().click(); await page.getByRole('heading', { name: 'Create your company' }).waitFor();
     await page.goto('http://127.0.0.1:5173/login'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('test-record-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: 'My day', exact: true }).waitFor(); await page.getByRole('link', { name: 'Open role record', exact: true }).click(); await page.getByRole('heading', { name: 'Role record', exact: true }).waitFor();
-    await page.getByRole('button', { name: 'Add record', exact: true }).click(); await page.getByLabel('Title', { exact: true }).fill('Weekly review'); await page.getByLabel('Details', { exact: true }).fill('Prepare the notes and keep the reasons.');
+    await page.getByRole('button', { name: 'Add record', exact: true }).click(); assert.equal(await page.getByLabel('Title', { exact: true }).inputValue(), ''); assert((await page.getByLabel('Title', { exact: true }).getAttribute('placeholder')).includes('weekly operations report')); assert(await page.getByLabel('Details', { exact: true }).getAttribute('aria-describedby')); await page.getByLabel('Title', { exact: true }).fill('Weekly review'); await page.getByLabel('Details', { exact: true }).fill('Prepare the notes and keep the reasons.');
     failSave = true; await page.getByRole('button', { name: 'Save record', exact: true }).click(); await page.getByRole('alert').filter({ hasText: 'draft is still here' }).waitFor(); assert.equal(await page.getByLabel('Title', { exact: true }).inputValue(), 'Weekly review');
     failSave = false; await page.getByRole('button', { name: 'Save record', exact: true }).click();
     try { await page.getByRole('heading', { name: 'Weekly review', exact: true }).waitFor(); }
@@ -59,7 +59,7 @@ const assert = require('node:assert/strict');
     }
     for (const [tab, name] of [['Workstreams','Service reviews'], ['External contacts','Outside reviewer'], ['Documents','Review guide'], ['Recurring deadlines','Friday review']]) {
       await page.getByRole('button', { name: tab, exact: true }).click(); await page.getByRole('button', { name: 'Add record', exact: true }).click();
-      await page.getByLabel(tab === 'External contacts' ? 'Person or company name' : 'Title', { exact: true }).fill(name);
+      assert((await page.getByLabel(tab === 'External contacts' ? 'Person or company name' : 'Title', { exact: true }).getAttribute('placeholder')).startsWith('e.g.')); await page.getByLabel(tab === 'External contacts' ? 'Person or company name' : 'Title', { exact: true }).fill(name);
       if (tab === 'External contacts') { await page.getByLabel('Contact email').fill('reviewer@example.invalid'); await page.getByLabel('Contact phone').fill('+2348000000000'); }
       if (tab === 'Documents') await page.getByLabel('Document link', { exact: true }).fill('https://example.invalid/guide');
       if (tab === 'Recurring deadlines') { await page.getByLabel('Next deadline').fill('2026-10-23'); await page.getByLabel('Recurrence', { exact: true }).fill('Every Friday before 4 pm'); }

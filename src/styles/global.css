@@ -183,3 +183,5 @@ summary { cursor: pointer; font-weight: var(--weight-medium); padding-block: var
 @media (max-width: 760px) { .public-nav { gap: var(--space-3); } .public-nav > a[href^="#"] { display: none; } .public-header { padding: var(--space-4); } .landing-section { padding-inline: var(--space-4); } .record-outline { padding: var(--space-5); } }
 @media (min-width: 961px) { .landing-section .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 601px) and (max-width: 960px) { .landing-section .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.field-hint { margin: 0; color: var(--muted); font-size: var(--font-label); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }

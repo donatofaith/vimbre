@@ -21,13 +21,13 @@ The browser uses the connected development Supabase project by default. Its publ
 - Company and department isolation, immutable client role/company fields, active membership checks and append-only setup audit history.
 - Responsive navigation, shared UI, reduced motion and clear status pages for unfinished features.
 
-The user has received a signup email. The user reported a successful invitation check. A live password recovery inbox acceptance test remains pending. Configure Brevo SMTP and the allowed callback URLs before a real signup/recovery acceptance test. See docs/auth-setup.md. Departments, manager assignment, member edits, expiring invitations and recipient acceptance are implemented. Role records and the Decision Log are implemented, including search, status filters, archive/restore and protected read scopes. The public landing page links to signup, login and the workspace. Capture, AI, actions and handovers remain future work. See docs/role-records.md. See docs/team-setup.md for team setup and its acceptance checklist.
+The user has received a signup email. The user reported a successful invitation check. A live password recovery inbox acceptance test remains pending. Configure Brevo SMTP and the allowed callback URLs before a real signup/recovery acceptance test. See docs/auth-setup.md. Departments, manager assignment, member edits, expiring invitations and recipient acceptance are implemented. Role records and the Decision Log are implemented, including search, status filters, archive/restore and protected read scopes. The public landing page links to signup, login and the workspace. My day now has saved actions, due views, completion notes, decision links and scoped team reads. Input examples and field guidance help new users. Capture, AI and handovers remain future work. See docs/actions-my-day.md. See docs/role-records.md. See docs/team-setup.md for team setup and its acceptance checklist.
 
 ## Structure and checks
 
 src/app contains routing and layouts; src/features contains feature modules; src/lib contains the typed backend client. supabase/migrations records the applied development schema. supabase/tests/auth_isolation.sql contains rollback-only policy tests. PROJECT_NOTES.md records implementation status.
 
-npm run check runs lint, thirteen unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Authentication, team, and records/public browser suites intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
+npm run check runs lint, thirteen unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Authentication, team, records/public and actions browser suites intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
 
 Develop on development and review the existing pull request before merging main. Old Bolt code is not reused.
 

@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      actions: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          completion_note: string
+          created_at: string
+          decision_id: string | null
+          deleted_at: string | null
+          details: string
+          due_date: string
+          id: string
+          owner_id: string
+          source_url: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          completion_note?: string
+          created_at?: string
+          decision_id?: string | null
+          deleted_at?: string | null
+          details?: string
+          due_date: string
+          id?: string
+          owner_id: string
+          source_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          completion_note?: string
+          created_at?: string
+          decision_id?: string | null
+          deleted_at?: string | null
+          details?: string
+          due_date?: string
+          id?: string
+          owner_id?: string
+          source_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actions_decision_id_owner_id_company_id_fkey"
+            columns: ["decision_id", "owner_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "decisions"
+            referencedColumns: ["id", "owner_id", "company_id"]
+          },
+          {
+            foreignKeyName: "actions_owner_id_company_id_fkey"
+            columns: ["owner_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
@@ -442,6 +515,7 @@ export type Database = {
         Args: { p_error_code?: string; p_id: string; p_status: string }
         Returns: undefined
       }
+      log_action_view: { Args: { p_owner: string }; Returns: undefined }
       log_role_view: { Args: { p_owner: string }; Returns: undefined }
       manage_department: {
         Args: {

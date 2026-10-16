@@ -1,0 +1,78 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
+(async () => {
+  const { createServer } = await import('vite');
+  const server = await createServer({ server: { host: '127.0.0.1', port: 5173, strictPort: true } }); await server.listen();
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext({ timezoneId: 'Africa/Lagos' }); const page = await context.newPage(); page.setDefaultTimeout(10000);
+    await page.clock.setFixedTime(new Date('2026-10-16T10:00:00Z'));
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    const user = { id: '11111111-1111-4111-8111-111111111111', aud: 'authenticated', role: 'authenticated', email: 'owner@example.invalid', email_confirmed_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} };
+    const company = { id: '22222222-2222-4222-8222-222222222222', name: 'Action test company', team_mode: 'small' };
+    let profile = { id: user.id, company_id: company.id, full_name: 'Action Owner', email: user.email, role: 'employee', active: true };
+    const colleague = { ...profile, id: '99999999-9999-4999-8999-999999999999', full_name: 'Department colleague' };
+    const decision = { id: '33333333-3333-4333-8333-333333333333', owner_id: user.id, title: 'Weekly reporting', deleted_at: null };
+    const actions = [], calls = []; let failSave = false, failRead = false;
+    await page.route('https://*.supabase.co/**', async route => {
+      const req = route.request(), url = new URL(req.url()); let args = null; try { args = req.postDataJSON(); } catch {}
+      calls.push({ path: url.pathname, method: req.method(), params: Object.fromEntries(url.searchParams), args }); let body = {}, status = 200, total = null;
+      if (url.pathname.endsWith('/token')) body = { access_token: 'actions-token', refresh_token: 'actions-refresh', expires_in: 3600, token_type: 'bearer', user };
+      else if (url.pathname.endsWith('/user')) body = user;
+      else if (url.pathname.endsWith('/my_invitation')) body = [];
+      else if (url.pathname.endsWith('/companies')) body = company;
+      else if (url.pathname.endsWith('/profiles')) body = req.headers().accept?.includes('vnd.pgrst.object') ? profile : [profile, colleague];
+      else if (url.pathname.endsWith('/decisions')) body = [decision];
+      else if (url.pathname.endsWith('/actions')) {
+        if (['POST', 'PATCH'].includes(req.method())) {
+          if (failSave) { status = 500; body = { message: 'Test save failure' }; }
+          else {
+            let row;
+            if (req.method() === 'POST') { row = { id: randomUUID(), ...args, deleted_at: null, completed_at: args.status === 'done' ? new Date().toISOString() : null }; actions.push(row); }
+            else { row = actions.find(row => `eq.${row.id}` === url.searchParams.get('id')); assert(row); Object.assign(row, args); row.completed_at = row.status === 'done' ? new Date().toISOString() : null; }
+            body = { id: row.id };
+          }
+        } else if (failRead) { status = 500; body = { message: 'Test read failure' }; }
+        else {
+          let rows = actions.filter(row => `eq.${row.owner_id}` === url.searchParams.get('owner_id'));
+          for (const field of ['status', 'decision_id', 'due_date']) if (url.searchParams.has(field)) { const filter = url.searchParams.get(field), [op, ...tail] = filter.split('.'), value = tail.join('.'); rows = rows.filter(row => op === 'eq' ? row[field] === value : op === 'neq' ? row[field] !== value : row[field] < value); }
+          if (url.searchParams.has('deleted_at')) rows = rows.filter(row => url.searchParams.get('deleted_at') === 'is.null' ? !row.deleted_at : Boolean(row.deleted_at));
+          const query = (url.searchParams.get('title') || '').replace(/^ilike\.%/, '').replace(/%$/, '').toLowerCase(); rows = rows.filter(row => row.title.toLowerCase().includes(query));
+          rows.sort((a, b) => a.due_date.localeCompare(b.due_date)); total = rows.length;
+          body = rows.slice(Number(url.searchParams.get('offset') || 0), Number(url.searchParams.get('offset') || 0) + Number(url.searchParams.get('limit') || 20)).map(row => ({ ...row, decision: row.decision_id === decision.id ? decision : null }));
+        }
+      }
+      const headers = total === null ? {} : { 'access-control-expose-headers': 'content-range', 'content-range': total ? `0-${Math.max(0, body.length - 1)}/${total}` : '*/0' };
+      await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
+    });
+    await page.goto('http://127.0.0.1:5173/login'); assert.equal(await page.getByLabel('Work email').inputValue(), ''); assert.equal(await page.getByLabel('Work email').getAttribute('placeholder'), 'e.g. ada@example.com'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('actions-test-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: 'My day', exact: true }).waitFor();
+    assert.equal(await page.getByLabel('View actions for').count(), 0);
+    await page.getByRole('button', { name: 'Add action', exact: true }).click(); assert.equal(await page.getByLabel('What needs to be done?').inputValue(), ''); assert((await page.getByLabel('What needs to be done?').getAttribute('placeholder')).includes('weekly operations report')); assert(await page.getByLabel('Due date').getAttribute('aria-describedby'));
+    await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await page.screenshot({ path: '/tmp/vimbre-action-example-form.png', fullPage: true, animations: 'disabled' }); await page.setViewportSize({ width: 1440, height: 900 });
+    // Required placeholders cannot become saved facts.
+    await page.getByRole('button', { name: 'Save action', exact: true }).click(); assert.equal(actions.length, 0);
+    await page.getByLabel('What needs to be done?').fill('Send the report'); await page.getByLabel('Due date').fill('2026-10-16'); await page.getByLabel('Action status').selectOption('in_progress'); await page.getByLabel('Related decision (optional)').selectOption(decision.id);
+    failSave = true; await page.getByRole('button', { name: 'Save action', exact: true }).click(); await page.getByRole('alert').filter({ hasText: 'draft is still here' }).waitFor(); assert.equal(await page.getByLabel('What needs to be done?').inputValue(), 'Send the report'); failSave = false;
+    await page.getByRole('button', { name: 'Save action', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor(); assert.equal(actions[0].decision_id, decision.id); assert(!Object.hasOwn(calls.find(row => row.path.endsWith('/actions') && row.method === 'POST').args, 'completed_at'));
+    await page.getByRole('button', { name: 'Due today', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Overdue', exact: true }).click(); await page.getByText('No open actions match this view.', { exact: false }).waitFor();
+    actions.push({ ...actions[0], id: randomUUID(), title: 'Check older figures', due_date: '2026-10-15', decision_id: null });
+    await page.getByRole('button', { name: 'All open', exact: true }).click(); await page.getByRole('heading', { name: 'Check older figures', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Overdue', exact: true }).click(); await page.getByRole('heading', { name: 'Check older figures', exact: true }).waitFor(); assert.equal(await page.getByRole('heading', { name: 'Send the report', exact: true }).count(), 0);
+    await page.getByRole('button', { name: 'All open', exact: true }).click(); await page.getByRole('button', { name: 'Complete Send the report', exact: true }).click(); await page.getByLabel('Anything the next person should know?').fill('Sent to Finance. They will reply on Monday.'); await page.getByRole('button', { name: 'Mark done', exact: true }).click(); await page.getByRole('status').filter({ hasText: 'Action completed' }).waitFor();
+    await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor(); await page.getByText('Sent to Finance. They will reply on Monday.', { exact: false }).waitFor();
+    await page.reload(); await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Reopen Send the report', exact: true }).click(); await page.getByRole('button', { name: 'All open', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Edit Send the report', exact: true }).click(); await page.getByLabel('Details', { exact: true }).fill('Check with Finance before sending.'); await page.getByRole('button', { name: 'Save action', exact: true }).click(); await page.getByText('Check with Finance before sending.', { exact: true }).waitFor();
+    page.once('dialog', dialog => dialog.accept()); await page.getByRole('button', { name: 'Archive Send the report', exact: true }).click(); await page.getByRole('button', { name: 'Archived', exact: true }).click(); await page.getByRole('button', { name: 'Restore Send the report', exact: true }).click(); await page.getByRole('button', { name: 'All open', exact: true }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    await page.goto(`http://127.0.0.1:5173/app?decision=${decision.id}`); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor(); assert.equal(await page.getByRole('heading', { name: 'Check older figures', exact: true }).count(), 0); await page.getByRole('button', { name: 'Show all decisions', exact: true }).click(); await page.getByRole('heading', { name: 'Check older figures', exact: true }).waitFor();
+    failRead = true; await page.getByRole('button', { name: 'Due today', exact: true }).click(); await page.getByRole('alert').filter({ hasText: 'Actions could not be loaded' }).waitFor(); failRead = false; await page.getByRole('button', { name: 'Retry actions' }).click(); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'All open', exact: true }).click(); await page.getByLabel('Search actions').fill('no match'); await page.getByText('No open actions match this view.', { exact: false }).waitFor(); await page.getByLabel('Search actions').fill(''); await page.getByRole('heading', { name: 'Send the report', exact: true }).waitFor();
+    for (let index = 0; index < 22; index++) actions.push({ ...actions[0], id: randomUUID(), title: `Extra action ${index}` });
+    await page.reload(); await page.getByRole('button', { name: 'Next actions', exact: true }).click(); await page.getByText('Page 2', { exact: true }).waitFor();
+    await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await page.screenshot({ path: '/tmp/vimbre-actions-mobile.png', fullPage: true, animations: 'disabled' });
+    profile = { ...profile, role: 'manager' }; await page.reload(); await page.getByLabel('View actions for').selectOption(colleague.id); await page.getByRole('heading', { name: `${colleague.full_name}’s actions`, exact: true }).waitFor(); assert.equal(await page.getByRole('button', { name: 'Add action', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Complete / }).count(), 0);
+    assert.equal(errors.length, 0, JSON.stringify(errors)); console.log(JSON.stringify({ examplesAndRequiredFields: 'passed', actionCreateEdit: 'passed', failedSaveDraft: 'passed', localDateDueViews: 'passed', completionNoteReloadReopen: 'passed', archiveRestore: 'passed', decisionLinksSearchPagination: 'passed', readRetry: 'passed', managerReadOnly: 'passed', mobileOverflow: false, pageErrors: errors, network: 'intercepted; no real records created' }));
+  } finally { await browser.close(); await server.close(); }
+})().catch(error => { console.error(error); process.exit(1); });
