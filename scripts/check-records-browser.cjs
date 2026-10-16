@@ -50,7 +50,12 @@ const assert = require('node:assert/strict');
     await page.goto('http://127.0.0.1:5173/login'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('test-record-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: 'My day', exact: true }).waitFor(); await page.getByRole('link', { name: 'Open role record', exact: true }).click(); await page.getByRole('heading', { name: 'Role record', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Add record', exact: true }).click(); await page.getByLabel('Title', { exact: true }).fill('Weekly review'); await page.getByLabel('Details', { exact: true }).fill('Prepare the notes and keep the reasons.');
     failSave = true; await page.getByRole('button', { name: 'Save record', exact: true }).click(); await page.getByRole('alert').filter({ hasText: 'draft is still here' }).waitFor(); assert.equal(await page.getByLabel('Title', { exact: true }).inputValue(), 'Weekly review');
-    failSave = false; await page.getByRole('button', { name: 'Save record', exact: true }).click(); await page.getByRole('heading', { name: 'Weekly review', exact: true }).waitFor();
+    failSave = false; await page.getByRole('button', { name: 'Save record', exact: true }).click();
+    try { await page.getByRole('heading', { name: 'Weekly review', exact: true }).waitFor(); }
+    catch (error) {
+      console.error(JSON.stringify({ retryDiagnostics: { items, requests: calls.filter(row => row.path.endsWith('/role_items')), screen: await page.locator('body').innerText(), fields: await page.locator('form input,form textarea').evaluateAll(nodes => nodes.map(node => ({ name: node.name, value: node.value, valid: node.validity.valid }))) } }));
+      throw error;
+    }
     for (const [tab, name] of [['Workstreams','Service reviews'], ['External contacts','Outside reviewer'], ['Documents','Review guide'], ['Recurring deadlines','Friday review']]) {
       await page.getByRole('button', { name: tab, exact: true }).click(); await page.getByRole('button', { name: 'Add record', exact: true }).click();
       await page.getByLabel(tab === 'External contacts' ? 'Person or company name' : 'Title', { exact: true }).fill(name);
