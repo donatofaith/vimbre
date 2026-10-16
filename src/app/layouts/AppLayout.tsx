@@ -27,7 +27,7 @@ export function AppLayout() {
       <p className="sidebar-note">{profile?.full_name}<br />{profile?.role.replace('_', ' ')}</p>
     </aside>
     <div className="workspace">
-      <header className="workspace-bar"><span>{company?.name}</span><Button variant="secondary" onClick={() => { void logout() }}>Sign out</Button></header>
+      <header className="workspace-bar"><span>{company?.name}</span><div className="form-actions"><Link to="/">Website home</Link><Button variant="secondary" onClick={() => { void logout() }}>Sign out</Button></div></header>
       <main id="main" className="workspace-content">{logoutError && <p role="alert">{logoutError}</p>}<Outlet /></main>
     </div>
   </div>

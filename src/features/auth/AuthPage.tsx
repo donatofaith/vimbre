@@ -90,7 +90,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
       {error && <p className="field-error" role="alert">{error}</p>}
       <Button type="submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create company' : mode === 'login' ? 'Log in' : mode === 'forgot' ? 'Send reset link' : 'Update password'}</Button>
     </form>}
-    <nav className="auth-links" aria-label="Account help">{mode === 'login' ? <><Link to="/forgot">Forgot password?</Link><Link to="/signup">Create a company</Link></> : <Link to="/login">Back to login</Link>}</nav></section></main>
+    <nav className="auth-links" aria-label="Account help"><Link to="/">Back to website</Link>{mode === 'login' ? <><Link to="/forgot">Forgot password?</Link><Link to="/signup">Create a company</Link></> : <Link to="/login">Back to login</Link>}</nav></section></main>
 }
 export function AuthCallback() {
   const account = useAuth()
