@@ -11,10 +11,10 @@ const { randomUUID } = require('node:crypto');
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     const user = { id: '11111111-1111-4111-8111-111111111111', aud: 'authenticated', role: 'authenticated', email: 'owner@example.invalid', email_confirmed_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} };
     const company = { id: '22222222-2222-4222-8222-222222222222', name: 'Action test company', team_mode: 'small' };
-    let profile = { id: user.id, company_id: company.id, full_name: 'Action Owner', email: user.email, role: 'employee', active: true };
+    let profile = { id: user.id, company_id: company.id, full_name: 'Action Owner', email: user.email, role: 'employee', active: true, department_id: '44444444-4444-4444-8444-444444444444' };
     const colleague = { ...profile, id: '99999999-9999-4999-8999-999999999999', full_name: 'Department colleague' };
     const decision = { id: '33333333-3333-4333-8333-333333333333', owner_id: user.id, title: 'Weekly reporting', deleted_at: null };
-    const actions = [], calls = []; let failSave = false, failRead = false;
+    const actions = [], calls = []; let failSave = false, failRead = false, failTeam = false; let teamMembers = [colleague];
     await page.route('https://*.supabase.co/**', async route => {
       const req = route.request(), url = new URL(req.url()); let args = null; try { args = req.postDataJSON(); } catch {}
       calls.push({ path: url.pathname, method: req.method(), params: Object.fromEntries(url.searchParams), args }); let body = {}, status = 200, total = null;
@@ -22,7 +22,16 @@ const { randomUUID } = require('node:crypto');
       else if (url.pathname.endsWith('/user')) body = user;
       else if (url.pathname.endsWith('/my_invitation')) body = [];
       else if (url.pathname.endsWith('/companies')) body = company;
-      else if (url.pathname.endsWith('/profiles')) body = req.headers().accept?.includes('vnd.pgrst.object') ? profile : [profile, colleague];
+      else if (url.pathname.endsWith('/profiles')) {
+        if (req.headers().accept?.includes('vnd.pgrst.object')) body = profile;
+        else if (failTeam) { status = 500; body = { message: 'Test roster failure' }; }
+        else {
+          let rows = [profile, ...teamMembers];
+          if (url.searchParams.has('id')) rows = rows.filter(row => `neq.${row.id}` !== url.searchParams.get('id'));
+          const query = (url.searchParams.get('full_name') || '').replace(/^ilike\.%/, '').replace(/%$/, '').toLowerCase(); rows = rows.filter(row => row.full_name.toLowerCase().includes(query));
+          total = rows.length; const offset = Number(url.searchParams.get('offset') || 0); body = rows.slice(offset, offset + Number(url.searchParams.get('limit') || 20));
+        }
+      }
       else if (url.pathname.endsWith('/decisions')) body = [decision];
       else if (url.pathname.endsWith('/actions')) {
         if (['POST', 'PATCH'].includes(req.method())) {
@@ -72,7 +81,25 @@ const { randomUUID } = require('node:crypto');
     for (let index = 0; index < 22; index++) actions.push({ ...actions[0], id: randomUUID(), title: `Extra action ${index}` });
     await page.reload(); await page.getByRole('button', { name: 'Next actions', exact: true }).click(); await page.getByText('Page 2', { exact: true }).waitFor();
     await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await page.screenshot({ path: '/tmp/vimbre-actions-mobile.png', fullPage: true, animations: 'disabled' });
-    profile = { ...profile, role: 'manager' }; await page.reload(); await page.getByLabel('View actions for').selectOption(colleague.id); await page.getByRole('heading', { name: `${colleague.full_name}’s actions`, exact: true }).waitFor(); assert.equal(await page.getByRole('button', { name: 'Add action', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Complete / }).count(), 0);
-    assert.equal(errors.length, 0, JSON.stringify(errors)); console.log(JSON.stringify({ examplesAndRequiredFields: 'passed', actionCreateEdit: 'passed', failedSaveDraft: 'passed', localDateDueViews: 'passed', completionNoteReloadReopen: 'passed', archiveRestore: 'passed', decisionLinksSearchPagination: 'passed', readRetry: 'passed', managerReadOnly: 'passed', mobileOverflow: false, pageErrors: errors, network: 'intercepted; no real records created' }));
+    profile = { ...profile, role: 'manager' }; await page.reload();
+    await page.getByRole('heading', { name: 'My day', exact: true }).waitFor(); assert.equal(await page.getByLabel('View actions for').count(), 0); assert.equal(await page.getByLabel('Find a team member').count(), 0); await page.getByRole('button', { name: 'Add action', exact: true }).waitFor();
+    actions.push({ ...actions[0], id: randomUUID(), owner_id: colleague.id, title: 'Colleague completed report', status: 'done', completed_at: new Date().toISOString(), completion_note: 'Figures checked and report sent.' });
+    await page.getByRole('link', { name: 'View team activity', exact: true }).click(); await page.getByRole('heading', { name: 'Team activity', exact: true }).waitFor();
+    await page.getByRole('button', { name: `View work for ${colleague.full_name}`, exact: true }).click(); await page.getByRole('heading', { name: `${colleague.full_name}’s actions`, exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Add action', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Complete / }).count(), 0);
+    await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Colleague completed report', exact: true }).waitFor(); await page.getByText('Figures checked and report sent.', { exact: false }).waitFor();
+    assert.equal(await page.getByRole('button', { name: /^Edit / }).count(), 0); await page.screenshot({ path: '/tmp/vimbre-team-activity-mobile.png', fullPage: true, animations: 'disabled' }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth));
+    await page.getByRole('button', { name: 'Choose another person', exact: true }).click(); await page.getByLabel('Search team members').fill('nobody'); await page.getByRole('heading', { name: 'No names match your search', exact: true }).waitFor(); await page.getByLabel('Search team members').fill(''); await page.getByRole('button', { name: `View work for ${colleague.full_name}`, exact: true }).waitFor();
+    for (let index = 0; index < 22; index++) teamMembers.push({ ...colleague, id: randomUUID(), full_name: `Teammate ${index}` });
+    await page.reload(); await page.getByRole('button', { name: 'Next people', exact: true }).click(); await page.getByText('Page 2', { exact: true }).waitFor();
+    teamMembers = []; await page.reload(); await page.getByRole('heading', { name: 'No other team members are available yet', exact: true }).waitFor();
+    profile = { ...profile, department_id: null }; await page.reload(); await page.getByRole('heading', { name: 'Your department is not set up yet', exact: true }).waitFor(); assert.equal(await page.getByLabel('Search team members').count(), 0);
+    profile = { ...profile, role: 'hr_admin' }; await page.reload(); await page.getByRole('link', { name: 'Manage team invitations', exact: true }).waitFor();
+    failTeam = true; await page.reload(); await page.getByRole('alert').filter({ hasText: 'Your team could not be loaded' }).waitFor(); failTeam = false; teamMembers = [colleague]; await page.getByRole('button', { name: 'Retry team activity', exact: true }).click(); await page.getByRole('button', { name: `View work for ${colleague.full_name}`, exact: true }).waitFor();
+    profile = { ...profile, role: 'employee' }; const rosterCalls = calls.filter(row => row.path.endsWith('/profiles') && row.params.select === 'id,full_name').length;
+    await page.reload(); await page.getByText('This page is for Managers and HR Admins.', { exact: false }).waitFor(); assert.equal(await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Team activity', exact: true }).count(), 0); assert.equal(calls.filter(row => row.path.endsWith('/profiles') && row.params.select === 'id,full_name').length, rosterCalls);
+    await page.getByRole('link', { name: 'Open My day', exact: true }).click(); await page.getByRole('heading', { name: 'My day', exact: true }).waitFor();
+
+    assert.equal(errors.length, 0, JSON.stringify(errors)); console.log(JSON.stringify({ examplesAndRequiredFields: 'passed', actionCreateEdit: 'passed', failedSaveDraft: 'passed', localDateDueViews: 'passed', completionNoteReloadReopen: 'passed', archiveRestore: 'passed', decisionLinksSearchPagination: 'passed', readRetry: 'passed', managerReadOnly: 'passed', personalMyDay: 'passed', teamActivityAndOutcomes: 'passed', teamEmptySearchPaginationRetry: 'passed', noDepartmentGuidance: 'passed', employeeTeamPageGuard: 'passed', mobileOverflow: false, pageErrors: errors, network: 'intercepted; no real records created' }));
   } finally { await browser.close(); await server.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

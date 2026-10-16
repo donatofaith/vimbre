@@ -9,6 +9,8 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 
+const TeamActivityPage = lazy(() => import('../features/workspace/TeamActivityPage').then(module => ({ default: module.TeamActivityPage })))
+
 const RoleRecordPage = lazy(() => import('../features/records/RoleRecordPage').then(module => ({ default: module.RoleRecordPage })))
 
 const TeamPage = lazy(() => import('../features/team/TeamPage').then(module => ({ default: module.TeamPage })))
@@ -55,6 +57,7 @@ export function App() {
         <Route path="handovers" element={<FeaturePage title="Handovers" description="Planned handover drafting, approval and publication are coming soon." embedded />} />
         <Route path="my-cover-duties" element={<FeaturePage title="Cover duties" description="Temporary access, acknowledgement and progress tracking are coming soon." embedded />} />
         <Route path="team" element={<TeamPage />} />
+        <Route path="team-activity" element={<TeamActivityPage />} />
         <Route path="departments" element={<DepartmentsPage />} />
         <Route path="settings" element={<CompanySettings />} />
         <Route path="*" element={<FeaturePage title="Page not found" description="This workspace page does not exist." embedded notFound />} />
