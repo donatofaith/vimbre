@@ -14,20 +14,32 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [message, setMessage] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
   const [resendAt, setResendAt] = useState(0)
-  const [resendReady, setResendReady] = useState(false)
+  const [clock, setClock] = useState(Date.now)
+  const resendSeconds = Math.max(0, Math.ceil((resendAt - clock) / 1000))
   const account = useAuth()
   const navigate = useNavigate()
   useEffect(() => {
     if (!resendAt) return
-    const timer = window.setTimeout(() => setResendReady(true), Math.max(0, resendAt - Date.now()))
-    return () => window.clearTimeout(timer)
+    const tick = () => {
+      const now = Date.now()
+      setClock(now)
+      if (now >= resendAt) window.clearInterval(timer)
+    }
+    const timer = window.setInterval(tick, 1000)
+    document.addEventListener('visibilitychange', tick)
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick) }
   }, [resendAt])
+  function startCooldown() {
+    const now = Date.now()
+    setClock(now); setResendAt(now + 60000)
+  }
   async function resend() {
-    setBusy(true); setError(''); setResendReady(false); setResendAt(Date.now() + 60000)
+    if (busy || resendSeconds > 0) return
+    setBusy(true); setError(''); startCooldown()
     try {
       const { error: failure } = await supabase.auth.resend({ type: 'signup', email: signupEmail, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
       if (failure) throw failure
-      setMessage('If this email needs confirmation, a new link has been requested. Check your inbox and spam folder.')
+      setMessage('If your email still needs confirmation, a new link has been requested. Check your inbox and spam folder. If you already opened a confirmation link, your email may be confirmed—try logging in.')
     } catch (reason) { setError(authMessage((reason as { code?: string }).code)) }
     finally { setBusy(false) }
   }
@@ -47,7 +59,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         if (!company || !name) { setError('Enter your name and company name.'); return }
         const result = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, company_name: company }, emailRedirectTo: `${window.location.origin}/auth/callback` } })
         if (result.error) throw result.error
-        setSignupEmail(email); setResendAt(Date.now() + 60000)
+        setSignupEmail(email); startCooldown()
         setMessage('Check your inbox for a confirmation link. After confirming your email, you can access your company. If you already have an account, try signing in or resetting your password.')
       } else if (mode === 'login') {
         const result = await supabase.auth.signInWithPassword({ email, password })
@@ -70,7 +82,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
     finally { setBusy(false) }
   }
   const needsSession = mode === 'reset' && !account.session
-  return <main className="public-page auth-page"><div className="ambient ambient-one" aria-hidden="true" /><Link className="wordmark" to="/">vimbre</Link><section className="auth-card glass-surface"><span className="eyebrow">Your team’s shared memory</span><h1 tabIndex={-1}>{titles[mode]}</h1>{mode === 'signup' && <p>Start a company workspace. You’ll be its HR Admin.</p>}{mode === 'reset' && account.loading ? <p role="status">Checking your reset link…</p> : needsSession && !message ? <p>This link is missing or expired. <Link to="/forgot">Request a new reset link</Link>.</p> : message ? <div role="status"><p>{message}</p><Link to="/login">Go to login</Link>{mode === 'signup' && <><p className="muted">You can request another confirmation link after one minute.</p><Button variant="secondary" disabled={busy || !resendReady} onClick={() => { void resend() }}>Resend confirmation</Button>{error && <p role="alert" className="field-error">{error}</p>}</>}</div> : <form onSubmit={submit} className="auth-form">
+  return <main className="public-page auth-page"><div className="ambient ambient-one" aria-hidden="true" /><Link className="wordmark" to="/">vimbre</Link><section className="auth-card glass-surface"><span className="eyebrow">Your team’s shared memory</span><h1 tabIndex={-1}>{titles[mode]}</h1>{mode === 'signup' && <p>Start a company workspace. You’ll be its HR Admin.</p>}{mode === 'reset' && account.loading ? <p role="status">Checking your reset link…</p> : needsSession && !message ? <p>This link is missing or expired. <Link to="/forgot">Request a new reset link</Link>.</p> : message ? <div><p role="status">{message}</p><Link to="/login">Go to login</Link>{mode === 'signup' && <><p className="muted">Already clicked a confirmation link? Try logging in, even if its redirect failed.</p><Button variant="secondary" disabled={busy || resendSeconds > 0} onClick={() => { void resend() }}>{busy ? 'Requesting confirmation…' : resendSeconds > 0 ? `Resend in ${Math.floor(resendSeconds / 60)}:${String(resendSeconds % 60).padStart(2, '0')}` : 'Resend confirmation'}</Button>{error && <p role="alert" className="field-error">{error}</p>}</>}</div> : <form onSubmit={submit} className="auth-form">
       {mode === 'signup' && <><Input label="Full name" name="name" autoComplete="name" required maxLength={100} /><Input label="Company name" name="company" autoComplete="organization" required maxLength={120} /></>}
       {mode !== 'reset' && <Input label="Work email" name="email" type="email" autoComplete="email" required maxLength={320} />}
       {mode !== 'forgot' && <Input label={mode === 'reset' ? 'New password' : 'Password'} name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required minLength={mode === 'login' ? 1 : 12} maxLength={128} />}
