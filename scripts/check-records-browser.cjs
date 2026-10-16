@@ -40,7 +40,8 @@ const assert = require('node:assert/strict');
           body = filtered.slice(offset, offset + limit).map(row => rows === decisions ? { ...row, workstream: items.find(item => item.id === row.workstream_id) ?? null } : row);
         }
       }
-      const headers = total === null ? {} : { 'content-range': total ? `0-${Math.max(0, body.length - 1)}/${total}` : '*/0' };
+      // Match Supabase CORS: browsers need the count header explicitly exposed.
+      const headers = total === null ? {} : { 'access-control-expose-headers': 'content-range', 'content-range': total ? `0-${Math.max(0, body.length - 1)}/${total}` : '*/0' };
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
     await page.goto('http://127.0.0.1:5173/'); await page.getByRole('heading', { name: 'Stop losing what your team already decided' }).waitFor();
