@@ -11,3 +11,5 @@ Browser configuration contains only the development project's public URL and pub
 Fonts are bundled locally. Colours, glass and animation tokens live in src/styles/tokens.css. The approved glass, blur and brief motion override the PRD's earlier flat surface restriction. Reduced motion and solid surface fallbacks remain supported. The PRD and later written decisions remain authoritative; Bolt code is not reused.
 
 Team details, deployment configuration and acceptance checks are in team-setup.md. All lists are bounded; team modules load separately to keep the initial browser bundle under the build warning threshold.
+
+Role records use role_items and decisions, with owner/company composite keys and RLS. Only the owner can write; managers and HR have scoped read access. The public landing page is separate from the protected workspace and links to account routes. Public and team/records pages load as separate chunks. See role-records.md for the data contract, limitations and acceptance checks. The UI remains a working design foundation ahead of final visual polish.

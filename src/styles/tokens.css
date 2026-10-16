@@ -1,5 +1,7 @@
 /* PRD tokens plus the glass and motion treatment requested on 15 October 2026. */
 :root {
+  --font-landing-hero: clamp(2.25rem, 4.5vw, 4.5rem);
+  --record-tilt: 1deg;
   --member-label-width: 104px;
   --navy: #102a43;
   --blue: #2f80ed;

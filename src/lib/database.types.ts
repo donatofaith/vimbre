@@ -82,6 +82,79 @@ export type Database = {
         }
         Relationships: []
       }
+      decisions: {
+        Row: {
+          company_id: string
+          created_at: string
+          decided_by: string
+          decided_on: string
+          deleted_at: string | null
+          id: string
+          owner_id: string
+          reason: string
+          related_task_url: string | null
+          source_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          workstream_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          decided_by: string
+          decided_on: string
+          deleted_at?: string | null
+          id?: string
+          owner_id: string
+          reason: string
+          related_task_url?: string | null
+          source_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          workstream_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          decided_by?: string
+          decided_on?: string
+          deleted_at?: string | null
+          id?: string
+          owner_id?: string
+          reason?: string
+          related_task_url?: string | null
+          source_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          workstream_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_owner_id_company_id_fkey"
+            columns: ["owner_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "decisions_workstream_id_owner_id_company_id_fkey"
+            columns: ["workstream_id", "owner_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "role_items"
+            referencedColumns: ["id", "owner_id", "company_id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           archived_at: string | null
@@ -292,6 +365,72 @@ export type Database = {
           },
         ]
       }
+      role_items: {
+        Row: {
+          company_id: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          deleted_at: string | null
+          details: string
+          due_date: string | null
+          id: string
+          kind: string
+          owner_id: string
+          recurrence: string | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          company_id: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          details?: string
+          due_date?: string | null
+          id?: string
+          kind: string
+          owner_id: string
+          recurrence?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          company_id?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          details?: string
+          due_date?: string | null
+          id?: string
+          kind?: string
+          owner_id?: string
+          recurrence?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_items_owner_id_company_id_fkey"
+            columns: ["owner_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -303,6 +442,7 @@ export type Database = {
         Args: { p_error_code?: string; p_id: string; p_status: string }
         Returns: undefined
       }
+      log_role_view: { Args: { p_owner: string }; Returns: undefined }
       manage_department: {
         Args: {
           p_archive?: boolean

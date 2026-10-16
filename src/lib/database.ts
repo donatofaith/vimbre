@@ -1,6 +1,6 @@
 import type { Database as GeneratedDatabase } from './database.types'
 // The generator omits nullable SQL function arguments. Preserve its output and
-// explicitly model the two operations where null clears an assignment.
+// explicitly model operations where null clears an assignment.
 type Functions = GeneratedDatabase['public']['Functions']
 type NullableArgs<T extends { Args: object }, Keys extends keyof T['Args']> = Omit<T, 'Args'> & {
   Args: { [Key in keyof T['Args']]: T['Args'][Key] | (Key extends Keys ? null : never) }

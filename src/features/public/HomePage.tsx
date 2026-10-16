@@ -1,19 +1,27 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 
+const features = [
+  { title: 'Keep the role record', status: 'Available', text: 'Keep responsibilities, workstreams, external contacts, document links and recurring deadlines together.' },
+  { title: 'Keep the reason', status: 'Available', text: 'Record what was decided, why, who decided and the source. See which decisions are still live.' },
+  { title: 'Bring your team in', status: 'Available', text: 'Create your company, invite your team and set up departments when you need them.' },
+  { title: 'Capture from everyday work', status: 'Coming soon', text: 'Paste notes, upload files or forward emails. Review AI drafts before saving anything as fact.' },
+  { title: 'Hand over with context', status: 'Coming soon', text: 'Prepare the record, get approval and give the person covering you what they need to know.' },
+  { title: 'Pick up where work left off', status: 'Coming soon', text: 'See open actions, follow progress and take work back when you return.' },
+]
 export function HomePage() {
-  return <main className="public-page">
-    <div className="ambient ambient-one" aria-hidden="true" />
-    <div className="ambient ambient-two" aria-hidden="true" />
-    <header className="public-header glass-surface">
-      <Link className="wordmark" to="/">vimbre</Link>
-      <Link to="/login">Log in</Link>
-    </header>
-    <section className="hero glass-surface">
-      <span className="eyebrow">The record your other tools miss</span>
-      <h1 tabIndex={-1}>Stop losing what your team already decided</h1>
-      <p>Works next to the tools you already use.</p>
-      <Link className="button button-primary" to="/signup">Create your company</Link>
-      <p className="muted">Development preview. Capture and handover workflows are coming soon.</p>
-    </section>
-  </main>
+  const { profile } = useAuth()
+  return <div className="public-page landing-page">
+    <a className="skip-link" href="#public-main">Skip to content</a>
+    <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
+    <header className="public-header glass-surface"><Link className="wordmark brand" to="/" aria-label="Vimbre home"><span className="brand-mark" aria-hidden="true"><i /><i /></span>vimbre</Link><nav className="public-nav" aria-label="Public"><a href="#features">What Vimbre does</a><a href="#questions">Questions</a>{profile ? <Link className="button button-primary" to="/app">Open workspace</Link> : <><Link to="/login">Log in</Link><Link className="button button-primary" to="/signup">Get started</Link></>}</nav></header>
+    <main id="public-main">
+      <section className="hero glass-surface landing-hero"><div><span className="eyebrow">The record your other tools miss</span><h1 tabIndex={-1}>Stop losing what your team already decided</h1><p className="hero-description">Keep the decisions, reasons and role knowledge that the next person needs when someone is away, joins or moves on.</p><p>Works next to the tools you already use.</p><div className="form-actions"><Link className="button button-primary" to={profile ? '/app' : '/signup'}>{profile ? 'Open your workspace' : 'Create your company'}</Link><a className="button button-secondary" href="#features">Explore the product</a></div><p className="muted">Early access. Role records and decisions are ready. Capture and handovers are coming soon.</p></div><aside className="record-outline" aria-label="What a role record holds"><span className="eyebrow">Keep the context</span><h2>A role is more than a list of tasks.</h2><ul><li><span aria-hidden="true">01</span><div><strong>What the role does</strong><p>Responsibilities and workstreams</p></div></li><li><span aria-hidden="true">02</span><div><strong>What was decided</strong><p>The reason, the person and the source</p></div></li><li><span aria-hidden="true">03</span><div><strong>What someone needs</strong><p>Contacts, documents and deadlines</p></div></li></ul><p className="muted">Your workspace starts empty. You add your real records.</p></aside></section>
+      <section className="landing-section problem-section"><span className="eyebrow">Keep what happened</span><h2>Decisions get made. Then they disappear.</h2><p>The reason is in an email. The contact is in someone’s head. The deadline is in a different tool. When that person is away, the next person has to piece it together.</p><p>Vimbre gives that context a place to live beside the tools your team already uses.</p></section>
+      <section id="features" className="landing-section"><div className="section-intro"><span className="eyebrow">The product</span><h2>What Vimbre does</h2><p>Start with the record. Capture and handovers will build on it.</p></div><div className="feature-grid">{features.map(feature => <article className="card" key={feature.title}><span className="badge">{feature.status}</span><h3>{feature.title}</h3><p>{feature.text}</p></article>)}</div></section>
+      <section className="landing-section glass-surface benefits-section"><div><span className="eyebrow">A clearer starting point</span><h2>What it saves you</h2><p>Less searching through old threads. Less repeating the same explanation. A place to check what happened and why before asking someone to start again.</p></div><div><h3>Start with what you know</h3><ol className="landing-steps"><li>Create your company and invite your team.</li><li>Add the responsibilities and knowledge behind each role.</li><li>Keep decisions linked to their reasons and sources.</li></ol></div></section>
+      <section id="questions" className="landing-section faq-section"><span className="eyebrow">Before you start</span><h2>A few things to know</h2><details><summary>Does Vimbre replace our work tools?</summary><p>No. Vimbre holds the role knowledge and decision context beside them. Direct mailbox integrations are not available yet.</p></details><details><summary>Who can see my records?</summary><p>You can see your own records. Managers can read records in their department. Your company’s HR Admin can read company records. Each company has its own workspace.</p></details><details><summary>Do we need departments?</summary><p>No. Small teams can start without departments and invite people when they are ready.</p></details><details><summary>What can we use today?</summary><p>Company accounts, team invitations, departments, role records and the Decision Log. AI capture, actions and handovers are coming soon.</p></details></section>
+      <section className="landing-section landing-cta glass-surface"><span className="eyebrow">Put the context somewhere it can be found</span><h2>Start with your next email or meeting.</h2><p>For now, add the role knowledge and decisions by hand. AI capture is coming soon.</p><Link className="button button-primary" to={profile ? '/app/role-record' : '/signup'}>{profile ? 'Open role record' : 'Create your company'}</Link></section>
+    </main><footer className="public-footer"><Link className="wordmark" to="/">vimbre</Link><p>The record your other tools miss</p><Link to={profile ? '/app' : '/login'}>{profile ? 'Open workspace' : 'Log in'}</Link></footer>
+  </div>
 }

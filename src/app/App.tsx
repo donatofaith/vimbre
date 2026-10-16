@@ -1,13 +1,15 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
-import { HomePage } from '../features/public/HomePage'
+const HomePage = lazy(() => import('../features/public/HomePage').then(module => ({ default: module.HomePage })))
 import { WorkspacePage } from '../features/workspace/WorkspacePage'
 import { FeaturePage } from '../components/ui/FeaturePage'
 
 import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
+
+const RoleRecordPage = lazy(() => import('../features/records/RoleRecordPage').then(module => ({ default: module.RoleRecordPage })))
 
 const TeamPage = lazy(() => import('../features/team/TeamPage').then(module => ({ default: module.TeamPage })))
 
@@ -49,7 +51,7 @@ export function App() {
       <Route path="/app" element={<AppLayout />}>
         <Route index element={<WorkspacePage />} />
         <Route path="capture" element={<FeaturePage title="Capture" description="Forward an email, paste notes or upload a file. AI review and record saving are coming soon." embedded />} />
-        <Route path="role-record" element={<FeaturePage title="Role record" description="Responsibilities, workstreams, decisions and supporting records will live here." embedded />} />
+        <Route path="role-record" element={<RoleRecordPage />} />
         <Route path="handovers" element={<FeaturePage title="Handovers" description="Planned handover drafting, approval and publication are coming soon." embedded />} />
         <Route path="my-cover-duties" element={<FeaturePage title="Cover duties" description="Temporary access, acknowledgement and progress tracking are coming soon." embedded />} />
         <Route path="team" element={<TeamPage />} />

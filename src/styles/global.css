@@ -139,3 +139,47 @@ h1:focus { outline: none; }
   .table-scroll td::before { content: attr(data-label); font-weight: var(--weight-strong); }
   .table-scroll .button { justify-self: start; }
 }
+
+/* Working layouts share the existing tokens so the final design can evolve. */
+.field textarea { width: 100%; min-height: calc(var(--control-height) * 2); padding: var(--space-3); border: var(--border-width) solid var(--border); border-radius: var(--radius-card); background: var(--surface); color: var(--text); font: inherit; resize: vertical; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-width)), 1fr)); gap: var(--space-5); }
+.record-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-6); }
+.record-tabs .button { padding-inline: var(--space-4); }
+.record-editor { max-width: var(--standalone-width); }
+.record-section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.record-filters { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-5); margin-block: var(--space-5); }
+.record-filters > * { flex: 1 1 var(--tile-width); min-width: 0; }
+.role-record-list article { flex: 1 1 var(--tile-width); min-width: 0; }
+.role-record-list h3 { margin-block: var(--space-2); }
+.record-text { white-space: pre-wrap; }
+.visibility-panel { margin-top: var(--space-5); }
+summary { cursor: pointer; font-weight: var(--weight-medium); padding-block: var(--space-3); }
+.brand, .brand-mark, .public-nav { display: flex; align-items: center; gap: var(--space-4); }
+.brand-mark { gap: 0; }
+.brand-mark i { display: block; width: var(--space-5); height: var(--space-5); border-radius: 50%; border: var(--space-1) solid var(--blue); }
+.brand-mark i + i { margin-left: calc(var(--space-2) * -1); border-color: var(--navy); }
+.public-nav { flex-wrap: wrap; font-size: var(--font-label); }
+.public-nav > a:not(.button) { text-decoration: none; color: var(--navy); }
+.landing-hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-12); align-items: center; max-width: var(--content-max); }
+.landing-hero h1 { font-size: var(--font-landing-hero); margin-block: var(--space-5); }
+.hero-description { max-width: var(--body-measure); }
+.record-outline { background: var(--blue-soft); border: var(--border-width) solid var(--glass-edge); padding: var(--space-8); border-radius: var(--radius-card); transform: rotate(var(--record-tilt)); }
+.record-outline ul { list-style: none; padding: 0; }
+.record-outline li { display: flex; align-items: start; gap: var(--space-4); padding-block: var(--space-5); border-bottom: var(--border-width) solid var(--border); }
+.record-outline li > span { color: var(--blue-hover); font-size: var(--font-label); }
+.record-outline li p { margin: var(--space-2) 0 0; color: var(--muted); }
+.landing-section, .public-footer { position: relative; max-width: var(--content-max); margin: auto; padding: var(--space-12) var(--space-6); scroll-margin-top: var(--space-6); }
+.landing-section h2 { font-size: var(--font-title); }
+.problem-section { max-width: var(--standalone-width); text-align: center; }
+.section-intro p, .problem-section p, .benefits-section p { color: var(--muted); }
+.benefits-section { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); border-radius: var(--radius-card); padding: var(--hero-padding); margin-block: var(--space-8); }
+.landing-steps { padding-left: var(--space-6); }
+.landing-steps li { padding: var(--space-3); }
+.faq-section { max-width: var(--standalone-width); }
+.faq-section details { border-bottom: var(--border-width) solid var(--border); padding-block: var(--space-3); }
+.landing-cta { text-align: center; border-radius: var(--hero-border-radius); margin-block: var(--space-8); }
+.public-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-5); }
+@media (max-width: 960px) { .landing-hero, .benefits-section { grid-template-columns: 1fr; } .record-outline { transform: none; } }
+@media (max-width: 760px) { .public-nav { gap: var(--space-3); } .public-nav > a[href^="#"] { display: none; } .public-header { padding: var(--space-4); } .landing-section { padding-inline: var(--space-4); } .record-outline { padding: var(--space-5); } }
+@media (min-width: 961px) { .landing-section .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 601px) and (max-width: 960px) { .landing-section .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

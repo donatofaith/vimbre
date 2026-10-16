@@ -8,20 +8,24 @@ Responsive foundation, approved glass/blur/brief motion, reduced motion, shared 
 
 Team setup now includes departments, manager assignment, empty-department archive, member name/role/department/status edits, last-admin protection, expiring email invitations, resend/cancel and explicit verified-recipient acceptance. Small team mode skips departments. Lists are paginated and pickers search. Manager and Employee controls/read scopes remain restricted. See docs/team-setup.md.
 
+Role records and the Decision Log are implemented at /app/role-record. Five categories, workstream linked decisions, source/task links, status filters, paginated title search, archive/restore and the manager visibility panel are connected. Employees edit their own record; HR reads company records and Managers read their department. See docs/role-records.md.
+
+The public landing page now explains the product with accurate Available/Coming soon labels and connected signup, login and authenticated workspace links. The design is a working foundation, with final visual polish deferred by user instruction.
+
 ## Backend and security
 
-Public tables: companies, departments, profiles, activity_log, invitations and email_log. Every table has RLS and restricted grants. Authorization uses protected profiles, not editable metadata. Pending invite profiles are inactive. Trusted invitation records determine assigned roles; acceptance checks the verified recipient. One workspace per account; transfers are not implemented.
+Public tables: companies, departments, profiles, activity_log, invitations, email_log, role_items and decisions. Every table has RLS and restricted grants. Authorization uses protected profiles, not editable metadata. Pending invite profiles are inactive. Trusted invitation records determine assigned roles; acceptance checks the verified recipient. One workspace per account; transfers are not implemented.
 
 Privileged helpers live in private. Public RPC wrappers are SECURITY INVOKER and expose only narrow checked operations. The deployed team-invitations function validates tokens with Auth.getUser and HR membership in SQL before requesting mail. Its gateway verify_jwt is false because it performs its own verification; there is no anonymous send path. Email status finalization is service-only. Built-in service secrets stay on the server.
 
-Development migration history: 20261015221743_auth_company_foundation, 20261015221928_tighten_setup_audit, 20261016021024_team_setup, 20261016023106_archive_cancelled_invite_departments. Keep applied contents immutable. Generated database.types.ts remains the server snapshot; database.ts adds explicit nullable RPC argument overrides omitted by generation.
+Development migration history: 20261015221743_auth_company_foundation, 20261015221928_tighten_setup_audit, 20261016021024_team_setup, 20261016023106_archive_cancelled_invite_departments, 20261016030026_role_records_and_decisions. Keep applied contents immutable. Generated database.types.ts remains the server snapshot; database.ts adds explicit nullable RPC argument overrides omitted by generation.
 
 ## Current routes
 
-Public /, /login, /signup, /forgot, /reset-password, /auth/callback and /join. Protected /app, /app/team, /app/departments and /app/settings. Capture, role record, handovers and cover duties retain honest Coming soon screens.
+Public /, /login, /signup, /forgot, /reset-password, /auth/callback and /join. Protected /app, /app/role-record, /app/team, /app/departments and /app/settings. Capture, handovers and cover duties retain honest Coming soon screens. My day links to working role records; it does not yet show actions.
 
 ## Verification and pending work
 
-Eleven unit tests, lint, TypeScript/build, both browser suites and live rollback-only database suites passed. Tests do not send email. The user received and confirmed the signup email. A real invitation inbox acceptance test and live password recovery acceptance still need a team-selected recipient. Security advisors flag disabled leaked-password protection; enable the available Auth protection before the pilot (docs/team-setup.md has the remediation link).
+Thirteen unit tests, lint, TypeScript/build, three browser suites and live rollback-only database suites passed. Tests do not send email. The user received and confirmed the signup email. The user reported completing the real invitation check on 16 October. Live password recovery inbox acceptance still needs checking. Security advisors flag disabled leaked-password protection; enable the available Auth protection before the pilot (docs/team-setup.md has the remediation link).
 
-Capture/AI, forwarding, role records, decisions, actions/My day data, handovers and cover permissions remain unimplemented. Next product milestone: role records and decision log, then actions/My day. Use a separate appropriately backed-up production project for customers. development currently deploys to the development website; return reviewed releases to main when the release workflow is configured.
+Capture/AI, forwarding, actions/My day data, handovers and cover permissions remain unimplemented. Next product milestone: actions/My day, then the planned handover loop. Documents are links only and recurring deadlines are notes without automatic reminders. Use a separate appropriately backed-up production project for customers. development currently deploys to the development website; return reviewed releases to main when the release workflow is configured.
