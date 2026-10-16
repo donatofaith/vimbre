@@ -34,3 +34,14 @@ Schema migration versions match the development project's recorded versions. Cha
 - Security advisor returned zero findings. Fixture counts returned to zero.
 - Browser integration checks used intercepted Supabase responses for signup metadata, validation, verified profile loading, persistent login, settings writes/reload, logout, recovery request, PKCE callback, password update, missing reset session and mobile navigation.
 - No live confirmation or recovery emails were sent. Brevo SMTP, deployment callback configuration and real inbox acceptance are pending.
+
+## Current hosted callback configuration
+
+The former vimbre-zeta.vercel.app address redirects to https://vimbre.vercel.app. Use the canonical origin when starting signup/recovery so the PKCE verifier stays in the same browser origin.
+
+Supabase Authentication > URL Configuration:
+- Site URL: https://vimbre.vercel.app
+- Redirect URL: https://vimbre.vercel.app/auth/callback
+- Redirect URL: https://vimbre.vercel.app/auth/callback?flow=recovery
+
+vercel.json provides the SPA rewrite required for direct callback, login and workspace URLs. After deployment, verify the callback returns the application HTML, save the Supabase URLs and request a fresh confirmation link. Old emails retain their original redirect. Receipt of a signup email was reported by the user; complete callback and password recovery acceptance remain pending.
