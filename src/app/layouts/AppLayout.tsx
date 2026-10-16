@@ -22,7 +22,7 @@ export function AppLayout() {
         <Button className="menu-button" variant="secondary" aria-expanded={menuOpen} aria-controls="workspace-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? 'Close menu' : 'Menu'}</Button>
       </div>
       <nav id="workspace-navigation" className={menuOpen ? 'navigation is-open' : 'navigation'} aria-label="Workspace">
-        {navigation.map(item => <NavLink key={item.path} to={item.path} end={'end' in item && item.end} onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}
+        {navigation.filter(item => !('leaders' in item) || profile?.role !== 'employee').map(item => <NavLink key={item.path} to={item.path} end={'end' in item && item.end} onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}
       </nav>
       <p className="sidebar-note">{profile?.full_name}<br />{profile?.role.replace('_', ' ')}</p>
     </aside>

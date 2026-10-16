@@ -84,6 +84,7 @@ export type Database = {
       }
       departments: {
         Row: {
+          archived_at: string | null
           company_id: string
           created_at: string
           id: string
@@ -91,6 +92,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          archived_at?: string | null
           company_id: string
           created_at?: string
           id?: string
@@ -98,6 +100,7 @@ export type Database = {
           name: string
         }
         Update: {
+          archived_at?: string | null
           company_id?: string
           created_at?: string
           id?: string
@@ -117,6 +120,123 @@ export type Database = {
             columns: ["manager_id", "company_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      email_log: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          id: string
+          invitation_id: string
+          recipient: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          invitation_id: string
+          recipient: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          invitation_id?: string
+          recipient?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_log_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          company_id: string
+          created_at: string
+          department_id: string | null
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          invited_by: string | null
+          invited_user_id: string | null
+          last_requested_at: string | null
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string
+          department_id?: string | null
+          email: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          invited_by?: string | null
+          invited_user_id?: string | null
+          last_requested_at?: string | null
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string
+          department_id?: string | null
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          invited_by?: string | null
+          invited_user_id?: string | null
+          last_requested_at?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_department_id_company_id_fkey"
+            columns: ["department_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id", "company_id"]
           },
         ]
@@ -177,7 +297,58 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_invitation: { Args: { p_id: string }; Returns: undefined }
+      cancel_invitation: { Args: { p_id: string }; Returns: undefined }
+      complete_invitation_delivery: {
+        Args: { p_error_code?: string; p_id: string; p_status: string }
+        Returns: undefined
+      }
+      manage_department: {
+        Args: {
+          p_archive?: boolean
+          p_id?: string
+          p_manager?: string
+          p_name?: string
+        }
+        Returns: string
+      }
+      manage_member: {
+        Args: {
+          p_active: boolean
+          p_department: string
+          p_full_name: string
+          p_id: string
+          p_role: string
+        }
+        Returns: undefined
+      }
+      my_invitation: {
+        Args: never
+        Returns: {
+          company_name: string
+          department_name: string
+          expires_at: string
+          full_name: string
+          invitation_id: string
+          role: string
+        }[]
+      }
+      prepare_invitation: {
+        Args: {
+          p_action: string
+          p_department?: string
+          p_email?: string
+          p_full_name?: string
+          p_id?: string
+          p_role?: string
+        }
+        Returns: {
+          email: string
+          email_log_id: string
+          full_name: string
+          invitation_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

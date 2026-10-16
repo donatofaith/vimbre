@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
 import { HomePage } from '../features/public/HomePage'
@@ -9,12 +9,26 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 
+const TeamPage = lazy(() => import('../features/team/TeamPage').then(module => ({ default: module.TeamPage })))
+
+const DepartmentsPage = lazy(() => import('../features/team/DepartmentsPage').then(module => ({ default: module.DepartmentsPage })))
+
+const JoinPage = lazy(() => import('../features/auth/JoinPage').then(module => ({ default: module.JoinPage })))
+
 function PageFocus() {
   const { pathname } = useLocation()
   useEffect(() => {
-    const heading = document.querySelector('h1')
-    document.title = heading ? `${heading.textContent} | Vimbre` : 'Vimbre'
-    heading?.focus({ preventScroll: true })
+    const focus = () => {
+      const heading = document.querySelector('h1')
+      if (!heading || heading.getClientRects().length === 0) return false
+      document.title = `${heading.textContent} | Vimbre`
+      heading.focus({ preventScroll: true })
+      return true
+    }
+    if (focus()) return
+    const observer = new MutationObserver(() => { if (focus()) observer.disconnect() })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
   }, [pathname])
   return null
 }
@@ -22,12 +36,14 @@ function PageFocus() {
 export function App() {
   return <>
     <PageFocus />
+    <Suspense fallback={<main className="standalone" role="status">Loading page…</main>}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<AuthPage key="login" mode="login" />} />
       <Route path="/signup" element={<AuthPage key="signup" mode="signup" />} />
       <Route path="/forgot" element={<AuthPage key="forgot" mode="forgot" />} />
       <Route path="/reset-password" element={<AuthPage key="reset" mode="reset" />} />
+      <Route path="/join" element={<JoinPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route element={<RequireAuth />}>
       <Route path="/app" element={<AppLayout />}>
@@ -36,11 +52,14 @@ export function App() {
         <Route path="role-record" element={<FeaturePage title="Role record" description="Responsibilities, workstreams, decisions and supporting records will live here." embedded />} />
         <Route path="handovers" element={<FeaturePage title="Handovers" description="Planned handover drafting, approval and publication are coming soon." embedded />} />
         <Route path="my-cover-duties" element={<FeaturePage title="Cover duties" description="Temporary access, acknowledgement and progress tracking are coming soon." embedded />} />
+        <Route path="team" element={<TeamPage />} />
+        <Route path="departments" element={<DepartmentsPage />} />
         <Route path="settings" element={<CompanySettings />} />
         <Route path="*" element={<FeaturePage title="Page not found" description="This workspace page does not exist." embedded notFound />} />
       </Route>
       </Route>
       <Route path="*" element={<main className="standalone"><h1 tabIndex={-1}>Page not found</h1><p>We could not find that page.</p><Link to="/">Go to the homepage</Link></main>} />
     </Routes>
+    </Suspense>
   </>
 }

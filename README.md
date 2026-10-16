@@ -21,13 +21,13 @@ The browser uses the connected development Supabase project by default. Its publ
 - Company and department isolation, immutable client role/company fields, active membership checks and append-only setup audit history.
 - Responsive navigation, shared UI, reduced motion and clear status pages for unfinished features.
 
-Email delivery is **not verified**. Configure Brevo SMTP and the allowed callback URLs before a real signup/recovery acceptance test. See docs/auth-setup.md. Invitations, department management, capture, AI, role records and handover workflows remain future work.
+The user has received a signup email. A live invitation and password-recovery inbox acceptance test remains pending. Configure Brevo SMTP and the allowed callback URLs before a real signup/recovery acceptance test. See docs/auth-setup.md. Departments, manager assignment, member edits, expiring invitations and recipient acceptance are implemented. Capture, AI, role records and handovers remain future work. See docs/team-setup.md for team setup and its acceptance checklist.
 
 ## Structure and checks
 
 src/app contains routing and layouts; src/features contains feature modules; src/lib contains the typed backend client. supabase/migrations records the applied development schema. supabase/tests/auth_isolation.sql contains rollback-only policy tests. PROJECT_NOTES.md records implementation status.
 
-npm run check runs lint, six unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Browser checks intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
+npm run check runs lint, eleven unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Both authentication and team browser suites intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
 
 Develop on development and review the existing pull request before merging main. Old Bolt code is not reused.
 

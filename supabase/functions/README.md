@@ -1,3 +1,5 @@
 # Server operations
 
-AI calls, outbound email and authenticated inbound webhooks belong here. No function is deployed yet. Keep provider and service role keys in server secrets only. Verify identity, company membership and record permissions on every operation. Document request contracts before implementing each function.
+team-invitations is deployed on development. It verifies Auth sessions and HR Admin membership, reserves invitations in PostgreSQL, requests email through Supabase/Brevo and records delivery request status. Its service-role key comes only from built-in Edge Function secrets. See docs/team-setup.md and supabase/config.toml for authorization and deployment details.
+
+AI, forwarding and handover email operations are future features. Every operation must enforce company and record permissions. No provider credentials belong in frontend variables.

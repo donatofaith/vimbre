@@ -1,5 +1,6 @@
 /* PRD tokens plus the glass and motion treatment requested on 15 October 2026. */
 :root {
+  --member-label-width: 104px;
   --navy: #102a43;
   --blue: #2f80ed;
   --blue-hover: #2563d9;

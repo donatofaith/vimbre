@@ -1,0 +1,8 @@
+project_id = "vimbre"
+
+[functions.team-invitations]
+# The handler verifies the JWT with Auth.getUser, then checks HR membership in SQL.
+# This supports current signing keys instead of relying on the legacy gateway verifier.
+verify_jwt = false
+import_map = "./functions/team-invitations/deno.json"
+entrypoint = "./functions/team-invitations/index.ts"

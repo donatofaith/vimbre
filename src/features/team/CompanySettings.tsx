@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
@@ -29,8 +30,8 @@ export function CompanySettings() {
     <Input label="Company name" name="company" defaultValue={company.name} required maxLength={120} autoComplete="organization" />
     <Input label="Contact email" name="contact" type="email" defaultValue={company.contact_email ?? ''} maxLength={320} autoComplete="email" />
     <div className="field"><label htmlFor="team-mode">Team structure</label><select id="team-mode" name="team_mode" defaultValue={company.team_mode}><option value="small">Small team</option><option value="departments">Departments</option></select></div>
-    <p className="muted">Department management and team invitations will be added in the next build stage.</p>
+    <p className="muted">Small teams can skip departments. In department mode, assign each Manager and Employee to a department.</p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your HR Admin to change company settings.</p>}</section></>
+  </form> : <p>Contact your HR Admin to change company settings.</p>}</section>{admin && <p><Link to="/app/team">Manage your team</Link> · <Link to="/app/departments">Manage departments</Link></p>}</>
 }

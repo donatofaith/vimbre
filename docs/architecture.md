@@ -4,8 +4,10 @@ React, TypeScript and Vite render the responsive client. React Router separates 
 
 Database RLS and column grants enforce company, department, owner and active membership boundaries. Private helpers read authorization from profiles. Browser role values and editable user metadata never determine access. A database trigger creates the first company and HR Admin atomically. Audit events are created by triggers and cannot be forged through the client.
 
-Company signup is implemented. Invitations and department administration require controlled server operations in the next stage. Capture, AI, email forwarding and handover changes will use Edge Functions and atomic database operations as appropriate. Private Storage and cover assignment access are future features, not deployed capabilities.
+Company signup, departments and team administration are implemented. Private checked RPCs manage departments/member changes and protect the last active HR Admin. The team-invitations Edge Function verifies the caller, requests sign-in emails through Supabase/Brevo and records email request status. Verified recipients accept at /join before membership activates. Capture, AI, email forwarding and handover changes will use Edge Functions and atomic database operations as appropriate. Private Storage and cover assignment access are future features, not deployed capabilities.
 
 Browser configuration contains only the development project's public URL and publishable key, with validated environment overrides. Server secrets are never included in the client. Separate production configuration and real email acceptance remain pending; see auth-setup.md.
 
 Fonts are bundled locally. Colours, glass and animation tokens live in src/styles/tokens.css. The approved glass, blur and brief motion override the PRD's earlier flat surface restriction. Reduced motion and solid surface fallbacks remain supported. The PRD and later written decisions remain authoritative; Bolt code is not reused.
+
+Team details, deployment configuration and acceptance checks are in team-setup.md. All lists are bounded; team modules load separately to keep the initial browser bundle under the build warning threshold.
