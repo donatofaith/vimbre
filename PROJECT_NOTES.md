@@ -35,3 +35,11 @@ Capture/AI, forwarding, handovers and cover permissions remain unimplemented. Ne
 ## 17 October 2026: draft review workflow
 
 Owner requests final public landing polish before returning to the employee experience. Keep unfinished changes on `draft/*`, which disables automatic Vercel Git deployment. Do not update the live `development` branch until the owner asks to publish. Separate owner-private landing review uses the actual public component and CSS, embedded fonts, working theme/menu/FAQ controls and links to current live account pages. Application and Auth testing remain separate from this landing-only review. See docs/development-and-releases.md.
+
+## 17 October 2026: finish public website before portal work
+
+Owner explicitly requests a complete launch presentation before employee, manager and HR screens. Replaced progress labels and early access copy with the planned launch product narrative. This overrides the PRD availability labelling rule for this unreleased draft only. The PRD fixed headlines and colours remain. Capture, AI review and handovers still require implementation and acceptance before this landing may be released; the marketing changes do not complete those features.
+
+The previous opacity entry and animated blurred layers were removed from public content cards after the owner reported intermittent white blanking. Feature surfaces are opaque with no backdrop filter or fade. Glass effects are restricted to a stable header; motion uses a brief transform entrance and hover feedback. The backing pseudo element stays removed in both themes. No browser visual verification was available locally; the existing browser regression suite now checks both theme surfaces.
+
+Owner now reviews from VS Code with Vite, not the separate ChatGPT review site. Do not update or send that review link. The review banner and standalone review builder are retired. Keep changes on the non-deploying draft branch. See docs/local-development.md.

@@ -60,3 +60,37 @@
   --stagger-four: 260ms;
   --shadow-small: 0 2px 8px rgb(16 42 67 / 5%);
 }
+
+/* Public website composition. Brand colours remain the PRD palette. */
+:root {
+  --landing-width: 1240px;
+  --landing-section-gap: clamp(64px, 8vw, 112px);
+  --landing-inset: clamp(16px, 4vw, 64px);
+  --landing-hero-title: clamp(40px, 4.8vw, 68px);
+  --landing-section-title: clamp(32px, 3.4vw, 48px);
+  --landing-card-title: 22px;
+  --landing-small-title: 18px;
+  --landing-eyebrow-size: 11px;
+  --landing-small-size: 13px;
+  --landing-caption-size: 12px;
+  --landing-lead-size: 18px;
+  --landing-logo-size: 30px;
+  --landing-tracking: -.055em;
+  --landing-eyebrow-tracking: .12em;
+  --landing-line-tight: 1.1;
+  --landing-line-roomy: 1.75;
+  --landing-wide-radius: 24px;
+  --landing-sphere: 400px;
+  --landing-icon: 44px;
+  --landing-symbol: 24px;
+  --landing-rule: 1px;
+  --landing-panel-opacity: 86%;
+  --landing-frost-opacity: 10%;
+  --landing-shadow: 0 24px 64px rgb(16 42 67 / 12%);
+  --landing-card-shadow: 0 8px 24px rgb(16 42 67 / 5%);
+  --landing-hero-light: radial-gradient(ellipse at 85% 18%, var(--blue-soft), transparent 58%);
+  --landing-hero-dark: radial-gradient(ellipse at 85% 18%, var(--navy-secondary), transparent 58%);
+  --landing-cta-glow: radial-gradient(ellipse at 85% 10%, var(--blue), transparent 75%);
+  --landing-hover-shift: -4px;
+  --landing-entry-shift: 8px;
+}

@@ -29,7 +29,7 @@ src/app contains routing and layouts; src/features contains feature modules; src
 
 npm run check runs lint, thirteen unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Authentication, team, records/public and actions browser suites intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
 
-Develop on development and review the existing pull request before merging main. Old Bolt code is not reused.
+Develop on `draft/landing-polish`. Update `development` only after the owner explicitly approves a Vercel release. Old Bolt code is not reused.
 
 ## Hosting
 
@@ -37,4 +37,4 @@ npm run build produces dist. Configure the host to rewrite application paths to 
 
 ## Draft reviews and releases
 
-Landing polish is developed on `draft/landing-polish`, with Git deployments disabled for `draft/*`. The live Vercel branch remains `development`. Publish only after the project owner explicitly requests it. See [development and releases](docs/development-and-releases.md) for local testing and the private landing review workflow.
+Landing polish is developed on `draft/landing-polish`, with Git deployments disabled for `draft/*`. The live Vercel branch remains `development`. Publish only after the project owner explicitly requests it. See [VS Code setup](docs/local-development.md) for local viewing, and [development and releases](docs/development-and-releases.md) for the release policy.
