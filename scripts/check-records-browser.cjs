@@ -45,13 +45,13 @@ const assert = require('node:assert/strict');
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
     await page.goto('http://127.0.0.1:5173/'); await page.getByRole('heading', { name: 'Stop losing what your team already decided' }).waitFor();
-    assert.equal(await page.locator('.v-feature').count(), 4); assert.equal(await page.locator('.v-plan').count(), 4); assert.equal(await page.title(), 'Vimbre'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
+    assert.equal(await page.locator('.rs-tile').count(), 4); assert.equal(await page.locator('.rs-plan').count(), 4); assert.equal(await page.title(), 'Vimbre'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
     assert.equal(await page.getByText('Coming soon', { exact: true }).count(), 0);
     assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 0);
     for (const theme of ['dark', 'light']) {
-      if (await page.locator('.v-site').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
-      assert.equal(await page.locator('.v-site').getAttribute('data-theme'), theme);
-      const card = await page.locator('.v-feature').last().evaluate(el => ({ opacity: getComputedStyle(el).opacity, animation: getComputedStyle(el).animationName, blur: getComputedStyle(el).backdropFilter }));
+      if (await page.locator('.rs-site').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+      assert.equal(await page.locator('.rs-site').getAttribute('data-theme'), theme);
+      const card = await page.locator('.rs-tile').last().evaluate(el => ({ opacity: getComputedStyle(el).opacity, animation: getComputedStyle(el).animationName, blur: getComputedStyle(el).backdropFilter }));
       assert.equal(card.opacity, '1'); assert.equal(card.animation, 'none'); assert.equal(card.blur, 'none');
     }
     for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `landing overflow at ${width}`); }
@@ -87,7 +87,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Responsibilities', exact: true }).click(); await page.getByRole('button', { name: 'Next records', exact: true }).click(); await page.getByText('Page 2', { exact: true }).waitFor(); assert(calls.some(row => row.path.endsWith('/role_items')));
     profile = { ...profile, role: 'manager' }; await page.reload(); await page.getByLabel('Role record owner').selectOption(other.id); await page.getByRole('heading', { name: other.full_name, exact: true }).waitFor(); assert.equal(await page.getByRole('button', { name: 'Add record', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Edit / }).count(), 0);
     await page.getByRole('link', { name: 'Website home', exact: true }).click(); await page.getByRole('heading', { name: 'Stop losing what your team already decided', exact: true }).waitFor(); await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'signed-in public header overflow'); await page.setViewportSize({ width: 1440, height: 900 }); await page.getByRole('link', { name: 'Open workspace', exact: true }).first().click(); await page.getByRole('heading', { name: 'My day', exact: true }).waitFor();
-    await page.goto('http://127.0.0.1:5173/'); await page.emulateMedia({ reducedMotion: 'reduce' }); assert.equal(await page.locator('.v-hero').evaluate(el => getComputedStyle(el).animationName), 'none'); await page.screenshot({ path: '/tmp/vimbre-landing-desktop.png', fullPage: true });
+    await page.goto('http://127.0.0.1:5173/'); await page.emulateMedia({ reducedMotion: 'reduce' }); assert.equal(await page.locator('.rs-hero').evaluate(el => getComputedStyle(el).animationName), 'none'); await page.screenshot({ path: '/tmp/vimbre-landing-desktop.png', fullPage: true });
     assert.equal(errors.length, 0, JSON.stringify(errors)); console.log(JSON.stringify({ publicEntryAndWorkspace: 'passed', fiveRecordCategories: 'passed', decisionWorkstreamStatusLinks: 'passed', archiveRestoreReload: 'passed', failedSaveRetainsDraft: 'passed', readRetry: 'passed', pagination: 'passed', managerReadOnly: 'passed', mobileOverflow: false, pageErrors: errors, network: 'intercepted; no real user data created' }));
   } finally { await browser.close(); await server.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

@@ -51,3 +51,8 @@ Owner explicitly authorizes publishing the reference-inspired local landing desi
 Corrected the pricing investigation: the newer 15 October PRD leaves pricing open, but the original 13 October Vimbre.pdf contains Starter £29/month (10 people), Growth £99 (50), Business £249 (250), Enterprise custom (250+). Owner authorizes those starting bundles. No invented charges or claim that billing is implemented. No V2 mailbox integrations advertised.
 
 Landing now uses the reviewed dark framed hero and varied grid composition in PRD navy/blue, brief copy, four plan cards, light/dark toggle and transform-only scroll reveals. A static HTML logo/name loading screen fades when the routed page and fonts are ready; a timeout prevents it blocking the page indefinitely. Content cards remain opaque and do not animate filters. Homepage tab title is Vimbre.
+
+
+## 17 October 2026: reference rebuild and GitHub review
+
+The owner supersedes the pasteable-code workflow and requests publishing the latest landing rebuild to GitHub for Vercel review. Continue landing iterations through this workflow; provide code files when asked. The rebuild uses a centred hero, a large blue glowing arc, wide role-record illustration, bento features, alternating feature rows, the original PRD pricing, FAQ and copyright footer. It retains the logo loading intro and existing account routes. Backend implementation status is unchanged.

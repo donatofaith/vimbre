@@ -37,6 +37,6 @@ npm run build produces dist. Configure the host to rewrite application paths to 
 
 ## Local review and publishing
 
-The owner authorized this landing page release through GitHub and Vercel. Future changes should be supplied as pasteable code with exact file locations. The owner tests locally, then pushes `development` when ready; Vercel deploys automatically. See [local setup](docs/local-development.md) and [release workflow](docs/development-and-releases.md).
+The owner requests landing-page iterations through GitHub and Vercel until the design is approved. Provide code files directly when requested. The owner can also pull `development` for local testing; pushing this branch deploys automatically. See [local setup](docs/local-development.md) and [release workflow](docs/development-and-releases.md).
 
 The four company pricing bundles come from the original Vimbre product notes dated 13 October 2026, page 7, reinstated by the owner's instruction. Pricing is presentation only; no payment or plan enforcement was added.

@@ -45,7 +45,7 @@ You can also receive focused code edits, make them in VS Code and save to see th
 ## Landing page files
 
 - `src/features/public/HomePage.tsx`: sections, text, feature descriptions and page structure.
-- `src/features/public/PublicHeader.tsx`: navigation, account links and theme switch.
+- `src/features/public/HomePage.tsx`: also owns the landing navigation, account links and theme switch.
 - `src/features/public/landing.css`: landing page layouts and visual styles.
 - `src/styles/tokens.css`: PRD brand colours, fonts, sizes and motion settings.
 
@@ -55,4 +55,4 @@ The application has no review banner and uses local routes for signup, login and
 
 Run `npm run check`. Browser regression checks use `npx playwright install chromium` followed by `npm run test:browser` in a supported local environment. They intercept backend calls with fixtures.
 
-Saving local files and running Vite do not publish anything. Pushing `development` triggers Vercel automatically. Future assistant changes are supplied as pasteable code until the owner explicitly asks for a GitHub update.
+Saving local files and running Vite do not publish anything. Pushing `development` triggers Vercel automatically. The current owner instruction is to publish landing iterations through GitHub for Vercel review. Supply code directly when requested.

@@ -2,10 +2,10 @@
 
 Current owner instruction, 17 October 2026:
 
-- Publish this reference-inspired landing page, pricing and logo loading intro through GitHub to Vercel once.
+- Publish the latest reference rebuild and continue landing-page iterations through GitHub so the owner can review them on Vercel.
 - Keep `development` as the existing Vercel production branch. Automatic Git deployment is enabled.
-- After this release, provide future changes as code blocks with exact file paths, replacement instructions and commands. Do not push future improvements to GitHub unless the owner explicitly asks.
-- The owner edits and tests locally in VS Code, then chooses when to push to GitHub. Vercel redeploys after that push.
+- Supply code files or replacement instructions when the owner asks for them, or after landing-page approval when requested.
+- The owner can also pull `development` into VS Code for local review.
 - Do not send or update the retired ChatGPT landing review site.
 
 ## Local setup after this release
