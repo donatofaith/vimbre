@@ -177,3 +177,7 @@
 @media (max-width: 960px) { .landing-page .record-outline { animation-name: landing-float-small; } }
 @keyframes landing-float-small { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) { .landing-page .ambient,.landing-page .record-outline { animation: none; } }
+
+/* Keep the decorative backing behind the navy card in every stacking context. */
+.landing-page .record-outline::before { content: none; }
+.landing-page .record-outline { box-shadow: 10px 12px 0 var(--landing-tint), 0 28px 65px rgb(16 42 67 / 20%); }
