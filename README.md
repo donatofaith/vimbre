@@ -34,3 +34,7 @@ Develop on development and review the existing pull request before merging main.
 ## Hosting
 
 npm run build produces dist. Configure the host to rewrite application paths to /index.html. Set the Supabase Auth Site URL and redirect allowlist to the actual deployment origin before testing confirmation and password recovery. The development branch deploys to https://vimbre.vercel.app. This is the development site, not a separate customer production environment.
+
+## Draft reviews and releases
+
+Landing polish is developed on `draft/landing-polish`, with Git deployments disabled for `draft/*`. The live Vercel branch remains `development`. Publish only after the project owner explicitly requests it. See [development and releases](docs/development-and-releases.md) for local testing and the private landing review workflow.
