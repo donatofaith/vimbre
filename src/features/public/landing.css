@@ -158,3 +158,22 @@
   .landing-page .public-footer nav { gap: 16px; }
 }
 @media (max-width: 380px) { .landing-page { padding-inline: 12px; } .landing-page .public-header .brand-mark { display: none; } .landing-page .public-actions { gap: 8px; } .landing-page .form-actions .button { width: 100%; } }
+
+/* Frosted layers and gentle motion requested for the public website. */
+.landing-page .public-footer { justify-content: center; padding: 24px 0 32px; }
+.landing-page .public-footer small { font-size: 12px; color: var(--landing-muted); }
+.landing-page .ambient-one { top: 10%; opacity: .18; animation: landing-glow 16s ease-in-out infinite alternate; }
+.landing-page .ambient-two { bottom: 32%; opacity: .2; animation: landing-glow 20s ease-in-out infinite alternate-reverse; }
+.landing-page .record-outline { animation: landing-float 8s ease-in-out 600ms infinite; }
+.landing-page .feature-grid .card,.landing-page .benefit-detail { box-shadow: 0 8px 32px rgb(16 42 67 / 5%); }
+@supports (backdrop-filter: blur(20px)) {
+  .landing-page .public-header { background: color-mix(in srgb, var(--landing-panel) 64%, transparent); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); }
+  .landing-page #features { background: color-mix(in srgb, var(--landing-tint) 65%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  .landing-page .feature-grid .card,.landing-page .benefit-detail { background: color-mix(in srgb, var(--landing-panel) 72%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .landing-page .record-outline li { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+}
+@keyframes landing-glow { from { transform: translate3d(0,0,0) scale(.95); } to { transform: translate3d(24px,-32px,0) scale(1.08); } }
+@keyframes landing-float { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+@media (max-width: 960px) { .landing-page .record-outline { animation-name: landing-float-small; } }
+@keyframes landing-float-small { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .landing-page .ambient,.landing-page .record-outline { animation: none; } }
