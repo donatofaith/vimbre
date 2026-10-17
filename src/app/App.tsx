@@ -25,7 +25,8 @@ function PageFocus() {
     const focus = () => {
       const heading = document.querySelector('h1')
       if (!heading || heading.getClientRects().length === 0) return false
-      document.title = `${heading.textContent} | Vimbre`
+      document.title = pathname === '/' ? 'Vimbre' : `${heading.textContent} | Vimbre`
+      window.dispatchEvent(new Event('vimbre:ready'))
       heading.focus({ preventScroll: true })
       return true
     }

@@ -29,8 +29,14 @@ src/app contains routing and layouts; src/features contains feature modules; src
 
 npm run check runs lint, thirteen unit tests, TypeScript and a production build. For browser integration checks, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. Authentication, team, records/public and actions browser suites intercept Supabase traffic with test fixtures; database policies are checked separately against PostgreSQL.
 
-Develop on development and review the existing pull request before merging main. Old Bolt code is not reused.
+Work locally from `development`. The owner reviews local changes and chooses when to push. Future assistant improvements are delivered as code blocks unless a GitHub update is explicitly requested. Old Bolt code is not reused.
 
 ## Hosting
 
 npm run build produces dist. Configure the host to rewrite application paths to /index.html. Set the Supabase Auth Site URL and redirect allowlist to the actual deployment origin before testing confirmation and password recovery. The development branch deploys to https://vimbre.vercel.app. This is the development site, not a separate customer production environment.
+
+## Local review and publishing
+
+The owner authorized this landing page release through GitHub and Vercel. Future changes should be supplied as pasteable code with exact file locations. The owner tests locally, then pushes `development` when ready; Vercel deploys automatically. See [local setup](docs/local-development.md) and [release workflow](docs/development-and-releases.md).
+
+The four company pricing bundles come from the original Vimbre product notes dated 13 October 2026, page 7, reinstated by the owner's instruction. Pricing is presentation only; no payment or plan enforcement was added.

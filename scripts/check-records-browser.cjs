@@ -45,7 +45,15 @@ const assert = require('node:assert/strict');
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
     await page.goto('http://127.0.0.1:5173/'); await page.getByRole('heading', { name: 'Stop losing what your team already decided' }).waitFor();
-    assert.equal(await page.getByRole('article').filter({ hasText: 'Available' }).count(), 4); assert.equal(await page.getByRole('article').filter({ hasText: 'Coming soon' }).count(), 2);
+    assert.equal(await page.locator('.v-feature').count(), 4); assert.equal(await page.locator('.v-plan').count(), 4); assert.equal(await page.title(), 'Vimbre'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
+    assert.equal(await page.getByText('Coming soon', { exact: true }).count(), 0);
+    assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 0);
+    for (const theme of ['dark', 'light']) {
+      if (await page.locator('.v-site').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+      assert.equal(await page.locator('.v-site').getAttribute('data-theme'), theme);
+      const card = await page.locator('.v-feature').last().evaluate(el => ({ opacity: getComputedStyle(el).opacity, animation: getComputedStyle(el).animationName, blur: getComputedStyle(el).backdropFilter }));
+      assert.equal(card.opacity, '1'); assert.equal(card.animation, 'none'); assert.equal(card.blur, 'none');
+    }
     for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `landing overflow at ${width}`); }
     await page.setViewportSize({ width: 360, height: 800 }); await page.getByRole('button', { name: 'Open website menu', exact: true }).click(); await page.getByRole('navigation', { name: 'Public', exact: true }).getByRole('link', { name: 'How it works', exact: true }).click(); assert.equal(await page.getByRole('button', { name: 'Open website menu', exact: true }).getAttribute('aria-expanded'), 'false'); await page.screenshot({ path: '/tmp/vimbre-public-mobile.png', fullPage: true, animations: 'disabled' }); await page.setViewportSize({ width: 1440, height: 900 });
     await page.getByRole('link', { name: 'Create your company', exact: true }).first().click(); await page.getByRole('heading', { name: 'Create your company' }).waitFor();

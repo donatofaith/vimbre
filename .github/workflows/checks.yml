@@ -1,7 +1,7 @@
 name: Application checks
 on:
   push:
-    branches: [main, development]
+    branches: [main, development, 'draft/**']
   pull_request:
     branches: [main]
 permissions:
