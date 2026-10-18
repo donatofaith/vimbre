@@ -1,8 +1,8 @@
 # Development and releases
 
-Current owner instruction, 17 October 2026:
+Current owner instruction, 18 October 2026:
 
-- Publish the latest reference rebuild and continue landing-page iterations through GitHub so the owner can review them on Vercel.
+- Publish the approved light product-led design and continue landing-page iterations through GitHub so the owner can review them on Vercel.
 - Keep `development` as the existing Vercel production branch. Automatic Git deployment is enabled.
 - Supply code files or replacement instructions when the owner asks for them, or after landing-page approval when requested.
 - The owner can also pull `development` into VS Code for local review.

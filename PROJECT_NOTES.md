@@ -56,3 +56,8 @@ Landing now uses the reviewed dark framed hero and varied grid composition in PR
 ## 17 October 2026: reference rebuild and GitHub review
 
 The owner supersedes the pasteable-code workflow and requests publishing the latest landing rebuild to GitHub for Vercel review. Continue landing iterations through this workflow; provide code files when asked. The rebuild uses a centred hero, a large blue glowing arc, wide role-record illustration, bento features, alternating feature rows, the original PRD pricing, FAQ and copyright footer. It retains the logo loading intro and existing account routes. Backend implementation status is unchanged.
+
+
+## 18 October 2026: approved product-led landing
+
+Owner approves the final light SaaS mockup (generated design exec-c2d19a0a) with actual product previews, PRD plan checklists, flowing blue line details and scroll entrances. Replaces the rejected eclipse direction. Home now uses a single light theme with a navy feature section; no theme switch. Motion uses one-time transform reveals, staggered content and restrained decorative paths, with reduced-motion support. The existing two-circle loading intro and authentication routes remain. All illustrative work content is identified as an example. Pricing uses the original PDF pages 7–8; Business integrations and Enterprise SSO/custom integrations are omitted from MVP marketing. Plan limits, billing and backend handover capabilities still require implementation; this public design does not implement those services.

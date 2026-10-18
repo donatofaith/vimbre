@@ -45,7 +45,7 @@ You can also receive focused code edits, make them in VS Code and save to see th
 ## Landing page files
 
 - `src/features/public/HomePage.tsx`: sections, text, feature descriptions and page structure.
-- `src/features/public/HomePage.tsx`: also owns the landing navigation, account links and theme switch.
+- `src/features/public/HomePage.tsx`: also owns the landing navigation and account links. The landing uses one light theme.
 - `src/features/public/landing.css`: landing page layouts and visual styles.
 - `src/styles/tokens.css`: PRD brand colours, fonts, sizes and motion settings.
 
