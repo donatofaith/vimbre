@@ -13,6 +13,7 @@ import { actionError } from './action-utils'
 import { CaptureSummary, RoleChecklist } from './MyDayOverview'
 import { useMyDaySummary } from './useMyDaySummary'
 import { WorkVisibilityDetails } from './WorkVisibilityDetails'
+import { localGreeting } from './greeting'
 
 type View = 'open' | 'today' | 'overdue' | 'done' | 'archived'
 
@@ -57,6 +58,7 @@ function ActionWorkspace({
   const ownerId = member?.id ?? profile!.id
 
   const [today, setToday] = useState(localDate)
+  const [greeting, setGreeting] = useState(localGreeting)
   const [view, setView] = useState<View>(member || decisionId ? 'open' : 'today')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
@@ -91,8 +93,19 @@ function ActionWorkspace({
   const reload = () => setRevision(value => value + 1)
 
   useEffect(() => {
-    const timer = setInterval(() => setToday(localDate()), 60000)
-    return () => clearInterval(timer)
+    const refreshClock = () => {
+      if (document.hidden) return
+      setToday(localDate())
+      setGreeting(localGreeting())
+    }
+    const timer = setInterval(refreshClock, 60000)
+    window.addEventListener('focus', refreshClock)
+    document.addEventListener('visibilitychange', refreshClock)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', refreshClock)
+      document.removeEventListener('visibilitychange', refreshClock)
+    }
   }, [])
 
   useEffect(() => {
@@ -261,7 +274,7 @@ function ActionWorkspace({
       {!member && (
         <>
           <div className="vw-page-heading">
-            <div><h1 tabIndex={-1}>Good morning, {firstName}</h1><p>Your tasks for today</p></div>
+            <div><h1 tabIndex={-1}>{greeting}, {firstName}</h1><p>Your tasks for today</p></div>
             <Link className="button button-primary vw-capture-cta" to="/app/capture"><WorkspaceIcon name="capture" />Capture an email or notes</Link>
           </div>
           <CaptureSummary data={summary.data} />

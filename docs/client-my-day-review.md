@@ -9,3 +9,8 @@ Cover and handover status are blocked by the unimplemented handover/approval/cov
 The header uses the client’s exact Good morning copy regardless of time of day. Decision-linked task entry keeps the full linked-task scope; normal My day entry defaults to Today. Checklist completion means at least one active record in each of five categories; it is not a manual checkbox.
 
 Supabase my_day_summary executes with caller privileges and existing RLS. Forwarding addresses can only be provisioned through trusted server access, and users can only read their own enabled address. No roles, ownership or record permissions were widened.
+
+
+## 19 October 2026: owner timezone clarification
+
+The owner supersedes the fixed Good morning prefix with a greeting based on the viewer’s browser/device timezone: Good morning before noon, Good afternoon from noon, and Good evening from 4 pm. The first name and exact subtitle remain. Refresh the greeting and Today date every minute and when the tab becomes visible/focused. Do not use the hosting/server timezone. Browser checks compare Lagos evening and Los Angeles morning at the same instant, plus noon transitions.
