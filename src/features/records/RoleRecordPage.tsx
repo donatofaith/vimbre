@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
@@ -97,7 +97,11 @@ export function RoleRecordPage() {
   const [owners, setOwners] = useState<Owner[]>([])
   const [ownerError, setOwnerError] = useState(false)
 
-  const [tab, setTab] = useState<Tab>('responsibility')
+  const [sectionParams, setSectionParams] = useSearchParams()
+  const requestedSection = sectionParams.get('section')
+  const tab: Tab = requestedSection === 'decision' || itemKinds.some(([kind]) => kind === requestedSection)
+    ? requestedSection as Tab : 'responsibility'
+  const setTab = (value: Tab) => setSectionParams({ section: value })
   const [archived, setArchived] = useState(false)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
@@ -311,10 +315,11 @@ export function RoleRecordPage() {
 
     try {
       // oxlint-disable-next-line react/purity -- Timestamp is created in an event handler.
+      const archivedAt = restore ? null : new Date().toISOString()
       const { error: failure } = await supabase
         .from(tab === 'decision' ? 'decisions' : 'role_items')
         .update({
-          deleted_at: restore ? null : new Date().toISOString(),
+          deleted_at: archivedAt,
         })
         .eq('id', row.id)
         .select('id')
@@ -787,7 +792,7 @@ export function RoleRecordPage() {
                             <Link
                               to={`/app?decision=${decision.id}`}
                             >
-                              View linked actions
+                              View linked tasks
                             </Link>
                           )}
                         </div>
@@ -917,7 +922,7 @@ export function RoleRecordPage() {
         <p>
           Managers in your department can read your responsibilities,
           workstreams, external contacts, document links, recurring
-          deadlines, decisions, actions, completion notes and archived
+          deadlines, decisions, tasks, completion notes and archived
           records. Your company’s HR Admin can read these across the
           company. Only you can edit your role record.
         </p>

@@ -174,7 +174,7 @@
 .vc-guide h2 {
   font-size: 25px;
   line-height: 1.35;
-  letter-spacing: -0.04em;
+  letter-spacing:var(--heading-letter-spacing);
   margin: 5px 0 25px;
 }
 

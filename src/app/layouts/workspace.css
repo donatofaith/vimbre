@@ -10,7 +10,7 @@
 }
 
 .vw-shell * { box-sizing: border-box; }
-.vw-shell :is(h1, h2, h3) { letter-spacing: -.035em; overflow-wrap: normal; }
+.vw-shell :is(h1, h2, h3) { letter-spacing:var(--heading-letter-spacing); overflow-wrap: normal; }
 .vw-shell svg { width: 20px; height: 20px; flex-shrink: 0; }
 .vw-shell a { color: #2563d9; }
 
@@ -276,7 +276,7 @@
 .vw-page-heading h1 {
   font-size: clamp(30px, 3vw, 43px);
   line-height: 1.15;
-  letter-spacing: -.05em;
+  letter-spacing:var(--heading-letter-spacing);
   margin: 12px 0 8px;
 }
 
@@ -599,7 +599,7 @@
 .vw-dialog h2 {
   font-size: 23px;
   line-height: 1.3;
-  letter-spacing: -.03em;
+  letter-spacing:var(--small-heading-letter-spacing);
   margin: 0 0 18px;
 }
 
@@ -752,3 +752,40 @@
     transition: none !important;
   }
 }
+
+/* My day: capture entry, today's tasks and linked role setup. */
+.vw-myday .vw-page-heading h1{letter-spacing:var(--heading-letter-spacing);max-width:none}
+.vw-shell :is(h2,h3,h4,h5,h6){letter-spacing:var(--small-heading-letter-spacing)}
+.vw-shell .vw-capture-cta{font-size:13px;gap:9px;flex-shrink:0}
+.vw-capture-cta svg{width:20px;height:20px}
+.vw-task-tools{display:flex;align-items:center;justify-content:flex-end;gap:13px;flex-wrap:wrap}
+.vw-task-tools .button{font-size:12px;min-height:39px;padding:9px 13px}
+.vw-task-tools .button svg{width:16px;height:16px}
+.vw-task-tools .vw-access-button{border:0;background:none;padding:7px 0;text-decoration:underline;text-underline-offset:3px}
+.vw-role-guide h2{font-size:21px;line-height:1.45;margin-bottom:17px}
+.vw-role-guide progress{width:100%;height:6px;border:0;border-radius:5px;overflow:hidden;accent-color:#2f80ed;margin:12px 0 4px;background:#dce8f5}
+.vw-role-guide progress::-webkit-progress-bar{background:#dce8f5;border-radius:5px}
+.vw-role-guide progress::-webkit-progress-value{background:#2f80ed;border-radius:5px}
+.vw-role-guide progress::-moz-progress-bar{background:#2f80ed;border-radius:5px}
+.vw-role-guide .vw-checklist-count{font-size:12px;color:#334e68}
+.vw-role-guide li{display:block;padding:0}
+.vw-role-guide li a{display:flex;align-items:center;gap:11px;padding:13px 0;text-decoration:none;color:#334e68;font-size:12px}
+.vw-role-guide li a:hover{color:#1e66d1;text-decoration:underline}
+.vw-checklist-state{margin-left:auto;display:grid;place-items:center;color:#7c91a8}
+.vw-checklist-state.is-done{color:#16803d}
+.vw-checklist-state svg{width:17px;height:17px}
+.vw-secondary-links{display:flex;gap:23px;flex-wrap:wrap;padding:20px 0 0;font-size:12px}
+.vw-secondary-links a{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.vw-secondary-links svg{width:17px;height:17px}
+.vw-shell .vw-draft-notice{display:flex;align-items:center;gap:10px;padding:13px 17px;margin-bottom:18px;background:#edf5ff;border:1px solid #d1e4fc;border-radius:9px;font-size:13px;text-decoration:none}
+.vw-draft-notice svg{width:18px;height:18px}
+.vw-draft-notice>svg:last-child{margin-left:auto}
+.vw-forward-card{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:17px 19px;margin-bottom:18px;border:1px solid #dce5f0;background:#fff;border-radius:10px}
+.vw-forward-card>div{min-width:0}
+.vw-forward-card h2{font-size:13px;line-height:1.6;margin:0 0 5px}
+.vw-forward-address{font-size:13px;color:#53677a;overflow-wrap:anywhere;user-select:all}
+.vw-forward-card .button{font-size:11px;min-height:35px;padding:7px 11px}
+.vw-forward-card>p{width:100%;font-size:12px;margin:0}
+.vw-inline-button{background:none;border:0;padding:0;font:inherit;color:#1e66d1;text-decoration:underline;cursor:pointer}
+@media(max-width:1000px){.vw-module-heading{align-items:flex-start}.vw-task-tools{gap:6px;flex-direction:column;align-items:flex-end}.vw-myday .vw-page-heading{flex-wrap:wrap}.vw-role-guide ul{display:block}}
+@media(max-width:760px){.vw-shell .vw-capture-cta{font-size:12px}.vw-module-heading{flex-wrap:wrap}.vw-task-tools{align-items:flex-start;flex-direction:row;justify-content:flex-start;gap:12px}.vw-role-guide h2{font-size:20px}.vw-forward-card{padding:15px}.vw-secondary-links{gap:18px}}

@@ -1,5 +1,8 @@
 /* PRD tokens plus the glass and motion treatment requested on 15 October 2026. */
 :root {
+  --heading-letter-spacing: -0.01em;
+  --small-heading-letter-spacing: 0;
+  --text-letter-spacing: 0;
   --public-account-measure: 8ch;
   --font-landing-hero: clamp(2.25rem, 4.5vw, 4.5rem);
   --record-tilt: 1deg;
@@ -75,7 +78,7 @@
   --landing-caption-size: 12px;
   --landing-lead-size: 18px;
   --landing-logo-size: 30px;
-  --landing-tracking: -.055em;
+  --landing-tracking: var(--heading-letter-spacing);
   --landing-eyebrow-tracking: .12em;
   --landing-line-tight: 1.1;
   --landing-line-roomy: 1.75;
@@ -94,3 +97,4 @@
   --landing-hover-shift: -4px;
   --landing-entry-shift: 8px;
 }
+

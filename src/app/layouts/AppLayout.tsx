@@ -16,10 +16,10 @@ const icons: Record<string, string> = {
   '/app/capture': 'capture',
   '/app/role-record': 'record',
   '/app/handovers': 'handover',
-  '/app/my-cover-duties': 'people',
+  '/app/my-cover-duties': 'cover',
   '/app/team-activity': 'check',
   '/app/team': 'people',
-  '/app/departments': 'people',
+  '/app/departments': 'departments',
 }
 
 export function AppLayout() {
@@ -162,7 +162,7 @@ export function AppLayout() {
 
           <Link to="/">
             <WorkspaceIcon name="home" />
-            Home
+            Back to website
           </Link>
 
           <button
@@ -230,15 +230,13 @@ export function AppLayout() {
         <h2 id="vw-help-title">Find your way around</h2>
 
         <p>
-          My day shows your own actions. Use your role record to
+          My day shows your own tasks. Use your role record to
           keep responsibilities, decisions and useful links
           together.
         </p>
 
         <p>
-          Capture, handovers and cover duties are the next parts
-          being built. Your company administrator manages team
-          access.
+          Capture saves source notes and drafts for review. Your company administrator manages team access.
         </p>
 
         <form method="dialog">

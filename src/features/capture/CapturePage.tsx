@@ -38,7 +38,7 @@ type Listing = {
 
 const labels: Record<string, string> = {
   decision: 'Decision',
-  action: 'Action',
+  action: 'Task',
   contact: 'External contact',
 }
 
@@ -528,7 +528,7 @@ function CaptureWorkspace() {
                   <h3>No drafts yet</h3>
 
                   <p>
-                    Read your source, then add a decision, action or
+                    Read your source, then add a decision, task or
                     external contact to review.
                   </p>
                 </div>
@@ -648,7 +648,7 @@ function CaptureWorkspace() {
             ],
             [
               'check',
-              'Actions & dates',
+              'Tasks & dates',
               'What needs doing and when.',
             ],
             [
@@ -828,7 +828,7 @@ function DraftForm({
             onChange={event => setKind(event.target.value)}
           >
             <option value="decision">Decision</option>
-            <option value="action">Action</option>
+            <option value="action">Task</option>
             <option value="contact">External contact</option>
           </select>
         </div>
@@ -894,7 +894,7 @@ function DraftForm({
             type="date"
             required
             defaultValue={value('due_date')}
-            hint="This action will be assigned to you in My day."
+            hint="This task will be assigned to you in My day."
           />
         )}
 

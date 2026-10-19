@@ -61,3 +61,20 @@ The owner supersedes the pasteable-code workflow and requests publishing the lat
 ## 18 October 2026: approved product-led landing
 
 Owner approves the final light SaaS mockup (generated design exec-c2d19a0a) with actual product previews, PRD plan checklists, flowing blue line details and scroll entrances. Replaces the rejected eclipse direction. Home now uses a single light theme with a navy feature section; no theme switch. Motion uses one-time transform reveals, staggered content and restrained decorative paths, with reduced-motion support. The existing two-circle loading intro and authentication routes remain. All illustrative work content is identified as an example. Pricing uses the original PDF pages 7–8; Business integrations and Enterprise SSO/custom integrations are omitted from MVP marketing. Plan limits, billing and backend handover capabilities still require implementation; this public design does not implement those services.
+
+
+## 19 October 2026: client My day corrections
+
+Owner explicitly authorizes direct GitHub changes and Vercel deployment for the client feedback. Start from development 348795b; preserve the owner's pasted-code work.
+
+My day now greets the first name with the client's exact "Good morning" wording and "Your tasks for today" subtitle. Today is the normal default; decision-linked entry opens all linked tasks, and read-only teammate lists retain Open. Tab order is Today, Open, Overdue, Recently done, Archived. One Add task control remains. Capture is the main entry. Removed the large duplicate navigation cards and personal-work footer/explanation. Compact handover/cover links appear below the task list. One manager-visibility control remains. User-facing task terminology is consistent across My day, forms, Capture, role records, team outcomes and examples; SQL tables/columns stay unchanged.
+
+Checklist progress is computed from distinct non-archived role-item categories for the current owner. Each row opens its actual section through a validated section query parameter, with a completed tick and genuine 0–5 progress. My day reads real pending capture-item counts, excluding discarded/confirmed drafts and archived sources. Summary refreshes on return to the tab and at 60-second intervals. Sources and drafts remain private; manager role access does not grant source access.
+
+Global heading tracking tokens use -0.01em and normal 0 tracking on smaller headings/text. Replaced tighter local CSS overrides. Sidebar Back to website and distinct cover/team/department icons follow the client wording.
+
+Restored the previously applied capture migration to the repository under its actual live migration version (20261019042036); the owner's src-only push had omitted it. New migration 20261019103715 adds my_day_summary and owner-readable, server-provisioned forwarding-address records. No mailbox is invented or provisioned by these rows. Only a receiving-service-tested, verified and enabled address appears with Copy address.
+
+Outstanding client requirements: no inbound receiving service/domain or actual personal Vimbre address is configured, so the forwarding card has no real address to display yet. Planned handovers, approval state and temporary cover assignments are not implemented in this database; their requested top status messages cannot yet be sourced. Do not fabricate them or describe these two items as completed. Build the actual handover lifecycle/access model before rendering those statuses.
+
+Validation: npm run check passes 19 tests, lint and TypeScript/production build. Live rollback-only my-day-summary tests verify counts, archived/discarded filtering, category deduplication, verified address display and tenant/owner/inactive/anonymous isolation. Browser checks updated for the requested semantics and summary fixtures; run in GitHub Actions. No local browser QA is available in this managed session.
