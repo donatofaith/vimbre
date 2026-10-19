@@ -482,15 +482,14 @@ function ConversationPanel({
             scroll.current.clientHeight <
             100
         setError('')
-        setResult((old) =>
-          old && !anchor
-            ? {
-                ...detail,
-                messages: mergeMessages(old.messages, detail.messages),
-              }
-            : detail,
-        )
-        if (initial.current || anchor) setMore(detail.messages.length === 50)
+        const reset = initial.current
+        setResult((old) => {
+          const overlap = old?.messages.some(message => detail.messages.some(incoming => incoming.id === message.id))
+          // Never join disjoint history windows and silently hide the intervening messages.
+          if (!old || reset || (!overlap && detail.messages.length > 0)) return detail
+          return { ...detail, messages: mergeMessages(old.messages, detail.messages) }
+        })
+        if (reset) setMore(detail.messages.length === 50)
         if (
           !initial.current &&
           !nearBottom &&
