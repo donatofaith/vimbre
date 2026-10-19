@@ -21,7 +21,7 @@ await page.route('https://*.supabase.co/**',async route=>{
  else if(url.pathname.endsWith('/profiles'))body=profile;
  else if(url.pathname.endsWith('/companies')){if(req.method()==='PATCH'){company={...company,...req.postDataJSON()};body={id:company.id};}else body=company;}
  else if(url.pathname.endsWith('/signup')){if(duplicateSignup){status=422;body={code:'user_already_exists',msg:'User already registered'};}else body={user,session:null};}
- await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+ await route.fulfill({status,headers:{'x-supabase-api-version':'2024-01-01'},contentType:'application/json',body:JSON.stringify(body)});
 });
 await page.goto('http://127.0.0.1:5173/app/settings');await page.getByRole('heading',{name:'Welcome back'}).waitFor();
 await page.getByRole('link',{name:'Create a company'}).click();await page.getByLabel('Full name',{exact:true}).fill('Test Admin');await page.getByLabel('Company name',{exact:true}).fill('New company');await page.getByLabel('Work email').fill(user.email);await page.getByLabel('Password',{exact:true}).fill('safe-test-password');await page.getByLabel('Confirm password',{exact:true}).fill('does-not-match');await page.getByRole('button',{name:'Create company',exact:true}).click();await page.getByRole('alert').filter({hasText:'do not match'}).waitFor();assert(!calls.some(x=>x.path.endsWith('/signup')));
