@@ -483,13 +483,14 @@ function ConversationPanel({
             100
         setError('')
         const reset = initial.current
+        const historyGap = latestSeq.current > 0 && (detail.messages[0]?.seq ?? 0) > latestSeq.current
         setResult((old) => {
           const overlap = old?.messages.some(message => detail.messages.some(incoming => incoming.id === message.id))
           // Never join disjoint history windows and silently hide the intervening messages.
           if (!old || reset || (!overlap && detail.messages.length > 0)) return detail
           return { ...detail, messages: mergeMessages(old.messages, detail.messages) }
         })
-        if (reset) setMore(detail.messages.length === 50)
+        if (reset || historyGap) setMore(detail.messages.length === 50)
         if (
           !initial.current &&
           !nearBottom &&
