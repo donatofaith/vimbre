@@ -112,3 +112,11 @@ Capture uses the client’s exact title/subtitle/steps/privacy text and shared s
 ## 19 October 2026: timezone-aware My day greeting
 
 Owner explicitly replaces the fixed Good morning prefix with local-time greetings. Use the browser/device timezone: morning before 12:00, afternoon 12:00–15:59, evening from 16:00 (owner’s requested evening behavior at 4 pm). Keep first name and Your tasks for today unchanged. The existing minute refresh now updates greeting as well as Today date; focus/visibility refresh handles returning after a time or timezone change. No stored preference or server timezone is assumed. Tests cover local boundaries and the same UTC instant in Lagos and Los Angeles.
+
+## 19 October 2026: red errors and purpose-specific branded email preparation
+
+Shared field-error text previously used navy; it now uses the red error token #b42318. Account errors retain their existing red panel. Server-reported duplicate-signup codes have a helpful login/reset message; generic anti-enumeration signup responses remain generic and are not probed.
+
+team-invitations Edge Function v2 reads inviter/company/role from protected database rows, includes display-only invitation context in OTP metadata, and refreshes it for existing pending recipients. It preserves the existing callback URL and verified-recipient membership flow. Migration 20261019154616 clears the mail personalization fields when the invitation stops being pending, without changing authorization or other user metadata. Rollback SQL and invitation unit tests cover the boundaries.
+
+Prepared 13 branded Auth/security email templates under supabase/templates, with distinct purposes and Vimbre navy/blue design. IMPORTANT: hosted Auth templates are NOT yet changed. The Supabase connector does not expose Auth configuration and CLI reports no Management API access token. User approval is required by browser fallback instructions before opening the dashboard. Apply only the manifest’s subject/content keys and preserve SMTP, sender, redirect allowlist, expiry and notification settings. No real mail sent. Future welcome dispatch and real-inbox rendering checks remain separate; see supabase/templates/README.md.

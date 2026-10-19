@@ -43,14 +43,43 @@ Deno.serve(async (request: Request) => {
     }
     const invite = data?.[0]
     if (!invite) return respond(500, { error: 'Could not prepare the invitation.' })
+    const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } })
+    // These are display details only. Membership and role still come from the
+    // verified database invitation, never editable user metadata or request fields.
+    const { data: context, error: contextError } = await caller.from('invitations')
+      .select('company_id,role,invited_user_id').eq('id', invite.invitation_id).single()
+    const [company, inviter] = contextError || !context ? [] : await Promise.all([
+      caller.from('companies').select('name').eq('id', context.company_id).single(),
+      caller.from('profiles').select('full_name').eq('id', identity.user.id).single(),
+    ])
+    const metadata = {
+      invitation_id: invite.invitation_id,
+      invitation_email_purpose: 'team_invitation',
+      full_name: invite.full_name,
+      invitation_company_name: company?.data?.name,
+      invitation_inviter_name: inviter?.data?.full_name,
+      invitation_role_label: context?.role === 'hr_admin' ? 'HR Admin' : context?.role === 'manager' ? 'Manager' : context?.role === 'employee' ? 'Employee' : null,
+    }
+    if (contextError || company?.error || inviter?.error || !metadata.invitation_company_name || !metadata.invitation_inviter_name || !metadata.invitation_role_label) {
+      await admin.rpc('complete_invitation_delivery', { p_id: invite.email_log_id, p_status: 'failed', p_error_code: 'invitation_context_unavailable' })
+      return respond(502, { invitation_id: invite.invitation_id, error: 'The invitation is saved, but its email details could not be prepared. Please try Resend.' })
+    }
+    // OTP options populate metadata for a new account. Refresh the display details
+    // on an existing pending account as well, so resends reflect the current role.
+    if (context.invited_user_id) {
+      const { error: updateError } = await admin.auth.admin.updateUserById(context.invited_user_id, { user_metadata: metadata })
+      if (updateError) {
+        await admin.rpc('complete_invitation_delivery', { p_id: invite.email_log_id, p_status: 'failed', p_error_code: updateError.code ?? 'invitation_metadata_failed' })
+        return respond(502, { invitation_id: invite.invitation_id, error: 'The invitation is saved, but its email details could not be prepared. Please try Resend.' })
+      }
+    }
     // The recipient starts on another device: email sign-in uses an implicit link.
     // Membership remains inactive until the verified recipient explicitly accepts it.
     const mailer = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, flowType: 'implicit' } })
     const { error: mailError } = await mailer.auth.signInWithOtp({
       email: invite.email,
-      options: { shouldCreateUser: true, emailRedirectTo: redirectTo, data: { invitation_id: invite.invitation_id, full_name: invite.full_name } },
+      options: { shouldCreateUser: true, emailRedirectTo: redirectTo, data: metadata },
     })
-    const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } })
     const { error: logError } = await admin.rpc('complete_invitation_delivery', {
       p_id: invite.email_log_id, p_status: mailError ? 'failed' : 'accepted', p_error_code: mailError?.code ?? null,
     })

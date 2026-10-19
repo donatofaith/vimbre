@@ -12,12 +12,12 @@ const assert = require('node:assert/strict');
     const company = { id: '22222222-2222-4222-8222-222222222222', name: 'Team test company', team_mode: 'small', contact_email: user.email };
     let profile = { id: user.id, full_name: 'Test Admin', company_id: company.id, email: user.email, role: 'hr_admin', department_id: null, active: true };
     const departments = [], invitations = [], requests = [];
-    let pending = null;
+    let pending = null, duplicateEmail = false;
     const route = async route => {
       const req = route.request(), url = new URL(req.url()); let args = null;
       try { args = req.postDataJSON(); } catch {}
       requests.push({ path: url.pathname, args });
-      let body = {};
+      let body = {}, status = 200;
       if (url.pathname.endsWith('/token')) body = { access_token: 'browser-token', refresh_token: 'browser-refresh', expires_in: 3600, token_type: 'bearer', user };
       else if (url.pathname.endsWith('/user')) body = user;
       else if (url.pathname.endsWith('/company_active_member_count')) body = 2;
@@ -33,13 +33,14 @@ const assert = require('node:assert/strict');
         if (!args.p_id) { const row = { id: '33333333-3333-4333-8333-333333333333', company_id: company.id, name: args.p_name, manager_id: null, archived_at: null }; departments.push(row); body = row.id; }
         else { const row = departments.find(row => row.id === args.p_id); if (args.p_archive) row.archived_at = new Date().toISOString(); else { row.name = args.p_name; row.manager_id = args.p_manager; } body = row.id; }
       } else if (url.pathname.endsWith('/manage_member')) { profile = { ...profile, full_name: args.p_full_name, department_id: args.p_department, role: args.p_role, active: args.p_active }; body = null; }
+      else if (url.pathname.endsWith('/team-invitations') && duplicateEmail) { status=400;body={error:'This email already belongs to a workspace. Existing members can be managed on the Team page'}; }
       else if (url.pathname.endsWith('/team-invitations')) {
         if (args.action === 'create') invitations.push({ id: '44444444-4444-4444-8444-444444444444', company_id: company.id, email: args.email, full_name: args.full_name, role: args.role, department_id: args.department_id, status: 'pending', expires_at: new Date(Date.now() + 86400000).toISOString(), created_at: new Date().toISOString() });
         body = { invitation_id: invitations[0].id, delivery: 'accepted' };
       } else if (url.pathname.endsWith('/cancel_invitation')) { invitations.find(row => row.id === args.p_id).status = 'cancelled'; body = null; }
       else if (url.pathname.endsWith('/accept_invitation')) { pending = null; profile.active = true; body = null; }
       const headers = Array.isArray(body) ? { 'content-range': body.length ? `0-${body.length - 1}/${body.length}` : '*/0' } : {};
-      await route.fulfill({ status: 200, contentType: 'application/json', headers, body: JSON.stringify(body) });
+      await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     };
     await page.route('https://*.supabase.co/**', route);
     await page.goto('http://127.0.0.1:5173/login'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('browser-test-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / }).waitFor();
@@ -47,6 +48,8 @@ const assert = require('node:assert/strict');
     await page.getByLabel('Department name').fill('Operations'); await page.getByRole('button', { name: 'Create department' }).click(); await page.getByRole('status').filter({ hasText: 'Department created' }).waitFor();
     await page.getByRole('button', { name: 'Edit Operations' }).click(); await page.getByRole('heading', { name: 'Edit Operations' }).waitFor(); await page.getByLabel('Department manager', { exact: true }).selectOption(user.id); await page.getByRole('button', { name: 'Save department' }).click(); await page.getByRole('status').filter({ hasText: 'Department updated' }).waitFor(); assert.equal(departments[0].manager_id, user.id);
     await page.getByRole('link', { name: 'Team', exact: true }).click(); await page.getByRole('heading', { name: 'Team', exact: true }).waitFor();
+    duplicateEmail=true;await page.getByLabel('Full name',{exact:true}).fill('Existing member');await page.getByLabel('Email address',{exact:true}).fill(user.email);await page.getByRole('button',{name:'Send invitation',exact:true}).click();
+    const duplicate=page.getByRole('alert').filter({hasText:'This email already belongs to a workspace.'});await duplicate.waitFor();assert.equal(await duplicate.evaluate(el=>getComputedStyle(el).color),'rgb(180, 35, 24)');duplicateEmail=false;
     await page.getByLabel('Full name', { exact: true }).fill('New Teammate'); await page.getByLabel('Email address', { exact: true }).fill('teammate@example.invalid'); await page.getByLabel('Department (optional)', { exact: true }).selectOption(departments[0].id); await page.getByRole('button', { name: 'Send invitation' }).click(); await page.getByRole('status').filter({ hasText: 'Invitation email requested' }).waitFor(); assert.equal(invitations[0].department_id, departments[0].id);
     await page.getByRole('button', { name: 'Resend to New Teammate' }).click(); await page.getByRole('status').filter({ hasText: 'Invitation email requested' }).waitFor(); assert(requests.some(row => row.path.endsWith('/team-invitations') && row.args.action === 'resend'));
     page.once('dialog', dialog => dialog.accept()); await page.getByRole('button', { name: 'Cancel invitation for New Teammate' }).click(); await page.getByRole('status').filter({ hasText: 'Invitation cancelled' }).waitFor(); await page.getByText('cancelled', { exact: true }).waitFor();
