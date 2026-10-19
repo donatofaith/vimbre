@@ -378,11 +378,7 @@ export function RoleRecordPage() {
             {own ? 'Your role record' : 'Role record'}
           </h1>
 
-          <p>
-            {own
-              ? 'Keep the knowledge behind your role together.'
-              : `Reading ${ownerName}’s role record. Only the owner can edit it.`}
-          </p>
+
         </div>
 
         {own && !archived && !editor && (
@@ -456,21 +452,9 @@ export function RoleRecordPage() {
       )}
 
       <section
-        className="vr-intro"
-        aria-label="About your role record"
+        className="form-actions"
+        aria-label="Role record visibility"
       >
-        <span className="vr-icon">
-          <WorkspaceIcon name="record" />
-        </span>
-
-        <div>
-          <h2>Make your work easier to pick up.</h2>
-          <p>
-            Keep responsibilities, decisions and useful links in one
-            place.
-          </p>
-        </div>
-
         <button
           className="vw-access-button"
           type="button"
@@ -871,17 +855,11 @@ export function RoleRecordPage() {
               </ul>
             </div>
 
-            <p className="vr-guide-tip">
-              Use a clear title. Add useful context and a supporting
-              link.
-            </p>
+
           </aside>
         </div>
 
-        <p className="vr-storage-note">
-          Use Save record or Save decision to save your changes to your
-          company workspace.
-        </p>
+
       </section>
 
       {tab !== 'decision' && (
@@ -906,11 +884,7 @@ export function RoleRecordPage() {
         </section>
       )}
 
-      <p className="vr-footer">
-        {own
-          ? 'Only you can edit your role record.'
-          : 'You have read-only access to this role record.'}
-      </p>
+
 
       <dialog
         ref={accessDialog}
@@ -924,7 +898,7 @@ export function RoleRecordPage() {
           workstreams, external contacts, document links, recurring
           deadlines, decisions, tasks, completion notes and archived
           records. Your company’s HR Admin can read these across the
-          company. Only you can edit your role record.
+          company.
         </p>
 
         <p>

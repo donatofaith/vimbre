@@ -78,3 +78,10 @@ Restored the previously applied capture migration to the repository under its ac
 Outstanding client requirements: no inbound receiving service/domain or actual personal Vimbre address is configured, so the forwarding card has no real address to display yet. Planned handovers, approval state and temporary cover assignments are not implemented in this database; their requested top status messages cannot yet be sourced. Do not fabricate them or describe these two items as completed. Build the actual handover lifecycle/access model before rendering those statuses.
 
 Validation: npm run check passes 19 tests, lint and TypeScript/production build. Live rollback-only my-day-summary tests verify counts, archived/discarded filtering, category deduplication, verified address display and tenant/owner/inactive/anonymous isolation. Browser checks updated for the requested semantics and summary fixtures; run in GitHub Actions. No local browser QA is available in this managed session.
+
+
+## Interface copy rule — 19 October 2026
+
+Write for people using Vimbre, not for the implementer following development progress. Keep copy concise, professional and tied to a real task. Avoid redundant permission reminders (for example, “Only you can edit your role record”), definitions of obvious controls, repeated page descriptions, development commentary, and promotional filler in the workspace. Keep useful examples/placeholders, actionable empty states, errors, privacy/access details requested by the client, and explanations of material consequences or limitations. Do not conceal missing functionality or imply it is implemented.
+
+The client’s explicit My day wording and behaviors in `docs/client-my-day-review.md` remain authoritative. This copy cleanup must not alter those requirements, backend access rules, routes, counts, checklist completion, icons, or heading spacing. Keep “What my manager can see” and its meaningful visibility details. Apply this rule to future development as well.

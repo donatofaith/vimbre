@@ -320,11 +320,7 @@ function ActionWorkspace({
           </div>}
         </div>
 
-        {member && (
-          <p className="vw-readonly-note">
-            Only this person can change their tasks.
-          </p>
-        )}
+
 
         <div className="vw-filter-row">
           <nav className="vw-tabs" aria-label="Task views">

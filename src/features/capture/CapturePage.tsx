@@ -319,10 +319,7 @@ function CaptureWorkspace() {
             Capture the context.
           </h1>
 
-          <p>
-            Keep work notes, then turn the important details into
-            records.
-          </p>
+
         </div>
 
         {selected && (
@@ -420,9 +417,8 @@ function CaptureWorkspace() {
                   </div>
 
                   <p id="vc-source-help" className="vc-note">
-                    Your source text is saved privately. Only
-                    confirmed records become part of your role record
-                    or My day.
+                    Source notes are private. Confirm drafts to add them to
+                    your role record or tasks.
                   </p>
 
                   <div className="form-actions">
@@ -638,7 +634,7 @@ function CaptureWorkspace() {
         </section>
 
         <aside className="vc-guide">
-          <h2>You stay in control.</h2>
+          <h2>Draft types</h2>
 
           {[
             [
@@ -668,15 +664,7 @@ function CaptureWorkspace() {
             </div>
           ))}
 
-          <p className="vc-guide-note">
-            Add drafts manually, then edit, confirm or discard each
-            one.
-          </p>
 
-          <p className="vc-note">
-            Source notes and drafts are private to you. Confirmed
-            records follow your workspace’s existing access rules.
-          </p>
         </aside>
       </div>
 
@@ -894,7 +882,6 @@ function DraftForm({
             type="date"
             required
             defaultValue={value('due_date')}
-            hint="This task will be assigned to you in My day."
           />
         )}
 
