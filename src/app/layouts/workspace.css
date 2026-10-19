@@ -1,0 +1,754 @@
+.vw-shell.app-shell {
+  --vw-charcoal: #182630;
+  --vw-ink: #102a43;
+  --vw-blue: #2f80ed;
+  grid-template-columns: 220px minmax(0, 1fr);
+  background: #f8fafc;
+  color: var(--vw-ink);
+  font: 400 14px/1.6 var(--body-font);
+  min-height: 100dvh;
+}
+
+.vw-shell * { box-sizing: border-box; }
+.vw-shell :is(h1, h2, h3) { letter-spacing: -.035em; overflow-wrap: normal; }
+.vw-shell svg { width: 20px; height: 20px; flex-shrink: 0; }
+.vw-shell a { color: #2563d9; }
+
+.vw-shell .button {
+  gap: 8px;
+  font-size: 13px;
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+
+.vw-shell .button-primary { background: #2f80ed; color: #fff; }
+.vw-shell .button-primary:hover:not(:disabled) { background: #2563d9; }
+.vw-shell .button-secondary { background: #fff; color: #102a43; }
+.vw-shell .button:disabled { opacity: .5; cursor: not-allowed; }
+
+.vw-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  overflow-y: auto;
+  padding: 27px 14px 20px;
+  background: linear-gradient(155deg, #20313d, #182630);
+  color: #d7e3ec;
+  display: flex;
+  flex-direction: column;
+}
+
+.vw-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vw-shell .vw-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  font: 700 26px var(--heading-font);
+  letter-spacing: -1px;
+  padding: 0 9px;
+}
+
+.vw-mark {
+  position: relative;
+  width: 35px;
+  height: 25px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.vw-mark i {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  background: #2f80ed;
+  border-radius: 50%;
+  left: 0;
+  top: 0;
+}
+
+.vw-mark i + i { background: #84c4ffbb; left: 12px; }
+
+.vw-company {
+  font-size: 12px;
+  color: #b1c4d3;
+  padding: 0 12px;
+  margin: 22px 0;
+  overflow-wrap: anywhere;
+}
+
+.vw-navigation { display: grid; gap: 7px; }
+
+.vw-shell .vw-navigation a,
+.vw-shell .vw-utilities a,
+.vw-utilities button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 47px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  color: #d5e3ee;
+  text-decoration: none;
+  font: 400 13px/1.5 var(--body-font);
+  transition: background .2s, color .2s;
+}
+
+.vw-navigation a:hover,
+.vw-utilities a:hover,
+.vw-utilities button:hover { background: #ffffff0a; }
+
+.vw-shell .vw-navigation a.active,
+.vw-shell .vw-utilities a.active {
+  background: #2f80ed30;
+  color: #a5d7ff;
+}
+
+.vw-utilities {
+  margin-top: auto;
+  padding-top: 23px;
+  border-top: 1px solid #b2c8db24;
+}
+
+.vw-utilities button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.vw-utilities button:disabled { opacity: .5; }
+
+.vw-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #b2c8db24;
+  padding: 21px 8px 0;
+  margin-top: 19px;
+}
+
+.vw-avatar {
+  display: grid;
+  place-items: center;
+  background: #dceeff;
+  color: #235e9b;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vw-account > div { min-width: 0; }
+
+.vw-account strong {
+  display: block;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.vw-account > div > span {
+  display: block;
+  font-size: 11px;
+  color: #b1c4d3;
+}
+
+.vw-menu { display: none; }
+.vw-workspace { min-width: 0; }
+
+.vw-topbar {
+  height: 69px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 36px;
+  gap: 20px;
+  background: #ffffffeb;
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vw-breadcrumb {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.vw-breadcrumb strong { font-weight: 500; color: #102a43; }
+.vw-topbar-actions { display: flex; align-items: center; gap: 20px; }
+
+.vw-help {
+  border: 0;
+  background: none;
+  color: #334e68;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vw-content {
+  max-width: 1500px;
+  margin: auto;
+  padding: 39px 36px 30px;
+  min-width: 0;
+}
+
+.vw-shell .card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.vw-shell .record-editor { margin: 22px 0; padding: 25px; }
+
+.vw-shell .notice {
+  background: #eaf2fe;
+  border: 1px solid #d3e5fc;
+  color: #102a43;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.vw-shell .field-hint { font-size: 12px; }
+
+.vw-shell .field input,
+.vw-shell .field select,
+.vw-shell textarea {
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.vw-shell .form-actions { flex-wrap: wrap; }
+
+.vw-myday { position: relative; }
+
+.vw-myday::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: -50px;
+  width: 580px;
+  height: 250px;
+  border: 24px solid #eaf2fe;
+  border-radius: 50%;
+  transform: rotate(12deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.vw-myday > * { position: relative; }
+
+.vw-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 27px;
+}
+
+.vw-eyebrow {
+  color: #6584a3;
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.vw-page-heading h1 {
+  font-size: clamp(30px, 3vw, 43px);
+  line-height: 1.15;
+  letter-spacing: -.05em;
+  margin: 12px 0 8px;
+}
+
+.vw-page-heading p {
+  font-size: 17px;
+  color: #64748b;
+  margin: 0;
+}
+
+.vw-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.vw-shell .vw-shortcuts > a {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 21px 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #102a43;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+  min-width: 0;
+}
+
+.vw-shortcuts > a:first-child { border-color: #94bfff; }
+
+.vw-shell .vw-shortcuts > a:hover {
+  border-color: #2f80ed;
+  transform: translateY(-3px);
+  box-shadow: 0 9px 24px #102a4308;
+}
+
+.vw-shortcuts h2 {
+  font-size: 16px;
+  line-height: 1.3;
+  margin: 0 0 7px;
+}
+
+.vw-shortcuts p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #53677a;
+  margin: 0;
+}
+
+.vw-shortcut-icon {
+  display: grid;
+  place-items: center;
+  color: #2f80ed;
+  background: #edf5ff;
+  border-radius: 12px;
+  width: 45px;
+  height: 49px;
+  flex-shrink: 0;
+}
+
+.vw-shortcut-icon svg { width: 25px; height: 25px; }
+
+.vw-shortcuts > a > svg {
+  width: 16px;
+  color: #2f80ed;
+  margin-left: auto;
+}
+
+.vw-leader-link {
+  font-size: 12px;
+  color: #64748b;
+  margin: -8px 0 21px;
+}
+
+.vw-actions-module {
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 13px;
+  padding: 23px;
+  min-width: 0;
+}
+
+.vw-module-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 19px;
+}
+
+.vw-module-heading h2 { font-size: 21px; margin: 0; }
+
+.vw-access-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d7e3f1;
+  border-radius: 7px;
+  background: white;
+  padding: 8px 11px;
+  color: #2563d9;
+  font: 400 12px var(--body-font);
+  cursor: pointer;
+}
+
+.vw-access-button svg { width: 16px; }
+
+.vw-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vw-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.vw-tabs button {
+  background: none;
+  border: 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font: 400 12px var(--body-font);
+  color: #53677a;
+  cursor: pointer;
+}
+
+.vw-tabs button:hover { background: #f3f7fc; }
+
+.vw-tabs button[aria-pressed="true"] {
+  color: #2563d9;
+  background: #eaf2fe;
+}
+
+.vw-action-search { width: 240px; flex-shrink: 0; }
+
+.vw-action-search label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.vw-action-search input {
+  min-height: 39px !important;
+  padding: 9px 12px !important;
+  font-size: 12px !important;
+}
+
+.vw-actions-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 1fr);
+  gap: 17px;
+  margin-top: 17px;
+}
+
+.vw-actions-main { min-width: 0; }
+
+.vw-action-state {
+  min-height: 375px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 20px;
+  gap: 17px;
+}
+
+.vw-action-state h3 { font-size: 21px; margin: 0; }
+
+.vw-action-state p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  max-width: 38ch;
+}
+
+.vw-empty-icon {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #edf6ff, #e1eeff);
+  color: #2f80ed;
+  width: 82px;
+  height: 82px;
+  border-radius: 22px;
+  margin-bottom: 8px;
+}
+
+.vw-empty-icon svg { width: 43px; height: 43px; }
+
+.vw-role-guide {
+  background: linear-gradient(140deg, #f2f8ff, #edf5fe);
+  border-radius: 10px;
+  padding: 25px 23px;
+  min-width: 0;
+}
+
+.vw-role-guide h2 { font-size: 23px; margin: 8px 0; }
+
+.vw-role-guide > p {
+  font-size: 13px;
+  color: #53677a;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.vw-role-guide ul {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0;
+}
+
+.vw-role-guide li {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 12px;
+  border-bottom: 1px solid #dce8f5;
+  padding: 11px 0;
+  color: #334e68;
+}
+
+.vw-role-guide li svg { width: 18px; }
+
+.vw-role-guide > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.vw-role-guide > a svg { width: 17px; }
+
+.vw-action-list { padding: 0; margin: 0; list-style: none; }
+
+.vw-shell .vw-action-list > li {
+  display: block;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 18px;
+  margin: 0 0 14px;
+  background: #fff;
+}
+
+.vw-action-list h3 { font-size: 17px; margin: 12px 0 8px; }
+.vw-action-list p { font-size: 13px; overflow-wrap: anywhere; }
+.vw-action-list .badge { font-size: 10px; }
+.vw-action-list .form-actions { margin-top: 12px; }
+
+.vw-action-list .button {
+  font-size: 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.vw-shell .pagination {
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin: 18px 0 0;
+}
+
+.vw-shell .pagination .button {
+  font-size: 11px;
+  padding: 8px 10px;
+  min-height: 35px;
+}
+
+.vw-personal-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid #dce6f1;
+  margin-top: 25px;
+  padding-top: 18px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.vw-personal-note > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vw-personal-note svg { width: 18px; }
+
+.vw-personal-note button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #2563d9;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vw-readonly-note { font-size: 13px; color: #64748b; }
+
+.vw-dialog {
+  width: min(540px, calc(100% - 36px));
+  max-height: 85dvh;
+  overflow: auto;
+  border: 1px solid #d9e3ef;
+  border-radius: 15px;
+  padding: 28px;
+  color: #102a43;
+  background: #fff;
+  box-shadow: 0 25px 90px #102a4326;
+}
+
+.vw-dialog::backdrop { background: #102a4366; }
+
+.vw-dialog h2 {
+  font-size: 23px;
+  line-height: 1.3;
+  letter-spacing: -.03em;
+  margin: 0 0 18px;
+}
+
+.vw-dialog p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #53677a;
+}
+
+.vw-dialog form { margin-top: 23px; }
+
+@media (min-width: 761px) {
+  .vw-navigation { margin-bottom: 35px; }
+}
+
+@media (max-width: 1200px) {
+  .vw-content { padding: 30px 25px; }
+  .vw-shortcuts > a { gap: 11px; padding: 18px 13px; }
+  .vw-shortcut-icon { width: 37px; height: 42px; }
+  .vw-shortcuts h2 { font-size: 14px; }
+  .vw-shortcuts > a > svg { display: none; }
+
+  .vw-filter-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .vw-action-search { width: 100%; }
+
+  .vw-actions-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(230px, 1fr);
+  }
+}
+
+@media (max-width: 1000px) {
+  .vw-shell.app-shell {
+    grid-template-columns: 195px minmax(0, 1fr);
+  }
+
+  .vw-content { padding: 27px 20px; }
+  .vw-topbar { padding-inline: 20px; }
+  .vw-shortcuts { grid-template-columns: 1fr; }
+  .vw-shell .vw-shortcuts > a { padding: 16px; }
+  .vw-shortcuts h2 { font-size: 16px; margin-bottom: 3px; }
+  .vw-shortcuts > a > svg { display: block; }
+  .vw-actions-grid { grid-template-columns: 1fr; }
+  .vw-role-guide { padding: 22px; }
+
+  .vw-role-guide ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+  }
+
+  .vw-action-state { min-height: 290px; }
+  .vw-page-heading { align-items: flex-start; }
+  .vw-page-heading h1 { font-size: 32px; }
+  .vw-page-heading p { font-size: 14px; }
+}
+
+@media (max-width: 760px) {
+  .vw-shell.app-shell { display: block; overflow: clip; }
+
+  .vw-sidebar {
+    position: relative;
+    height: auto;
+    padding: 16px 20px;
+    overflow: visible;
+  }
+
+  .vw-shell .vw-brand { font-size: 23px; padding: 0; }
+
+  .vw-menu {
+    display: block;
+    border: 1px solid #ffffff30;
+    background: #ffffff0a;
+    color: #fff;
+    border-radius: 7px;
+    padding: 9px 12px;
+    font: 500 12px var(--body-font);
+    cursor: pointer;
+  }
+
+  .vw-company,
+  .vw-account,
+  .vw-sidebar[data-open="false"] .vw-navigation,
+  .vw-sidebar[data-open="false"] .vw-utilities {
+    display: none;
+  }
+
+  .vw-navigation { padding-top: 18px; }
+  .vw-utilities { margin-top: 14px; padding-top: 12px; }
+  .vw-topbar { height: 58px; padding: 0 20px; }
+  .vw-topbar-actions { gap: 14px; }
+
+  .vw-topbar .vw-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+
+  .vw-breadcrumb { font-size: 11px; gap: 9px; }
+  .vw-content { padding: 26px 18px; }
+  .vw-page-heading { flex-direction: column; gap: 18px; }
+  .vw-page-heading h1 { font-size: 31px; max-width: 15ch; }
+  .vw-page-heading p { font-size: 13px; }
+  .vw-page-heading .button { font-size: 12px; }
+  .vw-myday::before { display: none; }
+  .vw-shortcuts { gap: 10px; }
+  .vw-actions-module { padding: 16px; }
+  .vw-module-heading { align-items: flex-start; gap: 12px; }
+  .vw-module-heading h2 { font-size: 19px; }
+
+  .vw-access-button {
+    font-size: 10px;
+    padding: 7px;
+    gap: 4px;
+  }
+
+  .vw-access-button svg { width: 14px; }
+  .vw-tabs { gap: 2px; }
+  .vw-tabs button { font-size: 11px; padding: 8px 9px; }
+
+  .vw-action-state {
+    padding: 28px 8px;
+    min-height: 300px;
+  }
+
+  .vw-action-state h3 { font-size: 20px; }
+  .vw-action-state p { font-size: 12px; }
+  .vw-role-guide { padding: 20px 17px; }
+  .vw-role-guide h2 { font-size: 22px; }
+  .vw-role-guide ul { grid-template-columns: 1fr; }
+
+  .vw-personal-note {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 13px;
+  }
+
+  .vw-shell .record-editor { padding: 18px; }
+  .vw-dialog { padding: 23px; }
+  .vw-shell .form-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vw-shell * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
