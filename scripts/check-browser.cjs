@@ -14,6 +14,7 @@ await page.route('https://*.supabase.co/**',async route=>{
  const req=route.request(), url=new URL(req.url());let data=null;try{data=req.postDataJSON()}catch{};calls.push({path:url.pathname,method:req.method(),data});
  let body={};let status=200;
  if(url.pathname.endsWith('/token')) body={access_token:'browser-test-access',refresh_token:'browser-test-refresh',token_type:'bearer',expires_in:3600,user};
+ else if(url.pathname.endsWith('/capture_list'))body={rows:[],count:0};
  else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
  else if(url.pathname.endsWith('/user'))body=user;
  else if(url.pathname.endsWith('/profiles'))body=profile;
@@ -30,7 +31,7 @@ await page.getByRole('link',{name:'Go to login'}).click();await page.getByLabel(
 await page.getByRole('link',{name:'Settings',exact:true}).click();await page.getByRole('heading',{name:'Company settings'}).waitFor();await page.getByLabel('Company name').fill('Updated company');await page.getByRole('button',{name:'Save settings'}).click();await page.getByRole('status').filter({hasText:'settings saved'}).waitFor();assert.equal(company.name,'Updated company');
 await page.reload();await page.getByRole('heading',{name:'Company settings'}).waitFor();assert.equal(await page.getByLabel('Company name').inputValue(),'Updated company');
 await page.setViewportSize({width:360,height:800});await page.getByRole('button',{name:'Menu',exact:true}).click();await page.getByRole('navigation',{name:'Workspace'}).getByRole('link',{name:'Capture',exact:true}).click();await page.getByRole('heading',{name:'Capture',exact:true}).waitFor();assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
-await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByRole('heading',{name:'Welcome back'}).waitFor();
+await page.getByRole('button',{name:'Menu',exact:true}).click();await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByRole('heading',{name:'Welcome back'}).waitFor();
 await page.getByRole('link',{name:'Forgot password?'}).click();await page.getByRole('heading',{name:'Forgot your password?'}).waitFor();await page.getByLabel('Work email').fill(user.email);await page.getByRole('button',{name:'Send reset link'}).click();await page.getByRole('status').filter({hasText:'If an account exists'}).waitFor();assert(calls.some(x=>x.path.endsWith('/recover')));
 await page.goto('http://127.0.0.1:5173/auth/callback?code=browser-test-code&flow=recovery');await page.getByRole('heading',{name:'Choose a new password'}).waitFor();await page.getByLabel('New password',{exact:true}).fill('new-safe-password');await page.getByLabel('Confirm password',{exact:true}).fill('new-safe-password');await page.getByRole('button',{name:'Update password'}).click();await page.getByRole('status').filter({hasText:'Password updated'}).waitFor();assert(calls.some(x=>x.path.endsWith('/user')&&x.method==='PUT'));
 await page.goto('http://127.0.0.1:5173/reset-password');await page.getByText('This link is missing or expired.',{exact:false}).waitFor();
