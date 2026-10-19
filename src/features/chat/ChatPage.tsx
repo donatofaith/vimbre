@@ -353,7 +353,7 @@ function NewChat({
           <p>
             {search
               ? 'No teammates match your search.'
-              : 'No other active teammates yet. Invite someone from the Team page.'}
+              : 'No other active teammates yet.'}
           </p>
         )}
         <fieldset className="chat-people" disabled={busy}>
