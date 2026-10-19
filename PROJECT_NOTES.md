@@ -96,3 +96,8 @@ Applied migration 20261019145146_team_activity_overview adds narrow aggregate an
 ## 19 October 2026: Team activity responsive fix
 
 The shared mobile table CSS hides column headings and expects data-label attributes. Team overview cells previously omitted those labels and retained a 650px minimum width, creating unlabelled values and internal overflow despite passing a page-width-only check. Every metric now has its exact column label. Mobile shows each member as a two-column metric card with a full-width name; desktop/tablet retain a fitting five-column table. Browser regression checks validate container fit, actual visible metric labels and desktop table layout at 320, 360, 390, 768, 1024 and 1440px. No client wording, access rules or backend behavior changes.
+
+
+## 19 October 2026: visibility explanation stays on Team activity
+
+Owner approved replacing the confusing My day redirect with an in-place Team visibility dialog. The exact client trust statement remains clickable and shares `WorkVisibilityDetails` with the employee’s “What my manager can see” panel. Manager-facing phrasing describes team access; employee wording and title remain intact. This supersedes the earlier redirect interaction only. No navigation, member/filter state or access rules change. Browser checks cover mobile/desktop opening, unchanged URL, close/focus restoration and Escape.

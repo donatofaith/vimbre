@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { Input } from '../../components/ui/Input'
@@ -7,7 +7,7 @@ import { safeSearch } from '../team/team-utils'
 import { TeamMemberActions } from './WorkspacePage'
 import { TeamMemberDecisions } from './TeamMemberDecisions'
 import { useTeamOverview } from './useTeamOverview'
-const trust='You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.'
+import { WorkPrivacyNotice, WorkVisibilityDetails } from './WorkVisibilityDetails'
 export function TeamActivityPage() {
  const {profile}=useAuth()
  if(profile?.role==='employee')return <><h1 tabIndex={-1}>Team activity</h1><p>This page is for Managers and HR Admins.</p><Link to="/app">Open My day</Link></>
@@ -15,6 +15,7 @@ export function TeamActivityPage() {
 }
 function TeamActivity() {
  const {profile}=useAuth()
+ const visibility=useRef<HTMLDialogElement>(null)
  const [params,setParams]=useSearchParams()
  const requested=params.get('member')
  const validId=requested && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requested)?requested:null
@@ -26,7 +27,8 @@ function TeamActivity() {
  function overview(){setParams({});setPage(0);setSearch('')}
  return <div className="vt-page">
   <header className="page-heading"><h1 tabIndex={-1}>Team activity</h1><p>See what your team has captured, finished and left open.</p><Link to="/app">Back to My day</Link></header>
-  <p className="vt-trust"><Link to="/app?visibility=manager">{trust}</Link></p>
+  <p className="vt-trust"><button type="button" className="vt-trust-button" aria-haspopup="dialog" aria-controls="vt-visibility" onClick={()=>visibility.current?.showModal()}><WorkPrivacyNotice /></button></p>
+  <dialog id="vt-visibility" ref={visibility} className="vw-dialog" aria-labelledby="vt-visibility-title"><h2 id="vt-visibility-title">Team visibility</h2><WorkVisibilityDetails team /><form method="dialog"><Button type="submit">Close access details</Button></form></dialog>
   {missingDepartment?<section className="card"><h2>Your department is not set up yet</h2><p>Ask your HR Admin to assign you to a department.</p></section>:error?<section className="card"><p role="alert">Your team could not be loaded.</p><Button onClick={retry}>Retry team activity</Button></section>:!data?<p role="status">Loading your team…</p>:requested&&!validId?<section className="card"><p role="alert">Team member is not available.</p><Button onClick={overview}>Back to team overview</Button></section>:validId?<>
    <Button variant="secondary" onClick={overview}>Back to team overview</Button>
    {member?<><h2>{member.full_name}</h2><TeamMemberActions member={member}/><TeamMemberDecisions key={member.id} owner={member.id}/></>:<p role="alert">Team member is not available.</p>}

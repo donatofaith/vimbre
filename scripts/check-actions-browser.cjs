@@ -133,8 +133,20 @@ const { randomUUID } = require('node:crypto');
 
     await page.getByRole('link',{name:'Back to My day',exact:true}).waitFor();
     assert.equal(await page.getByLabel('Search team members').count(),0);
-    await page.getByRole('link',{name:'You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.',exact:true}).click();
-    await page.getByRole('dialog').waitFor();await page.getByRole('button',{name:'Close access details',exact:true}).click();await page.goto('http://127.0.0.1:5173/app/team-activity');
+    for(const width of [360,1440]) {
+      await page.setViewportSize({width,height:900});
+      const before=page.url();
+      const trigger=page.getByRole('button',{name:'You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.',exact:true});
+      await trigger.click();
+      const dialog=page.getByRole('dialog',{name:'Team visibility',exact:true});await dialog.waitFor();
+      assert.equal(page.url(),before,'visibility must keep the current page');
+      await dialog.getByText('Managers can read responsibilities, workstreams, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records within their department. HR Admins can read these across the company.',{exact:true}).waitFor();
+      await dialog.getByRole('button',{name:'Close access details',exact:true}).click();
+      assert.equal(await dialog.isVisible(),false);assert(await trigger.evaluate(el=>document.activeElement===el));
+      await trigger.click();await page.keyboard.press('Escape');assert.equal(await dialog.isVisible(),false);
+      assert.equal(page.url(),before);
+    }
+    await page.setViewportSize({width:360,height:800});
     await page.getByRole('link', { name: colleague.full_name, exact: true }).click(); await page.getByRole('heading', { name: `${colleague.full_name}’s tasks`, exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Add task', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Complete / }).count(), 0);
     await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Colleague completed report', exact: true }).waitFor(); await page.getByText('Figures checked and report sent.', { exact: false }).waitFor();

@@ -830,3 +830,5 @@
   .vt-overview .vt-members td:first-child a { display: block; padding-block: 4px; }
   .vt-overview .vt-members td:last-child { align-items: flex-start; }
 }
+
+.vt-trust-button { display: inline; max-width: 100%; border: 0; padding: 0; background: transparent; color: #52677e; font: inherit; line-height: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

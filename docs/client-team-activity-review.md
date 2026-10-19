@@ -17,7 +17,7 @@ The three client screenshots are authoritative for this page. Preserve the previ
 | Flags | Overdue tasks, handovers not started, people with no role record |
 | Search | Shown only when the company has at least five active members |
 | Trust line | You can see confirmed tasks and decisions. You cannot see private drafts or the original emails. |
-| Trust link | Opens the employee-side What my manager can see panel |
+| Trust link | Opens the same visibility information locally on Team activity, using the shared employee-side panel content; no redirect (owner clarification, 19 October) |
 | Manage navigation | Team activity, Team and Departments grouped together; only Managers and HR Admins |
 | One-person navigation | Team activity hidden until a second active company member joins |
 | Typography | Existing -0.01em heading limit and 0 smaller-text tracking preserved |
@@ -39,3 +39,7 @@ The database has no handover lifecycle, scheduled handovers or approval/cover mo
 ## Verification
 
 Rollback-only database tests cover role/tenant scope, aggregate numbers, timezone and pagination/search validation, inactive/anonymous denial and source/draft isolation. Browser checks cover the overview/member tasks and decisions, trust panel link, search threshold, sidebar groups, single-person behavior, retry, pagination, and employee guard. Unit tests reject malformed overview responses. Existing My day regression checks remain.
+
+## Visibility interaction clarification
+
+The owner approved opening the trust explanation directly on Team activity to avoid the confusing My day redirect. Team activity and the employee’s “What my manager can see” panel now use the same `WorkVisibilityDetails` component and exact trust statement. Team activity uses a “Team visibility” dialog title and manager-facing wording; the employee title and wording remain. The trigger is a semantic button styled as a text link. Opening/closing does not navigate, reset filters or replace the current member. Native dialog focus restoration and Escape dismissal are retained. Access enforcement is unchanged.

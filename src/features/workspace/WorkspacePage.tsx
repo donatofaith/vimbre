@@ -12,6 +12,7 @@ import type { Action } from './ActionForm'
 import { actionError } from './action-utils'
 import { CaptureSummary, RoleChecklist } from './MyDayOverview'
 import { useMyDaySummary } from './useMyDaySummary'
+import { WorkVisibilityDetails } from './WorkVisibilityDetails'
 
 type View = 'open' | 'today' | 'overdue' | 'done' | 'archived'
 
@@ -613,22 +614,7 @@ function ActionWorkspace({
               What my manager can see
             </h2>
 
-            <p>You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.</p>
-            <p>
-              Managers in your department can read your
-              responsibilities, workstreams, external contacts,
-              document links, recurring deadlines, decisions,
-              tasks, completion notes and archived records.
-              Your company’s HR Admin can read these across the
-              company.
-            </p>
-
-            <p>
-              Only you can change your tasks. Managers outside
-              your department and other employees cannot read
-              them. If you have no department, only you and
-              company HR Admins can read them.
-            </p>
+            <WorkVisibilityDetails />
 
             <form method="dialog">
               <Button type="submit">Close access details</Button>
