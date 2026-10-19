@@ -20,6 +20,8 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member'
     > & {
+      company_active_member_count: { Args: Record<PropertyKey, never>; Returns: number }
+      team_activity_overview: { Args: { p_search: string; p_page: number; p_timezone: string; p_member: string | null }; Returns: Json }
       my_day_summary: { Args: Record<PropertyKey, never>; Returns: Json }
 
       capture_list: {

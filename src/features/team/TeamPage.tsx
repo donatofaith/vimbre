@@ -90,7 +90,7 @@ export function TeamPage() {
   const current = result?.key === key ? result : null
   return <><div className="page-heading"><span className="eyebrow">{company?.name}</span><h1 tabIndex={-1}>Team</h1></div>
     {message && <p role="status" className="notice">{message}</p>}{error && <p role="alert" className="field-error">{error}</p>}
-    {admin && <section className="card settings-card"><h2>Invite a teammate</h2><p>Invitations expire after seven days.</p><form className="auth-form" key={formVersion} onSubmit={event => { event.preventDefault(); void send('create', new FormData(event.currentTarget)) }}>
+    {admin && <section id="invite-teammate" className="card settings-card"><h2>Invite a teammate</h2><p>Invitations expire after seven days.</p><form className="auth-form" key={formVersion} onSubmit={event => { event.preventDefault(); void send('create', new FormData(event.currentTarget)) }}>
       <Input label="Full name" name="name" required maxLength={100} autoComplete="off" /><Input label="Email address" name="email" type="email" required maxLength={320} autoComplete="off" />
       <div className="field"><label htmlFor="invite-role">Role</label><select aria-describedby="invite-role-hint" id="invite-role" value={inviteRole} onChange={event => setInviteRole(event.target.value)}>{roles.map(role => <option key={role} value={role}>{roleLabel(role)}</option>)}</select><p className="field-hint" id="invite-role-hint">Choose Employee for most teammates, Manager for a department lead, or HR Admin for company and team administration.</p></div>
       <DepartmentPicker required={company?.team_mode === 'departments' && inviteRole !== 'hr_admin'} /><Button type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Send invitation'}</Button>

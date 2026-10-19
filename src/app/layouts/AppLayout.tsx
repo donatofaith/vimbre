@@ -10,6 +10,7 @@ import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
+import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 
 const icons: Record<string, string> = {
   '/app': 'home',
@@ -25,6 +26,8 @@ const icons: Record<string, string> = {
 export function AppLayout() {
   const { company, profile } = useAuth()
   const { pathname } = useLocation()
+  const leader = profile?.role === 'hr_admin' || profile?.role === 'manager'
+  const memberCount = useCompanyMemberCount(profile?.id ?? '', leader)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutError, setLogoutError] = useState('')
@@ -52,6 +55,7 @@ export function AppLayout() {
   const items = navigation.filter(
     item =>
       item.path !== '/app/settings' &&
+      (item.path !== '/app/team-activity' || memberCount !== null && memberCount >= 2) &&
       (!('leaders' in item) || profile?.role !== 'employee'),
   )
 
@@ -134,7 +138,7 @@ export function AppLayout() {
           className="vw-navigation"
           aria-label="Workspace"
         >
-          {items.map(item => (
+          {items.filter(item => !('leaders' in item)).map(item => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -149,6 +153,7 @@ export function AppLayout() {
               </span>
             </NavLink>
           ))}
+          {leader && <div className="vw-manage-group"><span className="vw-nav-heading">Manage</span>{items.filter(item => 'leaders' in item).map(item => <NavLink key={item.path} to={item.path} onClick={() => setMenuOpen(false)}><WorkspaceIcon name={icons[item.path]} /><span>{item.label}</span></NavLink>)}</div>}
         </nav>
 
         <div className="vw-utilities">
@@ -189,7 +194,7 @@ export function AppLayout() {
       <div className="vw-workspace">
         <header className="vw-topbar">
           <div className="vw-breadcrumb">
-            Workspace
+            Company
             <span aria-hidden="true">/</span>
             <strong>{pageName}</strong>
           </div>

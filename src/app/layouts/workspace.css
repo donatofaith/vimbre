@@ -789,3 +789,27 @@
 .vw-inline-button{background:none;border:0;padding:0;font:inherit;color:#1e66d1;text-decoration:underline;cursor:pointer}
 @media(max-width:1000px){.vw-module-heading{align-items:flex-start}.vw-task-tools{gap:6px;flex-direction:column;align-items:flex-end}.vw-myday .vw-page-heading{flex-wrap:wrap}.vw-role-guide ul{display:block}}
 @media(max-width:760px){.vw-shell .vw-capture-cta{font-size:12px}.vw-module-heading{flex-wrap:wrap}.vw-task-tools{align-items:flex-start;flex-direction:row;justify-content:flex-start;gap:12px}.vw-role-guide h2{font-size:20px}.vw-forward-card{padding:15px}.vw-secondary-links{gap:18px}}
+
+.vw-manage-group { display: grid; gap: 4px; margin-top: 18px; }
+.vw-nav-heading { padding: 0 13px 5px; color: #66758a; font-size: 11px; font-weight: 650; letter-spacing: 0; }
+.vt-page { display: grid; gap: 20px; min-width: 0; }
+.vt-page .page-heading { margin-bottom: 0; }
+.vt-trust { margin: 0; font-size: 13px; line-height: 1.6; }
+.vt-trust a { color: #52677e; text-underline-offset: 3px; }
+.vt-section-heading { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+.vt-section-heading h2, .vt-overview h2 { font-size: 18px; letter-spacing: 0; }
+.vt-section-heading p { color: #66758a; font-size: 12px; }
+.vt-flags { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 12px 0 0; }
+.vt-flags > div { padding: 18px; border: 1px solid #dce5f0; border-radius: 12px; background: #fff; }
+.vt-flags dt { font-size: 13px; color: #52677e; }
+.vt-flags dd { margin: 10px 0 0; font-size: 28px; font-weight: 650; }
+.vt-overview { min-width: 0; }
+.vt-overview .field { max-width: 320px; margin: 16px 0; }
+.vt-members { margin-top: 16px; width: 100%; min-width: 650px; border-collapse: collapse; }
+.vt-members th { text-align: left; font-size: 12px; color: #66758a; }
+.vt-members td, .vt-members th { padding: 14px 12px; border-bottom: 1px solid #e4ebf3; }
+.vt-members tr:has(td) { cursor: pointer; }
+.vt-members tr:has(td):hover, .vt-members tr:focus-within { background: #f2f7ff; }
+.vt-members a { font-weight: 600; text-underline-offset: 3px; }
+.vt-decisions h2 { font-size: 18px; letter-spacing: 0; }
+@media(max-width: 640px) { .vt-flags { grid-template-columns: 1fr; } .vt-flags > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; } .vt-flags dd { margin: 0; font-size: 24px; } }

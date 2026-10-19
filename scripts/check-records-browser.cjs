@@ -17,6 +17,7 @@ const assert = require('node:assert/strict');
       calls.push({ path: url.pathname, params: Object.fromEntries(url.searchParams), method: req.method(), args }); let body = {}, status = 200, total = null;
       if (url.pathname.endsWith('/token')) body = { access_token: 'record-token', refresh_token: 'record-refresh', expires_in: 3600, token_type: 'bearer', user };
       else if (url.pathname.endsWith('/user')) body = user;
+      else if (url.pathname.endsWith('/company_active_member_count')) body = 2;
       else if (url.pathname.endsWith('/my_day_summary')) body = { pending_drafts: 0, completed_sections: [], forwarding_address: null };
       else if (url.pathname.endsWith('/my_invitation')) body = [];
       else if (url.pathname.endsWith('/companies')) body = company;

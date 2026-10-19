@@ -81,6 +81,9 @@ function ActionWorkspace({
   const own = !member && ownerId === profile!.id
   const summary = useMyDaySummary(ownerId, revision, own)
   const firstName = profile!.full_name.trim().split(/\s+/)[0]
+  useEffect(() => {
+    if (own && params.get('visibility') === 'manager') access.current?.showModal()
+  }, [own, params])
 
   const key = `${ownerId}:${view}:${query}:${page}:${revision}:${today}:${decisionId}`
 
@@ -610,6 +613,7 @@ function ActionWorkspace({
               What my manager can see
             </h2>
 
+            <p>You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.</p>
             <p>
               Managers in your department can read your
               responsibilities, workstreams, external contacts,

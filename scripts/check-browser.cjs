@@ -15,6 +15,7 @@ await page.route('https://*.supabase.co/**',async route=>{
  let body={};let status=200;
  if(url.pathname.endsWith('/token')) body={access_token:'browser-test-access',refresh_token:'browser-test-refresh',token_type:'bearer',expires_in:3600,user};
  else if(url.pathname.endsWith('/capture_list'))body={rows:[],count:0};
+ else if(url.pathname.endsWith('/company_active_member_count'))body=2;
  else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
  else if(url.pathname.endsWith('/user'))body=user;
  else if(url.pathname.endsWith('/profiles'))body=profile;
