@@ -101,3 +101,9 @@ The shared mobile table CSS hides column headings and expects data-label attribu
 ## 19 October 2026: visibility explanation stays on Team activity
 
 Owner approved replacing the confusing My day redirect with an in-place Team visibility dialog. The exact client trust statement remains clickable and shares `WorkVisibilityDetails` with the employee’s “What my manager can see” panel. Manager-facing phrasing describes team access; employee wording and title remain intact. This supersedes the earlier redirect interaction only. No navigation, member/filter state or access rules change. Browser checks cover mobile/desktop opening, unchanged URL, close/focus restoration and Escape.
+
+## 19 October 2026: Capture review and returning-user navigation
+
+See `docs/client-capture-review.md`. New client instructions supersede the earlier always-login Open workspace rule: signed-in visitors now enter protected /app and do not see a duplicate public Log in link, including after reload. Signed-out entry and account guards remain intact.
+
+Capture uses the client’s exact title/subtitle/steps/privacy text and shared sidebar My role label. Manual entry is secondary; empty states no longer instruct users to type drafts manually. Confirmed items leave Review drafts and appear under Saved. Capture display dates are formatted without timezone shifts; date input/storage formats stay ISO. Archive has the requested tooltip. Client-requested Coming soon status is shown for unimplemented AI drafting, forwarding and file uploads. This explicit client requirement overrides the general avoidance of progress labels for these unavailable capabilities only. AI prose cleanup remains a requirement for the forthcoming AI drafting pipeline; this change does not implement AI or rewrite manual/source text. Database grants and RPCs are unchanged.
