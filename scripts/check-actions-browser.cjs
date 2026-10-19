@@ -56,7 +56,7 @@ const { randomUUID } = require('node:crypto');
       const headers = total === null ? {} : { 'access-control-expose-headers': 'content-range', 'content-range': total ? `0-${Math.max(0, body.length - 1)}/${total}` : '*/0' };
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
-    await page.goto('http://127.0.0.1:5173/login'); assert.equal(await page.getByLabel('Work email').inputValue(), ''); assert.equal(await page.getByLabel('Work email').getAttribute('placeholder'), 'e.g. ada@example.com'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('actions-test-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: /^Good morning, / }).waitFor();
+    await page.goto('http://127.0.0.1:5173/login'); assert.equal(await page.getByLabel('Work email').inputValue(), ''); assert.equal(await page.getByLabel('Work email').getAttribute('placeholder'), 'you@company.com'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('actions-test-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: /^Good morning, / }).waitFor();
     await page.getByRole('link', { name: 'Capture an email or notes', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Today', exact: true }).getAttribute('aria-pressed'), 'true');
     await page.getByText('Nothing due today. Forward an email or add a task.', { exact: true }).waitFor();

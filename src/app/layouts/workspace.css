@@ -268,7 +268,7 @@
   color: #6584a3;
   display: block;
   font-size: 10px;
-  letter-spacing: 1.1px;
+  letter-spacing:var(--small-heading-letter-spacing);
   text-transform: uppercase;
   font-weight: 600;
 }

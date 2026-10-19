@@ -34,7 +34,7 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --control-height: 48px; --sidebar-width: 232px; --content-max: 1440px;
   --border-width: 1px; --focus-width: 3px; --focus-offset: 3px;
-  --disabled-opacity: .45; --tracking: .04em;
+  --disabled-opacity: .45; --tracking: var(--text-letter-spacing);
   --hero-width: 960px; --standalone-width: 900px; --tile-width: 240px;
   --hero-measure: 18ch; --body-measure: 60ch; --overlay-layer: 10;
   --glass-surface: rgb(255 255 255 / 82%);
@@ -79,7 +79,7 @@
   --landing-lead-size: 18px;
   --landing-logo-size: 30px;
   --landing-tracking: var(--heading-letter-spacing);
-  --landing-eyebrow-tracking: .12em;
+  --landing-eyebrow-tracking: var(--text-letter-spacing);
   --landing-line-tight: 1.1;
   --landing-line-roomy: 1.75;
   --landing-wide-radius: 24px;
