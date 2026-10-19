@@ -805,7 +805,9 @@
 .vt-flags dd { margin: 10px 0 0; font-size: 28px; font-weight: 650; }
 .vt-overview { min-width: 0; }
 .vt-overview .field { max-width: 320px; margin: 16px 0; }
-.vt-members { margin-top: 16px; width: 100%; min-width: 650px; border-collapse: collapse; }
+.vt-members { margin-top: 16px; width: 100%; table-layout: fixed; border-collapse: collapse; }
+.vt-members th:first-child { width: 28%; }
+.vt-members th, .vt-members td { overflow-wrap: anywhere; }
 .vt-members th { text-align: left; font-size: 12px; color: #66758a; }
 .vt-members td, .vt-members th { padding: 14px 12px; border-bottom: 1px solid #e4ebf3; }
 .vt-members tr:has(td) { cursor: pointer; }
@@ -813,3 +815,18 @@
 .vt-members a { font-weight: 600; text-underline-offset: 3px; }
 .vt-decisions h2 { font-size: 18px; letter-spacing: 0; }
 @media(max-width: 640px) { .vt-flags { grid-template-columns: 1fr; } .vt-flags > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; } .vt-flags dd { margin: 0; font-size: 24px; } }
+
+/* Keep member metrics labelled when the global table layout stacks on mobile. */
+@media (max-width: 760px) {
+  .vt-overview .table-scroll { overflow: visible; }
+  .vt-overview .vt-members { width: 100%; min-width: 0; }
+  .vt-overview .vt-members thead { display: table-header-group; position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vt-overview .vt-members tbody { width: 100%; }
+  .vt-overview .vt-members tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0 0 14px; border: 1px solid #dce5f0; border-radius: 12px; overflow: hidden; background: #fff; }
+  .vt-overview .vt-members td { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px; border: 0; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .vt-overview .vt-members td::before { content: attr(data-label); font-size: 12px; line-height: 1.5; font-weight: 500; color: #66758a; }
+  .vt-overview .vt-members td:first-child { grid-column: 1 / -1; padding: 16px 14px; border-bottom: 1px solid #e4ebf3; font-size: 16px; }
+  .vt-overview .vt-members td:first-child::before { content: none; }
+  .vt-overview .vt-members td:first-child a { display: block; padding-block: 4px; }
+  .vt-overview .vt-members td:last-child { align-items: flex-start; }
+}

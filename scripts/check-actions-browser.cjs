@@ -115,6 +115,22 @@ const { randomUUID } = require('node:crypto');
     actions.push({ ...actions[0], id: randomUUID(), owner_id: colleague.id, title: 'Colleague completed report', status: 'done', completed_at: new Date().toISOString(), completion_note: 'Figures checked and report sent.' });
     await page.getByRole('button', { name: 'Menu', exact: true }).click(); await page.getByRole('link', { name: 'Team activity', exact: true }).click(); await page.getByRole('heading', { name: 'Team activity', exact: true }).waitFor();
     await page.getByText('See what your team has captured, finished and left open.',{exact:true}).waitFor();
+    await page.getByRole('link', { name: colleague.full_name, exact: true }).waitFor();
+    for (const width of [320,360,390,768,1024,1440]) {
+      await page.setViewportSize({width,height:900});
+      assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`team overview overflow at ${width}`);
+      const geometry=await page.locator('.vt-members').evaluate(table=>{
+        const row=table.querySelector('tbody tr'),cells=[...row.querySelectorAll('td')];
+        return {tableWidth:table.getBoundingClientRect().width,parentWidth:table.parentElement.clientWidth,rowDisplay:getComputedStyle(row).display,labels:cells.slice(1).map(cell=>({label:cell.dataset.label,visible:getComputedStyle(cell,'::before').content})),headerDisplay:getComputedStyle(table.querySelector('thead')).display};
+      });
+      assert(geometry.tableWidth<=geometry.parentWidth+1,`team table wider than container at ${width}`);
+      if(width<=760){
+        assert.equal(geometry.rowDisplay,'grid');
+        for(const cell of geometry.labels)assert.equal(cell.visible,JSON.stringify(cell.label),`missing metric label at ${width}`);
+      } else {assert.equal(geometry.rowDisplay,'table-row');assert.notEqual(geometry.headerDisplay,'none');}
+    }
+    await page.setViewportSize({width:360,height:800});
+
     await page.getByRole('link',{name:'Back to My day',exact:true}).waitFor();
     assert.equal(await page.getByLabel('Search team members').count(),0);
     await page.getByRole('link',{name:'You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.',exact:true}).click();
