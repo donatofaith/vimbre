@@ -57,6 +57,17 @@ const { chromium } = require('playwright');
     await storyPage.locator('#pricing').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(200);
     assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).every(a => a.playState !== 'running')));
+    await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
+    await storyPage.waitForTimeout(100);
+    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 3)), 'Hero stops after three loops');
+    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:35000});
+    for(const selector of ['.rs-story-stage','.rs-story-record','.rs-story-alex','.rs-story-resolution']){
+      assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
+    }
+    const og = await page.request.get('http://127.0.0.1:5174/vimbre-og-image-1200.png');
+    assert.equal(og.status(),200);
+    const image = await og.body(); assert.equal(image.readUInt32BE(16),1200); assert.equal(image.readUInt32BE(20),630);
+    assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'),'https://vimbre.com/vimbre-og-image-1200.png');
     assert.deepEqual(errors, []);
     await context.close(); await plain.close(); await normal.close();
     console.log('Production landing: prerender, schema, copy, responsive widths, FAQ keyboard, reduced motion, no JS and hero pause passed.');

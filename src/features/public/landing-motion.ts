@@ -2,6 +2,7 @@ import { animate, scroll } from 'motion'
 import type { AnimationSequence } from 'motion'
 const ease: [number, number, number, number] = [.22, 1, .36, 1]
 export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onState: (state: { paused: boolean; ready: boolean }) => void) {
+  delete shell.dataset.storyComplete
   const disposers: (() => void)[] = []
   const all = new Set<ReturnType<typeof animate>>()
   let disposed = false, userPaused = false, heroVisible = false, complete = false
@@ -29,14 +30,21 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const hero = animate(timeline, { repeat: 2 })
   hero.pause()
   all.add(hero)
-  const restore = () => { hero.cancel() }
+  const restore = () => {
+    shell.dataset.storyComplete = 'true'
+    hero.cancel()
+    shell.querySelectorAll<HTMLElement>('.rs-story-stage, [data-story-source], [data-story-chip], [data-story-dot], [data-story-record], [data-story-row], [data-story-ring], [data-story-sam], [data-story-alex], [data-story-line], [data-story-resolution]').forEach(el => {
+      el.style.removeProperty('opacity')
+      el.style.removeProperty('transform')
+    })
+  }
   const sync = () => {
     if (disposed || complete) return
     if (heroVisible && !document.hidden && !userPaused) hero.play()
     else hero.pause()
     onState({ paused: userPaused, ready: true })
   }
-  void hero.then(() => { if (!disposed) { complete = true; restore(); onState({ paused: true, ready: true }) } })
+  void hero.then(() => { if (!disposed) { complete = true; restore(); onState({ paused: true, ready: false }) } })
   const heroObserver = new IntersectionObserver(entries => { heroVisible = entries[0].intersectionRatio >= .4; sync() }, { threshold: [0, .4] })
   heroObserver.observe(shell)
   disposers.push(() => heroObserver.disconnect())

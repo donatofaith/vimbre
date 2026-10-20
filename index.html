@@ -13,6 +13,13 @@
     <meta property="og:title" content="Vimbre | Decision Records for Teams and Handovers" />
     <meta property="og:description" content="Know what your team decided, when and why. Ready for whoever covers, joins or takes over." />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://vimbre.com/vimbre-og-image-1200.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Vimbre. Know what your team decided, when and why." />
+    <meta name="twitter:title" content="Vimbre | Decision Records for Teams and Handovers" />
+    <meta name="twitter:description" content="Know what your team decided, when and why. Ready for whoever covers, joins or takes over." />
+    <meta name="twitter:image" content="https://vimbre.com/vimbre-og-image-1200.png" />
     <meta property="og:url" content="https://vimbre.com/" />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
@@ -44,6 +51,7 @@
           });
         };
         window.addEventListener('vimbre:ready', finish, { once:true });
+        requestAnimationFrame(() => { if (document.querySelector('#root h1')) finish(); });
         setTimeout(finish, 3000); setTimeout(remove, 5000);
       })();
     </script>

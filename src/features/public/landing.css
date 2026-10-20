@@ -24,3 +24,12 @@
 @keyframes rs-underline{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes rs-mark-pulse{0%,100%{opacity:1}50%{opacity:.7}}
 @media(prefers-reduced-motion:reduce){.rs-step-number i{transform:none!important}.rs-tools-lines path{stroke-dashoffset:0!important}}
+
+.rs-legal{max-width:800px}.rs-legal h1{font-size:clamp(40px,5vw,64px);margin-bottom:24px}.rs-legal section{margin-top:48px}.rs-legal section h2{font-size:26px;margin-bottom:20px}.rs-legal p+p{margin-top:20px}
+
+/* A completed story is a static frame. Author-important declarations also
+   protect it from an animation engine's deferred final style write. */
+.rs-story-shell[data-story-complete] :is(.rs-story-stage,.rs-story-record,[data-story-row],[data-story-chip],.rs-story-alex,.rs-story-resolution,.rs-story-cover-line){opacity:1!important;transform:none!important}
+.rs-story-shell[data-story-complete] :is(.rs-story-source,.rs-story-sam){opacity:.6!important;transform:none!important}
+.rs-story-shell[data-story-complete] :is(.rs-story-ring,[data-story-dot]){opacity:0!important}
+.rs-story-shell[data-story-complete] .rs-story-control{visibility:hidden}

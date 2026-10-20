@@ -183,3 +183,8 @@ Owner requests contact details near the landing-page footer rather than a separa
 ## 20 October 2026: landing page repositioning draft
 
 Owner supplies the complete founder build brief. Prepare the new decision-record positioning and page composition on a draft branch; section 12 explicitly requires founder launch confirmations. Preserve workspace pages and their client instructions. See docs/landing-repositioning.md for scope, current capabilities, missing brand/legal/social assets and the publication gate. Do not present unimplemented AI, forwarding, file upload, handover or cover workflows as active pricing features. The new brief supersedes the earlier copyright-only footer instruction for this homepage.
+
+
+## 20 October 2026: owner approves landing completion and publication
+
+Owner states that the client approved and instructs completion. This supersedes the prior draft-only hold. Finish the social sharing asset and metadata, three-loop final-frame behavior, initial HTML startup and production auditing, then promote the tested commit to development. Preserve original colour logo assets until the actual reverse logo is supplied. Privacy/Terms content has not been supplied; prepare content-driven routes and conditional links, without inventing legal policy or publishing empty documents. Missing documents and brand files remain factual outstanding items, not a new approval request. Live domain and Lighthouse results must be reported accurately.
