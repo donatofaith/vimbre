@@ -26,7 +26,8 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   frame('[data-story-line]', { transform: ['scaleY(0)', 'scaleY(1)'] }, 5.5, .5)
   frame('[data-story-resolution]', { opacity: [0, 1] }, 6.4, .4)
   frame('.rs-story-stage', { opacity: [1, 0] }, 8, .6)
-  const hero = animate(timeline, { repeat: 2, autoplay: false })
+  const hero = animate(timeline, { repeat: 2 })
+  hero.pause()
   all.add(hero)
   const restore = () => { hero.cancel() }
   const sync = () => {
@@ -74,7 +75,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
     const target = root.querySelector<HTMLElement>('[data-problem-record]')!
     const b = target.getBoundingClientRect()
     const moves = cards.map((el, i) => { const a = el.getBoundingClientRect(); return { el, x: b.left + b.width / 2 - a.left - a.width / 2, y: b.top + b.height / 2 - a.top - a.height / 2, angle: [-4, 5, 3, -3][i] } })
-    const detach = scroll(progress => {
+    const detach = scroll((progress: number) => {
       if (document.hidden) return
       moves.forEach(({ el, x, y, angle }) => { el.style.transform = `translate(${x * progress}px,${y * progress}px) rotate(${angle * (1 - progress)}deg)`; el.style.opacity = String(1 - progress) })
       target.style.opacity = String(Math.min(1, progress * 1.5))
@@ -87,7 +88,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   disposers.push(() => { mobile.removeEventListener('change', setupProblem); cleanupProblem() })
   const motif = root.querySelector<HTMLElement>('.rs-hero-motif')
   if (motif) {
-    const detach = scroll(progress => { if (!document.hidden) motif.style.transform = `translateY(${progress * -24}px) rotate(-20deg)` }, { target: shell, offset: ['start start', 'end start'] })
+    const detach = scroll((progress: number) => { if (!document.hidden) motif.style.transform = `translateY(${progress * -24}px) rotate(-20deg)` }, { target: shell, offset: ['start start', 'end start'] })
     disposers.push(() => { detach(); motif.style.removeProperty('transform') })
   }
   const final = root.querySelector<HTMLElement>('[data-final-section]')
