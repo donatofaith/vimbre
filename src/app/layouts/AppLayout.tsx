@@ -5,12 +5,13 @@ import {
   Outlet,
   useLocation,
 } from 'react-router-dom'
+import { Notifications } from '../../features/notifications/Notifications'
 import { navigation } from '../navigation'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
-import { ChatProvider, ChatNotifications, ChatLauncher } from '../../features/chat/ChatProvider'
+import { ChatProvider, ChatLauncher } from '../../features/chat/ChatProvider'
 import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 
 const icons: Record<string, string> = {
@@ -206,7 +207,7 @@ function WorkspaceLayout() {
 
           <div className="vw-topbar-actions">
             <ChatLauncher />
-            <ChatNotifications />
+            <Notifications />
             <button
               type="button"
               className="vw-help"

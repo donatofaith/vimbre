@@ -39,6 +39,7 @@ const assert = require('node:assert/strict')
       { id: bob, full_name: 'Bob Example', role: 'employee', active: true },
       { id: cara, full_name: 'Cara Example', role: 'manager', active: true },
     ]
+    let workRows = [], notificationTasks = [], notificationRecords = []
     const conversations = [],
       messageMap = new Map(),
       read = new Map()
@@ -117,7 +118,10 @@ const assert = require('node:assert/strict')
           completed_sections: [],
           forwarding_address: null,
         }
-      else if (path.endsWith('/actions')) body = []
+      else if (path.endsWith('/actions')) { const id=new URL(req.url()).searchParams.get('id')?.replace('eq.',''); body=notificationTasks.filter(row=>!id||row.id===id) }
+      else if (path.endsWith('/role_items')) {const url=new URL(req.url()), id=url.searchParams.get('id')?.replace('eq.',''), kind=url.searchParams.get('kind')?.replace('eq.',''); body=notificationRecords.filter(row=>(!id||row.id===id)&&(!kind||row.kind===kind))}
+      else if (path.endsWith('/work_notification_inbox')) body={count:workRows.length,unread:workRows.filter(r=>!r.read_at).length,items:workRows}
+      else if (path.endsWith('/work_notification_read')) {const row=workRows.find(r=>r.notification_key===a.p_key);if(row)row.read_at=new Date().toISOString();body=Boolean(row)}
       else if (path.endsWith('/chat_inbox')) body = inbox()
       else if (path.endsWith('/chat_people'))
         body = people.filter((p) =>
@@ -382,6 +386,33 @@ const assert = require('node:assert/strict')
         .count(),
       0,
     )
+    denied=false
+    await page.goto('http://127.0.0.1:5173/app')
+    const taskId=crypto.randomUUID(),recordId=crypto.randomUUID()
+    const due='2026-10-20'
+    notificationTasks=[{id:taskId,company_id:profile.company_id,owner_id:uid,title:'Submit the budget',details:'',due_date:due,status:'open',deleted_at:null,completion_note:'',created_at:new Date().toISOString()}, {id:crypto.randomUUID(),company_id:profile.company_id,owner_id:uid,title:'Another task',details:'',due_date:due,status:'open',deleted_at:null,completion_note:'',created_at:new Date().toISOString()}]
+    notificationRecords=[{id:recordId,company_id:profile.company_id,owner_id:uid,title:'Approve payroll',kind:'responsibility',details:'',due_date:due,recurrence:null,deleted_at:null,created_at:new Date().toISOString()}]
+    workRows=[{notification_key:'task-reminder',source_kind:'task',source_id:taskId,title:'Submit the budget',due_date:due,stage:'today',section:null,read_at:null},{notification_key:'role-reminder',source_kind:'role_item',source_id:recordId,title:'Approve payroll',due_date:due,stage:'approaching',section:'responsibility',read_at:null}]
+    await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:work-changed')))
+    await page.getByRole('button',{name:/Notifications/}).click()
+    let alerts=page.getByRole('dialog',{name:'Notifications',exact:true})
+    await alerts.getByText('Due today',{exact:true}).waitFor()
+    await alerts.getByText('Due soon',{exact:true}).waitFor()
+    assert.equal(await alerts.getByRole('link').filter({hasText:'Submit the budget'}).getAttribute('href'),`/app?task=${taskId}`)
+    await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).click()
+    await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).waitFor({state:'detached'})
+    await alerts.getByRole('link').filter({hasText:'Submit the budget'}).click()
+    await page.getByRole('heading',{name:'Submit the budget',exact:true}).waitFor()
+    assert.equal(await page.getByRole('heading',{name:'Another task',exact:true}).count(),0)
+    await page.getByRole('link',{name:'All tasks',exact:true}).click()
+    await page.getByRole('button',{name:/Notifications/}).click()
+    alerts=page.getByRole('dialog',{name:'Notifications',exact:true})
+    await alerts.getByRole('link').filter({hasText:'Approve payroll'}).click()
+    await page.getByRole('heading',{name:'Approve payroll',exact:true}).waitFor()
+    assert.equal(new URL(page.url()).searchParams.get('record'),recordId)
+    await page.getByRole('link',{name:'All records',exact:true}).click()
+    await page.getByRole('button',{name:'Add record',exact:true}).click()
+    await page.getByLabel('Deadline (optional)',{exact:true}).waitFor()
     assert.deepEqual(errors, [])
     console.log(
       JSON.stringify({

@@ -21,6 +21,7 @@ const assert = require('node:assert/strict');
       if (url.pathname.endsWith('/token')) body = { access_token: 'browser-token', refresh_token: 'browser-refresh', expires_in: 3600, token_type: 'bearer', user };
       else if (url.pathname.endsWith('/user')) body = user;
       else if (url.pathname.endsWith('/company_active_member_count')) body = 2;
+      else if (url.pathname.endsWith('/work_notification_inbox')) body={unread:0,count:0,items:[]};
       else if (url.pathname.endsWith('/my_day_summary')) body = { pending_drafts: 0, completed_sections: [], forwarding_address: null };
       else if (url.pathname.endsWith('/my_invitation')) body = pending ? [pending] : [];
       else if (url.pathname.endsWith('/companies')) body = company;

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
-import { emptyInbox, chatTime } from './chat-types'
+import { emptyInbox } from './chat-types'
 import type { ChatInbox } from './chat-types'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import './chat.css'
@@ -114,68 +114,4 @@ export function ChatLauncher() {
     <WorkspaceIcon name="chat" />
     {inbox.unread > 0 && <span className="chat-count" aria-hidden="true">{inbox.unread > 99 ? '99+' : inbox.unread}</span>}
   </NavLink>
-}
-export function ChatNotifications() {
-  const { inbox, error, refresh } = useChat()
-  const dialog = useRef<HTMLDialogElement>(null)
-  return (
-    <>
-      <button
-        className="chat-bell"
-        type="button"
-        aria-label={`Notifications${inbox.unread ? `, ${inbox.unread} unread` : ''}`}
-        onClick={() => {
-          refresh()
-          dialog.current?.showModal()
-        }}
-      >
-        <WorkspaceIcon name="bell" />
-        {inbox.unread > 0 && (
-          <span className="chat-count">
-            {inbox.unread > 99 ? '99+' : inbox.unread}
-          </span>
-        )}
-      </button>
-      <dialog
-        ref={dialog}
-        className="vw-dialog chat-notifications"
-        aria-labelledby="chat-notifications-title"
-      >
-        <div className="chat-dialog-heading">
-          <h2 id="chat-notifications-title">Notifications</h2>
-          <button
-            className="button button-secondary"
-            onClick={() => dialog.current?.close()}
-          >
-            Close
-          </button>
-        </div>
-        {error && (
-          <p role="alert" className="field-error">
-            Notifications could not be refreshed.{' '}
-            <button type="button" onClick={refresh}>
-              Retry
-            </button>
-          </p>
-        )}
-        {!error && inbox.items.length === 0 && <p>No unread notifications.</p>}
-        <ul>
-          {inbox.items.map((n) => (
-            <li key={n.id}>
-              <Link
-                to={`/app/chat?conversation=${n.conversation_id}&message=${n.message_id}`}
-                onClick={() => dialog.current?.close()}
-              >
-                <strong>
-                  {n.mentioned ? `${n.sender_name} mentioned you` : `New message from ${n.sender_name}`}
-                </strong>
-                {n.title !== n.sender_name && <span>in {n.title}</span>}
-                <small>{chatTime(n.created_at)}</small>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </dialog>
-    </>
-  )
 }

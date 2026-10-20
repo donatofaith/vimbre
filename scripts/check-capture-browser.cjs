@@ -20,6 +20,7 @@ const assert = require('node:assert/strict');
       else if (url.pathname.endsWith('/profiles')) body = profile;
       else if (url.pathname.endsWith('/companies')) body = company;
       else if (url.pathname.endsWith('/my_invitation')) body = [];
+      else if (url.pathname.endsWith('/work_notification_inbox')) body={unread:0,count:0,items:[]};
       else if (url.pathname.endsWith('/my_day_summary')) body = { pending_drafts: drafts.filter(d => d.status === 'pending').length, completed_sections: [], forwarding_address: null };
       else if (url.pathname.endsWith('/actions')) body = [];
       else if (url.pathname.endsWith('/capture_list')) { const rows = sources.filter(s => Boolean(s.deleted_at) === args.p_archived); body = { rows, count: rows.length }; }

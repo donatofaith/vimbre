@@ -88,6 +88,11 @@ function WebLink({
 }
 
 export function RoleRecordPage() {
+  const [params] = useSearchParams()
+  return <RoleRecordContent key={params.get('record') ?? 'all'} />
+}
+
+function RoleRecordContent() {
   const { profile, company } = useAuth()
   const accessDialog = useRef<HTMLDialogElement>(null)
 
@@ -98,6 +103,8 @@ export function RoleRecordPage() {
   const [ownerError, setOwnerError] = useState(false)
 
   const [sectionParams, setSectionParams] = useSearchParams()
+  const requestedRecord = sectionParams.get('record') ?? ''
+  const recordId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedRecord) ? requestedRecord : ''
   const requestedSection = sectionParams.get('section')
   const tab: Tab = requestedSection === 'decision' || itemKinds.some(([kind]) => kind === requestedSection)
     ? requestedSection as Tab : 'responsibility'
@@ -135,7 +142,7 @@ export function RoleRecordPage() {
 
   const key =
     `${ownerId}:${tab}:${archived}:${page}:` +
-    `${revision}:${query}:${decisionStatus}`
+    `${revision}:${query}:${decisionStatus}:${recordId}`
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -217,6 +224,8 @@ export function RoleRecordPage() {
           .eq('kind', tab)
           .ilike('title', `%${query}%`)
 
+        if (recordId) request = request.eq('id', recordId)
+
         request = archived
           ? request.not('deleted_at', 'is', null)
           : request.is('deleted_at', null)
@@ -243,7 +252,7 @@ export function RoleRecordPage() {
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, tab, archived, page, query, decisionStatus])
+  }, [key, ownerId, tab, archived, page, query, decisionStatus, recordId])
 
   useEffect(() => {
     let cancelled = false
@@ -280,7 +289,7 @@ export function RoleRecordPage() {
       })
   }, [ownerId])
 
-  const reload = () => setRevision(value => value + 1)
+  const reload = () => { setRevision(value => value + 1); window.dispatchEvent(new Event('vimbre:work-changed')) }
 
   const saved = () => {
     setEditor(null)
@@ -389,6 +398,7 @@ export function RoleRecordPage() {
         )}
       </header>
 
+      {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
       {profile?.role !== 'employee' && (
         <section
           className="vr-owner"
@@ -682,7 +692,7 @@ export function RoleRecordPage() {
 
                         {item.due_date && (
                           <p>
-                            Next deadline:{' '}
+                            {item.kind === 'responsibility' ? 'Deadline: ' : 'Next deadline: '}
                             <time dateTime={item.due_date}>
                               {item.due_date}
                             </time>

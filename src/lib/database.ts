@@ -20,6 +20,8 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member'
     > & {
+      work_notification_inbox: { Args: {p_timezone: string; p_page: number}; Returns: Json }
+      work_notification_read: { Args: {p_key: string; p_timezone: string}; Returns: boolean }
       chat_people: { Args: {p_search: string; p_page: number}; Returns: Json }
       chat_create: { Args: {p_kind: string; p_title: string; p_members: string[]}; Returns: string }
       chat_list: { Args: {p_page: number}; Returns: Json }

@@ -26,7 +26,8 @@ const views: [View, string][] = [
 ]
 
 export function WorkspacePage() {
-  return <ActionWorkspace />
+  const [params] = useSearchParams()
+  return <ActionWorkspace key={params.get('task') ?? 'all'} />
 }
 
 export function TeamMemberActions({
@@ -55,11 +56,13 @@ function ActionWorkspace({
       ? linked
       : ''
 
+  const requestedTask = params.get('task') ?? ''
+  const taskId = !member && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedTask) ? requestedTask : ''
   const ownerId = member?.id ?? profile!.id
 
   const [today, setToday] = useState(localDate)
   const [greeting, setGreeting] = useState(localGreeting)
-  const [view, setView] = useState<View>(member || decisionId ? 'open' : 'today')
+  const [view, setView] = useState<View>(member || decisionId || taskId ? 'open' : 'today')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
@@ -88,9 +91,9 @@ function ActionWorkspace({
     if (own && params.get('visibility') === 'manager') access.current?.showModal()
   }, [own, params])
 
-  const key = `${ownerId}:${view}:${query}:${page}:${revision}:${today}:${decisionId}`
+  const key = `${ownerId}:${view}:${query}:${page}:${revision}:${today}:${decisionId}:${taskId}`
 
-  const reload = () => setRevision(value => value + 1)
+  const reload = () => { setRevision(value => value + 1); window.dispatchEvent(new Event('vimbre:work-changed')) }
 
   useEffect(() => {
     const refreshClock = () => {
@@ -149,6 +152,8 @@ function ActionWorkspace({
         request = request.lt('due_date', today)
       }
 
+      if (taskId) request = request.eq('id', taskId)
+
       if (decisionId) {
         request = request.eq('decision_id', decisionId)
       }
@@ -188,7 +193,7 @@ function ActionWorkspace({
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, view, query, page, today, decisionId])
+  }, [key, ownerId, view, query, page, today, decisionId, taskId])
 
   useEffect(() => {
     void supabase
@@ -372,6 +377,7 @@ function ActionWorkspace({
           </div>
         </div>
 
+        {taskId && <Link to="/app">All tasks</Link>}
         {decisionId && (
           <p className="notice">
             Showing tasks linked to the selected decision.{' '}

@@ -31,6 +31,7 @@ const { randomUUID } = require('node:crypto');
           body={rows:rows.slice(args.p_page*20,args.p_page*20+20),count:rows.length,total_active_count:1+teamMembers.length,scope:profile.role==='hr_admin'?'company':'department',today:'2026-10-16',week_start:'2026-10-12',flags,handovers_available:false};
         }
       }
+      else if (url.pathname.endsWith('/work_notification_inbox')) body={unread:0,count:0,items:[]};
       else if (url.pathname.endsWith('/my_day_summary')) body = summary;
       else if (url.pathname.endsWith('/my_invitation')) body = [];
       else if (url.pathname.endsWith('/companies')) body = company;
