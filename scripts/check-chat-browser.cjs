@@ -402,6 +402,7 @@ const assert = require('node:assert/strict')
     await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).click()
     await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).waitFor({state:'detached'})
     await alerts.getByRole('link').filter({hasText:'Submit the budget'}).click()
+    await page.getByRole('link',{name:'All tasks',exact:true}).waitFor()
     await page.getByRole('heading',{name:'Submit the budget',exact:true}).waitFor()
     assert.equal(await page.getByRole('heading',{name:'Another task',exact:true}).count(),0)
     await page.getByRole('link',{name:'All tasks',exact:true}).click()
@@ -416,6 +417,9 @@ const assert = require('node:assert/strict')
     assert.deepEqual(errors, [])
     console.log(
       JSON.stringify({
+        deadlineReminders: 'passed',
+        exactReminderLinks: 'passed',
+        responsibilityDeadlineInput: 'passed',
         groups: 'passed',
         directMessages: 'passed',
         replyContext: 'passed',
