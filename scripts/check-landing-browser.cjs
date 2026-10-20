@@ -60,8 +60,7 @@ const { chromium } = require('playwright');
     await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(100);
     assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 3)), 'Hero stops after three loops');
-    await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).forEach(a => { a.playbackRate = 100 }));
-    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:10000});
+    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:35000});
     for(const selector of ['.rs-story-stage','.rs-story-record','.rs-story-alex','.rs-story-resolution']){
       assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
     }
