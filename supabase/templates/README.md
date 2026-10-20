@@ -1,6 +1,6 @@
 # Vimbre account emails
 
-Status: **prepared, not yet applied to hosted Supabase Auth**. GitHub/Vercel deployment does not update hosted Auth templates. The connected Supabase tools cannot read or edit this setting, and no CLI Management API credential is available. Applying them requires approved dashboard access or an authenticated Management API session.
+Status: **all 13 subjects and HTML templates applied to hosted Supabase Auth on 20 October 2026** through the owner-authorized dashboard session. Every HTML template was reloaded and matched the repository source. Purpose-specific subjects were checked; privacy-redacted subject fields were checked visually in the dashboard. GitHub/Vercel deployment alone does not apply hosted Auth settings.
 
 Use `manifest.json` for each subject, HTML path and the exact Management API keys. Apply only those subject/content keys. Preserve existing SMTP credentials, sender, redirect allowlist, token expiry, security notification enablement and Auth settings. Do not replace the whole Auth configuration from local defaults.
 
@@ -12,8 +12,12 @@ Invitation wording: “Hi [name], [inviter] has invited you to join [company] on
 
 The server reads company, inviter and role from protected database rows. It never trusts display details supplied in the request, and metadata never grants membership. Pending existing recipients get refreshed metadata before resend. When an invitation becomes accepted/cancelled/expired, the database clears only the email personalization fields. Editable names are escaped with the Go template html function. Existing link expiry and seven-day invitation eligibility are distinct; templates do not invent a token expiry duration.
 
-## Verification and remaining activation
+## Verification and remaining setup
 
 Unit tests check invitation context, authorization, metadata refresh, failed delivery, link variables, branding and separate reset purpose. Browser tests assert actual red computed colors for duplicate invitations and server-reported duplicate signups. Rollback-only SQL verifies metadata cleanup without changing membership or unrelated fields. No real invitation or test email has been sent by this change.
 
-After applying hosted subjects/content, use the dashboard template preview to validate both invitation and ordinary-account branches and check one owner-authorized inbox per active flow. Rendering in real mail clients remains unverified. The current sender/domain/Brevo configuration is unchanged. A separate automatic welcome email is not implemented by these Auth templates; it requires a post-verification/acceptance delivery flow.
+The password-change template was visually checked in the hosted Preview panel. Template validation initially hit a temporary ThrottlerException rate limit; remaining templates were retried after other verification and all were saved successfully. Nine email/invitation unit tests pass. No real email was sent; invitation personalization and delivery still need an owner-authorized inbox test. Dashboard previews do not substitute actual recipient metadata for all Go-template conditionals.
+
+Brevo custom SMTP remains enabled at smtp-relay.brevo.com:587 with sender display name Vimbre. Credentials and sender address were preserved. Existing security notification switches were preserved: password changed is enabled; the other six security notifications remain disabled. Their designs are saved for when those notifications are enabled. Auth link expiry, allowed redirects and Site URL were not changed.
+
+Remaining: configure and verify the no-reply sender/domain with Brevo; support@vimbre.com and hello@vimbre.com routing/reply behavior must be checked separately. Cloudflare forwarding alone is not outbound SMTP. A separate automatic welcome email after verification/accepted membership is not implemented by Auth templates and needs a transactional sender credential and a reliable post-verification delivery flow. No Brevo API key or SMTP secret is available in the coding environment; do not expose credentials or imply welcome delivery is active.

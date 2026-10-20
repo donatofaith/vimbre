@@ -1,5 +1,5 @@
 {
-  "status": "prepared_not_applied_to_hosted_auth",
+  "status": "applied_to_hosted_auth",
   "project_ref": "ijyjrooarwoafkykvzjp",
   "templates": {
     "confirmation": {
@@ -80,5 +80,7 @@
       "content_key": "mailer_templates_identity_unlinked_notification_content",
       "subject_key": "mailer_subjects_identity_unlinked_notification"
     }
-  }
+  },
+  "applied_date": "2026-10-20",
+  "verification": "All 13 HTML templates reloaded from hosted dashboard and matched repository source; no real email sent."
 }
