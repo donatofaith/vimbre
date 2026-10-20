@@ -6,6 +6,8 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 
+const LegalPage = lazy(() => import('../features/public/LegalPage').then(module => ({ default: module.LegalPage })))
+
 const ChatPage = lazy(() => import('../features/chat/ChatPage').then(module => ({ default: module.ChatPage })))
 
 const HomePage = lazy(() =>
@@ -129,6 +131,8 @@ export function App() {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/privacy" element={<LegalPage page="privacy" />} />
+          <Route path="/terms" element={<LegalPage page="terms" />} />
           <Route path="/contact" element={<Navigate to="/#contact" replace />} />
           <Route
             path="/login"

@@ -19,3 +19,7 @@ jobs:
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - run: node scripts/build-social-image.cjs
+      - name: Audit deployed public website
+        if: github.ref == 'refs/heads/development'
+        run: node scripts/audit-public.cjs
