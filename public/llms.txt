@@ -1,0 +1,5 @@
+# Vimbre
+
+Vimbre is a shared decision log for teams. It keeps each decision with its reason, date, owner and next step, so whoever covers for a colleague, joins a team or takes over a role can see what happened and what to do first. It works next to the tools you already use.
+
+Vimbre is for HR managers, team leads and directors. It helps when someone is on leave, leaves the company, joins a team or changes role, because the person stepping in can see recent decisions, open work and who to speak to.

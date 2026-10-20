@@ -178,3 +178,8 @@ Contact release verification: lint, all 35 unit tests, TypeScript and production
 ## 20 October 2026: contact section on the landing page
 
 Owner requests contact details near the landing-page footer rather than a separate page. Reviewed Linear contact routing (support vs general inquiries) and Notion's bottom-of-page resources/help navigation. Added a compact How can we help? contact section after the final landing CTA and directly above the copyright-only footer. The Contact navbar anchor scrolls there on desktop/mobile, workspace All contact options links to /#contact, and /contact redirects to /#contact for existing links. Hash scrolling waits for lazy-loaded landing content, including reloads. Both email addresses and the existing email-template support links remain unchanged. No contact form, chat support, download, phone/address, response-time promise or sender change is introduced.
+
+
+## 20 October 2026: landing page repositioning draft
+
+Owner supplies the complete founder build brief. Prepare the new decision-record positioning and page composition on a draft branch; section 12 explicitly requires founder launch confirmations. Preserve workspace pages and their client instructions. See docs/landing-repositioning.md for scope, current capabilities, missing brand/legal/social assets and the publication gate. Do not present unimplemented AI, forwarding, file upload, handover or cover workflows as active pricing features. The new brief supersedes the earlier copyright-only footer instruction for this homepage.
