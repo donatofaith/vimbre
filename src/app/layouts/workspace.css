@@ -832,3 +832,7 @@
 }
 
 .vt-trust-button { display: inline; max-width: 100%; border: 0; padding: 0; background: transparent; color: #52677e; font: inherit; line-height: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+.vw-brand-surface { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 9px; background: #fff; }
+.vw-brand-surface .vimbre-logo-full { width: 130px; height: auto; }
+@media (max-width: 760px) { .vw-brand-surface .vimbre-logo-full { width: 112px; } }

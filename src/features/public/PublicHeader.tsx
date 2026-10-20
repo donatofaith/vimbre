@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/ui/BrandLogo'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
@@ -7,7 +8,7 @@ export function PublicHeader({ theme, onToggleTheme }: { theme: 'light' | 'dark'
   const { profile } = useAuth()
   const [open, setOpen] = useState(false)
   return <header className="public-header glass-surface">
-    <Link className="wordmark brand" to="/" aria-label="Vimbre home"><span className="brand-mark" aria-hidden="true"><i /><i /></span>vimbre</Link>
+    <Link className="wordmark brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link>
     <nav id="public-navigation" className={`public-nav${open ? ' is-open' : ''}`} aria-label="Public">
       <a href="#how-it-works" onClick={() => setOpen(false)}>How it works</a><a href="#features" onClick={() => setOpen(false)}>What Vimbre does</a><a href="#questions" onClick={() => setOpen(false)}>Questions</a>
     </nav>

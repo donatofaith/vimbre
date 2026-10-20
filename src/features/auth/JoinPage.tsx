@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/ui/BrandLogo'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -31,7 +32,7 @@ export function JoinPage() {
     } catch { setError('Could not accept this invitation. It may have expired or been cancelled. Ask your HR Admin to resend it, then retry.') }
     finally { setBusy(false) }
   }
-  return <main className="public-page auth-page"><Link className="wordmark" to="/">vimbre</Link><section className="auth-card glass-surface"><h1 tabIndex={-1}>{account.invitation ? `Join ${account.invitation.company_name}` : 'Your invitation'}</h1>
+  return <main className="public-page auth-page"><Link className="wordmark" to="/" aria-label="Vimbre home"><BrandLogo /></Link><section className="auth-card glass-surface"><h1 tabIndex={-1}>{account.invitation ? `Join ${account.invitation.company_name}` : 'Your invitation'}</h1>
     {accepted && account.error ? <><p role="alert">Your invitation was accepted, but the workspace could not be loaded.</p><Button onClick={account.refresh}>Retry loading workspace</Button></> : account.loading || accepted ? <p role="status">Loading your workspace…</p> : !account.session ? <p>Open the email sign in link sent by your HR Admin. If it has expired, ask them to resend your invitation. <Link to="/login">Already joined? Log in</Link>.</p> : account.invitation ? <><p>{account.invitation.full_name}, you’re invited as {roleLabel(account.invitation.role)}{account.invitation.department_name ? ` in ${account.invitation.department_name}` : ''}.</p><p className="muted">Set your password to accept. This invitation expires {new Date(account.invitation.expires_at).toLocaleDateString()}.</p><form className="auth-form" onSubmit={accept}>
       <Input label="New password" name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={128} /><Input label="Confirm password" name="confirm" type="password" autoComplete="new-password" required maxLength={128} />
       {error && <p className="field-error" role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy ? 'Joining…' : 'Accept invitation'}</Button>

@@ -6,6 +6,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 import { Notifications } from '../../features/notifications/Notifications'
+import { BrandLogo } from '../../components/ui/BrandLogo'
 import { navigation } from '../navigation'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
@@ -116,11 +117,7 @@ function WorkspaceLayout() {
             to="/"
             aria-label="Vimbre home"
           >
-            <span className="vw-mark" aria-hidden="true">
-              <i />
-              <i />
-            </span>
-            Vimbre
+            <span className="vw-brand-surface"><BrandLogo /></span>
           </Link>
 
           <button

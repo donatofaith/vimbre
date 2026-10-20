@@ -438,3 +438,5 @@
     transition: none !important;
   }
 }
+.v-auth-brand .vimbre-logo-full { width: 144px; height: auto; }
+@media (max-width: 600px) { .v-auth-brand .vimbre-logo-full { width: 118px; } }

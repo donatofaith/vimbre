@@ -47,7 +47,22 @@ const assert = require('node:assert/strict');
       const headers = total === null ? {} : { 'access-control-expose-headers': 'content-range', 'content-range': total ? `0-${Math.max(0, body.length - 1)}/${total}` : '*/0' };
       await route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
     });
+    const source = await (await page.request.get('http://127.0.0.1:5173/')).text();
+    assert(source.includes('class="boot-logo" src="/vimbre-lockup-compact-colour.svg"'));
+    const favicon = await page.request.get('http://127.0.0.1:5173/favicon-192.png');
+    assert.equal(favicon.status(), 200);
+    const faviconBytes = await favicon.body(); assert.equal(faviconBytes.readUInt32BE(16), 192); assert.equal(faviconBytes.readUInt32BE(20), 192);
     await page.goto('http://127.0.0.1:5173/'); await page.getByRole('heading', { name: 'Stop losing what your team already decided' }).waitFor();
+    await page.locator('.rs-brand .vimbre-logo-full').waitFor();
+    assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/favicon-192.png');
+    await page.waitForFunction(() => [...document.querySelectorAll('.rs-site img.vimbre-logo')].every(img => img.complete && img.naturalWidth > 0));
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({width, height: 900});
+      assert(await page.locator('.rs-brand .vimbre-logo-full').isVisible());
+      assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `Brand header overflow at ${width}`);
+    }
+    await page.setViewportSize({width: 1280, height: 720});
+
     assert.equal(await page.locator('.rs-source').count(), 3); assert.equal(await page.locator('.rs-plan').count(), 4); assert.equal(await page.title(), 'Vimbre'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
     assert.equal(await page.getByText('Coming soon', { exact: true }).count(), 0);
     assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 0);
@@ -60,7 +75,7 @@ const assert = require('node:assert/strict');
     for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `landing overflow at ${width}`); }
     await page.setViewportSize({ width: 360, height: 800 }); await page.getByRole('button', { name: 'Open website menu', exact: true }).click(); await page.getByRole('navigation', { name: 'Public', exact: true }).getByRole('link', { name: 'How it works', exact: true }).click(); assert.equal(await page.getByRole('button', { name: 'Open website menu', exact: true }).getAttribute('aria-expanded'), 'false'); await page.screenshot({ path: '/tmp/vimbre-public-mobile.png', fullPage: true, animations: 'disabled' }); await page.setViewportSize({ width: 1440, height: 900 });
     await page.getByRole('link', { name: 'Get started', exact: true }).first().click(); await page.getByRole('heading', { name: 'Create your company' }).waitFor();
-    await page.goto('http://127.0.0.1:5173/login'); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('test-record-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / }).waitFor(); await page.getByRole('link', { name: 'My role', exact: true }).click(); await page.getByRole('heading', { name: 'Role record', exact: true }).waitFor();
+    await page.goto('http://127.0.0.1:5173/login'); assert(await page.locator('.v-auth-brand .vimbre-logo-full').isVisible()); await page.getByLabel('Work email').fill(user.email); await page.getByLabel('Password', { exact: true }).fill('test-record-password'); await page.getByRole('button', { name: 'Log in', exact: true }).click(); await page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / }).waitFor(); assert(await page.locator('.vw-brand-surface .vimbre-logo-full').isVisible()); assert.equal(await page.locator('.vw-brand-surface').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)'); await page.getByRole('link', { name: 'My role', exact: true }).click(); await page.getByRole('heading', { name: 'Role record', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Add record', exact: true }).click(); assert.equal(await page.getByLabel('Title', { exact: true }).inputValue(), ''); assert((await page.getByLabel('Title', { exact: true }).getAttribute('placeholder')).includes('weekly operations report')); assert(await page.getByLabel('Details', { exact: true }).getAttribute('placeholder')); assert.equal(await page.getByLabel('Details', { exact: true }).getAttribute('aria-describedby'), null); assert.equal(await page.getByText('Only you can edit your role record.', { exact: true }).count(), 0); await page.getByLabel('Title', { exact: true }).fill('Weekly review'); await page.getByLabel('Details', { exact: true }).fill('Prepare the notes and keep the reasons.');
     failSave = true; await page.getByRole('button', { name: 'Save record', exact: true }).click(); await page.getByRole('alert').filter({ hasText: 'draft is still here' }).waitFor(); assert.equal(await page.getByLabel('Title', { exact: true }).inputValue(), 'Weekly review');
     failSave = false; await page.getByRole('button', { name: 'Save record', exact: true }).click();

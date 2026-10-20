@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useAuth } from './AuthProvider'
 import { authMessage, passwordProblem } from './validation'
+import { BrandLogo } from '../../components/ui/BrandLogo'
 import './account.css'
 
 type Mode = 'login' | 'signup' | 'forgot' | 'reset'
@@ -32,11 +33,7 @@ function AccountLayout({
           to="/"
           aria-label="Vimbre home"
         >
-          <span className="v-auth-mark" aria-hidden="true">
-            <i />
-            <i />
-          </span>
-          Vimbre
+          <BrandLogo />
         </Link>
 
         <Link to="/">← Back to website</Link>
