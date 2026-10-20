@@ -3,10 +3,11 @@ const { spawn } = require('node:child_process');
 const { readFile } = require('node:fs/promises');
 const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
-  for(const address of ['https://vimbre.co.uk/','https://www.vimbre.co.uk/','https://vimbre.com/']){
+  for(const address of ['https://vimbre.co.uk/','https://www.vimbre.co.uk/','https://vimbre.com/','https://www.vimbre.com/']){
     try{
       const response=await fetch(address,{redirect:'manual',signal:AbortSignal.timeout(15000)});
-      console.log('DOMAIN_CHECK '+JSON.stringify({address,status:response.status,location:response.headers.get('location')}));
+      const html = response.status === 200 ? await response.text() : '';
+      console.log('DOMAIN_CHECK '+JSON.stringify({address,status:response.status,location:response.headers.get('location'),currentLanding:html.includes('Know what your team decided'),socialImage:html.includes('vimbre-og-image-1200.png'),server:response.headers.get('server')}));
     }catch(error){console.log('DOMAIN_CHECK '+JSON.stringify({address,error:error.message}));}
   }
   const url='https://vimbre.vercel.app/';

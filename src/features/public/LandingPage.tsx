@@ -55,7 +55,7 @@ function HeroStory({ rootRef, paused, ready, toggle }: { rootRef: RefObject<HTML
         <p className="rs-story-resolution" data-story-resolution>Nothing lost.</p>
       </div>
       <p className="sr-only">{storySummary}</p>
-      <button className="rs-story-control" type="button" disabled={!ready} aria-label={paused ? 'Play hero story' : 'Pause hero story'} onClick={toggle}><span aria-hidden="true">{paused ? '▷' : 'Ⅱ'}</span>{paused ? 'Play' : 'Pause'}</button>
+      <button className="rs-story-control" type="button" disabled={!ready} aria-label={paused ? 'Play hero story' : 'Pause hero story'} onClick={toggle}><svg viewBox="0 0 24 24" aria-hidden="true">{paused ? <path d="m9 5 10 7-10 7z" /> : <path d="M8 5v14M16 5v14" />}</svg>{paused ? 'Play' : 'Pause'}</button>
     </div>
   </div>
 }
