@@ -6,6 +6,8 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 
+const ContactPage = lazy(() => import('../features/public/ContactPage').then(module => ({ default: module.ContactPage })))
+
 const ChatPage = lazy(() => import('../features/chat/ChatPage').then(module => ({ default: module.ChatPage })))
 
 const HomePage = lazy(() =>
@@ -108,6 +110,7 @@ export function App() {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route
             path="/login"
             element={<AuthPage key="login" mode="login" />}

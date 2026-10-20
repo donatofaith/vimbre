@@ -6,7 +6,7 @@ describe('branded auth templates',()=>{
  it('keeps authentication links intact and uses email-compatible branding',()=>{
   for(const [type,entry] of Object.entries(manifest.templates) as [string,{file:string;subject:string}][]){
    const html=readFileSync(new URL(entry.file,root),'utf8')
-   expect(html).toContain('#102a43');expect(html).toContain('#2f80ed');expect(html).toContain('max-width:600px');expect(html).toContain('role="presentation"')
+   expect(html).toContain('href="mailto:support@vimbre.com"');expect(html).toContain('Contact support');expect(html).toContain('#102a43');expect(html).toContain('#2f80ed');expect(html).toContain('max-width:600px');expect(html).toContain('role="presentation"')
    expect(html).not.toMatch(/<script|<iframe|<form|tracking|utm_/i)
    if(type==='reauthentication')expect(html).toContain('{{ .Token }}')
    else if(type.endsWith('_notification'))expect(html).toContain('href="https://vimbre.vercel.app/login"')

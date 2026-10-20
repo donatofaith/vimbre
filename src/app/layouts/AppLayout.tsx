@@ -237,17 +237,10 @@ function WorkspaceLayout() {
         ref={help}
         aria-labelledby="vw-help-title"
       >
-        <h2 id="vw-help-title">Find your way around</h2>
-
-        <p>
-          My day shows your own tasks. Use your role record to
-          keep responsibilities, decisions and useful links
-          together.
-        </p>
-
-        <p>
-          Capture saves source notes and drafts for review. Your company administrator manages team access.
-        </p>
+        <h2 id="vw-help-title">Contact support</h2>
+        <p>Help with your account or workspace.</p>
+        <p><a href="mailto:support@vimbre.com?subject=Vimbre%20support">support@vimbre.com</a></p>
+        <p><Link to="/contact" onClick={() => help.current?.close()}>All contact options</Link></p>
 
         <form method="dialog">
           <button className="button button-primary">

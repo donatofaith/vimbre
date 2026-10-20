@@ -15,3 +15,5 @@
   .rs-brand .vimbre-logo-full { width: 112px; }
   .rs-product-brand .rs-official-mark { width: 17px; height: 17px; margin-right: 3px; padding: 2px; border-radius: 3px; }
 }
+
+@media (min-width: 601px) and (max-width: 850px) { .rs-nav { gap: 10px; } .rs-header-inner { gap: 16px; } .rs-header-actions { gap: 10px; } }

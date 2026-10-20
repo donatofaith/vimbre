@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { BrandLogo } from '../../components/ui/BrandLogo'
+import { WebsiteHeader } from './WebsiteHeader'
 import './landing.css'
 
 const plans = [
@@ -39,9 +40,8 @@ const faq = [
   ['What happens when someone is away?', 'The handover brings together responsibilities, open work and useful links. The employee reviews it before the next person takes over.'],
 ]
 export function HomePage() {
-  const { session, loading } = useAuth()
+  const { session } = useAuth()
   const root = useRef<HTMLDivElement>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
     if (media.matches || !('IntersectionObserver' in window)) return
@@ -49,15 +49,11 @@ export function HomePage() {
     root.current?.querySelectorAll('[data-rs-reveal]').forEach(el => { el.classList.add('rs-pending'); observer.observe(el) })
     return () => observer.disconnect()
   }, [])
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && menuOpen) { setMenuOpen(false); root.current?.querySelector<HTMLButtonElement>('.rs-menu')?.focus() } }
-    document.addEventListener('keydown', close); return () => document.removeEventListener('keydown', close)
-  }, [menuOpen])
   const to = session ? '/app' : '/signup'
   const cta = session ? 'Open workspace' : 'Get started'
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
-    <header className="rs-header"><div className="rs-container rs-header-inner"><Link className="rs-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav id="rs-navigation" className={`rs-nav${menuOpen ? ' rs-nav-open' : ''}`} aria-label="Public">{[['Product', '#features'], ['How it works', '#how-it-works'], ['Pricing', '#pricing']].map(([label, href]) => <a href={href} key={label} onClick={() => setMenuOpen(false)}>{label}</a>)}</nav><div className="rs-header-actions">{!session && !loading && <Link className="rs-login" to="/login">Log in</Link>}<Link className="rs-button rs-header-cta" to={to}>{cta}</Link><button className="rs-menu" type="button" aria-label={menuOpen ? 'Close website menu' : 'Open website menu'} aria-expanded={menuOpen} aria-controls="rs-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? 'Close' : 'Menu'}</button></div></div></header>
+    <WebsiteHeader />
     <main id="rs-main">
       <section className="rs-hero"><Ribbon /><div className="rs-container rs-hero-grid"><div className="rs-hero-copy"><Reveal><span className="rs-eyebrow">The record your other tools miss</span></Reveal><Reveal delay={80}><h1 tabIndex={-1}>Stop losing what <br />your team <span>already decided.</span></h1></Reveal><Reveal delay={150}><p>Keep decisions, role knowledge and handovers in one place.</p><div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Icon kind="arrow" /></Link><a className="rs-text-link" href="#how-it-works">See how it works <Icon kind="arrow" /></a></div></Reveal></div><Reveal className="rs-hero-visual" delay={180}><ProductPreview /><div className="rs-captured"><small className="rs-example">Example</small><strong><span className="rs-captured-check"><Icon kind="check" /></span>Decision captured</strong><p>Added to this role record and linked to your notes.</p></div></Reveal></div></section>
       <section className="rs-context-section" id="features"><div className="rs-container"><div className="rs-context-heading"><Reveal><h2>Decisions get made.<br />Then they disappear.</h2></Reveal><Reveal delay={90}><p>Vimbre keeps the context<br />with the work.</p></Reveal></div><div className="rs-flow"><div className="rs-sources">{['Meeting notes', 'Email', 'Daily notes'].map((source, i) => <Reveal className="rs-source" key={source} delay={i * 100}><Icon kind={i === 1 ? 'mail' : 'document'} /><div><strong>{source}</strong><span aria-hidden="true"><i /><i /></span></div></Reveal>)}</div><svg className="rs-flow-paths" viewBox="0 0 300 280" fill="none" aria-hidden="true"><path d="M0 35C170 35 80 140 290 140 M0 140H290 M0 245C170 245 80 140 290 140 M280 130l10 10-10 10" /><circle className="rs-flow-dot" r="4"><animateMotion dur="5s" repeatCount="indefinite" path="M0 35C170 35 80 140 290 140" /></circle></svg><Reveal className="rs-flow-record" delay={180}><ProductPreview sidebar={false} /></Reveal></div></div></section>
