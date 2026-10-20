@@ -8,5 +8,29 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "vimbre.co.uk"
+        }
+      ],
+      "destination": "https://vimbre.com/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.vimbre.co.uk"
+        }
+      ],
+      "destination": "https://vimbre.com/:path*",
+      "statusCode": 301
+    }
   ]
 }
