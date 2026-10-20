@@ -70,7 +70,7 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByRole('button', { name: /Switch to .* theme/ }).count(), 0);
     for (const feature of ['Decision records', 'Tasks and dates', 'Role records', 'Team chat']) assert(await page.locator('.rs-pricing').getByText(feature, { exact: true }).first().isVisible());
     await page.locator('#pricing').scrollIntoViewIfNeeded();
-    await page.waitForFunction(() => [...document.querySelectorAll('.rs-plan')].every(el => el.classList.contains('rs-visible')));
+    await page.waitForFunction(() => [...document.querySelectorAll('.rs-plan')].every(el => el.classList.contains('rs-visible') && getComputedStyle(el).opacity === '1'));
     assert.equal(await page.locator('.rs-plan').last().evaluate(el => getComputedStyle(el).opacity), '1');
     for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `landing overflow at ${width}`); }
     await page.setViewportSize({ width: 360, height: 800 }); await page.getByRole('button', { name: 'Open website menu', exact: true }).click(); await page.getByRole('navigation', { name: 'Public', exact: true }).getByRole('link', { name: 'How it works', exact: true }).click(); assert.equal(await page.getByRole('button', { name: 'Open website menu', exact: true }).getAttribute('aria-expanded'), 'false'); await page.screenshot({ path: '/tmp/vimbre-public-mobile.png', fullPage: true, animations: 'disabled' }); await page.setViewportSize({ width: 1440, height: 900 });
