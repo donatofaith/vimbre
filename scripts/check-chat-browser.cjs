@@ -123,6 +123,15 @@ const assert = require('node:assert/strict')
       else if (path.endsWith('/work_notification_inbox')) body={count:workRows.length,unread:workRows.filter(r=>!r.read_at).length,items:workRows}
       else if (path.endsWith('/work_notification_read')) {const row=workRows.find(r=>r.notification_key===a.p_key);if(row)row.read_at=new Date().toISOString();body=Boolean(row)}
       else if (path.endsWith('/chat_inbox')) body = inbox()
+      else if (path.endsWith('/chat_team')) {
+        let c = conversations.find(c => c.is_team)
+        if (!c) {
+          c = {id:crypto.randomUUID(),kind:'group',is_team:true,title:'Team chat',updated_at:new Date().toISOString(),members:[{id:uid,full_name:profile.full_name,active:true},...people]}
+          conversations.unshift(c)
+          messageMap.set(c.id, [])
+        }
+        body = c.id
+      }
       else if (path.endsWith('/chat_people'))
         body = people.filter((p) =>
           p.full_name.toLowerCase().includes(a.p_search.toLowerCase()),
@@ -236,21 +245,21 @@ const assert = require('node:assert/strict')
     assert.equal(await page.getByRole('navigation', {name: 'Workspace', exact: true}).getByRole('link', {name: /^Chat/}).count(), 0)
     await page.locator('.vw-topbar').getByRole('link', { name: 'Chat', exact: true }).click()
     await page
-      .getByRole('heading', { name: 'Start a conversation', exact: true })
+      .getByRole('button', { name: /Team chat/ })
       .waitFor()
     await page.getByRole('button', { name: 'New chat', exact: true }).click()
     let dialog = page.getByRole('dialog', { name: 'New chat', exact: true })
     await dialog.getByLabel('Conversation type').selectOption('group')
-    await dialog.getByLabel('Group name').fill('Operations team')
-    await dialog.getByLabel(/Bob Example/).check()
-    await dialog.getByLabel(/Cara Example/).check()
+    assert.equal(await dialog.getByLabel('Group name').count(), 0)
+    assert.equal(await dialog.getByRole('group', {name:'Choose teammates'}).count(), 0)
     await dialog
-      .getByRole('button', { name: 'Create chat', exact: true })
+      .getByRole('button', { name: 'Open Team chat', exact: true })
       .click()
     await page
-      .getByRole('heading', { name: 'Operations team', exact: true })
+      .getByRole('heading', { name: 'Team chat', exact: true })
       .waitFor()
     const cid = conversations[0].id
+    assert.equal(conversations.filter(c=>c.is_team).length, 1)
     assert.equal(conversations[0].members.length, 3)
     await page
       .getByLabel('Message', { exact: true })
@@ -372,7 +381,7 @@ const assert = require('node:assert/strict')
     }
     await page.setViewportSize({ width: 390, height: 844 })
     await page.getByRole('button', { name: '← Chats', exact: true }).click()
-    await page.getByRole('button', { name: /Operations team/ }).click()
+    await page.getByRole('button', { name: /Team chat/ }).click()
     await page.getByLabel('Message', { exact: true }).waitFor()
     denied = true
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))

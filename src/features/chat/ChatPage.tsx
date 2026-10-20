@@ -29,7 +29,11 @@ export function ChatPage() {
   const [detailReload, setDetailReload] = useState(0)
   useEffect(() => {
     let alive = true
-    void supabase.rpc('chat_list', { p_page: page }).then(({ data, error }) => {
+    void (async () => {
+      const team = await supabase.rpc('chat_team')
+      if (team.error) return { data: null, error: team.error }
+      return supabase.rpc('chat_list', { p_page: page })
+    })().then(({ data, error }) => {
       if (!alive) return
       setListLoading(false)
       if (error || !Array.isArray(data)) {
@@ -85,7 +89,7 @@ export function ChatPage() {
           {!listLoading && !listError && conversations.length === 0 && (
             <div className="chat-empty">
               <h2>Start a conversation</h2>
-              <p>Message a teammate or create a group.</p>
+              <p>Message a teammate or open Team chat.</p>
             </div>
           )}
           <ul>
@@ -202,8 +206,7 @@ function NewChat({
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [kind, setKind] = useState<'direct' | 'group'>('direct')
-  const [title, setTitle] = useState('')
-  const [search, setSearch] = useState('')
+    const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [people, setPeople] = useState<ChatPerson[]>([])
   const [selected, setSelected] = useState<ChatPerson[]>([])
@@ -217,6 +220,7 @@ function NewChat({
     dialog.current?.showModal()
   }, [])
   useEffect(() => {
+    if (kind !== 'direct') return
     let alive = true
     const timer = setTimeout(() => {
       void supabase
@@ -236,23 +240,27 @@ function NewChat({
       alive = false
       clearTimeout(timer)
     }
-  }, [search, page, retry])
+  }, [search, page, retry, kind])
   async function create(event: FormEvent) {
     event.preventDefault()
     if (busy) return
     setError('')
     setBusy(true)
     try {
-      const { data, error } = await supabase.rpc('chat_create', {
-        p_kind: kind,
-        p_title: title,
-        p_members: selected.map((p) => p.id),
-      })
+      const { data, error } = kind === 'group'
+        ? await supabase.rpc('chat_team')
+        : await supabase.rpc('chat_create', {
+            p_kind: 'direct',
+            p_title: '',
+            p_members: selected.map((p) => p.id),
+          })
       if (error || !data) throw error
       onCreated(data)
     } catch {
       setError(
-        'The chat could not be created. Check your selection and try again.',
+        kind === 'group'
+          ? 'Team chat could not be opened. Please try again.'
+          : 'The chat could not be created. Choose a teammate and try again.',
       )
     } finally {
       setBusy(false)
@@ -294,106 +302,91 @@ function NewChat({
             }}
           >
             <option value="direct">Direct message</option>
-            <option value="group">Group chat</option>
+            <option value="group">Team chat</option>
           </select>
         </label>
-        {kind === 'group' && (
-          <label className="chat-label">
-            Group name
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={80}
-              required
-              placeholder="e.g. Operations team"
-            />
-          </label>
-        )}
-        <label className="chat-label">
-          Find teammates
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(0)
-            }}
-            placeholder="Search by name"
-            maxLength={100}
-          />
-        </label>
-        <p>
-          {selected.length} selected
-          {kind === 'group' ? ' · Up to 49 teammates' : ''}
-        </p>
-        <div className="chat-selected">
-          {selected.map((p) => (
-            <button
-              type="button"
-              key={p.id}
-              onClick={() =>
-                setSelected((old) => old.filter((s) => s.id !== p.id))
-              }
-              aria-label={`Remove ${p.full_name}`}
-            >
-              {p.full_name} ×
-            </button>
-          ))}
-        </div>
-        {loading && <p role="status">Loading teammates…</p>}
-        {peopleError && (
-          <p className="field-error" role="alert">
-            Teammates could not be loaded.{' '}
-            <button type="button" onClick={() => setRetry((n) => n + 1)}>
-              Retry
-            </button>
-          </p>
-        )}
-        {!loading && !peopleError && people.length === 0 && (
-          <p>
-            {search
-              ? 'No teammates match your search.'
-              : 'No other active teammates yet.'}
-          </p>
-        )}
-        <fieldset className="chat-people" disabled={busy}>
-          <legend>Choose teammates</legend>
-          {people.map((p) => (
-            <label key={p.id}>
+        {kind === 'group' && <p>Everyone in your company.</p>}
+        {kind === 'direct' && (
+          <>
+            <label className="chat-label">
+              Find teammates
               <input
-                type={kind === 'direct' ? 'radio' : 'checkbox'}
-                name="chat-member"
-                checked={selected.some((s) => s.id === p.id)}
-                onChange={(e) =>
-                  setSelected((old) =>
-                    kind === 'direct'
-                      ? [p]
-                      : e.target.checked
-                        ? [...old, p]
-                        : old.filter((s) => s.id !== p.id),
-                  )
-                }
+                type="search"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(0)
+                }}
+                placeholder="Search by name"
+                maxLength={100}
               />
-              <span>{p.full_name}</span>
-              <small>
-                {p.role === 'hr_admin'
-                  ? 'HR Admin'
-                  : p.role === 'manager'
-                    ? 'Manager'
-                    : 'Employee'}
-              </small>
             </label>
-          ))}
-        </fieldset>
-        {more && (
-          <button
-            type="button"
-            className="button button-secondary"
-            disabled={loading}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            More teammates
-          </button>
+            <p>
+              {selected.length} selected
+    
+            </p>
+            <div className="chat-selected">
+              {selected.map((p) => (
+                <button
+                  type="button"
+                  key={p.id}
+                  onClick={() =>
+                    setSelected((old) => old.filter((s) => s.id !== p.id))
+                  }
+                  aria-label={`Remove ${p.full_name}`}
+                >
+                  {p.full_name} ×
+                </button>
+              ))}
+            </div>
+            {loading && <p role="status">Loading teammates…</p>}
+            {peopleError && (
+              <p className="field-error" role="alert">
+                Teammates could not be loaded.{' '}
+                <button type="button" onClick={() => setRetry((n) => n + 1)}>
+                  Retry
+                </button>
+              </p>
+            )}
+            {!loading && !peopleError && people.length === 0 && (
+              <p>
+                {search
+                  ? 'No teammates match your search.'
+                  : 'No other active teammates yet.'}
+              </p>
+            )}
+            <fieldset className="chat-people" disabled={busy}>
+              <legend>Choose teammates</legend>
+              {people.map((p) => (
+                <label key={p.id}>
+                  <input
+                    type="radio"
+                    name="chat-member"
+                    checked={selected.some((s) => s.id === p.id)}
+                    onChange={() => setSelected([p])}
+                  />
+                  <span>{p.full_name}</span>
+                  <small>
+                    {p.role === 'hr_admin'
+                      ? 'HR Admin'
+                      : p.role === 'manager'
+                        ? 'Manager'
+                        : 'Employee'}
+                  </small>
+                </label>
+              ))}
+            </fieldset>
+            {more && (
+              <button
+                type="button"
+                className="button button-secondary"
+                disabled={loading}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                More teammates
+              </button>
+            )}
+          </>
         )}
         {error && (
           <p className="field-error" role="alert">
@@ -402,9 +395,9 @@ function NewChat({
         )}
         <button
           className="button button-primary"
-          disabled={busy || selected.length === 0 || selected.length > 49}
+          disabled={busy || (kind === 'direct' && selected.length !== 1)}
         >
-          {busy ? 'Creating…' : 'Create chat'}
+          {busy ? 'Opening…' : kind === 'group' ? 'Open Team chat' : 'Create chat'}
         </button>
       </form>
     </dialog>
