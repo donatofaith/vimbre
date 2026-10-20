@@ -2,6 +2,7 @@ import { animate, scroll } from 'motion'
 import type { AnimationSequence } from 'motion'
 const ease: [number, number, number, number] = [.22, 1, .36, 1]
 export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onState: (state: { paused: boolean; ready: boolean }) => void) {
+  delete shell.dataset.storyComplete
   const disposers: (() => void)[] = []
   const all = new Set<ReturnType<typeof animate>>()
   let disposed = false, userPaused = false, heroVisible = false, complete = false
@@ -30,6 +31,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   hero.pause()
   all.add(hero)
   const restore = () => {
+    shell.dataset.storyComplete = 'true'
     hero.cancel()
     shell.querySelectorAll<HTMLElement>('.rs-story-stage, [data-story-source], [data-story-chip], [data-story-dot], [data-story-record], [data-story-row], [data-story-ring], [data-story-sam], [data-story-alex], [data-story-line], [data-story-resolution]').forEach(el => {
       el.style.removeProperty('opacity')
