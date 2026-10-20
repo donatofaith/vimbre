@@ -588,3 +588,5 @@
 .work-mark-read { margin: 0 0 12px; padding: 4px 0; border: 0; background: none; color: #2563d9; font: inherit; font-size: 12px; cursor: pointer; }
 .work-mark-read:disabled { opacity: .5; }
 .notification-pages { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.chat-notifications .field-error { color: var(--error); }
+.chat-notifications li strong, .chat-notifications li span { overflow-wrap: anywhere; min-width: 0; }

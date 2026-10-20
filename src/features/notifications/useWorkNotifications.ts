@@ -39,5 +39,6 @@ export function useWorkNotifications(page: number) {
   }catch{setReadError(true)}finally{marking.current=false;setBusy('')}
  }
  const current=result?.key===key?result:null
- return {data:current?.data??emptyWorkInbox,error:current?.error??false,loading:!current,refresh,markRead,readError,busy}
+ const latest=result?.key.startsWith(`${owner}:`)?result.data:emptyWorkInbox
+ return {data:current?.data??{...latest,items:[]},error:current?.error??false,loading:!current,refresh,markRead,readError,busy}
 }

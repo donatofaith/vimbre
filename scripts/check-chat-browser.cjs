@@ -219,6 +219,7 @@ const assert = require('node:assert/strict')
       }
       await route.fulfill({
         status,
+        headers: Array.isArray(body) && (path.endsWith('/actions') || path.endsWith('/role_items')) ? {'content-range': body.length ? `0-${body.length-1}/${body.length}` : '*/0', 'access-control-expose-headers': 'content-range'} : {},
         contentType: 'application/json',
         body: JSON.stringify(body),
       })
