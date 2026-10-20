@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
@@ -88,6 +88,11 @@ function WebLink({
 }
 
 export function RoleRecordPage() {
+  const [params] = useSearchParams()
+  return <RoleRecordContent key={params.get('record') ?? 'all'} />
+}
+
+function RoleRecordContent() {
   const { profile, company } = useAuth()
   const accessDialog = useRef<HTMLDialogElement>(null)
 
@@ -97,7 +102,13 @@ export function RoleRecordPage() {
   const [owners, setOwners] = useState<Owner[]>([])
   const [ownerError, setOwnerError] = useState(false)
 
-  const [tab, setTab] = useState<Tab>('responsibility')
+  const [sectionParams, setSectionParams] = useSearchParams()
+  const requestedRecord = sectionParams.get('record') ?? ''
+  const recordId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedRecord) ? requestedRecord : ''
+  const requestedSection = sectionParams.get('section')
+  const tab: Tab = requestedSection === 'decision' || itemKinds.some(([kind]) => kind === requestedSection)
+    ? requestedSection as Tab : 'responsibility'
+  const setTab = (value: Tab) => setSectionParams({ section: value })
   const [archived, setArchived] = useState(false)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
@@ -131,7 +142,7 @@ export function RoleRecordPage() {
 
   const key =
     `${ownerId}:${tab}:${archived}:${page}:` +
-    `${revision}:${query}:${decisionStatus}`
+    `${revision}:${query}:${decisionStatus}:${recordId}`
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -213,6 +224,8 @@ export function RoleRecordPage() {
           .eq('kind', tab)
           .ilike('title', `%${query}%`)
 
+        if (recordId) request = request.eq('id', recordId)
+
         request = archived
           ? request.not('deleted_at', 'is', null)
           : request.is('deleted_at', null)
@@ -239,7 +252,7 @@ export function RoleRecordPage() {
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, tab, archived, page, query, decisionStatus])
+  }, [key, ownerId, tab, archived, page, query, decisionStatus, recordId])
 
   useEffect(() => {
     let cancelled = false
@@ -276,7 +289,7 @@ export function RoleRecordPage() {
       })
   }, [ownerId])
 
-  const reload = () => setRevision(value => value + 1)
+  const reload = () => { setRevision(value => value + 1); window.dispatchEvent(new Event('vimbre:work-changed')) }
 
   const saved = () => {
     setEditor(null)
@@ -311,10 +324,11 @@ export function RoleRecordPage() {
 
     try {
       // oxlint-disable-next-line react/purity -- Timestamp is created in an event handler.
+      const archivedAt = restore ? null : new Date().toISOString()
       const { error: failure } = await supabase
         .from(tab === 'decision' ? 'decisions' : 'role_items')
         .update({
-          deleted_at: restore ? null : new Date().toISOString(),
+          deleted_at: archivedAt,
         })
         .eq('id', row.id)
         .select('id')
@@ -373,11 +387,7 @@ export function RoleRecordPage() {
             {own ? 'Your role record' : 'Role record'}
           </h1>
 
-          <p>
-            {own
-              ? 'Keep the knowledge behind your role together.'
-              : `Reading ${ownerName}’s role record. Only the owner can edit it.`}
-          </p>
+
         </div>
 
         {own && !archived && !editor && (
@@ -388,6 +398,7 @@ export function RoleRecordPage() {
         )}
       </header>
 
+      {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
       {profile?.role !== 'employee' && (
         <section
           className="vr-owner"
@@ -451,21 +462,9 @@ export function RoleRecordPage() {
       )}
 
       <section
-        className="vr-intro"
-        aria-label="About your role record"
+        className="form-actions"
+        aria-label="Role record visibility"
       >
-        <span className="vr-icon">
-          <WorkspaceIcon name="record" />
-        </span>
-
-        <div>
-          <h2>Make your work easier to pick up.</h2>
-          <p>
-            Keep responsibilities, decisions and useful links in one
-            place.
-          </p>
-        </div>
-
         <button
           className="vw-access-button"
           type="button"
@@ -693,7 +692,7 @@ export function RoleRecordPage() {
 
                         {item.due_date && (
                           <p>
-                            Next deadline:{' '}
+                            {item.kind === 'responsibility' ? 'Deadline: ' : 'Next deadline: '}
                             <time dateTime={item.due_date}>
                               {item.due_date}
                             </time>
@@ -787,7 +786,7 @@ export function RoleRecordPage() {
                             <Link
                               to={`/app?decision=${decision.id}`}
                             >
-                              View linked actions
+                              View linked tasks
                             </Link>
                           )}
                         </div>
@@ -866,17 +865,11 @@ export function RoleRecordPage() {
               </ul>
             </div>
 
-            <p className="vr-guide-tip">
-              Use a clear title. Add useful context and a supporting
-              link.
-            </p>
+
           </aside>
         </div>
 
-        <p className="vr-storage-note">
-          Use Save record or Save decision to save your changes to your
-          company workspace.
-        </p>
+
       </section>
 
       {tab !== 'decision' && (
@@ -901,11 +894,7 @@ export function RoleRecordPage() {
         </section>
       )}
 
-      <p className="vr-footer">
-        {own
-          ? 'Only you can edit your role record.'
-          : 'You have read-only access to this role record.'}
-      </p>
+
 
       <dialog
         ref={accessDialog}
@@ -917,9 +906,9 @@ export function RoleRecordPage() {
         <p>
           Managers in your department can read your responsibilities,
           workstreams, external contacts, document links, recurring
-          deadlines, decisions, actions, completion notes and archived
+          deadlines, decisions, tasks, completion notes and archived
           records. Your company’s HR Admin can read these across the
-          company. Only you can edit your role record.
+          company.
         </p>
 
         <p>

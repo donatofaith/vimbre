@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import './capture.css'
+import { captureDate } from './capture-utils'
 
 type Source = {
   id: string
@@ -38,7 +39,7 @@ type Listing = {
 
 const labels: Record<string, string> = {
   decision: 'Decision',
-  action: 'Action',
+  action: 'Task',
   contact: 'External contact',
 }
 
@@ -152,6 +153,8 @@ function CaptureWorkspace() {
   const current = result?.key === detailKey ? result : null
   const detail = current?.data
   const listing = list?.key === listKey ? list : null
+  const pendingDrafts = detail?.items.filter(draft => draft.status === 'pending') ?? []
+  const savedDrafts = detail?.items.filter(draft => draft.status === 'confirmed') ?? []
 
   function reload() {
     setRevision(value => value + 1)
@@ -218,7 +221,7 @@ function CaptureWorkspace() {
       setPage(0)
       setArchived(false)
       setMessage(
-        'Source saved. Add drafts below, then review each one before confirming.',
+        'Notes saved.',
       )
       reload()
     } catch (reason) {
@@ -253,7 +256,7 @@ function CaptureWorkspace() {
       setMessage(
         operation === 'confirm'
           ? `${labels[draft.kind]} confirmed and saved to ${
-              draft.kind === 'action' ? 'My day' : 'your role record'
+              draft.kind === 'action' ? 'My day' : 'My role'
             }.`
           : 'Draft discarded.',
       )
@@ -315,14 +318,12 @@ function CaptureWorkspace() {
             {company?.name ?? 'Your workspace'}
           </span>
 
-          <h1 tabIndex={-1} aria-label="Capture">
-            Capture the context.
+          <h1 tabIndex={-1}>
+            Save what your team decided
           </h1>
+          <p>Forward an email, paste notes or upload a file. Vimbre drafts the decisions and tasks for you to confirm.</p>
 
-          <p>
-            Keep work notes, then turn the important details into
-            records.
-          </p>
+
         </div>
 
         {selected && (
@@ -336,10 +337,11 @@ function CaptureWorkspace() {
         )}
       </header>
 
+      <div className="vc-capabilities" aria-label="Capture availability"><span>AI drafting · <strong>Coming soon</strong></span><span>Email forwarding and file uploads · <strong>Coming soon</strong></span></div>
       <ol className="vc-steps" aria-label="Capture workflow">
         <li data-active={!selected}>
           <span>1</span>
-          Add a source
+          Add an email or notes
         </li>
         <li data-active={Boolean(selected)}>
           <span>2</span>
@@ -347,7 +349,7 @@ function CaptureWorkspace() {
         </li>
         <li>
           <span>3</span>
-          Confirm records
+          Confirm and save
         </li>
       </ol>
 
@@ -420,9 +422,8 @@ function CaptureWorkspace() {
                   </div>
 
                   <p id="vc-source-help" className="vc-note">
-                    Your source text is saved privately. Only
-                    confirmed records become part of your role record
-                    or My day.
+                    Source notes are private. Confirm drafts to add them to
+                    your role record or tasks.
                   </p>
 
                   <div className="form-actions">
@@ -431,7 +432,7 @@ function CaptureWorkspace() {
                     </Button>
 
                     <Link to="/app/role-record">
-                      Add a role record directly
+                      Open in My role
                     </Link>
                   </div>
                 </fieldset>
@@ -454,7 +455,7 @@ function CaptureWorkspace() {
                 <div>
                   <span className="vw-eyebrow">
                     {detail.source.source_type} ·{' '}
-                    {detail.source.source_date}
+                    {captureDate(detail.source.source_date)}
                   </span>
                   <h2>{detail.source.title}</h2>
                 </div>
@@ -462,18 +463,19 @@ function CaptureWorkspace() {
                 <Button
                   variant="secondary"
                   disabled={busy || Boolean(editor)}
+                  title={detail.source.deleted_at ? 'Restore this capture' : 'You can find it later'}
                   onClick={() => {
                     void archiveSource()
                   }}
                 >
                   {detail.source.deleted_at
                     ? 'Restore capture'
-                    : 'Archive capture'}
+                    : 'Archive'}
                 </Button>
               </div>
 
               <details className="vc-source">
-                <summary>Read original source</summary>
+                <summary>Read the original email or notes</summary>
                 <p>{detail.source.source_text}</p>
               </details>
 
@@ -482,6 +484,7 @@ function CaptureWorkspace() {
 
                 {!detail.source.deleted_at && !editor && (
                   <Button
+                    variant="secondary"
                     disabled={busy}
                     onClick={() => setEditor({})}
                   >
@@ -519,22 +522,19 @@ function CaptureWorkspace() {
                 />
               )}
 
-              {detail.items.length === 0 ? (
+              {pendingDrafts.length === 0 ? (
                 <div className="vc-empty">
                   <span className="vw-empty-icon">
                     <WorkspaceIcon name="record" />
                   </span>
 
-                  <h3>No drafts yet</h3>
+                  <h3>{savedDrafts.length ? 'No drafts to review' : 'No drafts yet'}</h3>
 
-                  <p>
-                    Read your source, then add a decision, action or
-                    external contact to review.
-                  </p>
+
                 </div>
               ) : (
-                <ul className="vc-drafts">
-                  {detail.items.map(draft => (
+                <ul className="vc-drafts" aria-label="Drafts to review">
+                  {pendingDrafts.map(draft => (
                     <li key={draft.id}>
                       <div className="vc-draft-meta">
                         <span>{labels[draft.kind]}</span>
@@ -554,13 +554,13 @@ function CaptureWorkspace() {
                           Decided by{' '}
                           {draft.payload.decided_by || 'Not specified'}
                           {' · '}
-                          {draft.payload.decided_on || 'Date needed'}
+                          {captureDate(draft.payload.decided_on)}
                         </p>
                       )}
 
                       {draft.kind === 'action' && (
                         <p>
-                          Due: {draft.payload.due_date || 'Date needed'}
+                          Due: {captureDate(draft.payload.due_date)}
                           {' · '}Assigned to you
                         </p>
                       )}
@@ -611,24 +611,11 @@ function CaptureWorkspace() {
                           </div>
                         )}
 
-                      {draft.status === 'confirmed' && (
-                        <Link
-                          to={
-                            draft.kind === 'action'
-                              ? '/app'
-                              : '/app/role-record'
-                          }
-                        >
-                          Open{' '}
-                          {draft.kind === 'action'
-                            ? 'My day'
-                            : 'role record'}
-                        </Link>
-                      )}
                     </li>
                   ))}
                 </ul>
               )}
+              {savedDrafts.length > 0 && <section className="vc-saved" aria-labelledby="vc-saved-title"><h2 id="vc-saved-title">Saved</h2><ul className="vc-drafts" aria-label="Saved records">{savedDrafts.map(draft => <li key={draft.id}><div className="vc-draft-meta"><span>{labels[draft.kind]}</span><span>Saved</span></div><h3>{draft.payload.title}</h3><Link to={draft.kind === 'action' ? '/app' : `/app/role-record?section=${draft.kind === 'decision' ? 'decision' : 'external_contact'}`}>{draft.kind === 'action' ? 'Open My day' : 'Open in My role'}</Link></li>)}</ul></section>}
             </>
           )}
 
@@ -638,22 +625,22 @@ function CaptureWorkspace() {
         </section>
 
         <aside className="vc-guide">
-          <h2>You stay in control.</h2>
+          <h2>Nothing is saved until you confirm it.</h2>
 
           {[
             [
               'record',
-              'Decisions & reasons',
+              'Decisions and reasons',
               'What was agreed and why.',
             ],
             [
               'check',
-              'Actions & dates',
+              'Tasks and dates',
               'What needs doing and when.',
             ],
             [
               'people',
-              'Useful contacts',
+              'External contacts',
               'People mentioned in the source.',
             ],
           ].map(([icon, title, copy]) => (
@@ -668,15 +655,7 @@ function CaptureWorkspace() {
             </div>
           ))}
 
-          <p className="vc-guide-note">
-            Add drafts manually, then edit, confirm or discard each
-            one.
-          </p>
-
-          <p className="vc-note">
-            Source notes and drafts are private to you. Confirmed
-            records follow your workspace’s existing access rules.
-          </p>
+          <p className="vc-note">Your notes and drafts are private to you. Once confirmed, they follow your company’s access rules.</p>
         </aside>
       </div>
 
@@ -730,7 +709,7 @@ function CaptureWorkspace() {
                   >
                     <strong>{source.title}</strong>
                     <span>
-                      {source.source_type} · {source.source_date}
+                      {source.source_type} · {captureDate(source.source_date)}
                       {source.deleted_at ? ' · Archived' : ''}
                     </span>
                   </button>
@@ -828,7 +807,7 @@ function DraftForm({
             onChange={event => setKind(event.target.value)}
           >
             <option value="decision">Decision</option>
-            <option value="action">Action</option>
+            <option value="action">Task</option>
             <option value="contact">External contact</option>
           </select>
         </div>
@@ -894,7 +873,6 @@ function DraftForm({
             type="date"
             required
             defaultValue={value('due_date')}
-            hint="This action will be assigned to you in My day."
           />
         )}
 

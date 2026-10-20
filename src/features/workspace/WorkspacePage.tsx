@@ -10,19 +10,24 @@ import { localDate, safeRecordUrl } from '../records/record-utils'
 import { ActionForm, CompleteAction } from './ActionForm'
 import type { Action } from './ActionForm'
 import { actionError } from './action-utils'
+import { CaptureSummary, RoleChecklist } from './MyDayOverview'
+import { useMyDaySummary } from './useMyDaySummary'
+import { WorkVisibilityDetails } from './WorkVisibilityDetails'
+import { localGreeting } from './greeting'
 
 type View = 'open' | 'today' | 'overdue' | 'done' | 'archived'
 
 const views: [View, string][] = [
-  ['open', 'All open'],
-  ['today', 'Due today'],
+  ['today', 'Today'],
+  ['open', 'Open'],
   ['overdue', 'Overdue'],
   ['done', 'Recently done'],
   ['archived', 'Archived'],
 ]
 
 export function WorkspacePage() {
-  return <ActionWorkspace />
+  const [params] = useSearchParams()
+  return <ActionWorkspace key={params.get('task') ?? 'all'} />
 }
 
 export function TeamMemberActions({
@@ -51,10 +56,13 @@ function ActionWorkspace({
       ? linked
       : ''
 
+  const requestedTask = params.get('task') ?? ''
+  const taskId = !member && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedTask) ? requestedTask : ''
   const ownerId = member?.id ?? profile!.id
 
   const [today, setToday] = useState(localDate)
-  const [view, setView] = useState<View>('open')
+  const [greeting, setGreeting] = useState(localGreeting)
+  const [view, setView] = useState<View>(member || decisionId || taskId ? 'open' : 'today')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
@@ -77,14 +85,30 @@ function ActionWorkspace({
   const [message, setMessage] = useState('')
 
   const own = !member && ownerId === profile!.id
+  const summary = useMyDaySummary(ownerId, revision, own)
+  const firstName = profile!.full_name.trim().split(/\s+/)[0]
+  useEffect(() => {
+    if (own && params.get('visibility') === 'manager') access.current?.showModal()
+  }, [own, params])
 
-  const key = `${ownerId}:${view}:${query}:${page}:${revision}:${today}:${decisionId}`
+  const key = `${ownerId}:${view}:${query}:${page}:${revision}:${today}:${decisionId}:${taskId}`
 
-  const reload = () => setRevision(value => value + 1)
+  const reload = () => { setRevision(value => value + 1); window.dispatchEvent(new Event('vimbre:work-changed')) }
 
   useEffect(() => {
-    const timer = setInterval(() => setToday(localDate()), 60000)
-    return () => clearInterval(timer)
+    const refreshClock = () => {
+      if (document.hidden) return
+      setToday(localDate())
+      setGreeting(localGreeting())
+    }
+    const timer = setInterval(refreshClock, 60000)
+    window.addEventListener('focus', refreshClock)
+    document.addEventListener('visibilitychange', refreshClock)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', refreshClock)
+      document.removeEventListener('visibilitychange', refreshClock)
+    }
   }, [])
 
   useEffect(() => {
@@ -128,6 +152,8 @@ function ActionWorkspace({
         request = request.lt('due_date', today)
       }
 
+      if (taskId) request = request.eq('id', taskId)
+
       if (decisionId) {
         request = request.eq('decision_id', decisionId)
       }
@@ -167,7 +193,7 @@ function ActionWorkspace({
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, view, query, page, today, decisionId])
+  }, [key, ownerId, view, query, page, today, decisionId, taskId])
 
   useEffect(() => {
     void supabase
@@ -220,9 +246,7 @@ function ActionWorkspace({
 
     try {
       // oxlint-disable-next-line react/purity -- Runs from a button event.
-      const values = reopen
-        ? { status: 'open' }
-        : { deleted_at: restore ? null : new Date().toISOString() }
+      const values = reopen ? { status: 'open' } : { deleted_at: restore ? null : new Date().toISOString() }
 
       const { error: failure } = await supabase
         .from('actions')
@@ -235,10 +259,10 @@ function ActionWorkspace({
 
       saved(
         reopen
-          ? 'Action reopened.'
+          ? 'Task reopened.'
           : restore
-            ? 'Action restored.'
-            : 'Action archived.',
+            ? 'Task restored.'
+            : 'Task archived.',
       )
     } catch (reason) {
       console.error('Action change failed', reason)
@@ -250,77 +274,15 @@ function ActionWorkspace({
 
   const current = result?.key === key ? result : null
 
-  const roleParts = [
-    'Responsibilities',
-    'Workstreams',
-    'External contacts',
-    'Documents',
-    'Recurring deadlines',
-  ]
-
   return (
     <div className={own ? 'vw-myday' : 'vw-member-actions'}>
       {!member && (
         <>
           <div className="vw-page-heading">
-            <div>
-              <span className="vw-eyebrow">Your workspace</span>
-              <h1 tabIndex={-1} aria-label="My day">
-                A clear place to start.
-              </h1>
-              <p>My day · Your actions and next steps</p>
-            </div>
-
-            {own && !editor && !finishing && (
-              <Button onClick={addAction}>
-                <WorkspaceIcon name="plus" />
-                Add action
-              </Button>
-            )}
+            <div><h1 tabIndex={-1}>{greeting}, {firstName}</h1><p>Your tasks for today</p></div>
+            <Link className="button button-primary vw-capture-cta" to="/app/capture"><WorkspaceIcon name="capture" />Capture an email or notes</Link>
           </div>
-
-          <div className="vw-shortcuts">
-            {[
-              [
-                '/app/role-record',
-                'record',
-                'Your role record',
-                'Keep the knowledge behind your role together.',
-              ],
-              [
-                '/app/handovers',
-                'handover',
-                'My handovers',
-                'Prepare the context for the next person.',
-              ],
-              [
-                '/app/my-cover-duties',
-                'people',
-                'Cover duties',
-                'Pick up work when you’re assigned cover.',
-              ],
-            ].map(([to, icon, title, text]) => (
-              <Link to={to} key={to}>
-                <span className="vw-shortcut-icon">
-                  <WorkspaceIcon name={icon} />
-                </span>
-                <div>
-                  <h2>{title}</h2>
-                  <p>{text}</p>
-                </div>
-                <WorkspaceIcon name="arrow" />
-              </Link>
-            ))}
-          </div>
-
-          {profile?.role !== 'employee' && (
-            <p className="vw-leader-link">
-              My day always shows your own work.{' '}
-              <Link to="/app/team-activity">
-                View team activity →
-              </Link>
-            </p>
-          )}
+          <CaptureSummary data={summary.data} />
         </>
       )}
 
@@ -343,7 +305,7 @@ function ActionWorkspace({
           ownerId={ownerId}
           companyId={company!.id}
           initialDecision={decisionId}
-          saved={() => saved('Action saved.')}
+          saved={() => saved('Task saved.')}
           cancel={() => setEditor(null)}
         />
       )}
@@ -354,7 +316,7 @@ function ActionWorkspace({
           action={finishing}
           saved={() =>
             saved(
-              'Action completed. Check Recently done to see the outcome.',
+              'Task completed. Check Recently done to see the outcome.',
             )
           }
           cancel={() => setFinishing(null)}
@@ -364,29 +326,26 @@ function ActionWorkspace({
       <section className="vw-actions-module">
         <div className="vw-module-heading">
           <h2>
-            {member ? `${member.full_name}’s actions` : 'Your actions'}
+            {member ? `${member.full_name}’s tasks` : 'Your tasks'}
           </h2>
 
-          {own && (
+          {own && <div className="vw-task-tools">
+            {!editor && !finishing && <Button onClick={addAction}><WorkspaceIcon name="plus" />Add task</Button>}
             <button
               className="vw-access-button"
               type="button"
               onClick={() => access.current?.showModal()}
             >
               <WorkspaceIcon name="eye" />
-              View access details
+              What my manager can see
             </button>
-          )}
+          </div>}
         </div>
 
-        {member && (
-          <p className="vw-readonly-note">
-            Only this person can change their actions.
-          </p>
-        )}
+
 
         <div className="vw-filter-row">
-          <nav className="vw-tabs" aria-label="Action views">
+          <nav className="vw-tabs" aria-label="Task views">
             {views.map(([value, label]) => (
               <button
                 key={value}
@@ -409,18 +368,19 @@ function ActionWorkspace({
 
           <div className="vw-action-search">
             <Input
-              label="Search actions"
+              label="Search tasks"
               type="search"
-              placeholder="Search your actions"
+              placeholder="Search your tasks"
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
           </div>
         </div>
 
+        {taskId && <Link to="/app">All tasks</Link>}
         {decisionId && (
           <p className="notice">
-            Showing actions linked to the selected decision.{' '}
+            Showing tasks linked to the selected decision.{' '}
             <Button
               variant="secondary"
               onClick={() => {
@@ -437,12 +397,12 @@ function ActionWorkspace({
           <div className="vw-actions-main">
             {!current ? (
               <div className="vw-action-state" role="status">
-                Loading actions…
+                Loading tasks…
               </div>
             ) : current.error ? (
               <div className="vw-action-state">
-                <p role="alert">Actions could not be loaded.</p>
-                <Button onClick={reload}>Retry actions</Button>
+                <p role="alert">Tasks could not be loaded.</p>
+                <Button onClick={reload}>Retry tasks</Button>
               </div>
             ) : (
               <>
@@ -452,39 +412,19 @@ function ActionWorkspace({
                       <WorkspaceIcon name="check" />
                     </span>
 
-                    {own &&
-                    view === 'open' &&
-                    !query &&
-                    page === 0 ? (
-                      <>
-                        <h3>No open actions yet</h3>
-                        <p>
-                          Add an action to keep your next step clear.
-                        </p>
-
-                        {!editor && !finishing && (
-                          <Button
-                            aria-label="Add action: your first task"
-                            onClick={addAction}
-                          >
-                            <WorkspaceIcon name="plus" />
-                            Add action
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <p>
-                        {page > 0
-                          ? 'No more actions on this page. Go back to the previous page.'
+                    <p>{page > 0
+                      ? 'No more tasks on this page. Go back to the previous page.'
+                      : query || decisionId
+                        ? 'No tasks match these filters.'
+                        : own && view === 'today'
+                          ? 'Nothing due today. Forward an email or add a task.'
                           : view === 'done'
-                            ? 'No completed actions match this view yet.'
+                            ? 'No recently completed tasks.'
                             : view === 'archived'
-                              ? 'No archived actions match this view.'
-                              : member
-                                ? 'No open actions match this view for this person.'
-                                : 'No open actions match this view. Add an action or choose another view.'}
-                      </p>
-                    )}
+                              ? 'No archived tasks.'
+                              : view === 'overdue'
+                                ? 'No overdue tasks.'
+                                : 'No open tasks.'}</p>
                   </div>
                 ) : (
                   <ul className="record-list role-record-list vw-action-list">
@@ -658,7 +598,7 @@ function ActionWorkspace({
                       disabled={page === 0}
                       onClick={() => setPage(value => value - 1)}
                     >
-                      Previous actions
+                      Previous tasks
                     </Button>
 
                     <span>Page {page + 1}</span>
@@ -668,7 +608,7 @@ function ActionWorkspace({
                       disabled={(page + 1) * 20 >= current.count}
                       onClick={() => setPage(value => value + 1)}
                     >
-                      Next actions
+                      Next tasks
                     </Button>
                   </div>
                 )}
@@ -676,57 +616,13 @@ function ActionWorkspace({
             )}
           </div>
 
-          {own && (
-            <aside className="vw-role-guide">
-              <span className="vw-eyebrow">Get started</span>
-              <h2>Build your role record.</h2>
-
-              <p>
-                Start with the details someone would need to
-                cover your work.
-              </p>
-
-              <ul>
-                {roleParts.map((part, index) => (
-                  <li key={part}>
-                    <WorkspaceIcon
-                      name={
-                        index === 4
-                          ? 'calendar'
-                          : index === 2
-                            ? 'people'
-                            : 'record'
-                      }
-                    />
-                    {part}
-                  </li>
-                ))}
-              </ul>
-
-              <Link to="/app/role-record">
-                Open role record
-                <WorkspaceIcon name="arrow" />
-              </Link>
-            </aside>
-          )}
+          {own && <RoleChecklist data={summary.data} error={Boolean(summary.error)} retry={summary.retry} />}
         </div>
       </section>
+      {own && <nav className="vw-secondary-links" aria-label="More workspace pages"><Link to="/app/handovers"><WorkspaceIcon name="handover" />My handovers</Link><Link to="/app/my-cover-duties"><WorkspaceIcon name="cover" />Cover duties</Link></nav>}
 
       {own && (
         <>
-          <div className="vw-personal-note">
-            <span>
-              <WorkspaceIcon name="eye" />
-              My day shows your personal actions.
-            </span>
-
-            <button
-              type="button"
-              onClick={() => access.current?.showModal()}
-            >
-              What my manager can see →
-            </button>
-          </div>
 
           <dialog
             className="vw-dialog"
@@ -737,21 +633,7 @@ function ActionWorkspace({
               What my manager can see
             </h2>
 
-            <p>
-              Managers in your department can read your
-              responsibilities, workstreams, external contacts,
-              document links, recurring deadlines, decisions,
-              actions, completion notes and archived records.
-              Your company’s HR Admin can read these across the
-              company.
-            </p>
-
-            <p>
-              Only you can change your actions. Managers outside
-              your department and other employees cannot read
-              them. If you have no department, only you and
-              company HR Admins can read them.
-            </p>
+            <WorkVisibilityDetails />
 
             <form method="dialog">
               <Button type="submit">Close access details</Button>

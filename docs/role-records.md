@@ -6,7 +6,7 @@ At `/app/role-record`, employees can create and edit their own responsibilities,
 
 Every list starts empty, searches titles and loads 20 rows per page. Decisions filter by status. Removed records are archived with `deleted_at` and can be restored. Existing decision links survive archiving a workstream; new decisions cannot link to archived workstreams. The owner, company, category and creation fields cannot be changed through the client. Hard delete has no client grant.
 
-Document links open the external service, which enforces its own file permissions. Uploads, private Storage and signed URLs are not implemented yet. A recurring deadline stores the next date and a recurrence note; it does not schedule notifications or generate subsequent dates.
+Document links open the external service, which enforces its own file permissions. Uploads, private Storage and signed URLs are not implemented yet. Responsibilities can have an optional deadline. Dated responsibilities, tasks and recurring deadlines appear in the notification bell when due soon, due today or overdue. A recurring deadline stores its next date and a recurrence note; users update the next date after each occurrence. No recurring dates, emails or push notifications are generated automatically.
 
 ## Access
 

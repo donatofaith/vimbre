@@ -61,3 +61,84 @@ The owner supersedes the pasteable-code workflow and requests publishing the lat
 ## 18 October 2026: approved product-led landing
 
 Owner approves the final light SaaS mockup (generated design exec-c2d19a0a) with actual product previews, PRD plan checklists, flowing blue line details and scroll entrances. Replaces the rejected eclipse direction. Home now uses a single light theme with a navy feature section; no theme switch. Motion uses one-time transform reveals, staggered content and restrained decorative paths, with reduced-motion support. The existing two-circle loading intro and authentication routes remain. All illustrative work content is identified as an example. Pricing uses the original PDF pages 7–8; Business integrations and Enterprise SSO/custom integrations are omitted from MVP marketing. Plan limits, billing and backend handover capabilities still require implementation; this public design does not implement those services.
+
+
+## 19 October 2026: client My day corrections
+
+Owner explicitly authorizes direct GitHub changes and Vercel deployment for the client feedback. Start from development 348795b; preserve the owner's pasted-code work.
+
+My day now greets the first name with the client's exact "Good morning" wording and "Your tasks for today" subtitle. Today is the normal default; decision-linked entry opens all linked tasks, and read-only teammate lists retain Open. Tab order is Today, Open, Overdue, Recently done, Archived. One Add task control remains. Capture is the main entry. Removed the large duplicate navigation cards and personal-work footer/explanation. Compact handover/cover links appear below the task list. One manager-visibility control remains. User-facing task terminology is consistent across My day, forms, Capture, role records, team outcomes and examples; SQL tables/columns stay unchanged.
+
+Checklist progress is computed from distinct non-archived role-item categories for the current owner. Each row opens its actual section through a validated section query parameter, with a completed tick and genuine 0–5 progress. My day reads real pending capture-item counts, excluding discarded/confirmed drafts and archived sources. Summary refreshes on return to the tab and at 60-second intervals. Sources and drafts remain private; manager role access does not grant source access.
+
+Global heading tracking tokens use -0.01em and normal 0 tracking on smaller headings/text. Replaced tighter local CSS overrides. Sidebar Back to website and distinct cover/team/department icons follow the client wording.
+
+Restored the previously applied capture migration to the repository under its actual live migration version (20261019042036); the owner's src-only push had omitted it. New migration 20261019103715 adds my_day_summary and owner-readable, server-provisioned forwarding-address records. No mailbox is invented or provisioned by these rows. Only a receiving-service-tested, verified and enabled address appears with Copy address.
+
+Outstanding client requirements: no inbound receiving service/domain or actual personal Vimbre address is configured, so the forwarding card has no real address to display yet. Planned handovers, approval state and temporary cover assignments are not implemented in this database; their requested top status messages cannot yet be sourced. Do not fabricate them or describe these two items as completed. Build the actual handover lifecycle/access model before rendering those statuses.
+
+Validation: npm run check passes 19 tests, lint and TypeScript/production build. Live rollback-only my-day-summary tests verify counts, archived/discarded filtering, category deduplication, verified address display and tenant/owner/inactive/anonymous isolation. Browser checks updated for the requested semantics and summary fixtures; run in GitHub Actions. No local browser QA is available in this managed session.
+
+
+## Interface copy rule — 19 October 2026
+
+Write for people using Vimbre, not for the implementer following development progress. Keep copy concise, professional and tied to a real task. Avoid redundant permission reminders (for example, “Only you can edit your role record”), definitions of obvious controls, repeated page descriptions, development commentary, and promotional filler in the workspace. Keep useful examples/placeholders, actionable empty states, errors, privacy/access details requested by the client, and explanations of material consequences or limitations. Do not conceal missing functionality or imply it is implemented.
+
+The client’s explicit My day wording and behaviors in `docs/client-my-day-review.md` remain authoritative. This copy cleanup must not alter those requirements, backend access rules, routes, counts, checklist completion, icons, or heading spacing. Keep “What my manager can see” and its meaningful visibility details. Apply this rule to future development as well.
+
+## 19 October 2026: client Team activity corrections
+
+See `docs/client-team-activity-review.md` for the exact requested copy, behaviors, metric definitions, privacy rules and incomplete handover fields. The page now opens a paginated aggregate overview and a durable member detail URL with confirmed tasks and decisions. A one-person company hides the Team activity sidebar entry; search appears only at five active company members. Manage groups Team activity, Team and Departments for leaders. All protected breadcrumbs use Company. The exact client trust line links to `/app?visibility=manager`, opening the existing employee-side visibility panel. Explicit client copy remains exempt from general copy cleanup.
+
+Applied migration 20261019145146_team_activity_overview adds narrow aggregate and company active-count RPCs with explicit active-profile tenant/role/department checks. It does not widen RLS on source or draft tables. HR flags are company-wide; manager flags retain department scope. Only numeric draft counts are shared, never private text or IDs. Handover status/count are null until the genuine handover workflow exists; these client fields remain incomplete, as do the earlier handover/cover and inbound email requirements. Existing leaked-password-protection advisory is unchanged.
+
+
+## 19 October 2026: Team activity responsive fix
+
+The shared mobile table CSS hides column headings and expects data-label attributes. Team overview cells previously omitted those labels and retained a 650px minimum width, creating unlabelled values and internal overflow despite passing a page-width-only check. Every metric now has its exact column label. Mobile shows each member as a two-column metric card with a full-width name; desktop/tablet retain a fitting five-column table. Browser regression checks validate container fit, actual visible metric labels and desktop table layout at 320, 360, 390, 768, 1024 and 1440px. No client wording, access rules or backend behavior changes.
+
+
+## 19 October 2026: visibility explanation stays on Team activity
+
+Owner approved replacing the confusing My day redirect with an in-place Team visibility dialog. The exact client trust statement remains clickable and shares `WorkVisibilityDetails` with the employee’s “What my manager can see” panel. Manager-facing phrasing describes team access; employee wording and title remain intact. This supersedes the earlier redirect interaction only. No navigation, member/filter state or access rules change. Browser checks cover mobile/desktop opening, unchanged URL, close/focus restoration and Escape.
+
+## 19 October 2026: Capture review and returning-user navigation
+
+See `docs/client-capture-review.md`. New client instructions supersede the earlier always-login Open workspace rule: signed-in visitors now enter protected /app and do not see a duplicate public Log in link, including after reload. Signed-out entry and account guards remain intact.
+
+Capture uses the client’s exact title/subtitle/steps/privacy text and shared sidebar My role label. Manual entry is secondary; empty states no longer instruct users to type drafts manually. Confirmed items leave Review drafts and appear under Saved. Capture display dates are formatted without timezone shifts; date input/storage formats stay ISO. Archive has the requested tooltip. Client-requested Coming soon status is shown for unimplemented AI drafting, forwarding and file uploads. This explicit client requirement overrides the general avoidance of progress labels for these unavailable capabilities only. AI prose cleanup remains a requirement for the forthcoming AI drafting pipeline; this change does not implement AI or rewrite manual/source text. Database grants and RPCs are unchanged.
+
+
+## 19 October 2026: timezone-aware My day greeting
+
+Owner explicitly replaces the fixed Good morning prefix with local-time greetings. Use the browser/device timezone: morning before 12:00, afternoon 12:00–15:59, evening from 16:00 (owner’s requested evening behavior at 4 pm). Keep first name and Your tasks for today unchanged. The existing minute refresh now updates greeting as well as Today date; focus/visibility refresh handles returning after a time or timezone change. No stored preference or server timezone is assumed. Tests cover local boundaries and the same UTC instant in Lagos and Los Angeles.
+
+## 19 October 2026: red errors and purpose-specific branded email preparation
+
+Shared field-error text previously used navy; it now uses the red error token #b42318. Account errors retain their existing red panel. Server-reported duplicate-signup codes have a helpful login/reset message; generic anti-enumeration signup responses remain generic and are not probed.
+
+team-invitations Edge Function v2 reads inviter/company/role from protected database rows, includes display-only invitation context in OTP metadata, and refreshes it for existing pending recipients. It preserves the existing callback URL and verified-recipient membership flow. Migration 20261019154616 clears the mail personalization fields when the invitation stops being pending, without changing authorization or other user metadata. Rollback SQL and invitation unit tests cover the boundaries.
+
+Prepared 13 branded Auth/security email templates under supabase/templates, with distinct purposes and Vimbre navy/blue design. IMPORTANT: hosted Auth templates are NOT yet changed. The Supabase connector does not expose Auth configuration and CLI reports no Management API access token. User approval is required by browser fallback instructions before opening the dashboard. Apply only the manifest’s subject/content keys and preserve SMTP, sender, redirect allowlist, expiry and notification settings. No real mail sent. Future welcome dispatch and real-inbox rendering checks remain separate; see supabase/templates/README.md.
+
+## 19 October 2026: client-approved team chat
+
+Owner confirms the client wants WhatsApp-style team conversations rather than comments on records and authorizes implementation. Added /app/chat for active employees, managers and HR: selected-participant group chats, reusable direct conversations, message replies with original context, explicit @mention chips, record links, unread conversation badges and a workspace notification bell. Notification/reply links load the relevant history; older history does not mark newer messages read. Text uses safe React rendering. Responsive chat switches from split pane to a single conversation/list on phones. Existing client copy, sidebar Manage visibility and task/record permissions remain intact.
+
+Migration 20261019190141_team_chat creates four RLS-protected tables and narrow checked RPCs. HR role alone grants no private chat access. Only current active same-company conversation participants can read or send. Direct table writes, external record links, cross-chat replies and nonparticipant mentions are blocked. The notification table is in supabase_realtime; the app refreshes immediately on received events, with visible-tab 20-second recovery and focus refresh. Message UUID idempotency and atomic send/notification operations prevent duplicate retries.
+
+See src/features/chat/README.md for scope and verification. Group membership is fixed at creation in this first release. Attachments, group participant administration, message edits/deletion, presence/read receipts and chat email/push delivery are not implemented. Existing Supabase branded templates remain prepared but not applied; domain and inbox work is separate. No chat email or welcome mail dispatch is implied by these in-app notifications.
+
+Chat verification: 31 unit tests, clean lint, TypeScript and production build pass. Live rollback-only SQL passed 25 assertions plus anonymous RPC denial; no test users/messages remain and no mail was sent. Security advisors report no new findings (the existing leaked-password-protection warning is unchanged). All six browser suites passed in GitHub Actions run 39308817779, including chat groups/directs, replies, mention/notification navigation, duplicate-safe retries, text escaping, access failure and fit at 320/360/390/768/1024/1440px. Browser API fixtures are mocked; real two-account websocket/inbox acceptance remains to be tested by the owner after deployment. The earlier duplicate-signup browser fixture now exposes its Supabase API version response header so SDK error codes match real responses; application anti-enumeration behavior is unchanged.
+
+## 20 October 2026: header chat access and notification privacy
+
+Owner approves placing Chat in the top-right header beside the notification bell, removing it from the sidebar. The header icon retains a named accessible link, active state and unread badge on every workspace page, including mobile. Chat breadcrumbs still identify the page. Notifications show New message from [name] or [name] mentioned you with group context and timestamp; message bodies and the duplicate Open chat footer are removed. Clicking an alert retains the original message/conversation route. Replaced the chat welcome slogan with Select a conversation and notification filler with No unread notifications. Preserve concise professional copy and the client's existing page wording. Chat access, data, permissions and delivery behavior are unchanged.
+
+## 20 October 2026: deadlines in the workspace notification bell
+
+Owner requests notifications beyond chat, including approaching/today responsibility deadlines. Added personal task, responsibility and recurring-deadline reminders: Due soon covers the next three local calendar days, followed by distinct Due today and Overdue stages. The combined notification bell counts unread work reminders plus messages; Chat shortcut counts messages alone. Message previews remain absent. Optional responsibility Deadline input is now supported by the database constraint, and recurring-date guidance makes manual next-date updates explicit.
+
+Applied 20261020040754_work_deadline_notifications. Reminder rows are computed from current source status/dates under checked owner+tenant+active-profile authorization; read receipts persist across devices and are idempotent. Rescheduling or a new stage becomes unread again. Completed/archived tasks and archived records are excluded. Source-specific links filter the protected personal task/role list and provide All tasks/All records return links. Work-save/archive events and visible-tab polling refresh counts. No email, cron or push delivery is implemented in this change. Arbitrary recurrence text never triggers automatic scheduling. Existing client My day/Capture/Team copy and access rules are preserved.
+
+Rollback SQL passed 21 assertions plus anonymous denial; all fixtures roll back and no mail is sent. See src/features/notifications/README.md for scope, tests and the optional redundant-index cleanup limitation. Security advisors show no new findings.

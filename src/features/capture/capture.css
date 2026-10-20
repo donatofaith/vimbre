@@ -174,7 +174,7 @@
 .vc-guide h2 {
   font-size: 25px;
   line-height: 1.35;
-  letter-spacing: -0.04em;
+  letter-spacing:var(--heading-letter-spacing);
   margin: 5px 0 25px;
 }
 
@@ -532,3 +532,7 @@
     padding: 22px 18px;
   }
 }
+
+.vc-capabilities { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 22px; color: #64748b; font-size: 12px; line-height: 1.6; }
+.vc-capabilities strong { font-weight: 600; }
+.vc-saved { border-top: 1px solid #dce5f0; margin-top: 28px; padding-top: 22px; }

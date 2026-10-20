@@ -5,26 +5,35 @@ import {
   Outlet,
   useLocation,
 } from 'react-router-dom'
+import { Notifications } from '../../features/notifications/Notifications'
 import { navigation } from '../navigation'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
+import { ChatProvider, ChatLauncher } from '../../features/chat/ChatProvider'
+import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 
 const icons: Record<string, string> = {
   '/app': 'home',
   '/app/capture': 'capture',
   '/app/role-record': 'record',
   '/app/handovers': 'handover',
-  '/app/my-cover-duties': 'people',
+  '/app/my-cover-duties': 'cover',
   '/app/team-activity': 'check',
   '/app/team': 'people',
-  '/app/departments': 'people',
+  '/app/departments': 'departments',
 }
 
 export function AppLayout() {
+  return <ChatProvider><WorkspaceLayout /></ChatProvider>
+}
+
+function WorkspaceLayout() {
   const { company, profile } = useAuth()
   const { pathname } = useLocation()
+  const leader = profile?.role === 'hr_admin' || profile?.role === 'manager'
+  const memberCount = useCompanyMemberCount(profile?.id ?? '', leader)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutError, setLogoutError] = useState('')
@@ -52,6 +61,7 @@ export function AppLayout() {
   const items = navigation.filter(
     item =>
       item.path !== '/app/settings' &&
+      (item.path !== '/app/team-activity' || memberCount !== null && memberCount >= 2) &&
       (!('leaders' in item) || profile?.role !== 'employee'),
   )
 
@@ -60,7 +70,7 @@ export function AppLayout() {
   const pageName =
     active?.label === 'Handovers'
       ? 'My handovers'
-      : active?.label ?? 'Workspace'
+      : pathname === '/app/chat' ? 'Chat' : active?.label ?? 'Workspace'
 
   useEffect(() => {
     if (!menuOpen) return
@@ -134,7 +144,7 @@ export function AppLayout() {
           className="vw-navigation"
           aria-label="Workspace"
         >
-          {items.map(item => (
+          {items.filter(item => !('leaders' in item)).map(item => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -149,6 +159,7 @@ export function AppLayout() {
               </span>
             </NavLink>
           ))}
+          {leader && <div className="vw-manage-group"><span className="vw-nav-heading">Manage</span>{items.filter(item => 'leaders' in item).map(item => <NavLink key={item.path} to={item.path} onClick={() => setMenuOpen(false)}><WorkspaceIcon name={icons[item.path]} /><span>{item.label}</span></NavLink>)}</div>}
         </nav>
 
         <div className="vw-utilities">
@@ -162,7 +173,7 @@ export function AppLayout() {
 
           <Link to="/">
             <WorkspaceIcon name="home" />
-            Home
+            Back to website
           </Link>
 
           <button
@@ -189,12 +200,14 @@ export function AppLayout() {
       <div className="vw-workspace">
         <header className="vw-topbar">
           <div className="vw-breadcrumb">
-            Workspace
+            Company
             <span aria-hidden="true">/</span>
             <strong>{pageName}</strong>
           </div>
 
           <div className="vw-topbar-actions">
+            <ChatLauncher />
+            <Notifications />
             <button
               type="button"
               className="vw-help"
@@ -230,15 +243,13 @@ export function AppLayout() {
         <h2 id="vw-help-title">Find your way around</h2>
 
         <p>
-          My day shows your own actions. Use your role record to
+          My day shows your own tasks. Use your role record to
           keep responsibilities, decisions and useful links
           together.
         </p>
 
         <p>
-          Capture, handovers and cover duties are the next parts
-          being built. Your company administrator manages team
-          access.
+          Capture saves source notes and drafts for review. Your company administrator manages team access.
         </p>
 
         <form method="dialog">

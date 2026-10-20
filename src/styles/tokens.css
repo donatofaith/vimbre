@@ -1,5 +1,8 @@
 /* PRD tokens plus the glass and motion treatment requested on 15 October 2026. */
 :root {
+  --heading-letter-spacing: -0.01em;
+  --small-heading-letter-spacing: 0;
+  --text-letter-spacing: 0;
   --public-account-measure: 8ch;
   --font-landing-hero: clamp(2.25rem, 4.5vw, 4.5rem);
   --record-tilt: 1deg;
@@ -10,6 +13,7 @@
   --blue-soft: #eaf2fe;
   --navy-secondary: #1b3a57;
   --success: #27ae60;
+  --error: #b42318;
   --warning: #f2994a;
   --background: #f8fafc;
   --surface: #ffffff;
@@ -31,7 +35,7 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --control-height: 48px; --sidebar-width: 232px; --content-max: 1440px;
   --border-width: 1px; --focus-width: 3px; --focus-offset: 3px;
-  --disabled-opacity: .45; --tracking: .04em;
+  --disabled-opacity: .45; --tracking: var(--text-letter-spacing);
   --hero-width: 960px; --standalone-width: 900px; --tile-width: 240px;
   --hero-measure: 18ch; --body-measure: 60ch; --overlay-layer: 10;
   --glass-surface: rgb(255 255 255 / 82%);
@@ -75,8 +79,8 @@
   --landing-caption-size: 12px;
   --landing-lead-size: 18px;
   --landing-logo-size: 30px;
-  --landing-tracking: -.055em;
-  --landing-eyebrow-tracking: .12em;
+  --landing-tracking: var(--heading-letter-spacing);
+  --landing-eyebrow-tracking: var(--text-letter-spacing);
   --landing-line-tight: 1.1;
   --landing-line-roomy: 1.75;
   --landing-wide-radius: 24px;
@@ -94,3 +98,4 @@
   --landing-hover-shift: -4px;
   --landing-entry-shift: 8px;
 }
+
