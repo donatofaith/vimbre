@@ -387,7 +387,8 @@
 .chat-error {
   margin: 12px 18px;
 }
-.chat-bell {
+.chat-bell,
+.vw-shell .chat-launcher {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -400,7 +401,8 @@
   color: var(--navy);
   cursor: pointer;
 }
-.chat-bell .chat-count {
+.chat-bell .chat-count,
+.chat-launcher .chat-count {
   position: absolute;
   top: -5px;
   right: -8px;
@@ -560,7 +562,18 @@
   .chat-conversation {
     transition: background 0.15s ease;
   }
-  .chat-bell:hover {
+  .chat-bell:hover,
+  .chat-launcher:hover {
     transform: translateY(-1px);
   }
+}
+
+.vw-shell .chat-launcher { text-decoration: none; flex-shrink: 0; }
+.vw-shell .chat-launcher[aria-current="page"] { background: var(--blue-soft); border-color: #b8d3f7; color: #2563d9; }
+@media (max-width: 760px) {
+  .vw-topbar { gap: 8px; }
+  .vw-topbar-actions { gap: 8px; flex-shrink: 0; }
+  .vw-breadcrumb { min-width: 0; overflow: hidden; white-space: nowrap; }
+  .vw-breadcrumb strong { overflow: hidden; text-overflow: ellipsis; }
+  .chat-bell, .vw-shell .chat-launcher { width: 36px; height: 36px; }
 }

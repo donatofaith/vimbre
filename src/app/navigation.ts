@@ -1,7 +1,6 @@
 export const navigation = [
   { label: 'My day', path: '/app', end: true },
   { label: 'Team activity', path: '/app/team-activity', available: true, leaders: true },
-  { label: 'Chat', path: '/app/chat', available: true },
   { label: 'Capture', path: '/app/capture' },
   { label: 'My role', path: '/app/role-record', available: true },
   { label: 'Handovers', path: '/app/handovers' },

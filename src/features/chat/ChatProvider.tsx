@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import { emptyInbox, chatTime } from './chat-types'
@@ -108,6 +108,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     </ChatContext.Provider>
   )
 }
+export function ChatLauncher() {
+  const { inbox } = useChat()
+  return <NavLink to="/app/chat" className="chat-launcher" title="Chat" aria-label={`Chat${inbox.unread ? `, ${inbox.unread} unread` : ''}`}>
+    <WorkspaceIcon name="chat" />
+    {inbox.unread > 0 && <span className="chat-count" aria-hidden="true">{inbox.unread > 99 ? '99+' : inbox.unread}</span>}
+  </NavLink>
+}
 export function ChatNotifications() {
   const { inbox, error, refresh } = useChat()
   const dialog = useRef<HTMLDialogElement>(null)
@@ -151,7 +158,7 @@ export function ChatNotifications() {
             </button>
           </p>
         )}
-        {!error && inbox.items.length === 0 && <p>You’re all caught up.</p>}
+        {!error && inbox.items.length === 0 && <p>No unread notifications.</p>}
         <ul>
           {inbox.items.map((n) => (
             <li key={n.id}>
@@ -160,19 +167,14 @@ export function ChatNotifications() {
                 onClick={() => dialog.current?.close()}
               >
                 <strong>
-                  {n.sender_name}
-                  {n.mentioned ? ' mentioned you' : ''}
+                  {n.mentioned ? `${n.sender_name} mentioned you` : `New message from ${n.sender_name}`}
                 </strong>
-                <span>{n.title}</span>
-                <p>{n.preview}</p>
+                {n.title !== n.sender_name && <span>in {n.title}</span>}
                 <small>{chatTime(n.created_at)}</small>
               </Link>
             </li>
           ))}
         </ul>
-        <Link to="/app/chat" onClick={() => dialog.current?.close()}>
-          Open chat
-        </Link>
       </dialog>
     </>
   )

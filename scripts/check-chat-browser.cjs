@@ -228,7 +228,8 @@ const assert = require('node:assert/strict')
     await page
       .getByRole('heading', { name: /^Good (morning|afternoon|evening),/ })
       .waitFor()
-    await page.getByRole('link', { name: 'Chat', exact: true }).click()
+    assert.equal(await page.getByRole('navigation', {name: 'Workspace', exact: true}).getByRole('link', {name: /^Chat/}).count(), 0)
+    await page.locator('.vw-topbar').getByRole('link', { name: 'Chat', exact: true }).click()
     await page
       .getByRole('heading', { name: 'Start a conversation', exact: true })
       .waitFor()
@@ -319,10 +320,10 @@ const assert = require('node:assert/strict')
     const notification = message(cara, 'Can you check the dates?', {
       mentions: [uid],
     })
-    messageMap.get(cid).push(notification)
+    messageMap.get(cid).push(message(bob, 'Private message text for notification test'), notification)
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
     await page
-      .getByRole('button', { name: 'Notifications, 1 unread', exact: true })
+      .getByRole('button', { name: 'Notifications, 2 unread', exact: true })
       .click()
     const notifications = page.getByRole('dialog', {
       name: 'Notifications',
@@ -331,9 +332,14 @@ const assert = require('node:assert/strict')
     await notifications
       .getByText('Cara Example mentioned you', { exact: true })
       .waitFor()
+    await notifications.getByText('New message from Bob Example', {exact: true}).waitFor()
+    await notifications.getByText('in Operations team', {exact: true}).first().waitFor()
+    assert.equal(await notifications.getByText('Private message text for notification test', {exact: true}).count(), 0)
+    assert.equal(await notifications.getByText('Can you check the dates?', {exact: true}).count(), 0)
+    assert.equal(await notifications.getByRole('link', {name: 'Open chat', exact: true}).count(), 0)
     await notifications
       .getByRole('link')
-      .filter({ hasText: 'Can you check the dates?' })
+      .filter({ hasText: 'Cara Example mentioned you' })
       .click()
     await page.locator('.chat-messages').getByText('Can you check the dates?', { exact: true }).waitFor()
     assert(new URL(page.url()).searchParams.get('message') === notification.id)
@@ -343,6 +349,7 @@ const assert = require('node:assert/strict')
     for (const width of [320, 360, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 950 })
       await page.getByLabel('Message', { exact: true }).waitFor()
+      assert(await page.locator('.vw-topbar .chat-launcher').isVisible())
       assert(
         !(await page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth,

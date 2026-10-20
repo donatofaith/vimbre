@@ -169,7 +169,7 @@ export function ChatPage() {
             <span className="chat-welcome-mark" aria-hidden="true">
               ↗
             </span>
-            <h2>Keep your team in the loop</h2>
+            <h2>Select a conversation</h2>
             <p>Choose a conversation or start a new chat.</p>
             <button
               className="button button-primary"

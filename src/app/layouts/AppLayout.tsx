@@ -10,13 +10,11 @@ import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
-import { ChatProvider, ChatNotifications } from '../../features/chat/ChatProvider'
-import { useChat } from '../../features/chat/chat-context'
+import { ChatProvider, ChatNotifications, ChatLauncher } from '../../features/chat/ChatProvider'
 import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 
 const icons: Record<string, string> = {
   '/app': 'home',
-  '/app/chat': 'chat',
   '/app/capture': 'capture',
   '/app/role-record': 'record',
   '/app/handovers': 'handover',
@@ -31,7 +29,6 @@ export function AppLayout() {
 }
 
 function WorkspaceLayout() {
-  const { inbox } = useChat()
   const { company, profile } = useAuth()
   const { pathname } = useLocation()
   const leader = profile?.role === 'hr_admin' || profile?.role === 'manager'
@@ -72,7 +69,7 @@ function WorkspaceLayout() {
   const pageName =
     active?.label === 'Handovers'
       ? 'My handovers'
-      : active?.label ?? 'Workspace'
+      : pathname === '/app/chat' ? 'Chat' : active?.label ?? 'Workspace'
 
   useEffect(() => {
     if (!menuOpen) return
@@ -159,7 +156,6 @@ function WorkspaceLayout() {
                   ? 'My handovers'
                   : item.label}
               </span>
-              {item.path === '/app/chat' && inbox.unread > 0 && <span className="chat-count">{inbox.unread > 99 ? '99+' : inbox.unread}</span>}
             </NavLink>
           ))}
           {leader && <div className="vw-manage-group"><span className="vw-nav-heading">Manage</span>{items.filter(item => 'leaders' in item).map(item => <NavLink key={item.path} to={item.path} onClick={() => setMenuOpen(false)}><WorkspaceIcon name={icons[item.path]} /><span>{item.label}</span></NavLink>)}</div>}
@@ -209,6 +205,7 @@ function WorkspaceLayout() {
           </div>
 
           <div className="vw-topbar-actions">
+            <ChatLauncher />
             <ChatNotifications />
             <button
               type="button"
