@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 import { WebsiteHeader } from './WebsiteHeader'
+import { ContactSection } from './ContactSection'
 import './landing.css'
 
 const plans = [
@@ -62,6 +63,7 @@ export function HomePage() {
       <section className="rs-pricing-section" id="pricing"><div className="rs-container"><Reveal><h2>A plan for every team.</h2></Reveal><div className="rs-pricing">{plans.map((plan, index) => <Reveal className={`rs-plan${index === 1 ? ' rs-plan-featured' : ''}`} key={plan.name} delay={index * 70}><h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.price !== 'Custom' && <span>/ month</span>}</div><p>{plan.size}</p><ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul><Link className={`rs-button${index === 3 ? ' rs-button-outline' : ''}`} to={to}>{session ? 'Open workspace' : index === 3 ? 'Discuss your team' : 'Get started'}<Icon kind="arrow" /></Link></Reveal>)}</div></div></section>
       <section className="rs-faq rs-container" id="questions"><Reveal><h2>A few things<br />to know.</h2></Reveal><div className="rs-faq-list">{faq.map(([question, answer], i) => <details key={question} open={i === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></section>
       <section className="rs-final"><div className="rs-container"><Reveal><h2>Start with your next<br />email or meeting.</h2></Reveal><Reveal delay={120}><Link className="rs-button" to={to}>{cta}<Icon kind="arrow" /></Link></Reveal></div></section>
+      <ContactSection />
     </main><footer className="rs-footer rs-container">© 2026 Vimbre.</footer>
   </div>
 }

@@ -28,7 +28,7 @@ export function WebsiteHeader() {
           {['Product', 'How it works', 'Pricing'].map((label, index) => (
             <a key={label} href={`${pathname === '/' ? '' : '/'}${['#features', '#how-it-works', '#pricing'][index]}`} onClick={() => setMenuOpen(false)}>{label}</a>
           ))}
-          <Link to="/contact" aria-current={pathname === '/contact' ? 'page' : undefined} onClick={() => setMenuOpen(false)}>Contact</Link>
+          <a href={`${pathname === '/' ? '' : '/'}#contact`} onClick={() => setMenuOpen(false)}>Contact</a>
         </nav>
         <div className="rs-header-actions">
           {!session && !loading && <Link className="rs-login" to="/login">Log in</Link>}

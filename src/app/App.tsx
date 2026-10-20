@@ -1,12 +1,10 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
 import { FeaturePage } from '../components/ui/FeaturePage'
 import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
-
-const ContactPage = lazy(() => import('../features/public/ContactPage').then(module => ({ default: module.ContactPage })))
 
 const ChatPage = lazy(() => import('../features/chat/ChatPage').then(module => ({ default: module.ChatPage })))
 
@@ -96,10 +94,31 @@ function PageFocus() {
   return null
 }
 
+function AnchorScroll() {
+  const { pathname, hash } = useLocation()
+  useEffect(() => {
+    if (!hash) return
+    let id: string
+    try { id = decodeURIComponent(hash.slice(1)) } catch { return }
+    const scroll = () => {
+      const target = document.getElementById(id)
+      if (!target) return false
+      target.scrollIntoView({ block: 'start' })
+      return true
+    }
+    if (scroll()) return
+    const observer = new MutationObserver(() => { if (scroll()) observer.disconnect() })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [pathname, hash])
+  return null
+}
+
 export function App() {
   return (
     <>
       <PageFocus />
+      <AnchorScroll />
 
       <Suspense
         fallback={
@@ -110,7 +129,7 @@ export function App() {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/contact" element={<Navigate to="/#contact" replace />} />
           <Route
             path="/login"
             element={<AuthPage key="login" mode="login" />}
