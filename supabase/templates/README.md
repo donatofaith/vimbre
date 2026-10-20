@@ -21,3 +21,8 @@ The password-change template was visually checked in the hosted Preview panel. T
 Brevo custom SMTP remains enabled at smtp-relay.brevo.com:587 with sender display name Vimbre. Credentials and sender address were preserved. Existing security notification switches were preserved: password changed is enabled; the other six security notifications remain disabled. Their designs are saved for when those notifications are enabled. Auth link expiry, allowed redirects and Site URL were not changed.
 
 Remaining: configure and verify the no-reply sender/domain with Brevo; support@vimbre.com and hello@vimbre.com routing/reply behavior must be checked separately. Cloudflare forwarding alone is not outbound SMTP. A separate automatic welcome email after verification/accepted membership is not implemented by Auth templates and needs a transactional sender credential and a reliable post-verification delivery flow. No Brevo API key or SMTP secret is available in the coding environment; do not expose credentials or imply welcome delivery is active.
+
+
+## Customer support links
+
+Every Auth/security template includes a Contact support link to mailto:support@vimbre.com. This opens the recipient's email app; it does not change SMTP sender, Reply-To, security notification switches or mail routing. The public /contact page also lists hello@vimbre.com for general enquiries; workspace Help provides the support address and a link to the full contact page. No support form or automatic acknowledgement is implemented.
