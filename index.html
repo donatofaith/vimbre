@@ -44,6 +44,7 @@
           });
         };
         window.addEventListener('vimbre:ready', finish, { once:true });
+        requestAnimationFrame(() => { if (document.querySelector('#root h1')) finish(); });
         setTimeout(finish, 3000); setTimeout(remove, 5000);
       })();
     </script>
