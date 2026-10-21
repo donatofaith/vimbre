@@ -493,7 +493,7 @@ function RoleRecordContent() {
           {canEdit && !archived && <div className="vr-section-actions"><div className="vr-ai-unavailable"><Button disabled aria-describedby="role-ai-status">Use Vimbre AI</Button><span id="role-ai-status">Coming soon</span></div><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
         </div>
         {editor && canEdit && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
-          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
+          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} companyId={company!.id} ownerId={ownerId} ownerName={profile!.full_name} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
         </RoleDrawer>}
 
         <div className="vr-filters">
@@ -582,7 +582,9 @@ function RoleRecordContent() {
                     ? 'Try another title or change your filters.'
                     : archived
                       ? 'Archived records will appear here when you have them.'
-                      : own
+                      : own && tab === 'responsibility' && !canManage
+                        ? 'Your manager will add your responsibilities.'
+                        : own
                         ? guides[tab].empty
                         : 'This team member has not added records in this section.'}
                 </p>

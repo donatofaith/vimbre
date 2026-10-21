@@ -120,7 +120,7 @@ const assert = require('node:assert/strict');
     failSave=false;await panel.getByRole('button',{name:'Save',exact:true}).click();await page.getByRole('heading',{name:'Weekly review',exact:true}).waitFor();assert.equal(items[0].recurrence,'Weekly');
     assert.equal(items[0].due_date,undefined);
     // Escape closes the panel and returns keyboard focus to its trigger.
-    await page.getByRole('button',{name:'Add responsibility',exact:true}).click();await panel.waitFor();await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),1);assert(!await panel.isVisible());
+    await page.getByRole('button',{name:'Add responsibility',exact:true}).click();await panel.waitFor();await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),0);assert(!await panel.isVisible());
     assert(await page.getByRole('button',{name:'Add responsibility',exact:true}).evaluate(el=>el===document.activeElement));
     for(const [tab,button,label,name] of [['Open work','Add open work','Name','Service reviews'],['External contacts','Add external contact','Name','Ada Okafor'],['Documents','Add document','Title','Review guide'],['Recurring deadlines','Add deadline','What is due','Friday review']]){
       await page.getByRole('button',{name:tab,exact:true}).click();await page.getByRole('button',{name:button,exact:true}).click();const drawer=page.getByRole('dialog',{name:button,exact:true});await drawer.getByLabel(label,{exact:true}).fill(name);
