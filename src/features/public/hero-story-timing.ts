@@ -1,16 +1,9 @@
-// Retain the original sources > record > cover story and its playback timing.
+// Every illustrated click precedes its scene change. One timeline owns the tour.
 export const heroStoryTiming = {
-  desktopDuration: 8.6,
-  mobileDuration: 7.6,
-  plays: 3,
-  chips: .8,
-  flow: 1.6,
-  record: 2.8,
-  rows: 2.9,
-  ring: 3.3,
-  away: 4,
-  cover: 5,
-  coverLine: 5.5,
-  resolve: 6.4,
-  reset: 8,
+  desktop: { duration: 16.1, capture: 2, draft: 4.3, confirmed: 6.5, saved: 8, away: 10, cover: 12, resolve: 14, reset: 15.5 },
+  mobile: { duration: 16.1, capture: 2, draft: 4.3, confirmed: 6.5, saved: 8, away: 10, cover: 12, resolve: 14, reset: 15.5 },
+  plays: 2,
+  transition: .35,
+  rowStagger: .1,
+  coverStagger: .08,
 } as const

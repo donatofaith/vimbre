@@ -25,8 +25,8 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
     assert.equal(await page.locator('.rs-hero .rs-eyebrow').count(), 0);
     assert.equal(await page.locator('.rs-hero-note').count(),0);
-    assert.equal(await page.locator('.rs-demo-window').count(),0);
-    assert.equal(await page.locator('[data-story-source]').count(),3);
+    assert.equal(await page.locator('.rs-demo-window').count(),1);
+    assert.equal(await page.locator('[data-demo-click]').count(),6);
     assert.equal(await page.getByRole('link', {name:'Open workspace',exact:true}).count(), 0);
     assert.equal(await page.locator('.rs-tools-lines path').count(), 1);
     const text = await page.locator('.rs-site').innerText();
@@ -35,22 +35,15 @@ const { chromium } = require('playwright');
     for (const width of [320,360,640,768,1024,1440]) {
       await page.setViewportSize({ width, height: 900 });
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Overflow at ' + width);
-      const layout = await page.locator('.rs-story-stage').evaluate(stage => {
-        const record = stage.querySelector('[data-story-record]').getBoundingClientRect();
-        const sources = [...stage.querySelectorAll('[data-story-source]')].filter(el=>getComputedStyle(el).display!=='none').map(el=>el.getBoundingClientRect());
-        const sam = stage.querySelector('[data-story-sam]').getBoundingClientRect();
-        const alex = stage.querySelector('[data-story-alex]').getBoundingClientRect();
+      const layout = await page.locator('.rs-demo-viewport').evaluate(viewport => {
+        const area = viewport.getBoundingClientRect();
+        const scene = viewport.querySelector('[data-scene="cover"]').getBoundingClientRect();
+        const cards = [...viewport.querySelectorAll('[data-scene="cover"] .card')].map(el => el.getBoundingClientRect());
         const intersects = (a,b) => a.left < b.right-1 && a.right > b.left+1 && a.top < b.bottom-1 && a.bottom > b.top+1;
-        const nodes = [record,...sources,sam,alex];
-        const overlap = nodes.some((a,i)=>nodes.slice(i+1).some(b=>intersects(a,b)));
-        const gutter = stage.querySelector('.rs-story-connections').getBoundingClientRect();
-        const connected = !gutter.width || (Math.abs(gutter.left-sources[0].right)<1 && Math.abs(gutter.right-record.left)<1 && Math.abs(gutter.top+gutter.height/6-(sources[0].top+sources[0].height/2))<1);
-        const line = stage.querySelector('[data-story-line]').getBoundingClientRect();
-        const coverConnected = !gutter.width || (Math.abs(line.top-record.bottom)<2 && Math.abs(line.bottom-alex.top)<2 && Math.abs(line.left-(record.left+record.width/2))<2);
-        return {overlap, connected, coverConnected};
+        return { inside: cards.every(card => card.left >= area.left && card.right <= area.right + 1 && card.top >= area.top && card.bottom <= area.bottom + 1), overlap: cards.some((card,i)=>cards.slice(i+1).some(other=>intersects(card,other))), sceneFits: scene.width <= area.width + 1 };
       });
-      assert(!layout.overlap, 'No hero card overlap at '+width);
-      assert(layout.connected && layout.coverConnected,'Attached connectors at '+width);
+      assert(layout.inside && layout.sceneFits, 'Cover cards fit the product viewport at '+width);
+      assert(!layout.overlap, 'Cover cards do not overlap at '+width);
       if ([360,768,1024,1440].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
       if (width === 1440) {
         const lines = await page.locator('h1').evaluate(el => el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
@@ -88,23 +81,27 @@ const { chromium } = require('playwright');
     assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).every(a => a.playState !== 'running')));
     await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(100);
-    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 3)), 'Hero stops after three loops');
-    await storyPage.waitForTimeout(2800);
-    await storyPage.locator('.rs-story-shell').screenshot({path:'/tmp/vimbre-landing-sources.png'});
-    await storyPage.waitForTimeout(2300);
-    await storyPage.locator('.rs-story-shell').screenshot({path:'/tmp/vimbre-landing-record.png'});
-    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:35000});
-    for(const selector of ['.rs-story-stage','[data-story-record]','[data-story-alex]','.rs-story-resolution']){
+    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 2)), 'Hero stops after two loops');
+    await storyPage.evaluate(() => { window.previewClicks = 0; document.querySelectorAll('.rs-demo-window button').forEach(button => button.addEventListener('click',()=>window.previewClicks++)); });
+    for (const name of ['capture','draft','confirmed','saved','away','cover']) {
+      await storyPage.waitForFunction(name => Number(getComputedStyle(document.querySelector(`[data-scene="${name}"]`)).opacity) > .9, name, {timeout:6000});
+      if(name==='draft' || name==='cover') await storyPage.locator('.rs-story-shell').screenshot({path:`/tmp/vimbre-landing-tour-${name}.png`});
+    }
+    assert.equal(await storyPage.evaluate(()=>window.previewClicks),0,'Illustrated clicks never dispatch real app actions');
+    assert.equal(await storyPage.locator('[data-demo-click]').count(),6);
+    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:40000});
+    for(const selector of ['.rs-story-stage','[data-scene="cover"]','.rs-story-resolution']){
       assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
     }
+    assert.equal(await storyPage.locator('[data-demo-cursor]').evaluate(el=>getComputedStyle(el).opacity),'0');
     const mobileContext = await browser.newContext({viewport:{width:360,height:800}});
     const mobilePage = await mobileContext.newPage();
     await mobilePage.goto('http://127.0.0.1:5174/');
     await mobilePage.locator('#vimbre-boot').waitFor({state:'detached'});
     await mobilePage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await mobilePage.getByRole('button',{name:'Pause hero story'}).waitFor();
-    await mobilePage.waitForFunction(() => document.querySelector('.rs-story-shell').hasAttribute('data-story-complete'),null,{timeout:25000});
-    assert.equal(await mobilePage.locator('[data-story-record]').evaluate(el=>getComputedStyle(el).opacity),'1');
+    await mobilePage.waitForFunction(() => document.querySelector('.rs-story-shell').hasAttribute('data-story-complete'),null,{timeout:40000});
+    assert.equal(await mobilePage.locator('[data-scene=cover]').evaluate(el=>getComputedStyle(el).opacity),'1');
     await mobileContext.close();
     const og = await page.request.get('http://127.0.0.1:5174/vimbre-og-image-1200.png');
     assert.equal(og.status(),200);

@@ -10,44 +10,57 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const mobile = window.matchMedia('(max-width: 767px)')
   const elements = (selector: string, within: ParentNode = root) => Array.from(within.querySelectorAll<HTMLElement>(selector))
   const timeline: AnimationSequence = []
-  const duration = mobile.matches ? heroStoryTiming.mobileDuration : heroStoryTiming.desktopDuration
-  const at = (time: number) => time * duration / 8.6
-  const frame = (selector: string, frames: Record<string, number[] | string[]>, time = 0, length = .5) => {
-    elements(selector, shell).forEach(el => timeline.push([el, frames, { at: at(time), duration: at(length), ease }]))
+  const timing = mobile.matches ? heroStoryTiming.mobile : heroStoryTiming.desktop
+  const { duration, capture, draft, confirmed, saved, away, cover, resolve, reset } = timing
+  const transition = heroStoryTiming.transition
+  const frame = (selector: string, frames: Record<string, number[] | string[]>, at: number, length: number = transition, times?: number[]) => {
+    elements(selector, shell).forEach(el => timeline.push([el, frames, { at, duration: length, ease, times }]))
   }
-  elements('[data-story-source]', shell).forEach((el, i) => {
-    timeline.push([el, { opacity: [0, 1, 1, .6, .6, 0], transform: ['translateY(16px)', 'translateY(0)', 'translateY(0)', 'translateY(0)', 'translateY(0)', 'translateY(0)'] }, { at: at(i * .12), duration: at(8.6 - i * .12), times: [0, .08, .18, .32, .93, 1], ease }])
-  })
-  frame('[data-story-chip]', { opacity: [0, 1], transform: ['scale(.96)', 'scale(1)'] }, .8, .6)
-  const connections = shell.querySelector<HTMLElement>('.rs-story-connections')!
-  const width = connections.clientWidth, height = connections.clientHeight
-  if (!mobile.matches) elements('[data-story-dot]', shell).forEach((el, i) => {
-    const start = [1 / 6, .5, 5 / 6][i]
-    const transforms = Array.from({ length: 25 }, (_, n) => {
-      const t = n / 24, u = 1 - t
-      const x = 3 * u * u * t * .6 + 3 * u * t * t * .4 + t * t * t
-      const y = u * u * u * start + 3 * u * u * t * start + 3 * u * t * t * .5 + t * t * t * .5
-      return `translate(${x * width}px,${(y - start) * height}px)`
-    })
-    timeline.push([el, { transform: transforms }, { at: heroStoryTiming.flow + i * .1, duration: 1, ease }])
-    timeline.push([el, { opacity: [0, 1, 1, 0] }, { at: heroStoryTiming.flow + i * .1, duration: 1, ease }])
-  })
-  frame('.rs-story-paths', { opacity: [0, 1] }, 3.3, .3)
-  frame('[data-story-record]', { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, 2.8, .5)
-  elements('[data-story-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: at(2.9 + i * .1), duration: at(.4), ease }]))
-  frame('[data-story-ring]', { opacity: [0, .4, 0] }, 3.3, .7)
-  frame('[data-story-sam]', { opacity: [0, 1, .6] }, 4, 1)
-  frame('[data-story-alex]', { opacity: [0, 1], transform: ['translateX(24px)', 'translateX(0)'] }, 5, .8)
-  frame('[data-story-line]', { transform: ['scaleY(0)', 'scaleY(1)'] }, 5.8, .5)
-  frame('[data-story-resolution]', { opacity: [0, 1] }, 6.4, .4)
-  frame('.rs-story-stage', { opacity: [1, 0] }, 8, .6)
+  const scene = (name: string, start: number, end: number) => {
+    const length = end - start
+    frame(`[data-scene="${name}"]`, { opacity: [0, 1, 1, 0], transform: ['translateX(12px)', 'translateX(0)', 'translateX(0)', 'translateX(0)'] }, start, length, [0, transition / length, 1 - transition / length, 1])
+  }
+  scene('email', 0, capture + transition)
+  scene('capture', capture, draft + transition)
+  scene('draft', draft, confirmed + transition)
+  scene('confirmed', confirmed, saved + transition)
+  scene('saved', saved, away + transition)
+  scene('away', away, cover + transition)
+  frame('[data-scene="cover"]', { opacity: [0, 1], transform: ['translateX(12px)', 'translateX(0)'] }, cover)
+  frame('[data-capture-dot]', { opacity: [0, 1, 1, 0] }, capture, saved - capture)
+  elements('[data-phrase]', shell).forEach((el, i) => timeline.push([el, { transform: ['scaleX(0)', 'scaleX(1)'] }, { at: capture + .4 + i * .12, duration: .35, ease }]))
+  elements('[data-draft-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: draft + .1 + i * heroStoryTiming.rowStagger, duration: .4, ease }]))
+  elements('[data-cover-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, { at: cover + i * heroStoryTiming.coverStagger, duration: .5, ease }]))
+  frame('[data-cover-highlight]', { opacity: [0, 1] }, cover + .8, .5)
+  frame('[data-story-resolution]', { opacity: [0, 1] }, resolve, .4)
+  frame('.rs-story-stage', { opacity: [1, 0] }, reset, duration - reset)
+  // Measure real controls on both layouts. A decorative pointer never dispatches DOM clicks.
+  const layout = shell.querySelector<HTMLElement>('.rs-demo-layout')!
+  const bounds = layout.getBoundingClientRect()
+  let previousX = bounds.width * .75, previousY = 60
+  const clicks = [
+    ['capture', '.rs-demo-capture-button', capture], ['review', '.rs-demo-review', draft],
+    ['save', '.rs-demo-save', confirmed], ['role', '.rs-demo-role', saved],
+    ['handovers', '.rs-demo-handovers', away], ['cover', '.rs-demo-cover-button', cover],
+  ] as const
+  for (const [name, selector, time] of clicks) {
+    const target = shell.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+    const x = target.left + target.width * .55 - bounds.left
+    const y = target.top + target.height * .5 - bounds.top
+    const ring = shell.querySelector<HTMLElement>(`[data-demo-click="${name}"]`)!
+    ring.style.left = `${x - 12}px`; ring.style.top = `${y - 12}px`
+    frame('[data-demo-cursor]', { opacity: [0, 1, 1, 0], transform: [`translate(${previousX}px,${previousY}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`] }, time - .8, 1, [0, .65, .85, 1])
+    frame(`[data-demo-click="${name}"]`, { opacity: [0, .85, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.5)'] }, time - .1, .4)
+    frame(selector, { transform: ['scale(1)', 'scale(.97)', 'scale(1)'] }, time - .1, .25)
+    previousX = x; previousY = y
+  }
   const hero = animate(timeline, { repeat: heroStoryTiming.plays - 1 })
   hero.pause()
   all.add(hero)
   const restore = () => {
     shell.dataset.storyComplete = 'true'
     hero.cancel()
-    shell.querySelectorAll<HTMLElement>('.rs-story-stage, .rs-story-paths, [data-story-source], [data-story-chip], [data-story-dot], [data-story-record], [data-story-row], [data-story-ring], [data-story-sam], [data-story-alex], [data-story-line], [data-story-resolution]').forEach(el => {
+    shell.querySelectorAll<HTMLElement>('.rs-story-stage, [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-demo-click], [data-cover-highlight], [data-story-resolution], .rs-demo-next, .rs-demo-save, .rs-demo-capture-button, .rs-demo-cover-button').forEach(el => {
       el.style.removeProperty('opacity')
       el.style.removeProperty('transform')
     })
