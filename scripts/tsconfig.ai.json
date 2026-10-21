@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2023","lib":["ES2023","DOM"],"module":"ESNext","moduleResolution":"Bundler","strict":true,"noEmit":true,"allowImportingTsExtensions":true,"skipLibCheck":true,"paths":{"@supabase/supabase-js":["../node_modules/@supabase/supabase-js"]}},"files":["./ai-deno.d.ts","../supabase/functions/ai-run/index.ts"]}

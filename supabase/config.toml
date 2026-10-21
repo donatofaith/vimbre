@@ -6,3 +6,9 @@ project_id = "vimbre"
 verify_jwt = false
 import_map = "./functions/team-invitations/deno.json"
 entrypoint = "./functions/team-invitations/index.ts"
+
+[functions.ai-run]
+# User JWT at the platform boundary, plus Auth.getUser and protected active profile in the handler.
+verify_jwt = true
+import_map = "./functions/ai-run/deno.json"
+entrypoint = "./functions/ai-run/index.ts"
