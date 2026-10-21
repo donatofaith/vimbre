@@ -148,7 +148,7 @@ const { randomUUID } = require('node:crypto');
       await trigger.click();
       const dialog=page.getByRole('dialog',{name:'Team visibility',exact:true});await dialog.waitFor();
       assert.equal(page.url(),before,'visibility must keep the current page');
-      await dialog.getByText('Managers can read responsibilities, workstreams, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records within their department. HR Admins can read these across the company.',{exact:true}).waitFor();
+      await dialog.getByText('Managers can read responsibilities, open work, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records within their department. HR Admins can read these across the company.',{exact:true}).waitFor();
       await dialog.getByRole('button',{name:'Close access details',exact:true}).click();
       assert.equal(await dialog.isVisible(),false);assert(await trigger.evaluate(el=>document.activeElement===el));
       await trigger.click();await page.keyboard.press('Escape');assert.equal(await dialog.isVisible(),false);

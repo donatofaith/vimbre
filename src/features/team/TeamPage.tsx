@@ -14,6 +14,7 @@ type Member = Profile & { department: { name: string } | null }
 type Invite = Invitation & { department: { name: string } | null }
 const pageSize = 20
 function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { member: Member; departmentsRequired: boolean; onSaved: () => void; onCancel: () => void }) {
+  const { company } = useAuth()
   const [role, setRole] = useState(member.role)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -31,7 +32,7 @@ function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { memb
   }
   return <section className="card settings-card" aria-label="Edit member"><h2>Edit {member.full_name}</h2><p>{member.email}</p><form className="auth-form" onSubmit={save}>
     <Input label="Full name" name="name" defaultValue={member.full_name} required maxLength={100} />
-    <div className="field"><label htmlFor={`role-${member.id}`}>Role</label><select id={`role-${member.id}`} value={role} onChange={event => setRole(event.target.value)}>{roles.map(value => <option key={value} value={value}>{roleLabel(value)}</option>)}</select></div>
+    <div className="field"><label htmlFor={`role-${member.id}`}>Role</label><select id={`role-${member.id}`} value={role} onChange={event => setRole(event.target.value)}>{roles.map(value => <option key={value} value={value}>{roleLabel(value, member.id === company?.created_by && value === 'hr_admin')}</option>)}</select></div>
     <DepartmentPicker initial={member.department_id ? { id: member.department_id, name: member.department?.name ?? 'Current department' } : null} required={departmentsRequired && role !== 'hr_admin'} />
     <TextField label="What are they responsible for?" name="role_description" value={member.role_description} placeholder="e.g. Supplier reviews and the weekly operations report" />
     <Input label="Start date" name="role_start_date" type="date" defaultValue={member.role_start_date ?? ''} />
