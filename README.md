@@ -1,6 +1,6 @@
 # Vimbre
 
-Fresh build from the PRD dated 15 October 2026. Vimbre preserves decisions, reasons and follow ups so someone covering or taking over a role knows what comes first. The approved glass, blur and brief animations remain in place.
+Fresh build from the PRD dated 15 October 2026. Vimbre preserves decisions, reasons and follow ups so someone covering or taking over a role knows what comes first. 
 
 ## Start locally
 
