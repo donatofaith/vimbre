@@ -1,7 +1,7 @@
 // Founder revision, 21 October 2026. Visible FAQ and schema share one source.
 export const landingTitle = 'Vimbre | Handover and Knowledge Retention for Teams'
 export const definition = "Vimbre keeps each person's tasks, decisions and contacts as they work, so when someone leaves or is away, whoever steps in knows what happened and what to do first."
-export const storySummary = 'Example: an email is captured as a decision with its reason, owner and next step, saved to a role record, and a colleague covering for someone who is away can see it.'
+export const storySummary = 'Example: a meeting note and an email become one decision record, and a colleague covering for someone who is away can see it.'
 export const record = [
   ['Decision', 'Move supplier reviews to monthly'],
   ['Why', 'To reduce meeting load and focus on key updates'],

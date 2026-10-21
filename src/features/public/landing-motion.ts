@@ -10,70 +10,48 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const mobile = window.matchMedia('(max-width: 767px)')
   const elements = (selector: string, within: ParentNode = root) => Array.from(within.querySelectorAll<HTMLElement>(selector))
   const timeline: AnimationSequence = []
-  const timing = mobile.matches ? heroStoryTiming.mobile : heroStoryTiming.desktop
-  const { duration, capture, draft, saved, away, cover, resolve, reset } = timing
-  const transition = heroStoryTiming.transition
-  const frame = (selector: string, frames: Record<string, number[] | string[]>, at: number, length: number = transition, times?: number[]) => {
-    elements(selector, shell).forEach(el => timeline.push([el, frames, { at, duration: length, ease, times }]))
+  const duration = mobile.matches ? heroStoryTiming.mobileDuration : heroStoryTiming.desktopDuration
+  const at = (time: number) => time * duration / 8.6
+  const frame = (selector: string, frames: Record<string, number[] | string[]>, time = 0, length = .5) => {
+    elements(selector, shell).forEach(el => timeline.push([el, frames, { at: at(time), duration: at(length), ease }]))
   }
-  const scene = (name: string, start: number, end: number, first = false) => {
-    frame(`[data-scene="${name}"]`, {
-      opacity: [0, 1, 1, 0],
-      transform: first ? ['translateY(24px)', 'translateY(0)', 'translateY(0)', 'translateY(0)'] : ['translateX(16px)', 'translateX(0)', 'translateX(0)', 'translateX(0)'],
-    }, start, end - start, [0, (first ? .6 : transition) / (end - start), 1 - transition / (end - start), 1])
-  }
-  scene('email', 0, capture + transition, true)
-  scene('capture', capture, draft + transition)
-  scene('draft', draft, saved + transition)
-  scene('saved', saved, away + transition)
-  scene('away', away, cover + transition)
-  frame('[data-scene="cover"]', { opacity: [0, 1], transform: ['translateX(16px)', 'translateX(0)'] }, cover)
-  frame('[data-capture-dot]', { opacity: [0, 1] }, .6)
-  if (!mobile.matches) elements('[data-phrase]', shell).forEach((el, i) => timeline.push([el, { transform: ['scaleX(0)', 'scaleX(1)'] }, { at: capture + .45 + i * .12, duration: .35, ease }]))
-  elements('[data-draft-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: draft + .1 + i * heroStoryTiming.rowStagger, duration: .4, ease }]))
-  frame('[data-save-toast]', { opacity: [0, 1, 1, 0], transform: ['translateY(16px)', 'translateY(0)', 'translateY(0)', 'translateY(0)'] }, saved, away - saved + transition)
-  elements('[data-cover-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, { at: cover + i * heroStoryTiming.coverStagger, duration: .5, ease }]))
-  frame('[data-cover-highlight]', { opacity: [0, 1] }, cover + 1, .5)
-  frame('[data-story-resolution]', { opacity: [0, 1] }, resolve, .5)
-  frame('.rs-story-stage', { opacity: [1, 0] }, reset, duration - reset)
-  if (!mobile.matches) {
-    frame('.rs-demo-camera', { transform: ['scale(1)', 'scale(1.05) translate(-4px,-6px)'] }, draft, heroStoryTiming.camera)
-    frame('.rs-demo-camera', { transform: ['scale(1.05) translate(-4px,-6px)', 'scale(1)'] }, away, heroStoryTiming.camera)
-    frame('.rs-demo-camera', { transform: ['scale(1)', 'scale(1.04) translate(-3px,-4px)'] }, cover, heroStoryTiming.camera)
-    const viewport = shell.querySelector<HTMLElement>('.rs-demo-viewport')!
-    const cursor = shell.querySelector<HTMLElement>('[data-demo-cursor]')!
-    const cursorTo = (targetSelector: string, at: number, startX: number, startY: number, ring?: string) => {
-      const bounds = viewport.getBoundingClientRect()
-      const target = shell.querySelector<HTMLElement>(targetSelector)!.getBoundingClientRect()
-      const x = target.left + target.width * .65 - bounds.left
-      const y = target.top + target.height * .5 - bounds.top
-      const click = ring ? shell.querySelector<HTMLElement>(ring) : null
-      if (click) { click.style.left = `${x - 12}px`; click.style.top = `${y - 12}px` }
-      timeline.push([cursor, { opacity: [0, 1, 1, 1], transform: [`translate(${startX}px,${startY}px)`, `translate(${startX + (x - startX) * .35}px,${startY - 16}px)`, `translate(${x - 12}px,${y - 10}px)`, `translate(${x}px,${y}px)`] }, { at, duration: heroStoryTiming.cursor, ease }])
-      if (ring) {
-        frame(ring, { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, at + heroStoryTiming.cursor, heroStoryTiming.click)
-        frame('[data-demo-cursor]', { opacity: [1, 0] }, at + heroStoryTiming.cursor + .15, .3)
-      }
-    }
-    cursorTo('.rs-demo-capture-button', capture - 1.05, 35, 140, '[data-click-capture]')
-    cursorTo('.rs-demo-save', saved - 1.05, 70, 210, '[data-click-save]')
-    cursorTo('.rs-demo-recent', cover + .5, 48, 185)
-  } else {
-    frame('[data-click-capture]', { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, capture - .3, .4)
-    frame('[data-click-save]', { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, saved - .3, .4)
-  }
+  elements('[data-story-source]', shell).forEach((el, i) => {
+    timeline.push([el, { opacity: [0, 1, 1, .6, .6, 0], transform: ['translateY(16px)', 'translateY(0)', 'translateY(0)', 'translateY(0)', 'translateY(0)', 'translateY(0)'] }, { at: at(i * .12), duration: at(8.6 - i * .12), times: [0, .08, .18, .32, .93, 1], ease }])
+  })
+  frame('[data-story-chip]', { opacity: [0, 1], transform: ['scale(.96)', 'scale(1)'] }, .8, .6)
+  const connections = shell.querySelector<HTMLElement>('.rs-story-connections')!
+  const width = connections.clientWidth, height = connections.clientHeight
+  if (!mobile.matches) elements('[data-story-dot]', shell).forEach((el, i) => {
+    const start = [1 / 6, .5, 5 / 6][i]
+    const transforms = Array.from({ length: 25 }, (_, n) => {
+      const t = n / 24, u = 1 - t
+      const x = 3 * u * u * t * .6 + 3 * u * t * t * .4 + t * t * t
+      const y = u * u * u * start + 3 * u * u * t * start + 3 * u * t * t * .5 + t * t * t * .5
+      return `translate(${x * width}px,${(y - start) * height}px)`
+    })
+    timeline.push([el, { transform: transforms }, { at: heroStoryTiming.flow + i * .1, duration: 1, ease }])
+    timeline.push([el, { opacity: [0, 1, 1, 0] }, { at: heroStoryTiming.flow + i * .1, duration: 1, ease }])
+  })
+  frame('.rs-story-paths', { opacity: [0, 1] }, 3.3, .3)
+  frame('[data-story-record]', { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, 2.8, .5)
+  elements('[data-story-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: at(2.9 + i * .1), duration: at(.4), ease }]))
+  frame('[data-story-ring]', { opacity: [0, .4, 0] }, 3.3, .7)
+  frame('[data-story-sam]', { opacity: [0, 1, .6] }, 4, 1)
+  frame('[data-story-alex]', { opacity: [0, 1], transform: ['translateX(24px)', 'translateX(0)'] }, 5, .8)
+  frame('[data-story-line]', { transform: ['scaleY(0)', 'scaleY(1)'] }, 5.8, .5)
+  frame('[data-story-resolution]', { opacity: [0, 1] }, 6.4, .4)
+  frame('.rs-story-stage', { opacity: [1, 0] }, 8, .6)
   const hero = animate(timeline, { repeat: heroStoryTiming.plays - 1 })
   hero.pause()
   all.add(hero)
   const restore = () => {
     shell.dataset.storyComplete = 'true'
     hero.cancel()
-    shell.querySelectorAll<HTMLElement>('.rs-story-stage, .rs-demo-camera, [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-click-capture], [data-click-save], [data-save-toast], [data-cover-highlight], [data-story-resolution]').forEach(el => {
+    shell.querySelectorAll<HTMLElement>('.rs-story-stage, .rs-story-paths, [data-story-source], [data-story-chip], [data-story-dot], [data-story-record], [data-story-row], [data-story-ring], [data-story-sam], [data-story-alex], [data-story-line], [data-story-resolution]').forEach(el => {
       el.style.removeProperty('opacity')
       el.style.removeProperty('transform')
     })
   }
-
   const sync = () => {
     if (disposed || complete) return
     if (heroVisible && !document.hidden && !userPaused) hero.play()
@@ -84,6 +62,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const heroObserver = new IntersectionObserver(entries => { heroVisible = entries[0].intersectionRatio >= .4; sync() }, { threshold: [0, .4] })
   heroObserver.observe(shell)
   disposers.push(() => heroObserver.disconnect())
+
   const headings = elements('[data-reveal] h2')
   const originals = new Map(headings.map(el => [el, el.textContent ?? '']))
   const splitHeadings = () => {
@@ -158,21 +137,6 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   setupProblem()
   mobile.addEventListener('change', setupProblem)
   disposers.push(() => { mobile.removeEventListener('change', setupProblem); cleanupProblem() })
-  const pointerMedia = window.matchMedia('(hover: hover) and (pointer: fine)')
-  const depth = shell.querySelector<HTMLElement>('.rs-demo-depth')!
-  let pointerFrame = 0
-  const resetDepth = () => { cancelAnimationFrame(pointerFrame); depth.style.removeProperty('transform') }
-  const pointerMove = (event: PointerEvent) => {
-    if (!pointerMedia.matches || mobile.matches || document.hidden || !heroVisible || userPaused || complete) return
-    const bounds = shell.getBoundingClientRect()
-    const x = (event.clientX - bounds.left) / bounds.width * 16 - 8
-    const y = (event.clientY - bounds.top) / bounds.height * 16 - 8
-    cancelAnimationFrame(pointerFrame)
-    pointerFrame = requestAnimationFrame(() => { depth.style.transform = `translate(${x}px,${y}px)` })
-  }
-  shell.addEventListener('pointermove', pointerMove)
-  shell.addEventListener('pointerleave', resetDepth)
-  disposers.push(() => { shell.removeEventListener('pointermove', pointerMove); shell.removeEventListener('pointerleave', resetDepth); resetDepth() })
   const motif = root.querySelector<HTMLElement>('.rs-hero-motif')
   if (motif) {
     const detach = scroll((progress: number) => { if (!document.hidden) motif.style.transform = `translateY(${progress * -24}px) rotate(-20deg)` }, { target: shell, offset: ['start start', 'end start'] })

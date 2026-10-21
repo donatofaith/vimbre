@@ -64,7 +64,7 @@ const assert = require('node:assert/strict');
     await page.setViewportSize({width: 1280, height: 720});
 
     assert.equal(await page.locator('.rs-source').count(), 4); assert.equal(await page.locator('.rs-plan').count(), 4); assert.equal(await page.title(), 'Vimbre | Handover and Knowledge Retention for Teams'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
-    assert.equal(await page.locator('.rs-demo-ai-label').getByText('Coming soon', { exact: true }).count(), 1);
+    assert.equal(await page.getByText('Coming soon', { exact: true }).count(), 0);
     assert.equal(await page.locator('.rs-pricing').getByText('Coming soon', { exact: true }).count(), 0);
     assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 5);
     assert.equal(await page.locator('.rs-site').getAttribute('data-theme'), 'light');

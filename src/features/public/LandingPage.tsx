@@ -60,6 +60,8 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     let disposed = false
     let frame = 0
     let generation = 0
+    let resizeTimer = 0
+    let lastWidth = window.innerWidth
     const compact = window.matchMedia('(max-width: 767px)')
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
     const start = () => {
@@ -70,16 +72,24 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       setStory({ paused: false, ready: false })
       if (media.matches) return
       frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
-        void import('./landing-motion').then(({ createLandingMotion }) => {
+        void import('./landing-motion').then(async ({ createLandingMotion }) => {
+          await document.fonts.ready
           if (disposed || currentGeneration !== generation || media.matches || !root.current || !stage.current) return
           motion.current = createLandingMotion(root.current, stage.current, setStory)
         }).catch(() => { /* Complete static frames remain usable if enhancement fails. */ })
       }) })
     }
+    const resized = () => {
+      if (window.innerWidth === lastWidth) return
+      lastWidth = window.innerWidth
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(start, 150)
+    }
     start()
+    window.addEventListener('resize', resized, {passive:true})
     media.addEventListener('change', start)
     compact.addEventListener('change', start)
-    return () => { disposed = true; cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
+    return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
   const to = authenticated ? '/app' : '/signup'
   const cta = authenticated ? 'Open workspace' : 'Get started'
@@ -94,7 +104,6 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             <h1 id="hero-title" tabIndex={-1}>Someone leaving or away? The next person <span>already knows where to start.</span></h1>
             <p className="rs-hero-subhead">Capture decisions, finish tasks, and keep the context. Vimbre builds the handover as your team works.</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#how-it-works">See how it works<Arrow /></a></div>
-            <p className="rs-hero-note">Works next to the tools you already use.</p>
           </div>
           <HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} />
         </div>
