@@ -8,13 +8,16 @@ import { Input } from '../../components/ui/Input'
 import { safeSearch } from '../team/team-utils'
 import { ItemForm, DecisionForm } from './RecordForms'
 import type { RoleItem, Decision } from './RecordForms'
-import { itemKinds, recordError, safeRecordUrl } from './record-utils'
+import { itemKinds, recordError, safeRecordUrl, addLabels } from './record-utils'
 import type { ItemKind } from './record-utils'
 import { recordExamples } from './record-examples'
+import { RoleDrawer } from './RoleDrawer'
+import { ResponsibilityReview, ResponsibilityPersonal } from './ResponsibilityReview'
+import { formatRecordDate } from './record-utils'
 import './role-record.css'
 
 type Tab = ItemKind | 'decision'
-type Owner = { id: string; full_name: string }
+type Owner = { id: string; full_name: string; department_id: string | null; role_description: string; role_start_date: string | null }
 
 const guides: Record<Tab, { examples: string[]; empty: string }> = {
   responsibility: {
@@ -56,7 +59,7 @@ const guides: Record<Tab, { examples: string[]; empty: string }> = {
     examples: [
       'Friday operations report',
       'Monthly invoice review',
-      'Quarterly supplier check-in',
+      'Quarterly supplier review',
     ],
     empty:
       'Add the next due date and explain how often the work repeats.',
@@ -125,9 +128,7 @@ function RoleRecordContent() {
     error: boolean
   } | null>(null)
 
-  const [workstreams, setWorkstreams] = useState<RoleItem[]>([])
-  const [streamSearch, setStreamSearch] = useState('')
-  const [streamError, setStreamError] = useState(false)
+  const [personal, setPersonal] = useState<{item: RoleItem; mode: 'notes' | 'suggest'} | null>(null)
 
   const [editor, setEditor] = useState<{
     item?: RoleItem
@@ -139,6 +140,10 @@ function RoleRecordContent() {
   const [error, setError] = useState('')
 
   const own = ownerId === profile!.id
+  const selectedOwner = own ? profile : owners.find(row => row.id === ownerId)
+  const manager = profile?.role === 'hr_admin' || profile?.role === 'manager'
+  const canManage = profile?.role === 'hr_admin' || profile?.role === 'manager' && Boolean(profile.department_id) && profile.department_id === selectedOwner?.department_id
+  const canEdit = tab === 'responsibility' ? canManage : own || canManage
 
   const key =
     `${ownerId}:${tab}:${archived}:${page}:` +
@@ -161,7 +166,7 @@ function RoleRecordContent() {
     const timer = setTimeout(async () => {
       const { data, error: failure } = await supabase
         .from('profiles')
-        .select('id,full_name')
+        .select('id,full_name,department_id,role_description,role_start_date')
         .eq('active', true)
         .ilike('full_name', `%${safeSearch(ownerSearch)}%`)
         .order('full_name')
@@ -254,32 +259,7 @@ function RoleRecordContent() {
     }
   }, [key, ownerId, tab, archived, page, query, decisionStatus, recordId])
 
-  useEffect(() => {
-    let cancelled = false
 
-    const timer = setTimeout(async () => {
-      const { data, error: failure } = await supabase
-        .from('role_items')
-        .select('*')
-        .eq('owner_id', ownerId)
-        .eq('kind', 'workstream')
-        .is('deleted_at', null)
-        .ilike('title', `%${safeSearch(streamSearch)}%`)
-        .order('title')
-        .order('id')
-        .limit(20)
-
-      if (!cancelled) {
-        setWorkstreams(data ?? [])
-        setStreamError(Boolean(failure))
-      }
-    }, 250)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [ownerId, streamSearch, revision])
 
   useEffect(() => {
     void supabase
@@ -350,15 +330,15 @@ function RoleRecordContent() {
 
   const label =
     tab === 'decision'
-      ? 'Decision Log'
+      ? 'Decision log'
       : itemKinds.find(row => row[0] === tab)![1]
 
   const guidance =
     tab === 'decision'
-      ? 'Record what was decided and why. This helps the next person understand the choices behind the work.'
+      ? 'What was decided, why, and what happens next.'
       : recordExamples[tab].guidance
 
-  const addLabel = tab === 'decision' ? 'Add decision' : 'Add record'
+  const addLabel = addLabels[tab]
 
   function openEditor() {
     setEditor({})
@@ -384,19 +364,18 @@ function RoleRecordContent() {
           </span>
 
           <h1 tabIndex={-1} aria-label="Role record">
-            {own ? 'Your role record' : 'Role record'}
+            {own ? 'My role' : ownerName}
           </h1>
 
 
         </div>
 
-        {own && !archived && !editor && (
-          <Button disabled={busy} onClick={openEditor}>
-            <WorkspaceIcon name="plus" />
-            {addLabel}
-          </Button>
-        )}
       </header>
+
+      {selectedOwner?.role_start_date && <p className="vr-role-since">In this role since <time dateTime={selectedOwner.role_start_date}>{formatRecordDate(selectedOwner.role_start_date)}</time></p>}
+      {selectedOwner?.role_description && <p className="vr-role-description">{selectedOwner.role_description}</p>}
+      <ResponsibilityReview manager={manager} revision={revision} changed={reload} />
+      {personal && <ResponsibilityPersonal key={`${personal.item.id}:${personal.mode}`} {...personal} close={() => setPersonal(null)} saved={() => {setPersonal(null); setMessage(personal.mode === 'notes' ? 'Notes saved.' : 'Suggestion sent for review.'); reload()}} />}
 
       {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
       {profile?.role !== 'employee' && (
@@ -494,7 +473,7 @@ function RoleRecordContent() {
         <nav className="vr-tabs" aria-label="Role record sections">
           {[
             ...itemKinds,
-            ['decision', 'Decision Log'] as const,
+            ['decision', 'Decision log'] as const,
           ].map(([value, title]) => (
             <button
               type="button"
@@ -509,56 +488,13 @@ function RoleRecordContent() {
           ))}
         </nav>
 
-        {editor && own && (
-          <div className="vr-editor-area">
-            {tab === 'decision' ? (
-              <>
-                <div className="vr-stream-search">
-                  <Input
-                    label="Find a workstream for this decision"
-                    type="search"
-                    value={streamSearch}
-                    onChange={event =>
-                      setStreamSearch(event.target.value)
-                    }
-                  />
-
-                  <p className="muted">
-                    Search to find workstreams beyond the first 20
-                    choices.
-                  </p>
-
-                  {streamError && (
-                    <p role="alert">
-                      Workstream choices could not be loaded. Try
-                      searching again.
-                    </p>
-                  )}
-                </div>
-
-                <DecisionForm
-                  key={editor.decision?.id ?? 'new-decision'}
-                  decision={editor.decision}
-                  workstreams={workstreams}
-                  companyId={company!.id}
-                  ownerId={ownerId}
-                  saved={saved}
-                  cancel={() => setEditor(null)}
-                />
-              </>
-            ) : (
-              <ItemForm
-                key={editor.item?.id ?? tab}
-                kind={tab}
-                item={editor.item}
-                companyId={company!.id}
-                ownerId={ownerId}
-                saved={saved}
-                cancel={() => setEditor(null)}
-              />
-            )}
-          </div>
-        )}
+        <div className="vr-section-heading">
+          <div><h2>{label}</h2><p>{guidance}</p></div>
+          {canEdit && !archived && <div className="vr-section-actions"><div className="vr-ai-unavailable"><Button disabled aria-describedby="role-ai-status">Use Vimbre AI</Button><span id="role-ai-status">Coming soon</span></div><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
+        </div>
+        {editor && canEdit && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
+          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
+        </RoleDrawer>}
 
         <div className="vr-filters">
           <div className="vr-search">
@@ -651,22 +587,6 @@ function RoleRecordContent() {
                         : 'This team member has not added records in this section.'}
                 </p>
 
-                {own &&
-                  !archived &&
-                  !editor &&
-                  !query &&
-                  decisionStatus === 'all' && (
-                    <Button
-                      disabled={busy}
-                      onClick={openEditor}
-                      aria-label={`${addLabel}: your first ${
-                        tab === 'decision' ? 'decision' : 'record'
-                      }`}
-                    >
-                      <WorkspaceIcon name="plus" />
-                      {addLabel}
-                    </Button>
-                  )}
               </div>
             ) : (
               <>
@@ -682,11 +602,18 @@ function RoleRecordContent() {
                           </p>
                         )}
 
-                        {item.contact_email && (
+                        {item.organisation && <p>Organisation: {item.organisation}</p>}
+                        {item.contact_details && <p>{item.contact_details}</p>}
+                        {item.contact_context && <p className="record-text">{item.contact_context}</p>}
+                        {item.kind === 'workstream' && <p>Status: {{in_progress:'In progress',waiting:'Waiting',on_hold:'On hold',done:'Done'}[item.work_status]}</p>}
+                        {item.next_step && <p>Next step: {item.next_step}</p>}
+                        {item.backup_person_id && <p>Backup person: {owners.find(row => row.id === item.backup_person_id)?.full_name ?? 'Assigned'}</p>}
+                        {item.file_path && <DocumentFile path={item.file_path} />}
+                        {item.contact_email && !item.contact_details && (
                           <p>Email: {item.contact_email}</p>
                         )}
 
-                        {item.contact_phone && (
+                        {item.contact_phone && !item.contact_details && (
                           <p>Phone: {item.contact_phone}</p>
                         )}
 
@@ -694,7 +621,7 @@ function RoleRecordContent() {
                           <p>
                             {item.kind === 'responsibility' ? 'Deadline: ' : 'Next deadline: '}
                             <time dateTime={item.due_date}>
-                              {item.due_date}
+                              {formatRecordDate(item.due_date)}
                             </time>
                           </p>
                         )}
@@ -710,7 +637,7 @@ function RoleRecordContent() {
                         </WebLink>
                       </article>
 
-                      {own && (
+                      {canEdit && (
                         <div className="form-actions">
                           {!archived && (
                             <Button
@@ -737,6 +664,7 @@ function RoleRecordContent() {
                           </Button>
                         </div>
                       )}
+                      {own && item.kind === 'responsibility' && !archived && <div className="form-actions"><Button variant="secondary" onClick={() => setPersonal({item,mode:'notes'})}>My notes</Button>{!canManage && <Button variant="secondary" onClick={() => setPersonal({item,mode:'suggest'})}>Suggest a change</Button>}</div>}
                     </li>
                   ))}
 
@@ -753,18 +681,19 @@ function RoleRecordContent() {
                           <strong>Why:</strong> {decision.reason}
                         </p>
 
+                        {decision.next_step && <p>Next step: {decision.next_step}</p>}
                         <p>
                           Decided by {decision.decided_by} on{' '}
                           <time dateTime={decision.decided_on}>
-                            {decision.decided_on}
+                            {formatRecordDate(decision.decided_on)}
                           </time>
                         </p>
 
                         <p>
                           {decision.workstream_id
-                            ? `Workstream: ${
+                            ? `Open work: ${
                                 decision.workstream?.title ??
-                                'Linked workstream'
+                                'Linked open work'
                               }${
                                 decision.workstream?.deleted_at
                                   ? ' (archived)'
@@ -792,7 +721,7 @@ function RoleRecordContent() {
                         </div>
                       </article>
 
-                      {own && (
+                      {canEdit && (
                         <div className="form-actions">
                           {!archived && (
                             <Button
@@ -852,49 +781,11 @@ function RoleRecordContent() {
             )}
           </div>
 
-          <aside className="vr-guide" aria-label="Record guidance">
-            <h2>What belongs here</h2>
-            <p>{guidance}</p>
 
-            <div>
-              <h3>Examples to guide you</h3>
-              <ul>
-                {guides[tab].examples.map(example => (
-                  <li key={example}>{example}</li>
-                ))}
-              </ul>
-            </div>
-
-
-          </aside>
         </div>
 
 
       </section>
-
-      {tab !== 'decision' && (
-        <section className="vr-decision-callout">
-          <span className="vr-icon">
-            <WorkspaceIcon name="check" />
-          </span>
-
-          <div>
-            <h2>Keep the reason behind the decision.</h2>
-            <p>Record what was decided, why, and what it affects.</p>
-          </div>
-
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => selectTab('decision')}
-          >
-            Open decision log
-            <WorkspaceIcon name="arrow" />
-          </button>
-        </section>
-      )}
-
-
 
       <dialog
         ref={accessDialog}
@@ -905,7 +796,7 @@ function RoleRecordContent() {
 
         <p>
           Managers in your department can read your responsibilities,
-          workstreams, external contacts, document links, recurring
+          open work, external contacts, document links, recurring
           deadlines, decisions, tasks, completion notes and archived
           records. Your company’s HR Admin can read these across the
           company.
@@ -923,4 +814,13 @@ function RoleRecordContent() {
       </dialog>
     </div>
   )
+}
+
+
+function DocumentFile({path}: {path: string}) {
+  const [url,setUrl]=useState('')
+  const [error,setError]=useState('')
+  const [busy,setBusy]=useState(false)
+  useEffect(()=>{if(!url)return;const timer=setTimeout(()=>setUrl(''),55000);return()=>clearTimeout(timer)},[url])
+  return <div className="form-actions">{url ? <a href={url} target="_blank" rel="noopener noreferrer">Open uploaded document</a> : <Button variant="secondary" disabled={busy} onClick={async()=>{setBusy(true);setError('');const {data,error}=await supabase.storage.from('role-documents').createSignedUrl(path,60);setBusy(false);if(error)setError('Could not open the document. Please retry.');else setUrl(data.signedUrl)}}>{busy?'Preparing document…':'View uploaded document'}</Button>}{error && <p role="alert">{error}</p>}</div>
 }

@@ -4,6 +4,7 @@ export function WorkspaceIcon({
   name?: string
 }) {
   const paths: Record<string, string> = {
+    sidebar: 'M3 4h18v16H3z M9 4v16 M14 9l-3 3 3 3',
     chat: 'M4 4h16v12H9l-5 4z M8 8h8 M8 12h5',
     bell: 'M6 9a6 6 0 0 1 12 0v6l2 3H4l2-3z M10 21h4',
     home: 'M3 10l9-7 9 7 M5 9v12h14V9 M9 21v-8h6v8',
@@ -42,3 +43,4 @@ export function WorkspaceIcon({
     </svg>
   )
 }
+

@@ -10,7 +10,7 @@ import { localDate, safeRecordUrl } from '../records/record-utils'
 import { ActionForm, CompleteAction } from './ActionForm'
 import type { Action } from './ActionForm'
 import { actionError } from './action-utils'
-import { CaptureSummary, RoleChecklist } from './MyDayOverview'
+import { CaptureSummary, RoleChecklist, RecurringDue } from './MyDayOverview'
 import { useMyDaySummary } from './useMyDaySummary'
 import { WorkVisibilityDetails } from './WorkVisibilityDetails'
 import { localGreeting } from './greeting'
@@ -624,6 +624,7 @@ function ActionWorkspace({
       {own && (
         <>
 
+          <RecurringDue owner={ownerId} revision={revision} />
           <dialog
             className="vw-dialog"
             ref={access}
@@ -644,3 +645,4 @@ function ActionWorkspace({
     </div>
   )
 }
+

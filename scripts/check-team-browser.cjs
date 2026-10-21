@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
     const page = await browser.newPage(); page.setDefaultTimeout(10000);
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     const user = { id: '11111111-1111-4111-8111-111111111111', aud: 'authenticated', role: 'authenticated', email: 'admin@example.invalid', email_confirmed_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} };
-    const company = { id: '22222222-2222-4222-8222-222222222222', name: 'Team test company', team_mode: 'small', contact_email: user.email };
+    const company = { id: '22222222-2222-4222-8222-222222222222', name: 'Team test company', team_mode: 'small', contact_email: user.email, created_by: user.id };
     let profile = { id: user.id, full_name: 'Test Admin', company_id: company.id, email: user.email, role: 'hr_admin', department_id: null, active: true };
     const departments = [], invitations = [], requests = [];
     let pending = null, duplicateEmail = false;
@@ -33,7 +33,7 @@ const assert = require('node:assert/strict');
       else if (url.pathname.endsWith('/manage_department')) {
         if (!args.p_id) { const row = { id: '33333333-3333-4333-8333-333333333333', company_id: company.id, name: args.p_name, manager_id: null, archived_at: null }; departments.push(row); body = row.id; }
         else { const row = departments.find(row => row.id === args.p_id); if (args.p_archive) row.archived_at = new Date().toISOString(); else { row.name = args.p_name; row.manager_id = args.p_manager; } body = row.id; }
-      } else if (url.pathname.endsWith('/manage_member')) { profile = { ...profile, full_name: args.p_full_name, department_id: args.p_department, role: args.p_role, active: args.p_active }; body = null; }
+      } else if (url.pathname.endsWith('/manage_member_context')) { profile = { ...profile, full_name: args.p_full_name, department_id: args.p_department, role: args.p_role, active: args.p_active, role_description: args.p_description, role_start_date: args.p_start }; body = null; }
       else if (url.pathname.endsWith('/team-invitations') && duplicateEmail) { status=400;body={error:'This email already belongs to a workspace. Existing members can be managed on the Team page'}; }
       else if (url.pathname.endsWith('/team-invitations')) {
         if (args.action === 'create') invitations.push({ id: '44444444-4444-4444-8444-444444444444', company_id: company.id, email: args.email, full_name: args.full_name, role: args.role, department_id: args.department_id, status: 'pending', expires_at: new Date(Date.now() + 86400000).toISOString(), created_at: new Date().toISOString() });
@@ -55,6 +55,13 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Resend to New Teammate' }).click(); await page.getByRole('status').filter({ hasText: 'Invitation email requested' }).waitFor(); assert(requests.some(row => row.path.endsWith('/team-invitations') && row.args.action === 'resend'));
     page.once('dialog', dialog => dialog.accept()); await page.getByRole('button', { name: 'Cancel invitation for New Teammate' }).click(); await page.getByRole('status').filter({ hasText: 'Invitation cancelled' }).waitFor(); await page.getByText('cancelled', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Edit Test Admin', exact: true }).click(); const editor = page.getByRole('region', { name: 'Edit member' }); await editor.getByLabel('Full name', { exact: true }).fill('Updated Admin'); await editor.getByRole('button', { name: 'Save member' }).click(); await page.getByRole('status').filter({ hasText: 'Member updated' }).waitFor(); assert.equal(profile.full_name, 'Updated Admin');
+    await page.getByRole('link',{name:'Settings',exact:true}).click();await page.getByRole('heading',{name:'Company settings',exact:true}).waitFor();
+    assert(await page.getByLabel('Account email',{exact:true}).evaluate(el=>el.readOnly));assert.equal(await page.getByLabel('Account email',{exact:true}).inputValue(),user.email);
+    assert(await page.getByLabel('Company contact email',{exact:true}).evaluate(el=>el.readOnly));assert(await page.getByLabel('Team structure',{exact:true}).evaluate(el=>el.readOnly));
+    assert.equal(await page.getByRole('link',{name:'view plans and subscribe',exact:true}).getAttribute('href'),'/#pricing');
+    await page.getByLabel('Company name',{exact:true}).fill('Team test company');await page.getByRole('button',{name:'Save settings',exact:true}).click();await page.getByRole('status').filter({hasText:'Company settings saved.'}).waitFor();
+    const settingsWrite=requests.filter(row=>row.path.endsWith('/companies')&&row.args).at(-1);assert.deepEqual(Object.keys(settingsWrite.args),['name']);
+    await page.getByRole('link',{name:'Team',exact:true}).click();
     await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await page.screenshot({ path: process.env.VIMBRE_TEAM_SCREENSHOT || '/tmp/vimbre-team-mobile.png', fullPage: true });
     // A different browser accepts a valid implicit email link. No metadata grants access.
     Object.assign(user, { id: '55555555-5555-4555-8555-555555555555', email: 'teammate@example.invalid', user_metadata: {} });
@@ -66,4 +73,5 @@ const assert = require('node:assert/strict');
     assert.equal(errors.length, 0, JSON.stringify(errors)); console.log(JSON.stringify({ departmentCreateAndManager: 'passed', memberEdit: 'passed', inviteCreateResendCancel: 'passed', separateBrowserAcceptance: 'passed', employeeReadOnly: 'passed', mobileOverflow: false, pageErrors: errors, network: 'intercepted; no email sent' }));
   } finally { await browser.close(); await server.close(); }
 })().catch(error => { console.error(error); process.exit(1) });
+
 

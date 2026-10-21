@@ -836,3 +836,45 @@
 .vw-brand-surface { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 9px; background: #fff; }
 .vw-brand-surface .vimbre-logo-full { width: 130px; height: auto; }
 @media (max-width: 760px) { .vw-brand-surface .vimbre-logo-full { width: 112px; } }
+
+
+/* Workspace review: compact branding, full width view and clear section rhythm. */
+.vw-shell .vw-brand { padding-inline: 4px; }
+.vw-brand-surface { padding: 4px 7px; border-radius: 6px; }
+.vw-brand-surface .vimbre-logo-full { width: 96px; height: auto; }
+.vw-collapse-sidebar { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; flex-shrink: 0; border: 0; border-radius: 8px; padding: 8px; background: transparent; color: #334e68; cursor: pointer; font: inherit; }
+.vw-collapse-sidebar span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.vw-collapse-sidebar:hover { background: #edf3fa; }
+.vw-collapse-sidebar:focus-visible { outline: 2px solid #2563d9; outline-offset: 3px; }
+.vw-topbar .vw-breadcrumb { margin-right: auto; }
+.vw-content { width: 100%; padding-block: 40px 56px; }
+.vw-content > .page-heading { margin-bottom: 32px; }
+.vw-content > section + section { margin-top: 28px; }
+.vw-content > .card + .card { margin-top: 28px; }
+.vw-content .card > h2 { margin-bottom: 20px; }
+.vw-content .auth-form { gap: 20px; }
+.vw-content :is(input, select, textarea)[readonly] { background: #f1f5f9; color: #52677e; }
+.vw-content .settings-card { max-width: 760px; padding: 28px; }
+.settings-plan-link { margin: 0; line-height: 1.7; }
+.vr-tabs { margin-bottom: 24px; padding-bottom: 16px; }
+.vr-filters { padding-block: 24px; }
+.vr-records-grid { gap: 28px; }
+@media (min-width: 761px) {
+  .vw-shell.app-shell[data-sidebar-collapsed="true"] { grid-template-columns: minmax(0, 1fr); }
+  .vw-shell[data-sidebar-collapsed="true"] > .vw-sidebar { display: none; }
+  .vw-shell[data-sidebar-collapsed="true"] .vw-content { max-width: none; }
+}
+@media (max-width: 760px) {
+  .vw-collapse-sidebar { display: none; }
+  .vw-brand-surface .vimbre-logo-full { width: 96px; }
+  .vw-content { padding: 28px 16px 40px; }
+  .vw-content > .page-heading { margin-bottom: 24px; }
+  .vw-content > section + section, .vw-content > .card + .card { margin-top: 24px; }
+  .vw-content .settings-card { padding: 20px; }
+  .vr-tabs { margin-bottom: 20px; }
+}
+
+.vw-shell[data-sidebar-collapsed="true"] .vw-collapse-sidebar svg { transform: rotate(180deg); }
+.vw-recurring-due { margin-top: 28px; }
+.vw-recurring-due ul { list-style: none; padding: 0; }
+.vw-recurring-due li { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 14px; border-top: 1px solid #e2e8f0; }

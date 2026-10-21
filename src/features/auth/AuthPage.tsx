@@ -279,7 +279,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
       {!message && (
         <p className="v-auth-description">
           {mode === 'signup'
-            ? 'Create your account and company workspace. You’ll be its HR Admin.'
+            ? 'Create your account and company workspace. You’ll be its Super admin.'
             : mode === 'login'
               ? 'Sign in to your company workspace.'
               : mode === 'forgot'

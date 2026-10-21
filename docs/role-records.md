@@ -1,3 +1,7 @@
+# Current role record rules
+
+The 21 October client review supersedes the earlier access and form descriptions below. See [client-role-review.md](client-role-review.md) for current behavior, private uploads, notes, approvals, AI limitations and verification.
+
 # Role records and Decision Log
 
 ## Available
@@ -36,3 +40,4 @@ The existing glass styling is a working design foundation. Final visual design r
 - Supabase security advisors: no database findings. The previously known disabled leaked-password-protection warning remains: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
 The public page describes only implemented features as Available. AI capture, forwarding and handovers remain Coming soon. Actions are available in My day. No pricing, public contact inbox, testimonial or results statistics have been invented.
+

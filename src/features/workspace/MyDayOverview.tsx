@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { MyDaySummary } from './useMyDaySummary'
+import { supabase } from '../../lib/supabase'
+import { localDate, formatRecordDate } from '../records/record-utils'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 
 const roleSteps = [
@@ -32,4 +34,21 @@ export function RoleChecklist({ data, error, retry }: { data: MyDaySummary | nul
       return <li key={kind}><Link to={`/app/role-record?section=${kind}`} aria-label={`${label}${data ? complete ? ', done' : ', not done' : ''}`}><WorkspaceIcon name={icon} /><span>{label}</span><span className={`vw-checklist-state${complete ? ' is-done' : ''}`} aria-hidden="true">{complete ? <WorkspaceIcon name="tick" /> : <WorkspaceIcon name="arrow" />}</span></Link></li>
     })}</ul>
   </aside>
+}
+
+
+export function RecurringDue({owner, revision}: {owner: string; revision: number}) {
+  const [result,setResult]=useState<{owner:string; rows:{id:string; title:string; due_date:string|null}[]; error:boolean}|null>(null)
+  useEffect(()=>{
+    let cancelled=false
+    async function load(){const {data,error}=await supabase.from('role_items').select('id,title,due_date').eq('owner_id',owner).eq('kind','recurring_deadline').is('deleted_at',null).lte('due_date',localDate()).order('due_date').limit(20);if(!cancelled)setResult({owner,rows:data??[],error:Boolean(error)})}
+    void load()
+    const refresh=()=>{if(!document.hidden)void load()}
+    window.addEventListener('vimbre:work-changed',refresh);window.addEventListener('focus',refresh)
+    return()=>{cancelled=true;window.removeEventListener('vimbre:work-changed',refresh);window.removeEventListener('focus',refresh)}
+  },[owner,revision])
+  if(result?.owner!==owner)return null
+  if(result.error)return <p role="alert">Recurring deadlines could not be loaded. <Link to="/app/role-record?section=recurring_deadline">View deadlines</Link></p>
+  if(!result.rows.length)return null
+  return <section className="vw-recurring-due card"><h2>Recurring deadlines</h2><ul>{result.rows.map(row=><li key={row.id}><Link to={`/app/role-record?section=recurring_deadline&record=${row.id}`}>{row.title}</Link>{row.due_date && <time dateTime={row.due_date}>{formatRecordDate(row.due_date)}</time>}</li>)}</ul><Link to="/app/role-record?section=recurring_deadline">View all deadlines</Link></section>
 }

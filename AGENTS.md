@@ -9,3 +9,6 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - Keep useful examples/placeholders, actionable empty states, errors, requested access/privacy information, and material consequences or limitations. Never imply unfinished functionality works.
 - Preserve the client’s explicit wording and behaviors in `docs/client-my-day-review.md` and `docs/client-team-activity-review.md` and `docs/client-capture-review.md`, including the My day labels, empty state, tabs, Capture entry, checklist and “What my manager can see” link. Do not change these during general copy cleanup without explicit authorization.
 - Copy edits must preserve functionality, accessibility and authorization rules.
+
+
+- Preserve `docs/client-role-review.md`: employee responsibilities are read only, notes are private, suggested changes require approval, and role forms use side panels. Founder display is Super admin; invited HR Admin remains a separate label. Settings changes cannot bypass subscription controls.

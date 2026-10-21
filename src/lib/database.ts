@@ -18,7 +18,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
   public: Omit<GeneratedDatabase['public'], 'Functions'> & {
     Functions: Omit<
       Functions,
-      'manage_department' | 'manage_member'
+      'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
       work_notification_inbox: { Args: {p_timezone: string; p_page: number}; Returns: Json }
       work_notification_read: { Args: {p_key: string; p_timezone: string}; Returns: boolean }
@@ -64,6 +64,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
         'p_manager'
       >
 
+      manage_member_context: NullableArgs<Functions['manage_member_context'], 'p_department' | 'p_start'>
       manage_member: NullableArgs<
         Functions['manage_member'],
         'p_department'
@@ -71,3 +72,4 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
     }
   }
 }
+

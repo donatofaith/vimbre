@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
+import { roleLabel } from '../team/team-utils'
 import { supabase } from '../../lib/supabase'
 import { useChat } from './chat-context'
 import { chatTime, mergeMessages, recordPath } from './chat-types'
@@ -204,6 +205,7 @@ function NewChat({
   onClose: () => void
   onCreated: (id: string) => void
 }) {
+  const { company } = useAuth()
   const dialog = useRef<HTMLDialogElement>(null)
   const [kind, setKind] = useState<'direct' | 'group'>('direct')
     const [search, setSearch] = useState('')
@@ -367,11 +369,7 @@ function NewChat({
                   />
                   <span>{p.full_name}</span>
                   <small>
-                    {p.role === 'hr_admin'
-                      ? 'HR Admin'
-                      : p.role === 'manager'
-                        ? 'Manager'
-                        : 'Employee'}
+                    {roleLabel(p.role ?? 'employee', p.id === company?.created_by)}
                   </small>
                 </label>
               ))}
@@ -918,3 +916,4 @@ function MessageComposer({
     </form>
   )
 }
+

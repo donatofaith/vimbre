@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const origins = new Set(['https://vimbre.vercel.app', 'http://localhost:5173', 'http://127.0.0.1:5173'])
+const origins = new Set(['https://vimbre.com', 'https://www.vimbre.com', 'https://vimbre.vercel.app', 'http://localhost:5173', 'http://127.0.0.1:5173'])
 const redirectTo = 'https://vimbre.vercel.app/auth/callback'
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get('origin')
@@ -24,12 +24,13 @@ Deno.serve(async (request: Request) => {
   if (authError || !identity.user?.email_confirmed_at) return respond(401, { error: 'Sign in with a confirmed email.' })
   try {
     const text = await request.text()
-    if (text.length > 4096) return respond(413, { error: 'Invitation details are too long.' })
+    if (text.length > 10000) return respond(413, { error: 'Invitation details are too long.' })
     const body = JSON.parse(text)
     if (!body || !['create', 'resend'].includes(body.action)) return respond(400, { error: 'Choose an invitation action.' })
-    const { data, error: preparationError } = await caller.rpc('prepare_invitation', {
+    const { data, error: preparationError } = await caller.rpc('prepare_invitation_context', {
       p_action: body.action, p_id: body.id ?? null, p_email: body.email ?? null,
       p_full_name: body.full_name ?? null, p_role: body.role ?? null, p_department: body.department_id ?? null,
+      p_description: body.role_description ?? null, p_start: body.role_start_date ?? null,
     })
     if (preparationError) {
       console.error('Invitation preparation rejected', { code: preparationError.code, message: preparationError.message })
@@ -94,3 +95,4 @@ Deno.serve(async (request: Request) => {
     return respond(400, { error: 'Could not process the invitation. Check your connection and retry.' })
   }
 })
+

@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom'
 import { Notifications } from '../../features/notifications/Notifications'
 import { BrandLogo } from '../../components/ui/BrandLogo'
+import { roleLabel } from '../../features/team/team-utils'
 import { navigation } from '../navigation'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
@@ -37,6 +38,14 @@ function WorkspaceLayout() {
   const memberCount = useCompanyMemberCount(profile?.id ?? '', leader)
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('vimbre:sidebar-collapsed') === 'true' } catch { return false }
+  })
+  function toggleSidebar() {
+    const next = !sidebarCollapsed
+    setSidebarCollapsed(next)
+    try { localStorage.setItem('vimbre:sidebar-collapsed', String(next)) } catch { /* Storage may be unavailable. */ }
+  }
   const [logoutError, setLogoutError] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -52,12 +61,7 @@ function WorkspaceLayout() {
       .join('')
       .toUpperCase() || 'Y'
 
-  const role =
-    profile?.role === 'hr_admin'
-      ? 'HR Admin'
-      : profile?.role === 'manager'
-        ? 'Manager'
-        : 'Employee'
+  const role = roleLabel(profile?.role ?? 'employee', company?.created_by === profile?.id)
 
   const items = navigation.filter(
     item =>
@@ -105,12 +109,12 @@ function WorkspaceLayout() {
   }
 
   return (
-    <div className="app-shell vw-shell">
+    <div className="app-shell vw-shell" data-sidebar-collapsed={sidebarCollapsed}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
 
-      <aside className="vw-sidebar" data-open={menuOpen}>
+      <aside className="vw-sidebar" id="workspace-sidebar" data-open={menuOpen}>
         <div className="vw-sidebar-top">
           <Link
             className="vw-brand"
@@ -196,6 +200,10 @@ function WorkspaceLayout() {
 
       <div className="vw-workspace">
         <header className="vw-topbar">
+          <button type="button" className="vw-collapse-sidebar" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-controls="workspace-sidebar" aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <WorkspaceIcon name="sidebar" />
+            <span>{sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>
+          </button>
           <div className="vw-breadcrumb">
             Company
             <span aria-hidden="true">/</span>
@@ -251,3 +259,4 @@ function WorkspaceLayout() {
     </div>
   )
 }
+

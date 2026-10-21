@@ -1,6 +1,7 @@
 export const roles = ['hr_admin', 'manager', 'employee'] as const
 export type Role = typeof roles[number]
-export function roleLabel(role: string) {
+export function roleLabel(role: string, creator = false) {
+  if (creator) return 'Super admin'
   return role === 'hr_admin' ? 'HR Admin' : role === 'manager' ? 'Manager' : 'Employee'
 }
 export function safeSearch(value: string) { return value.trim().replace(/[%_\\]/g, '').slice(0, 120) }
@@ -17,3 +18,4 @@ export function teamError(message?: string) {
   if (message?.includes('duplicate key')) return 'That name is already in use. Choose another name.'
   return 'Could not save this change. Check your details and access, then retry.'
 }
+

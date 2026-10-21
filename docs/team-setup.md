@@ -1,3 +1,7 @@
+# Current company settings
+
+The creator displays Super admin; database authorization remains hr_admin. Company settings saves only the name. Account and company email are read only. Team structure links to Pricing and cannot be changed through the client or its database grants. Stripe checkout and entitlements still need integration. Invitations and controlled member edits carry role responsibilities and start date into My role. See [client-role-review.md](client-role-review.md).
+
 # Team and department setup
 
 ## Available behavior
@@ -42,3 +46,4 @@ supabase/config.toml preserves this configuration for CLI deployment. No service
 4. Confirm they appear as Active with the intended role. A Manager sees only their department; an Employee cannot edit team settings.
 5. Test resend with a second pending invitation, then cancel it. Its recipient must be unable to join. Check an expired/reissued email link as well.
 6. Assign a department manager, change their role or deactivate them, and verify the manager assignment is cleared. The last active HR Admin must remain protected.
+
