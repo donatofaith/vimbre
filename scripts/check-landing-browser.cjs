@@ -7,26 +7,35 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({ headless: true });
   try {
     const source = await readFile('dist/index.html', 'utf8');
-    assert(source.includes('Know what your team decided'));
-    assert(source.includes('Vimbre is a shared decision log for teams.'));
+    assert(source.includes('Someone leaving or away?'));
+    assert(source.includes('It is a shared decision log and role record for teams.'));
     assert(source.includes('What does Vimbre cost?'));
     assert.equal((source.match(/<h1(?:\s|>)/g) ?? []).length, 1);
     const structured = JSON.parse(source.match(/<script type="application\/ld\+json">([\s\S]+?)<\/script>/)[1]);
     const questions = structured['@graph'].find(item => item['@type'] === 'FAQPage').mainEntity;
-    assert.equal(questions.length, 5);
+    assert.equal(questions.length, 6);
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.goto('http://127.0.0.1:5174/');
     await page.getByRole('heading', { level: 1 }).waitFor();
-    assert.equal(await page.title(), 'Vimbre | Decision Records for Teams and Handovers');
+    await page.locator('#vimbre-boot').waitFor({state:'detached'});
+    assert.equal(await page.title(), 'Vimbre | Handover and Knowledge Retention for Teams');
     assert.equal(await page.locator('h1').count(), 1);
+    assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
+    assert.equal(await page.locator('.rs-hero .rs-eyebrow').count(), 0);
+    assert.equal(await page.getByRole('link', {name:'Open workspace',exact:true}).count(), 0);
+    assert.equal(await page.locator('.rs-tools-lines path').count(), 1);
     const text = await page.locator('.rs-site').innerText();
     assert(!/[—–-]/.test(text), 'No dashes in visible copy');
     assert(!/\b(seamless|powerful|streamline|empower|unlock|leverage|robust|cutting edge|revolutionise|journey|ecosystem|synergy|continuity|effortless|automatically)\b/i.test(text), 'No banned copy');
     for (const width of [320,360,640,768,1024,1440]) {
       await page.setViewportSize({ width, height: 900 });
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Overflow at ' + width);
+      const sceneFits = await page.locator('[data-scene=cover]').evaluate(el => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth);
+      assert(sceneFits, 'Cover preview fits at ' + width);
+      if ([360,768,1024,1440].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
+      if (width === 1440) console.log('HEADLINE_LINES', await page.locator('h1').evaluate(el => ({height:el.clientHeight, lineHeight:getComputedStyle(el).lineHeight, width:el.clientWidth}))); 
     }
     for (let i = 0; i < questions.length; i++) {
       const button = page.locator('#faq-button-' + i);
@@ -36,11 +45,11 @@ const { chromium } = require('playwright');
       await page.keyboard.press('Space');
       assert.equal(await button.getAttribute('aria-expanded'), 'false');
     }
-    assert.equal(await page.locator('.rs-story-record').evaluate(el => getComputedStyle(el).opacity), '1');
+    assert.equal(await page.locator('[data-scene=cover]').evaluate(el => getComputedStyle(el).opacity), '1');
     const plain = await browser.newContext({ javaScriptEnabled: false });
     const staticPage = await plain.newPage();
     await staticPage.goto('http://127.0.0.1:5174/');
-    assert(await staticPage.getByRole('heading', { name: 'Know what your team decided, when and why.' }).isVisible());
+    assert(await staticPage.getByRole('heading', { name: 'Someone leaving or away? The next person already knows where to start.' }).isVisible());
     assert(await staticPage.getByText('Nothing lost.', { exact: true }).isVisible());
     const normal = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const storyPage = await normal.newPage();
@@ -59,9 +68,9 @@ const { chromium } = require('playwright');
     assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).every(a => a.playState !== 'running')));
     await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(100);
-    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 3)), 'Hero stops after three loops');
+    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 2)), 'Hero stops after two loops');
     await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:35000});
-    for(const selector of ['.rs-story-stage','.rs-story-record','.rs-story-alex','.rs-story-resolution']){
+    for(const selector of ['.rs-story-stage','[data-scene=cover]','[data-cover-row] >> nth=0','.rs-story-resolution']){
       assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
     }
     const og = await page.request.get('http://127.0.0.1:5174/vimbre-og-image-1200.png');
@@ -73,3 +82,4 @@ const { chromium } = require('playwright');
     console.log('Production landing: prerender, schema, copy, responsive widths, FAQ keyboard, reduced motion, no JS and hero pause passed.');
   } finally { await browser.close(); await new Promise(resolve => server.httpServer.close(resolve)); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
+

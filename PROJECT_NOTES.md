@@ -188,3 +188,9 @@ Owner supplies the complete founder build brief. Prepare the new decision-record
 ## 20 October 2026: owner approves landing completion and publication
 
 Owner states that the client approved and instructs completion. This supersedes the prior draft-only hold. Finish the social sharing asset and metadata, three-loop final-frame behavior, initial HTML startup and production auditing, then promote the tested commit to development. Preserve original colour logo assets until the actual reverse logo is supplied. Privacy/Terms content has not been supplied; prepare content-driven routes and conditional links, without inventing legal policy or publishing empty documents. Missing documents and brand files remain factual outstanding items, not a new approval request. Live domain and Lighthouse results must be reported accurately.
+
+
+
+## 21 October 2026: revised founder landing brief
+
+Owner supplies a revised situation-led brief and screenshots showing detached lines and overlapping hero tiles, authorizing direct GitHub implementation and Vercel review under the existing workflow. New headline: Someone leaving or away? The next person already knows where to start. Replaces the definition-heavy hero, My day marketing section and old hero tiles with daily role-record growth, Employees/Managers cards, six FAQ answers and a single app-component product story. Search, schema and social text follow the new brief. Notes has one correctly attached connector, matching the one working input. No AI, mailbox forwarding, cover access, HR readiness or completed-task context implementation is added by this marketing work. AI example is explicitly Coming soon; HR card omitted as instructed. Actual legal and reverse-brand materials remain outstanding. See docs/landing-repositioning.md for conflicting word/layout/playback requirements and their resolution.

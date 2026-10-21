@@ -1,5 +1,3 @@
-# Vimbre
+Vimbre keeps each person's tasks, decisions and contacts as they work, so when someone leaves or is away, whoever steps in knows what happened and what to do first. It is a shared decision log and role record for teams.
 
-Vimbre is a shared decision log for teams. It keeps each decision with its reason, date, owner and next step, so whoever covers for a colleague, joins a team or takes over a role can see what happened and what to do first. It works next to the tools you already use.
-
-Vimbre is for HR managers, team leads and directors. It helps when someone is on leave, leaves the company, joins a team or changes role, because the person stepping in can see recent decisions, open work and who to speak to.
+Vimbre is for teams where people cover for each other. Employees keep their day and finished work in one place. Plans start at £29 a month for up to 10 people. Visit https://vimbre.com/ or contact hello@vimbre.com for general enquiries and support@vimbre.com for account help.

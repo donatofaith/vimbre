@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode, CSSProperties, RefObject } from 'react'
+import type { ReactNode, CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 import { LandingHeader } from './LandingHeader'
 import { ContactSection } from './ContactSection'
 import { legalDocuments } from './legal-content'
-import { definition, faq, plans, record, schema, storySummary } from './landing-content'
+import { faq, plans, record, schema } from './landing-content'
+import { HeroStory } from './HeroStory'
 import './landing.css'
 
 function Arrow() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg> }
@@ -35,36 +36,20 @@ function StreamMotif({ className = '' }: { className?: string }) {
   // The supplied mark, never reconstructed or recoloured.
   return <img className={`rs-stream-motif ${className}`} src="/vimbre-mark-colour.svg" width="512" height="512" alt="" aria-hidden="true" />
 }
-function HeroStory({ rootRef, paused, ready, toggle }: { rootRef: RefObject<HTMLDivElement | null>; paused: boolean; ready: boolean; toggle: () => void }) {
-  return <div className="rs-hero-visual">
-    <div ref={rootRef} className="rs-story-shell">
-      <div className="rs-story-stage" aria-hidden="true">
-        <div className="rs-story-sources">{['Meeting notes', 'Supplier email', 'Daily notes'].map((label, i) => <div className={`rs-story-source ${i === 2 ? 'rs-daily-source' : ''}`} key={label} data-story-source>
-          <Example /><span className="rs-source-title"><Icon kind={i === 1 ? 'email' : 'notes'} />{label}</span>
-          <span className="rs-skeleton-lines"><i /><i /></span>
-          <small className="rs-story-chip" data-story-chip>{['Decision', 'Owner', 'Next step'][i]}</small>
-        </div>)}</div>
-        <svg className="rs-story-paths" viewBox="0 0 640 480" fill="none">
-          {[80, 170, 260].map((y, i) => <g key={y}><path d={`M130 ${y} C210 ${y}, 160 190, 250 190`} /><circle data-story-dot data-dot-index={i} cx="130" cy={y} r="3" /></g>)}
-        </svg>
-        <RecordCard story />
-        <div className="rs-story-ring" data-story-ring />
-        <div className="rs-story-person rs-story-sam" data-story-sam><span className="rs-avatar">S</span><span>Sam<small>Away this week</small></span><Example /></div>
-        <div className="rs-story-person rs-story-alex" data-story-alex><span className="rs-avatar rs-avatar-blue">A</span><span>Alex, covering</span><Example /><div className="rs-alex-panel"><span>Open work</span><i /><span>Recent decisions</span><i /></div></div>
-        <div className="rs-story-cover-line" data-story-line />
-        <p className="rs-story-resolution" data-story-resolution>Nothing lost.</p>
-      </div>
-      <p className="sr-only">{storySummary}</p>
-      <button className="rs-story-control" type="button" disabled={!ready} aria-label={paused ? 'Play hero story' : 'Pause hero story'} onClick={toggle}><svg viewBox="0 0 24 24" aria-hidden="true">{paused ? <path d="m9 5 10 7-10 7z" /> : <path d="M8 5v14M16 5v14" />}</svg>{paused ? 'Play' : 'Pause'}</button>
-    </div>
-  </div>
-}
 function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
   return <div className="rs-faq-list">{faq.map(([question, answer], i) => <div className={`rs-faq-item${open === i ? ' rs-faq-open' : ''}`} key={question}>
     <h3><button type="button" id={`faq-button-${i}`} aria-expanded={open === i} aria-controls={`faq-panel-${i}`} onClick={() => setOpen(open === i ? null : i)}>{question}<span aria-hidden="true">+</span></button></h3>
     <div id={`faq-panel-${i}`} role="region" aria-labelledby={`faq-button-${i}`} className="rs-faq-panel" inert={open !== i}><div><p>{answer}</p></div></div>
   </div>)}</div>
+}
+function RoleRecordGrowth() {
+  const moments = [
+    ['Week 1', ['Supplier review notes']],
+    ['Week 4', ['Supplier review notes', 'Move supplier reviews to monthly', 'Alex, Operations']],
+    ['Week 12', ['Supplier review notes', 'Move supplier reviews to monthly', 'Alex, Operations', 'Share the review notes', 'Supplier review, 12 October']],
+  ] as const
+  return <Reveal className="rs-role-growth"><div className="rs-growth-bar"><strong>Operations role record</strong><Example /></div><div className="rs-growth-moments">{moments.map(([week, items], i) => <div className="rs-growth-moment" key={week}><h3>{week}</h3><ul>{items.map((item, j) => <li data-growth-item style={{ '--reveal-delay': `${i * 120 + j * 80}ms` } as CSSProperties} key={item}><Icon kind="check" />{item}</li>)}</ul></div>)}</div></Reveal>
 }
 export function LandingPage({ authenticated = false, loading = false }: { authenticated?: boolean; loading?: boolean }) {
   const root = useRef<HTMLDivElement>(null)
@@ -101,31 +86,30 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         <StreamMotif className="rs-hero-motif" />
         <div className="rs-container rs-hero-grid">
           <div className="rs-hero-copy">
-            <span className="rs-eyebrow">Decision records for teams</span>
-            <h1 id="hero-title" tabIndex={-1}>Know what your team decided, <span>when and why.</span></h1>
-            <p className="rs-hero-subhead">Ready for whoever covers, joins or takes over.</p>
-            <p className="rs-definition">{definition}</p>
+            <h1 id="hero-title" tabIndex={-1}>Someone leaving or away? The next person <span>already knows where to start.</span></h1>
+            <p className="rs-hero-subhead">Capture decisions, finish tasks, and keep the context. Vimbre builds the handover as your team works.</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#how-it-works">See how it works<Arrow /></a></div>
+            <p className="rs-hero-note">Works next to the tools you already use.</p>
           </div>
           <HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} />
         </div>
       </section>
       <section id="features" className="rs-section rs-problem" aria-labelledby="problem-title">
-        <div className="rs-container"><Reveal className="rs-section-heading"><h2 id="problem-title">Decisions get made. Then they disappear.</h2><p>They sit in emails, meeting notes and one person's head. When that person is away, nobody can find them.</p></Reveal>
+        <div className="rs-container"><Reveal className="rs-section-heading"><h2 id="problem-title">Decisions get made. Then they disappear.</h2><p>They sit in emails, notes and one person's head. When that person leaves or is away, nobody can find them.</p></Reveal>
           <div className="rs-problem-visual" data-problem><div className="rs-problem-sources">{['Email', 'Meeting notes', 'Daily notes', 'Documents'].map((label, i) => <div className="rs-source" key={label} data-problem-source><Example /><Icon kind={i === 0 ? 'email' : 'notes'} /><strong>{label}</strong><span className="rs-skeleton-lines"><i /><i /></span></div>)}</div>
             <div className="rs-problem-record" data-problem-record><div className="rs-record"><div className="rs-record-bar"><span><Icon />Decision record</span><Example /></div><dl>{record.filter(([label]) => label !== 'Date').map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div></div>
           </div>
         </div>
       </section>
       <section className="rs-section rs-dark-section" aria-labelledby="why-title">
-        <div className="rs-container rs-two-col"><Reveal className="rs-section-heading"><h2 id="why-title">Keep the why with the what.</h2><p>A task list tells you what to do. Vimbre also keeps the reason behind each decision, who owns it and what happens next.</p></Reveal><Reveal className="rs-why-visual"><RecordCard /></Reveal></div>
+        <div className="rs-container rs-two-col"><Reveal className="rs-section-heading"><h2 id="why-title">Keep the why with the what.</h2><p>Every decision stays with its reason, date, owner and next step.</p></Reveal><Reveal className="rs-why-visual"><RecordCard /></Reveal></div>
       </section>
-      <section id="how-it-works" className="rs-section" aria-labelledby="how-title"><div className="rs-container"><Reveal><h2 id="how-title">How it works.</h2></Reveal><div className="rs-steps">{[
-        ['01', 'Add a decision.', 'From an email, a meeting or your own notes.'],
-        ['02', 'Keep the reason.', 'Vimbre holds the why, the date, the owner and the next step together.'],
-        ['03', 'Pass it on.', 'Whoever steps in opens one record and knows where to start.'],
-      ].map(([n, title, text], i) => <Reveal key={n} delay={i * 120}><span className="rs-step-number">{n}<i /></span><h3>{title}</h3><p>{text}</p></Reveal>)}</div></div></section>
-      <section className="rs-section rs-tinted" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="cover-title">When someone steps in, they start with the facts.</h2><p>Cover for leave, a new joiner or a full handover, all from the same record.</p></Reveal>
+      <section id="how-it-works" className="rs-section" aria-labelledby="how-title"><div className="rs-container"><Reveal><h2 id="how-title">A little each day adds up.</h2><p className="rs-section-line">Use Vimbre as you work, and the handover is already done when you need it.</p></Reveal><div className="rs-steps">{[
+        ['01', 'Capture it.', 'Paste an email or notes, or type a task.'],
+        ['02', 'Do your day.', 'Tasks and reminders keep you on track.'],
+        ['03', 'Add to context.', 'One click keeps what you did and decided.'],
+      ].map(([n, title, text], i) => <Reveal key={n} delay={i * 120}><span className="rs-step-number">{n}<i /></span><h3>{title}</h3><p>{text}</p></Reveal>)}</div><RoleRecordGrowth /></div></section>
+      <section className="rs-section rs-tinted" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="cover-title">When someone steps in, they start with the facts.</h2><p>Open work, recent decisions, people to know and coming deadlines, all in one place.</p></Reveal>
         <div className="rs-cover-layout"><Reveal className="rs-away-person"><Example /><Icon kind="calendar" /><span>Sam, away this week</span></Reveal><div className="rs-cover-view"><Example /><div className="rs-cover-grid">{[
           ['Open work', 'Share the review notes'],
           ['Recent decisions', 'Move supplier reviews to monthly'],
@@ -133,12 +117,15 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
           ['Coming deadlines', 'Supplier review, 12 October'],
         ].map(([title, value], i) => <Reveal className="rs-cover-card" key={title} delay={i * 80}><h3>{title}</h3><p>{value}</p></Reveal>)}</div></div></div>
       </div></section>
-      <section className="rs-section" aria-labelledby="day-title"><div className="rs-container rs-two-col"><Reveal><h2 id="day-title">See what needs you today.</h2></Reveal><Reveal className="rs-day-panel"><div className="rs-record-bar"><strong>My day</strong><Example /></div>{['3 decisions to review', '2 follow ups due', '1 handover to review'].map((row, i) => <div className="rs-day-row" data-day-row style={{ '--reveal-delay': `${i * 60}ms` } as CSSProperties} key={row}><Icon kind={i === 1 ? 'calendar' : 'notes'} /><span>{row}</span><Arrow /></div>)}</Reveal></div></section>
-      <section className="rs-section rs-tinted" aria-labelledby="tools-title"><div className="rs-container rs-two-col"><Reveal className="rs-section-heading"><h2 id="tools-title">Works next to the tools you already use.</h2><p>Nothing to replace. Your team keeps working where it works now.</p></Reveal><Reveal className="rs-tools-visual"><Example /><div className="rs-tools-flow"><div className="rs-tool-input"><Icon /><span>Notes</span></div><svg className="rs-tools-lines" viewBox="0 0 240 130" aria-hidden="true">{[30,65,100].map(y => <path key={y} pathLength="1" d={`M0 ${y}C100 ${y} 130 65 240 65`} />)}</svg><span className="rs-tools-mark"><BrandLogo variant="symbol" decorative /></span></div></Reveal></div></section>
-      <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title"><div className="rs-container"><Reveal><h2 id="pricing-title">Start small. Add people when you need to.</h2></Reveal><div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={`rs-plan ${i === 1 ? 'rs-plan-featured' : ''}`} delay={i * 60}>
+      <section className="rs-section" aria-labelledby="people-title"><div className="rs-container"><Reveal><h2 id="people-title">Everyone has a reason to open it.</h2></Reveal><div className="rs-audiences">{[
+        ['Employees', 'Keep your day in one place and leave nothing behind.', 'notes'],
+        ['Managers', 'See who is covering and what is open.', 'people'],
+      ].map(([title, text, kind], i) => <Reveal className="rs-audience-card" key={title} delay={i * 80}><Icon kind={kind} /><h3>{title}</h3><p>{text}</p></Reveal>)}</div></div></section>
+      <section className="rs-section rs-tinted" aria-labelledby="tools-title"><div className="rs-container rs-two-col"><Reveal className="rs-section-heading"><h2 id="tools-title">Works next to the tools you already use.</h2><p>Nothing to replace. Vimbre keeps the decisions and context they miss.</p></Reveal><Reveal className="rs-tools-visual"><Example /><div className="rs-tools-flow"><div className="rs-tool-input"><Icon /><span>Notes</span></div><svg className="rs-tools-lines" viewBox="0 0 240 130" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M0 65 C80 65 160 65 240 65" /></svg><span className="rs-tools-mark"><BrandLogo variant="symbol" decorative /></span></div></Reveal></div></section>
+      <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title"><div className="rs-container"><Reveal><h2 id="pricing-title">Simple plans for every team size.</h2></Reveal><div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={`rs-plan ${i === 1 ? 'rs-plan-featured' : ''}`} delay={i * 60}>
         <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{i < 3 && <span>a month</span>}</div><p>{plan.size}</p><ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>{i === 3 ? <a className="rs-button rs-button-outline" href="mailto:hello@vimbre.com?subject=Vimbre%20Enterprise">{cta}<Arrow /></a> : <Link className={`rs-button ${i !== 1 ? 'rs-button-outline' : ''}`} to={to}>{cta}<Arrow /></Link>}
       </Reveal>)}</div></div></section>
-      <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><h2 id="faq-title">A few things to know.</h2></Reveal><FAQ /></div></section>
+      <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
       <section className="rs-section rs-final" aria-labelledby="final-title" data-final-section><StreamMotif /><div className="rs-container"><Reveal><h2 id="final-title">Start with your next email or meeting.</h2><p>Add one decision. See what it feels like when the next person can find it.</p><Link className="rs-button rs-button-white" to={to}>{cta}<Arrow /></Link></Reveal></div></section>
       <ContactSection />
     </main>
@@ -146,3 +133,4 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
   </div>
 }
+

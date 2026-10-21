@@ -5,7 +5,7 @@ try {
   const { renderLanding } = await server.ssrLoadModule('/src/features/public/prerender.tsx')
   let html = await readFile('dist/index.html', 'utf8')
   const rendered = renderLanding()
-  if (!rendered.includes('Know what your team decided') || !rendered.includes('application/ld+json')) throw new Error('Landing prerender is incomplete')
+  if (!rendered.includes('Someone leaving or away?') || !rendered.includes('application/ld+json')) throw new Error('Landing prerender is incomplete')
   html = html.replace('<div id="root"></div>', '<div id="root">' + rendered + '</div>')
   const manifest = JSON.parse(await readFile('dist/.vite/manifest.json', 'utf8'))
   const css = new Set()
@@ -28,3 +28,4 @@ try {
   await writeFile('dist/index.html', html)
   console.log('Homepage prerendered with full content, FAQs and matching JSON LD.')
 } finally { await server.close() }
+
