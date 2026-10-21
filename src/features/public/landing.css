@@ -60,3 +60,7 @@
 @media(max-width:767px){.rs-site .rs-demo-cursor{display:block}.rs-demo-viewport{height:540px}.rs-demo-bar{height:54px}.rs-story-shell{padding:12px 12px 56px}}
 @media(max-width:389px){.rs-demo-viewport{height:610px}.rs-demo-cover-grid{grid-template-columns:1fr}.rs-demo-cover-grid .rs-demo-recent{grid-column:auto}.rs-demo-scene{padding:12px}}
 @media(prefers-reduced-motion:reduce){.rs-demo-scene{transform:none!important}.rs-site .rs-demo-cursor,.rs-demo-click{display:none!important}.rs-demo-camera,.rs-demo-depth{transform:none!important}}
+
+/* Keep the illustrated primary cover control readable above the card's muted span rule. */
+.rs-site .rs-demo-away > .rs-demo-cover-button,
+.rs-site .rs-demo-away > .rs-demo-cover-button svg { color: #fff; }
