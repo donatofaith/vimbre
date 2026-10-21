@@ -33,6 +33,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   elements('[data-draft-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: draft + .1 + i * heroStoryTiming.rowStagger, duration: .4, ease }]))
   frame('[data-save-toast]', { opacity: [0, 1, 1, 0], transform: ['translateY(16px)', 'translateY(0)', 'translateY(0)', 'translateY(0)'] }, saved, away - saved + transition)
   elements('[data-cover-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, { at: cover + i * heroStoryTiming.coverStagger, duration: .5, ease }]))
+  frame('[data-cover-highlight]', { opacity: [0, 1] }, cover + 1, .5)
   frame('[data-story-resolution]', { opacity: [0, 1] }, resolve, .5)
   frame('.rs-story-stage', { opacity: [1, 0] }, reset, duration - reset)
   if (!mobile.matches) {
@@ -41,19 +42,22 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
     frame('.rs-demo-camera', { transform: ['scale(1)', 'scale(1.04) translate(-3px,-4px)'] }, cover, heroStoryTiming.camera)
     const viewport = shell.querySelector<HTMLElement>('.rs-demo-viewport')!
     const cursor = shell.querySelector<HTMLElement>('[data-demo-cursor]')!
-    const cursorTo = (targetSelector: string, at: number, startX: number, startY: number, ring: string) => {
+    const cursorTo = (targetSelector: string, at: number, startX: number, startY: number, ring?: string) => {
       const bounds = viewport.getBoundingClientRect()
       const target = shell.querySelector<HTMLElement>(targetSelector)!.getBoundingClientRect()
       const x = target.left + target.width * .65 - bounds.left
       const y = target.top + target.height * .5 - bounds.top
-      const click = shell.querySelector<HTMLElement>(ring)!
-      click.style.left = `${x - 12}px`; click.style.top = `${y - 12}px`
+      const click = ring ? shell.querySelector<HTMLElement>(ring) : null
+      if (click) { click.style.left = `${x - 12}px`; click.style.top = `${y - 12}px` }
       timeline.push([cursor, { opacity: [0, 1, 1, 1], transform: [`translate(${startX}px,${startY}px)`, `translate(${startX + (x - startX) * .35}px,${startY - 16}px)`, `translate(${x - 12}px,${y - 10}px)`, `translate(${x}px,${y}px)`] }, { at, duration: heroStoryTiming.cursor, ease }])
-      frame(ring, { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, at + heroStoryTiming.cursor, heroStoryTiming.click)
-      frame('[data-demo-cursor]', { opacity: [1, 0] }, at + heroStoryTiming.cursor + .15, .3)
+      if (ring) {
+        frame(ring, { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, at + heroStoryTiming.cursor, heroStoryTiming.click)
+        frame('[data-demo-cursor]', { opacity: [1, 0] }, at + heroStoryTiming.cursor + .15, .3)
+      }
     }
     cursorTo('.rs-demo-capture-button', capture - 1.05, 35, 140, '[data-click-capture]')
     cursorTo('.rs-demo-save', saved - 1.05, 70, 210, '[data-click-save]')
+    cursorTo('.rs-demo-recent', cover + .5, 48, 185)
   } else {
     frame('[data-click-capture]', { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, capture - .3, .4)
     frame('[data-click-save]', { opacity: [0, .8, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.4)'] }, saved - .3, .4)
@@ -64,7 +68,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const restore = () => {
     shell.dataset.storyComplete = 'true'
     hero.cancel()
-    shell.querySelectorAll<HTMLElement>('.rs-story-stage, .rs-demo-camera, [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-click-capture], [data-click-save], [data-save-toast], [data-story-resolution]').forEach(el => {
+    shell.querySelectorAll<HTMLElement>('.rs-story-stage, .rs-demo-camera, [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-click-capture], [data-click-save], [data-save-toast], [data-cover-highlight], [data-story-resolution]').forEach(el => {
       el.style.removeProperty('opacity')
       el.style.removeProperty('transform')
     })
@@ -103,6 +107,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
     }
   }
   splitHeadings()
+  void document.fonts.ready.then(() => { if (!disposed) splitHeadings() })
   let layoutFrame = 0
   const resize = () => { cancelAnimationFrame(layoutFrame); layoutFrame = requestAnimationFrame(() => { splitHeadings(); setupProblem() }) }
   window.addEventListener('resize', resize, { passive: true })

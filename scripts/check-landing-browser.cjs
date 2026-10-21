@@ -35,7 +35,7 @@ const { chromium } = require('playwright');
       const sceneFits = await page.locator('[data-scene=cover]').evaluate(el => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth);
       assert(sceneFits, 'Cover preview fits at ' + width);
       if ([360,768,1024,1440].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
-      if (width === 1440) console.log('HEADLINE_LINES', await page.locator('h1').evaluate(el => ({height:el.clientHeight, lineHeight:getComputedStyle(el).lineHeight, width:el.clientWidth}))); 
+      if (width === 1440) console.log('HEADLINE_LINES', await page.locator('h1').evaluate(el => {const original=el.style.width;const measures=[580,660,700,720].map(width=>{el.style.width=width+'px';el.style.maxWidth='none';return {width,height:el.clientHeight,lineHeight:getComputedStyle(el).lineHeight}});el.style.width=original;el.style.removeProperty('max-width');return measures})); 
     }
     for (let i = 0; i < questions.length; i++) {
       const button = page.locator('#faq-button-' + i);
@@ -73,6 +73,15 @@ const { chromium } = require('playwright');
     for(const selector of ['.rs-story-stage','[data-scene=cover]','[data-cover-row] >> nth=0','.rs-story-resolution']){
       assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
     }
+    const mobileContext = await browser.newContext({viewport:{width:360,height:800}});
+    const mobilePage = await mobileContext.newPage();
+    await mobilePage.goto('http://127.0.0.1:5174/');
+    await mobilePage.locator('#vimbre-boot').waitFor({state:'detached'});
+    await mobilePage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
+    await mobilePage.getByRole('button',{name:'Pause hero story'}).waitFor();
+    await mobilePage.waitForFunction(() => document.querySelector('.rs-story-shell').hasAttribute('data-story-complete'),null,{timeout:25000});
+    assert.equal(await mobilePage.locator('[data-scene=cover]').evaluate(el=>getComputedStyle(el).opacity),'1');
+    await mobileContext.close();
     const og = await page.request.get('http://127.0.0.1:5174/vimbre-og-image-1200.png');
     assert.equal(og.status(),200);
     const image = await og.body(); assert.equal(image.readUInt32BE(16),1200); assert.equal(image.readUInt32BE(20),630);

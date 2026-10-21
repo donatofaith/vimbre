@@ -24,10 +24,10 @@ function Example() { return <small className="rs-example">Example</small> }
 function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   return <div className={`rs-reveal ${className}`} data-reveal style={{ '--reveal-delay': `${delay}ms` } as CSSProperties}>{children}</div>
 }
-function RecordCard({ story = false }: { story?: boolean }) {
-  return <div className={`rs-record ${story ? 'rs-story-record' : ''}`} data-story-record={story || undefined}>
+function RecordCard() {
+  return <div className="rs-record">
     <div className="rs-record-bar"><span><Icon />Decision record</span><Example /></div>
-    <dl>{record.map(([label, value]) => <div key={label} className={label === 'Why' ? 'rs-why-row' : ''} data-record-row data-story-row={story || undefined}>
+    <dl>{record.map(([label, value]) => <div key={label} className={label === 'Why' ? 'rs-why-row' : ''} data-record-row>
       <dt>{label}</dt><dd>{value}</dd>
     </div>)}</dl>
   </div>
@@ -59,22 +59,27 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
   useEffect(() => {
     let disposed = false
     let frame = 0
+    let generation = 0
+    const compact = window.matchMedia('(max-width: 767px)')
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
     const start = () => {
+      const currentGeneration = ++generation
+      cancelAnimationFrame(frame)
       motion.current?.dispose()
       motion.current = null
       setStory({ paused: false, ready: false })
       if (media.matches) return
       frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
         void import('./landing-motion').then(({ createLandingMotion }) => {
-          if (disposed || media.matches || !root.current || !stage.current) return
+          if (disposed || currentGeneration !== generation || media.matches || !root.current || !stage.current) return
           motion.current = createLandingMotion(root.current, stage.current, setStory)
         }).catch(() => { /* Complete static frames remain usable if enhancement fails. */ })
       }) })
     }
     start()
     media.addEventListener('change', start)
-    return () => { disposed = true; cancelAnimationFrame(frame); media.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
+    compact.addEventListener('change', start)
+    return () => { disposed = true; cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
   const to = authenticated ? '/app' : '/signup'
   const cta = authenticated ? 'Open workspace' : 'Get started'
