@@ -20,6 +20,8 @@ const assert = require('node:assert/strict');
       else if (url.pathname.endsWith('/company_active_member_count')) body = 2;
       else if (url.pathname.endsWith('/work_notification_inbox')) body={unread:0,count:0,items:[]};
       else if (url.pathname.endsWith('/my_day_summary')) body = { pending_drafts: 0, completed_sections: [], forwarding_address: null };
+      else if (url.pathname.includes('/storage/v1/object/sign/')) body = {signedURL: '/object/sign/role-documents/test.pdf?token=test-fixture'};
+      else if (url.pathname.includes('/storage/v1/object/role-documents/')) body = {Key:'role-documents/test.pdf',Id:'test-file'};
       else if (url.pathname.endsWith('/responsibility_suggestions')) body = suggestions;
       else if (url.pathname.endsWith('/suggest_responsibility')) { suggestions.push({id:'suggestion-1',item_id:args.p_item,body:args.p_body,original_details:items.find(r=>r.id===args.p_item).details,status:'pending',item:{title:items.find(r=>r.id===args.p_item).title}});body='suggestion-1'; }
       else if (url.pathname.endsWith('/review_responsibility')) {const row=suggestions.find(r=>r.id===args.p_id);if(args.p_approve)items.find(r=>r.id===row.item_id).details=row.body;suggestions.splice(suggestions.indexOf(row),1);body=null;}
@@ -124,10 +126,11 @@ const assert = require('node:assert/strict');
       await page.getByRole('button',{name:tab,exact:true}).click();await page.getByRole('button',{name:button,exact:true}).click();const drawer=page.getByRole('dialog',{name:button,exact:true});await drawer.getByLabel(label,{exact:true}).fill(name);
       if(tab==='Open work'){await drawer.getByLabel('What is happening',{exact:true}).fill('Checking supplier notes');await drawer.getByLabel('Status',{exact:true}).selectOption('waiting');await drawer.getByLabel('Next step',{exact:true}).fill('Share notes');}
       if(tab==='External contacts'){await drawer.getByLabel('Organisation',{exact:true}).fill('Acme Supplies');await drawer.getByLabel('Email or phone',{exact:true}).fill('ada@example.invalid');await drawer.getByLabel('What to know before contacting them',{exact:true}).fill('Include the order reference');}
-      if(tab==='Documents')await drawer.getByLabel('Link (optional)',{exact:true}).fill('https://example.invalid/guide');
+      if(tab==='Documents'){await drawer.getByLabel('Link (optional)',{exact:true}).fill('https://example.invalid/guide');await drawer.getByLabel('Or upload a file',{exact:true}).setInputFiles({name:'guide.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test fixture')});}
       if(tab==='Recurring deadlines'){await drawer.getByLabel('Next due date',{exact:true}).fill('2026-10-23');await drawer.getByLabel('How often',{exact:true}).fill('Every Friday');}
       await drawer.getByRole('button',{name:'Save',exact:true}).click();await page.getByRole('heading',{name,exact:true}).waitFor();
     }
+    await page.getByRole('button',{name:'Documents',exact:true}).click();await page.getByRole('button',{name:'View uploaded document',exact:true}).click();const fileLink=page.getByRole('link',{name:'Open uploaded document',exact:true});await fileLink.waitFor();assert((await fileLink.getAttribute('href')).includes('/storage/v1/object/sign/'));assert(!calls.some(row=>row.path.includes('/storage/v1/object/public/')));
     await page.getByRole('button',{name:'Decision log',exact:true}).click();await page.getByRole('button',{name:'Log a decision',exact:true}).click();const decisionPanel=page.getByRole('dialog',{name:'Log a decision',exact:true});
     assert.equal(await decisionPanel.getByLabel('Owner',{exact:true}).inputValue(),profile.full_name);assert.match(await decisionPanel.getByLabel('Date',{exact:true}).inputValue(),/^\d{4}-\d{2}-\d{2}$/);
     await decisionPanel.getByLabel('Decision',{exact:true}).fill('Keep weekly reviews');await decisionPanel.getByLabel('Why',{exact:true}).fill('Give the next person the context.');await decisionPanel.getByLabel('Next step',{exact:true}).fill('Share the review notes');await decisionPanel.getByLabel('Link to email or notes (optional)',{exact:true}).fill('https://example.invalid/source');await decisionPanel.getByRole('button',{name:'Save',exact:true}).click();await page.getByRole('heading',{name:'Keep weekly reviews',exact:true}).waitFor();assert.equal(decisions[0].next_step,'Share the review notes');

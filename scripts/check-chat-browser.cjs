@@ -422,14 +422,15 @@ const assert = require('node:assert/strict')
     await page.getByRole('heading',{name:'Approve payroll',exact:true}).waitFor()
     assert.equal(new URL(page.url()).searchParams.get('record'),recordId)
     await page.getByRole('link',{name:'All records',exact:true}).click()
-    await page.getByRole('button',{name:'Add record',exact:true}).click()
-    await page.getByLabel('Deadline (optional)',{exact:true}).waitFor()
+    assert.equal(await page.getByRole('button',{name:'Add responsibility',exact:true}).count(),0)
+    assert.equal(await page.getByLabel('Deadline (optional)',{exact:true}).count(),0)
+    assert(await page.getByRole('button',{name:'My notes',exact:true}).isVisible())
     assert.deepEqual(errors, [])
     console.log(
       JSON.stringify({
         deadlineReminders: 'passed',
         exactReminderLinks: 'passed',
-        responsibilityDeadlineInput: 'passed',
+        legacyDeadlineReminderAndReadOnlyResponsibility: 'passed',
         groups: 'passed',
         directMessages: 'passed',
         replyContext: 'passed',
@@ -450,3 +451,4 @@ const assert = require('node:assert/strict')
   console.error(e)
   process.exit(1)
 })
+

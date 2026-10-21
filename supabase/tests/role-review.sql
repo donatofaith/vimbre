@@ -17,6 +17,8 @@ do $$ declare n integer; begin
  insert into public.decisions(company_id,owner_id,title,reason,decided_by,decided_on,next_step) values(current_setting('test.company')::uuid,auth.uid(),'Monthly reviews','Less meeting time','Employee',current_date,'Share notes');
  insert into public.role_items(company_id,owner_id,kind,title,file_path) values(current_setting('test.company')::uuid,auth.uid(),'document','Guide',auth.uid()::text||'/test.pdf');
  begin insert into public.role_items(company_id,owner_id,kind,title,file_path) values(current_setting('test.company')::uuid,auth.uid(),'document','Bad file',current_setting('test.other_admin')||'/test.pdf'); raise exception 'Foreign file path allowed'; exception when check_violation then null; end;
+ insert into storage.objects(bucket_id,name) values('role-documents',auth.uid()::text||'/test.pdf');
+ if not exists(select 1 from storage.objects where bucket_id='role-documents' and name=auth.uid()::text||'/test.pdf') then raise exception 'Own storage read denied'; end if;
  insert into public.responsibility_notes(item_id,body) values(current_setting('test.item')::uuid,'Private note');
  perform set_config('test.suggestion',public.suggest_responsibility(current_setting('test.item')::uuid,'Suggested description')::text,true);
  begin perform public.review_responsibility(current_setting('test.suggestion')::uuid,true); raise exception 'Employee approved suggestion'; exception when insufficient_privilege then null; end;
@@ -45,7 +47,25 @@ do $$ declare n integer; begin
  update public.role_items set details='Foreign edit' where id=current_setting('test.item')::uuid; get diagnostics n=row_count; if n<>0 then raise exception 'Cross company edit'; end if;
  if exists(select 1 from public.responsibility_suggestions) then raise exception 'Cross company suggestions'; end if;
  begin perform public.review_responsibility(current_setting('test.suggestion')::uuid,false); raise exception 'Foreign approval allowed'; exception when insufficient_privilege then null; end;
+ if exists(select 1 from storage.objects where bucket_id='role-documents' and name=current_setting('test.employee')||'/test.pdf') then raise exception 'Foreign storage RLS read'; end if;
+ begin insert into storage.objects(bucket_id,name) values('role-documents',current_setting('test.employee')||'/foreign.pdf'); raise exception 'Foreign storage upload'; exception when insufficient_privilege then null; end;
  if private.can_read_role(private.document_owner(current_setting('test.employee')||'/test.pdf')) then raise exception 'Foreign storage access'; end if;
+end $$;
+select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
+do $$ declare r record; begin
+ select * into r from public.prepare_invitation_context('create',null,'role-context@example.invalid','Context recipient','employee',current_setting('test.department')::uuid,'Supplier reviews',date '2026-10-01');
+ perform set_config('test.invitation',r.invitation_id::text,true);
+end $$;
+reset role;
+do $$ declare u uuid:=gen_random_uuid(); begin
+ insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values(u,'role-context@example.invalid',now(),jsonb_build_object('invitation_id',current_setting('test.invitation'),'role','hr_admin'));
+ perform set_config('test.recipient',u::text,true);
+end $$;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.recipient'),true);
+select public.accept_invitation(current_setting('test.invitation')::uuid);
+do $$ begin
+ if not exists(select 1 from public.profiles where id=auth.uid() and active and role='employee' and role_description='Supplier reviews' and role_start_date=date '2026-10-01') then raise exception 'Invitation context was not copied'; end if;
 end $$;
 -- A direct grant is insufficient to bypass the settings protection trigger.
 reset role;
