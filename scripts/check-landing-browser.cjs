@@ -58,7 +58,7 @@ const { chromium } = require('playwright');
       await page.keyboard.press('Space');
       assert.equal(await button.getAttribute('aria-expanded'), 'false');
     }
-    assert.equal(await page.locator('[data-story-record]').evaluate(el => getComputedStyle(el).opacity), '1');
+    assert.equal(await page.locator('[data-scene=cover]').evaluate(el => getComputedStyle(el).opacity), '1');
     const plain = await browser.newContext({ javaScriptEnabled: false });
     const staticPage = await plain.newPage();
     await staticPage.goto('http://127.0.0.1:5174/');
