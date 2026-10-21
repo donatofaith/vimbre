@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
-const { readFile, writeFile } = require('node:fs/promises');
+const { readFile, writeFile, access } = require('node:fs/promises');
 (async () => {
+  try { await access('public/vimbre-og-image-1200.png'); return; } catch {}
   const [logo, mark, heading, body] = await Promise.all([
     readFile('public/vimbre-lockup-compact-colour.svg','utf8'),
     readFile('public/vimbre-mark-colour.svg','utf8'),

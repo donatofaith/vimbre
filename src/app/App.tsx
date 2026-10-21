@@ -66,7 +66,7 @@ function PageFocus() {
 
       document.title =
         pathname === '/'
-          ? 'Vimbre | Decision Records for Teams and Handovers'
+          ? 'Vimbre | Handover and Knowledge Retention for Teams'
           : `${heading.textContent} | Vimbre`
 
       window.dispatchEvent(new Event('vimbre:ready'))
