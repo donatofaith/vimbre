@@ -585,3 +585,5 @@
 .vr-review h3 { font-size: 16px; }
 .vr-review .record-text, .vr-role-description { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media(max-width:760px) { .vr-section-heading { align-items: flex-start; flex-direction: column; gap: 20px; } .vr-section-actions { width: 100%; } .vr-drawer { padding: 20px 16px 32px; } }
+
+.vr-review h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }

@@ -26,7 +26,7 @@ export function ResponsibilityReview({ manager, revision, changed }: { manager: 
   }
   if(!result) return null
   if(result.error) return <p role="alert">Suggestions could not be loaded. <button type="button" onClick={() => setRetry(n=>n+1)}>Retry suggestions</button></p>
-  if(!result.rows.length && !page && !message) return null
+  if(!result.rows.length && !page) return message ? <p className="notice" role="status">{message}</p> : null
   return <section className="vr-review card" aria-label="Responsibility suggestions"><h2>{manager ? 'Suggestions to review' : 'Your pending suggestions'}</h2>
     {message && <p role="status">{message}</p>}
     {result.rows.map(row => <article key={row.id}><h3>{row.item?.title ?? 'Responsibility'}</h3><p><strong>Current description</strong></p><p className="record-text">{row.original_details || 'No description'}</p><p><strong>Suggested description</strong></p><p className="record-text">{row.body}</p>{manager && <div className="form-actions"><Button disabled={busy} onClick={()=>{void review(row.id,true)}}>Approve</Button><Button variant="secondary" disabled={busy} onClick={()=>{void review(row.id,false)}}>Decline</Button></div>}</article>)}
