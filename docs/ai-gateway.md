@@ -1,6 +1,6 @@
 # Vimbre AI gateway
 
-Gateway only. No existing page, AI button, Capture workflow, role record, handover, payment integration or design is changed or enabled.
+The gateway was delivered in isolation first. The owner subsequently authorized connecting the pending website AI features. Capture extraction, reviewed text tidying, weekly summaries and handover drafting now use this gateway. Payment integration remains separate. See docs/ai-features.md for the current UI and activation limits.
 
 ## Routing
 
@@ -29,7 +29,7 @@ Send a signed-in Supabase user JWT, Content-Type application/json and optional I
 
 Success: {ok:true,text,request_id}. Failure: {ok:false,message,can_continue_manually:true}. The browser wrapper src/lib/ai-gateway.ts also converts platform errors and network failures into a plain manual-continuation message. Future features call runAI(task,text), never a provider. Retain a request reference when retrying a transport failure. Reusing it never repeats a provider call; because generated text is not stored, an earlier lost response cannot be replayed as a cached draft.
 
-No provider calls existed in the inspected application; therefore no feature needed migration. The new client wrapper is deliberately not wired to existing buttons. Static tests prevent provider endpoints or keys from appearing in frontend source.
+No provider calls existed in the inspected application; therefore no feature needed migration. The wrapper was initially delivered without UI wiring; the later AI feature integration now calls it by task name. Static tests prevent provider endpoints or keys from appearing in frontend source.
 
 ## Private tables and quotas
 
@@ -56,7 +56,7 @@ adapters/index.ts is the extension point. Another provider must implement the sa
 1. Save ANTHROPIC_API_KEY in Vimbre's Supabase Edge Function Secrets. Do not commit it or prefix it with VITE_. The function uses built-in server Supabase credentials separately.
 2. Configure an approved ai_company_limits row through a privileged server/SQL session. Provide a company UUID, daily_request_limit, monthly_request_limit, daily_cost_limit, monthly_cost_limit and enabled=true. Costs are USD. Do not enable other companies or choose unlimited allowances by implication.
 3. Run one signed-in tidy_text smoke test with non-sensitive text and a fresh Idempotency-Key, after approving the budget. Inspect the private ai_usage row. No paid smoke call was made during implementation.
-4. UI feature wiring is a later task. Keep manual paths working and require review before saving drafts.
+4. UI feature wiring is implemented. Keep manual paths working and require review before saving drafts. A real authenticated provider smoke test is still required after allowances are approved.
 
 The migration and ai-run deployment are independent of Vercel. supabase/config.toml configures ai-run with JWT verification plus the handler's own verified-profile check; the existing team-invitations configuration is preserved. Supabase keys and ANTHROPIC_API_KEY are read only by the Edge runtime.
 

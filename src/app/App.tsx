@@ -7,6 +7,8 @@ import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 import { HomePage } from '../features/public/HomePage'
 
+const HandoverDraftPage = lazy(() => import('../features/ai/HandoverDraftPage').then(module => ({ default: module.HandoverDraftPage })))
+
 const LegalPage = lazy(() => import('../features/public/LegalPage').then(module => ({ default: module.LegalPage })))
 
 const ChatPage = lazy(() => import('../features/chat/ChatPage').then(module => ({ default: module.ChatPage })))
@@ -158,11 +160,7 @@ export function App() {
               <Route
                 path="handovers"
                 element={
-                  <FeaturePage
-                    title="Handovers"
-                    description="Planned handover drafting, approval and publication are coming soon."
-                    embedded
-                  />
+                  <HandoverDraftPage />
                 }
               />
 

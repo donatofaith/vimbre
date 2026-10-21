@@ -16,7 +16,7 @@ The owner requests these changes directly on GitHub for Vercel review. This repl
 
 ## External services still required
 
-Vimbre AI is not connected. Buttons are disabled and marked Coming soon, with manual entry available. No fake AI drafts, email forwarding, task extraction or handover summaries are generated. Connect the founder's selected AI provider before enabling the full AI interaction described in the screenshot.
+Vimbre AI controls now use the AI gateway following the owner’s later integration request. Text revisions remain editable and require Use this draft, then the normal Save. Capture extraction, weekly summaries and handover draft previews are connected. Company allowances must be approved and configured before requests can run. Forwarding, document extraction and the handover approval/publishing lifecycle remain separate work. See docs/ai-features.md.
 
 Stripe checkout and paid plan entitlements are not implemented. Pricing navigation does not subscribe, take payment or unlock team mode. Complete authenticated checkout/webhook processing with the founder's Stripe configuration before enabling paid structure changes. No plan entitlement is invented.
 

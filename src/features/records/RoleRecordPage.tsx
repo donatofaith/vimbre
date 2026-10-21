@@ -1,3 +1,4 @@
+import { AIDraftPanel } from '../ai/AIDraftPanel'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
@@ -128,11 +129,13 @@ function RoleRecordContent() {
     error: boolean
   } | null>(null)
 
+  const [aiOpen, setAiOpen] = useState(false)
   const [personal, setPersonal] = useState<{item: RoleItem; mode: 'notes' | 'suggest'} | null>(null)
 
   const [editor, setEditor] = useState<{
     item?: RoleItem
     decision?: Decision
+    initialText?: string
   } | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -490,10 +493,11 @@ function RoleRecordContent() {
 
         <div className="vr-section-heading">
           <div><h2>{label}</h2><p>{guidance}</p></div>
-          {canEdit && !archived && <div className="vr-section-actions"><div className="vr-ai-unavailable"><Button disabled aria-describedby="role-ai-status">Use Vimbre AI</Button><span id="role-ai-status">Coming soon</span></div><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
+          {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={() => setAiOpen(true)}>Use Vimbre AI</Button><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
         </div>
+        {aiOpen && canEdit && <RoleDrawer title="Tidy text" close={() => setAiOpen(false)}><AIDraftPanel task="tidy_text" maxApplyLength={5000} onUse={initialText => { setAiOpen(false); setEditor({ initialText }) }} /></RoleDrawer>}
         {editor && canEdit && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
-          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} companyId={company!.id} ownerId={ownerId} ownerName={profile!.full_name} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
+          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} companyId={company!.id} ownerId={ownerId} ownerName={profile!.full_name} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} initialText={editor.initialText} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
         </RoleDrawer>}
 
         <div className="vr-filters">

@@ -8,6 +8,8 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import './capture.css'
+import { CaptureAI } from '../ai/CaptureAI'
+import type { ExtractedDraft } from '../ai/ai-output'
 import { captureDate } from './capture-utils'
 
 type Source = {
@@ -94,6 +96,7 @@ function CaptureWorkspace() {
 
   const [editor, setEditor] = useState<{
     draft?: Draft
+    initial?: ExtractedDraft
   } | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -101,6 +104,8 @@ function CaptureWorkspace() {
   const [message, setMessage] = useState('')
 
   const sourceRequest = useRef<string | null>(null)
+  const aiRequests = useRef(new Map<string, string>())
+  const [aiDrafts, setAiDrafts] = useState<Record<string, ExtractedDraft[]>>({})
 
   const listKey = `${page}:${archived}:${revision}`
   const detailKey = `${selected}:${revision}`
@@ -337,7 +342,7 @@ function CaptureWorkspace() {
         )}
       </header>
 
-      <div className="vc-capabilities" aria-label="Capture availability"><span>AI drafting · <strong>Coming soon</strong></span><span>Email forwarding and file uploads · <strong>Coming soon</strong></span></div>
+      <div className="vc-capabilities" aria-label="Capture availability"><span>Email forwarding and file uploads · <strong>Coming soon</strong></span></div>
       <ol className="vc-steps" aria-label="Capture workflow">
         <li data-active={!selected}>
           <span>1</span>
@@ -500,10 +505,13 @@ function CaptureWorkspace() {
                 </p>
               )}
 
+              {!detail.source.deleted_at && <div hidden={Boolean(editor)}><CaptureAI key={detail.source.id} text={detail.source.source_text} rows={aiDrafts[selected] ?? null} setRows={rows => setAiDrafts(current => ({ ...current, [selected]: rows }))} requestId={() => { if (!aiRequests.current.has(selected)) aiRequests.current.set(selected, crypto.randomUUID()); return aiRequests.current.get(selected)! }} choose={initial => setEditor({ initial })} /></div>}
+
               {editor && (
                 <DraftForm
                   key={editor.draft?.id ?? 'new'}
                   draft={editor.draft}
+                  initial={editor.initial}
                   busy={busy}
                   setBusy={setBusy}
                   save={async (id, data) => {
@@ -512,6 +520,7 @@ function CaptureWorkspace() {
                       id,
                       data,
                     )
+                    if (editor.initial) setAiDrafts(current => ({ ...current, [selected]: (current[selected] ?? []).filter(row => row !== editor.initial) }))
                     setEditor(null)
                     setMessage(
                       'Draft saved for review. It is not a confirmed record yet.',
@@ -750,18 +759,20 @@ function CaptureWorkspace() {
 
 function DraftForm({
   draft,
+  initial,
   busy,
   setBusy,
   save,
   cancel,
 }: {
   draft?: Draft
+  initial?: ExtractedDraft
   busy: boolean
   setBusy: (value: boolean) => void
   save: (id: string, data: Json) => Promise<void>
   cancel: () => void
 }) {
-  const [kind, setKind] = useState(draft?.kind ?? 'decision')
+  const [kind, setKind] = useState(draft?.kind ?? initial?.kind ?? 'decision')
   const [error, setError] = useState('')
   const requestId = useRef<string | null>(draft?.id ?? null)
 
@@ -772,6 +783,7 @@ function DraftForm({
     const values: Record<string, string | number> = {
       kind,
       version: draft?.version ?? 1,
+      ...(initial ? {origin: 'ai'} : {}),
     }
 
     for (const [key, value] of form.entries()) {
@@ -792,7 +804,7 @@ function DraftForm({
     }
   }
 
-  const value = (name: string) => draft?.payload[name] ?? ''
+  const value = (name: string) => draft?.payload[name] ?? initial?.payload[name] ?? ''
 
   return (
     <form className="vc-draft-form" onSubmit={submit}>
@@ -866,6 +878,8 @@ function DraftForm({
           </div>
         )}
 
+        {kind === 'decision' && <Input label="Next step" name="next_step" maxLength={5000} defaultValue={value('next_step')} placeholder="e.g. Share the review notes" />}
+
         {kind === 'action' && (
           <Input
             label="Due date"
@@ -920,3 +934,4 @@ function DraftForm({
     </form>
   )
 }
+

@@ -1,3 +1,6 @@
+import { AIDraftPanel } from '../ai/AIDraftPanel'
+import { loadOwnRecords } from '../ai/load-records'
+import { RoleDrawer } from '../records/RoleDrawer'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
@@ -79,6 +82,7 @@ function ActionWorkspace({
     action?: Action
   } | null>(null)
 
+  const [summaryOpen, setSummaryOpen] = useState(false)
   const [finishing, setFinishing] = useState<Action | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -619,6 +623,8 @@ function ActionWorkspace({
           {own && <RoleChecklist data={summary.data} error={Boolean(summary.error)} retry={summary.retry} />}
         </div>
       </section>
+      {own && summaryOpen && <RoleDrawer context="My day" title="Weekly summary" close={() => setSummaryOpen(false)}><AIDraftPanel task="weekly_summary" loadRecords={() => loadOwnRecords(profile!.id, company!.id)} /></RoleDrawer>}
+      {own && <Button variant="secondary" onClick={() => setSummaryOpen(true)}>Weekly summary</Button>}
       {own && <nav className="vw-secondary-links" aria-label="More workspace pages"><Link to="/app/handovers"><WorkspaceIcon name="handover" />My handovers</Link><Link to="/app/my-cover-duties"><WorkspaceIcon name="cover" />Cover duties</Link></nav>}
 
       {own && (

@@ -1,3 +1,4 @@
+import { AIDraftPanel } from '../ai/AIDraftPanel'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Input } from '../../components/ui/Input'
@@ -12,8 +13,15 @@ export type Decision = Database['public']['Tables']['decisions']['Row'] & { work
 type Context = { companyId: string; ownerId: string; saved: () => void; cancel: () => void }
 
 const headings = { responsibility: 'a responsibility', workstream: 'open work', external_contact: 'an external contact', document: 'a document', recurring_deadline: 'a deadline' }
-export function TextField({ label, name, value = '', required = false, maxLength = 5000, placeholder }: { label: string; name: string; value?: string; required?: boolean; maxLength?: number; placeholder?: string }) { return <div className="field"><label htmlFor={name}>{label}</label><textarea id={name} name={name} placeholder={placeholder} defaultValue={value} required={required} maxLength={maxLength} rows={3} /></div> }
-export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people }: Context & { item?: RoleItem; kind: ItemKind; people: {id: string; full_name: string}[] }) {
+export function TextField({ label, name, value = '', required = false, maxLength = 5000, placeholder }: { label: string; name: string; value?: string; required?: boolean; maxLength?: number; placeholder?: string }) {
+  const [text, setText] = useState(value), [tidying, setTidying] = useState(false)
+  return <div className="field"><label htmlFor={name}>{label}</label><textarea id={name} name={name} placeholder={placeholder} value={text} onChange={event => setText(event.target.value)} required={required} maxLength={maxLength} rows={3} />
+    <Button className="vai-inline" variant="secondary" disabled={!text.trim()} onClick={() => setTidying(value => !value)}>{tidying ? 'Close text review' : 'Tidy with AI'}</Button>
+    {tidying && <AIDraftPanel task="tidy_text" maxApplyLength={maxLength} initialText={text} onUse={result => { if (result.length > maxLength) return; setText(result); setTidying(false) }} />}
+  </div>
+}
+
+export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people, initialText }: Context & { initialText?: string; item?: RoleItem; kind: ItemKind; people: {id: string; full_name: string}[] }) {
   const example = recordExamples[kind]
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -55,7 +63,7 @@ export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people
   return <section className="record-editor" aria-label="Role item editor"><h2>{item ? `Edit ${headings[kind]}` : `Add ${headings[kind]}`}</h2><form className="auth-form" onSubmit={save}>
     <Input autoFocus label={titleLabel} placeholder={example.title} name="title" defaultValue={item?.title} required maxLength={200} />
     {kind === 'external_contact' && <Input label="Organisation" name="organisation" maxLength={200} defaultValue={item?.organisation} placeholder="e.g. Acme Supplies" />}
-    <TextField label={detailLabel} name="details" placeholder={example.details} value={item?.details} />
+    <TextField label={detailLabel} name="details" placeholder={example.details} value={item?.details ?? initialText} />
     {kind === 'responsibility' && <><div className="field"><label htmlFor="recurrence">How often</label><select id="recurrence" name="recurrence" defaultValue={item?.recurrence ?? 'As needed'}>{item?.recurrence && !['Daily','Weekly','Monthly','As needed'].includes(item.recurrence) && <option>{item.recurrence}</option>}{['Daily','Weekly','Monthly','As needed'].map(value => <option key={value}>{value}</option>)}</select></div><div className="field"><label htmlFor="backup">Backup person (optional)</label><select name="backup_person_id" id="backup" defaultValue={item?.backup_person_id ?? ''}><option value="">No backup person</option>{item?.backup_person_id && !people.some(p => p.id === item.backup_person_id) && <option value={item.backup_person_id}>Current backup person</option>}{people.filter(p => p.id !== ownerId).map(p => <option value={p.id} key={p.id}>{p.full_name}</option>)}</select></div></>}
     {kind === 'workstream' && <><div className="field"><label htmlFor="work-status">Status</label><select id="work-status" name="work_status" defaultValue={item?.work_status ?? 'in_progress'}><option value="in_progress">In progress</option><option value="waiting">Waiting</option><option value="on_hold">On hold</option><option value="done">Done</option></select></div><TextField label="Next step" name="next_step" value={item?.next_step} placeholder="e.g. Share the review notes with Operations" /></>}
     {kind === 'external_contact' && <><Input label="Email or phone" name="contact_details" maxLength={400} defaultValue={item?.contact_details || [item?.contact_email, item?.contact_phone].filter(Boolean).join(' · ')} placeholder="e.g. ada@example.com" /><TextField label="What to know before contacting them" name="contact_context" value={item?.contact_context} /></>}
@@ -64,7 +72,7 @@ export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people
     {error && <p role="alert" className="field-error">{error}</p>}<div className="form-actions"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button><Button variant="secondary" disabled={busy} onClick={cancel}>Cancel</Button></div>
   </form></section>
 }
-export function DecisionForm({ decision, companyId, ownerId, ownerName, saved, cancel }: Context & { decision?: Decision; ownerName: string }) {
+export function DecisionForm({ decision, companyId, ownerId, ownerName, saved, cancel, initialText }: Context & { initialText?: string; decision?: Decision; ownerName: string }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError('')
@@ -77,7 +85,7 @@ export function DecisionForm({ decision, companyId, ownerId, ownerName, saved, c
   }
   return <section className="record-editor" aria-label="Decision editor"><h2>{decision ? 'Edit decision' : 'Log a decision'}</h2><form className="auth-form" onSubmit={save}>
     <Input autoFocus label="Decision" name="title" required maxLength={300} defaultValue={decision?.title} placeholder="e.g. Move supplier reviews to monthly" />
-    <TextField label="Why" name="reason" placeholder="e.g. Reduce meeting time and focus on key updates" required value={decision?.reason} />
+    <TextField label="Why" name="reason" placeholder="e.g. Reduce meeting time and focus on key updates" required value={decision?.reason ?? initialText} />
     <Input label="Date" name="decided_on" type="date" required defaultValue={decision?.decided_on ?? localDate()} />
     <Input label="Owner" name="decided_by" required maxLength={200} defaultValue={decision?.decided_by ?? ownerName} />
     <TextField label="Next step" name="next_step" value={decision?.next_step} />
