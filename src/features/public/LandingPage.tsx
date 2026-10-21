@@ -47,7 +47,7 @@ function RoleRecordGrowth() {
   const moments = [
     ['Week 1', ['Supplier review notes']],
     ['Week 4', ['Supplier review notes', 'Move supplier reviews to monthly', 'Alex, Operations']],
-    ['Week 12', ['Supplier review notes', 'Move supplier reviews to monthly', 'Alex, Operations', 'Share the review notes', 'Supplier review, 12 October']],
+    ['Week 12', ['Supplier review notes', 'Move supplier reviews to monthly', 'Alex, Operations', 'Share the review notes', 'Supplier review, 27 October']],
   ] as const
   return <Reveal className="rs-role-growth"><div className="rs-growth-bar"><strong>Operations role record</strong><Example /></div><div className="rs-growth-moments">{moments.map(([week, items], i) => <div className="rs-growth-moment" key={week}><h3>{week}</h3><ul>{items.map((item, j) => <li data-growth-item style={{ '--reveal-delay': `${i * 120 + j * 80}ms` } as CSSProperties} key={item}><Icon kind="check" />{item}</li>)}</ul></div>)}</div></Reveal>
 }
@@ -119,7 +119,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
           ['Open work', 'Share the review notes'],
           ['Recent decisions', 'Move supplier reviews to monthly'],
           ['People to know', 'Alex, Operations'],
-          ['Coming deadlines', 'Supplier review, 12 October'],
+          ['Coming deadlines', 'Supplier review, 27 October'],
         ].map(([title, value], i) => <Reveal className="rs-cover-card" key={title} delay={i * 80}><h3>{title}</h3><p>{value}</p></Reveal>)}</div></div></div>
       </div></section>
       <section className="rs-section" aria-labelledby="people-title"><div className="rs-container"><Reveal><h2 id="people-title">Everyone has a reason to open it.</h2></Reveal><div className="rs-audiences">{[

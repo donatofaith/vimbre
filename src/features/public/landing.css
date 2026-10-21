@@ -44,3 +44,5 @@
 .rs-tool-input{position:relative;width:48px;height:76px;display:block}.rs-site .rs-tool-input svg{position:absolute;width:32px;height:32px;top:22px;left:8px}.rs-tool-input>span{position:absolute;top:64px;left:50%;transform:translateX(-50%);white-space:nowrap}
 @media(min-width:1024px){.rs-demo-viewport{height:540px}}
 .rs-demo-why{position:relative;isolation:isolate}.rs-demo-why>i{position:absolute;inset:8px -5px -5px;background:var(--blue-soft);border-radius:6px;z-index:-1}.rs-story-shell[data-story-complete] [data-cover-highlight]{opacity:1!important}
+/* The full approved 56px headline needs 700px to occupy three lines. */
+@media(min-width:1280px){.rs-hero-grid{grid-template-columns:minmax(0,700px) minmax(0,1fr)}}

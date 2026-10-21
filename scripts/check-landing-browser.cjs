@@ -35,7 +35,10 @@ const { chromium } = require('playwright');
       const sceneFits = await page.locator('[data-scene=cover]').evaluate(el => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth);
       assert(sceneFits, 'Cover preview fits at ' + width);
       if ([360,768,1024,1440].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
-      if (width === 1440) console.log('HEADLINE_LINES', await page.locator('h1').evaluate(el => {const original=el.style.width;const measures=[580,660,700,720].map(width=>{el.style.width=width+'px';el.style.maxWidth='none';return {width,height:el.clientHeight,lineHeight:getComputedStyle(el).lineHeight}});el.style.width=original;el.style.removeProperty('max-width');return measures})); 
+      if (width === 1440) {
+        const lines = await page.locator('h1').evaluate(el => el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
+        assert(Math.abs(lines - 3) < .05, 'Approved 56px headline occupies three desktop lines');
+      }
     }
     for (let i = 0; i < questions.length; i++) {
       const button = page.locator('#faq-button-' + i);
@@ -69,6 +72,10 @@ const { chromium } = require('playwright');
     await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(100);
     assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 2)), 'Hero stops after two loops');
+    await storyPage.waitForTimeout(2800);
+    await storyPage.locator('.rs-story-shell').screenshot({path:'/tmp/vimbre-landing-capture.png'});
+    await storyPage.waitForTimeout(2300);
+    await storyPage.locator('.rs-story-shell').screenshot({path:'/tmp/vimbre-landing-draft.png'});
     await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:35000});
     for(const selector of ['.rs-story-stage','[data-scene=cover]','[data-cover-row] >> nth=0','.rs-story-resolution']){
       assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
