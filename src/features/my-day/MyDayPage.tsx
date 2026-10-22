@@ -175,7 +175,7 @@ function MyDayContent() {
   const rows = data?.rows ?? [];
   const selected = rows.find((row) => row.id === taskId);
   const requestedReminder =
-    !dismissedAction && params.has("task_action") ? selected : null;
+    !dismissedAction && params.has("task_action") && selected?.status!=="done" && !selected?.deleted_at ? selected : null;
   function taskCard(task: Task) {
     return (
       <article

@@ -1,6 +1,7 @@
+import { myDayReturnPath } from './return-path'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -108,6 +109,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
   const account = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const resendSeconds = Math.max(
     0,
@@ -231,7 +233,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
         if (result.error) throw result.error
 
-        navigate('/app', { replace: true })
+        navigate(myDayReturnPath(location.state?.myDayTask), { replace: true })
       } else if (mode === 'forgot') {
         const result = await supabase.auth.resetPasswordForEmail(
           email,

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { Button } from '../../components/ui/Button'
@@ -59,10 +59,12 @@ export function useAuth() {
 }
 export function RequireAuth() {
   const account = useAuth()
+  const location = useLocation()
   if (account.loading) return <main className="standalone" role="status">Loading your workspace…</main>
-  if (!account.session) return <Navigate to="/login" replace />
+  if (!account.session) return <Navigate to="/login" replace state={{myDayTask:location.pathname==='/app'?location.search:undefined}} />
   if (account.invitation) return <Navigate to="/join" replace />
   if (account.recovery) return <Navigate to="/reset-password" replace />
   if (account.error || !account.profile) return <main className="standalone"><h1 tabIndex={-1}>Workspace unavailable</h1><p role="alert">{account.error}</p><Button onClick={account.refresh}>Retry</Button> <Button variant="secondary" onClick={() => { void supabase.auth.signOut() }}>Sign out</Button></main>
   return <Outlet />
 }
+
