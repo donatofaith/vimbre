@@ -1,3 +1,3 @@
-Vimbre keeps each person's tasks, decisions and contacts as they work, so when someone leaves or is away, whoever steps in knows what happened and what to do first. It is a shared decision log and role record for teams.
+Vimbre is a work intelligence layer for connecting conversations, decisions, actions and outcomes. It helps teams track work, build context and prepare handover drafts. The website is https://vimbre.com/.
 
-Vimbre is for teams where people cover for each other. Employees keep their day and finished work in one place. Plans start at £29 a month for up to 10 people. Visit https://vimbre.com/ or contact hello@vimbre.com for general enquiries and support@vimbre.com for account help.
+Current capture methods are typed notes and pasted email or meeting text. When enabled for a company, AI prepares drafts that users review and confirm. Users can prepare a handover draft from their own confirmed records or notes. Direct integrations, email forwarding and handover approval and publishing are planned. Contact hello@vimbre.com for general enquiries or support@vimbre.com for account help.

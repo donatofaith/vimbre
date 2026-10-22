@@ -7,7 +7,7 @@ const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
     try{
       const response=await fetch(address,{redirect:'manual',signal:AbortSignal.timeout(15000)});
       const html = response.status === 200 ? await response.text() : '';
-      console.log('DOMAIN_CHECK '+JSON.stringify({address,status:response.status,location:response.headers.get('location'),currentLanding:html.includes('Someone leaving or away?'),socialImage:html.includes('vimbre-og-image-1200.png'),server:response.headers.get('server')}));
+      console.log('DOMAIN_CHECK '+JSON.stringify({address,status:response.status,location:response.headers.get('location'),currentLanding:html.includes('The missing layer'),socialImage:html.includes('vimbre-work-context-og-1200.png'),server:response.headers.get('server')}));
     }catch(error){console.log('DOMAIN_CHECK '+JSON.stringify({address,error:error.message}));}
   }
   const url='https://vimbre.vercel.app/';
@@ -16,7 +16,7 @@ const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
     try{
       const response=await fetch(url,{signal:AbortSignal.timeout(15000)});
       const html=await response.text();
-      current=response.ok && html.includes('Someone leaving or away?') && html.includes('vimbre-og-image-1200.png');
+      current=response.ok && html.includes('The missing layer') && html.includes('vimbre-work-context-og-1200.png');
       if(current)break;
     }catch{}
     await delay(10000);
