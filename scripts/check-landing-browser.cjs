@@ -38,6 +38,15 @@ const { chromium } = require('playwright');
     for (const width of [320,360,390,640,768,1024,1280,1440]) {
       await page.setViewportSize({ width, height: 900 });
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Overflow at ' + width);
+      const toolsFit=await page.locator('.rs-tools-visual').evaluate(visual=>{
+        const text=visual.closest('section').querySelector('.rs-section-heading');
+        const inside=r=>r.left>=-1&&r.right<=innerWidth+1;
+        const nodes=[visual,...visual.querySelectorAll('.rs-tools-flow,.rs-tool-input,.rs-tools-lines,.rs-tools-mark'),text,...text.querySelectorAll('h2,p')];
+        const boxes=nodes.every(el=>inside(el.getBoundingClientRect()));
+        const lines=[...text.querySelectorAll('h2,p')].every(el=>{const range=document.createRange();range.selectNodeContents(el);return [...range.getClientRects()].every(inside)});
+        return boxes&&lines;
+      });
+      assert(toolsFit,'Tools text and diagram fit the viewport without clipping at '+width);
       const layout = await page.locator('.rs-demo-viewport').evaluate(viewport => {
         const area = viewport.getBoundingClientRect();
         const scene = viewport.querySelector('[data-scene="cover"]').getBoundingClientRect();

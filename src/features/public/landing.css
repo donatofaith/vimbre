@@ -73,3 +73,9 @@
 @media(max-width:639px){.rf-hero h1{font-size:clamp(34px,10vw,42px);max-width:19ch}.rf-hero h1 span{display:block}.rf-hero .rs-actions{flex-direction:column;align-items:center}.rf-hero .rs-actions .rs-button{min-width:224px}.rf-chain{grid-template-columns:1fr;gap:14px}.rf-chain-event{min-height:0;gap:10px;padding:20px}.rf-wide-demo .rs-demo-cover-grid{grid-template-columns:1fr}.rf-wide-demo .rs-demo-viewport{height:610px}.rf-wide-demo .rs-demo-fields>div{grid-template-columns:60px minmax(0,1fr);gap:8px}.rf-wide-demo .rs-demo-scene{padding:12px}.rf-wide-demo .rs-story-shell{padding-inline:8px}.rf-wide-demo .rs-story-resolution{font-size:20px}.rf-wide-demo .rs-demo-bar{padding-inline:14px}.rf-feature{padding:24px}.rf-feature>h3{font-size:21px}}
 
 .rs-problem .rs-record dl>div{grid-template-columns:100px minmax(0,1fr)}
+
+/* Keep intrinsic SVG dimensions from widening a stacked tools column. */
+.rs-two-col>*{min-width:0}
+.rs-tools-flow{display:grid;grid-template-columns:72px minmax(0,1fr) auto;min-width:0;width:100%}
+.rs-tools-lines{display:block;width:100%;max-width:100%;min-width:0}
+@media(max-width:1023px){.rs-two-col{grid-template-columns:minmax(0,1fr)}.rs-two-col>.rs-section-heading,.rs-tools-visual{min-width:0;max-width:100%}}
