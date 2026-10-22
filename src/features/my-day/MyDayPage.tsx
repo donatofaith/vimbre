@@ -616,6 +616,7 @@ function MyDayContent() {
           title={(reminder || requestedReminder)!.title}
           zone={zone}
           alert={Boolean(requestedReminder)}
+          initialReschedule={Boolean(requestedReminder)&&params.get("task_action")==="reschedule"}
           close={() => {
             setReminder(null);
             setDismissedAction(true);

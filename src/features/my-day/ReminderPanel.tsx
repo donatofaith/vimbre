@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { RoleDrawer } from "../records/RoleDrawer";
-import { dateInZone } from "./types";
+import { addDays,dateInZone } from "./types";
 import { morningTomorrow } from "./reminder-time";
 import { changeTask, taskError } from "./api";
 export function ReminderPanel({
@@ -12,6 +12,7 @@ export function ReminderPanel({
   close,
   changed,
   alert = false,
+  initialReschedule = false,
 }: {
   id: string;
   title: string;
@@ -19,11 +20,12 @@ export function ReminderPanel({
   close: () => void;
   changed: () => void;
   alert?: boolean;
+  initialReschedule?: boolean;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [reschedule, setReschedule] = useState(false),
-    [date, setDate] = useState(dateInZone(zone)),
+    [reschedule, setReschedule] = useState(initialReschedule),
+    [date, setDate] = useState(()=>addDays(dateInZone(zone),1)),
     [time, setTime] = useState("09:00");
   async function apply(operation: string, data: Record<string, unknown>) {
     if (busy) return;
@@ -40,7 +42,7 @@ export function ReminderPanel({
     }
   }
   return (
-    <RoleDrawer context="My day" title="Remind me" close={close}>
+    <RoleDrawer context="My day" title={initialReschedule?"Reschedule task":"Remind me"} close={close}>
       <section className="md-task-panel">
         <h2>{alert ? "Task reminder" : "Remind me"}</h2>
         <p className="md-reminder-task">{title}</p>

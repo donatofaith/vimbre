@@ -16,7 +16,7 @@ export function TaskAlerts({
   changed: () => void;
   close: () => void;
 }) {
-  const [selected, setSelected] = useState<Alert | null>(null),
+  const [selected, setSelected] = useState<(Alert & {reschedule?:boolean}) | null>(null),
     [busy, setBusy] = useState(""),
     [error, setError] = useState("");
   async function done(a: Alert) {
@@ -71,7 +71,7 @@ export function TaskAlerts({
                 <Button
                   variant="secondary"
                   disabled={Boolean(busy)}
-                  onClick={() => setSelected(a)}
+                  onClick={() => setSelected({...a,reschedule:true})}
                 >
                   Not yet
                 </Button>
@@ -86,6 +86,7 @@ export function TaskAlerts({
           title={selected.title}
           zone={zone}
           alert
+          initialReschedule={selected.reschedule}
           close={() => setSelected(null)}
           changed={changed}
         />
