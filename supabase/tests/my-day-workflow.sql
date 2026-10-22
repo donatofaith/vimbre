@@ -19,6 +19,18 @@ do $$begin
  if (public.myday_notes(0)->>'count')::integer<>0 then raise exception 'Private notes leaked';end if;
  begin perform public.myday_action(current_setting('test.task')::uuid,'status','{"status":"open"}');raise exception 'Manager wrote personal task';exception when insufficient_privilege then null;end;
 end $$;
+-- Context must preserve existing Open work and retain a Decision outcome.
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$declare t uuid:=gen_random_uuid();r uuid;d uuid;begin
+ insert into public.role_items(owner_id,company_id,kind,title,details,next_step) values(auth.uid(),current_setting('test.company')::uuid,'workstream','Reporting','Existing notes','Existing next step') returning id into r;
+ perform public.myday_action(t,'create','{"title":"Report sent","due_date":"2099-01-01"}');perform public.myday_action(t,'status','{"status":"done"}');
+ perform public.myday_action(t,'context',jsonb_build_object('kind','workstream','record_id',r,'title','Report sent','details','Shared with Finance.','next_step',''));
+ if not exists(select 1 from public.role_items where id=r and details like 'Existing notes%' and details like '%Shared with Finance.' and next_step='Existing next step') then raise exception 'Open work context was lost';end if;
+ t:=gen_random_uuid();perform public.myday_action(t,'create','{"title":"Monthly reviews","due_date":"2099-01-01"}');perform public.myday_action(t,'status','{"status":"done"}');
+ d:=public.myday_action(t,'context','{"kind":"decision","title":"Monthly reviews","details":"Shared notes with Operations.","reason":"Reduce meeting load.","next_step":""}');
+ select context_record_id into d from public.actions where id=t;
+ if not exists(select 1 from public.decisions where id=d and next_step='Shared notes with Operations.') then raise exception 'Decision outcome was lost';end if;
+end $$;
 reset role;
 -- Simulate worker time on isolated fixtures. All changes roll back.
 do $$declare u uuid:=current_setting('test.employee')::uuid;c uuid:=current_setting('test.company')::uuid;r uuid;a uuid;t timestamptz:=now();n integer;begin
@@ -31,6 +43,8 @@ do $$declare u uuid:=current_setting('test.employee')::uuid;c uuid:=current_sett
  perform private.process_myday(t);perform private.process_myday(t+interval '61 minutes');perform private.process_myday(t+interval '2 days');
  select count(*) into n from public.task_alerts where task_id=a;if n<>2 then raise exception 'Expected two alerts, got %',n;end if;
  if exists(select 1 from private.task_mail_queue q join public.task_alerts n on n.id=q.alert_id where n.task_id=a) then raise exception 'Email preference ignored';end if;
+ if private.anchored_work_date('2027-02-28','Monthly','2027-01-31')<>date '2027-03-31' then raise exception 'Month end anchor lost';end if;
+ if private.anchored_work_date('2026-10-23','Every weekday','2026-10-23')<>date '2026-10-26' then raise exception 'Weekday schedule failed';end if;
  if private.next_work_date('2026-10-02','First Friday of each month')<>date '2026-11-06' then raise exception 'Monthly date failed';end if;
 end $$;
 set local role authenticated;
