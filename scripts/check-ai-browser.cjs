@@ -11,6 +11,15 @@ const assert = require('node:assert/strict');
     const company={id:'22222222-2222-4222-8222-222222222222',name:'AI fixture',team_mode:'small',created_by:user.id};
     const profile={id:user.id,company_id:company.id,full_name:'Alex Example',email:user.email,active:true,role:'hr_admin',department_id:null};
     const calls=[], writes=[]; let limited=false; let allowance=null;
+    const structured={
+      role_responsibility:{title:'Supplier reviews',details:'Review supplier notes each Friday.',recurrence:'Weekly'},
+      role_workstream:{title:'Supplier review',details:'Waiting for Operations',work_status:'waiting',next_step:'Share notes'},
+      role_external_contact:{title:'Ada Okafor',organisation:'Acme',details:'Supplier reviews',contact_details:'ada@example.invalid',contact_context:'Ask for the report'},
+      role_document:{title:'Supplier guide',details:'How to review supplier notes',url:''},
+      role_recurring_deadline:{title:'Board report',details:'Send to Operations',recurrence:'First Friday of each month',due_date:'2026-11-06'},
+      role_decision:{title:'Review suppliers monthly',reason:'Reduce meetings',decided_on:'2026-10-22',decided_by:'Operations',next_step:'Share notes',source_url:''}
+    };
+
     await page.route('https://*.supabase.co/**',async route=>{
       const request=route.request(),url=new URL(request.url());let args={};try{args=request.postDataJSON()||{}}catch{}
       const call={path:url.pathname,method:request.method(),params:Object.fromEntries(url.searchParams),args};calls.push(call);
@@ -24,7 +33,7 @@ const assert = require('node:assert/strict');
       else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};
       else if(url.pathname.endsWith('/ai_allowance_summary'))body=allowance;
       else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
-      else if(url.pathname.endsWith('/ai-run')){status=limited?429:200;body=limited?{ok:false,code:'limit_reached',message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}:{ok:true,request_id:'fixture',text:args.task.startsWith('role_')?JSON.stringify({items:[{title:'Supplier reviews',details:'Review supplier notes each Friday.',recurrence:'Weekly'}]}):args.task==='tasks_extract'?JSON.stringify({items:[{title:'Send supplier notes',details:'Share the review',due_date:'2026-10-23'}]}):args.task==='tidy_text'?'Review supplier notes each Friday.':args.task==='weekly_summary'?'Recent decisions\nSupplier reviews are monthly.':'Responsibilities\nReview supplier notes.\n\nOpen work\nShare the review notes.'};}
+      else if(url.pathname.endsWith('/ai-run')){status=limited?429:200;body=limited?{ok:false,code:'limit_reached',message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}:{ok:true,request_id:'fixture',text:args.task.startsWith('role_')?JSON.stringify({items:[structured[args.task]]}):args.task==='tasks_extract'?JSON.stringify({items:[{title:'Send supplier notes',details:'Share the review',due_date:'2026-10-23'}]}):args.task==='tidy_text'?'Review supplier notes each Friday.':args.task==='weekly_summary'?'Recent decisions\nSupplier reviews are monthly.':'Responsibilities\nReview supplier notes.\n\nOpen work\nShare the review notes.'};}
       else if(url.pathname.endsWith('/role_items')){if(request.method()==='POST'){writes.push(call);body={id:'new-fixture-record'}}else body=url.searchParams.get('select')==='*'||url.searchParams.has('kind')?[]:[{kind:'responsibility',title:'Supplier reviews',details:'Review supplier notes',due_date:null}];}
       else if(url.pathname.endsWith('/decisions'))body=[{title:'Monthly supplier reviews',reason:'Reduce meetings',decided_on:'2026-10-20',decided_by:'Operations',next_step:'Share the notes'}];
       else if(url.pathname.endsWith('/actions'))body=[];
@@ -44,6 +53,15 @@ const assert = require('node:assert/strict');
     await tidy.getByText('Draft from Vimbre AI. Check before saving.',{exact:true}).waitFor();assert.equal(writes.length,0);await tidy.getByRole('button',{name:'Review draft',exact:true}).click();
     const editor=page.getByRole('dialog',{name:'Add a responsibility',exact:true});assert.equal(await editor.getByLabel('What it involves',{exact:true}).inputValue(),'Review supplier notes each Friday.');await editor.getByLabel('Title',{exact:true}).fill('Supplier reviews');
     assert.equal(writes.length,0,'Applying a revision must still require Save');await editor.getByRole('button',{name:'Save',exact:true}).click();await editor.waitFor({state:'hidden'});assert.equal(writes.length,1);
+    for(const [tab,field,value] of [['Open work','Next step','Share notes'],['External contacts','Organisation','Acme'],['Documents','What it is for','How to review supplier notes'],['Recurring deadlines','Next due date','2026-11-06'],['Decision log','Why','Reduce meetings']]){
+      await page.getByRole('button',{name:tab,exact:true}).click();await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
+      const panel=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});await panel.getByLabel('Email, notes or a short description',{exact:true}).fill('Supplier notes for review');
+      if(tab==='Documents')await panel.getByLabel('PDF or text file',{exact:true}).setInputFiles({name:'supplier.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-fixture only, intercepted by the test')});
+      await panel.getByRole('button',{name:'Generate drafts',exact:true}).click();await panel.getByRole('button',{name:'Review draft',exact:true}).click();
+      assert.equal(await page.getByRole('dialog').getByLabel(field,{exact:true}).inputValue(),value);assert.equal(writes.length,1,'AI must not save records');
+      if(tab==='Documents')await page.getByText('Selected file: supplier.pdf.',{exact:false}).waitFor();
+      await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+    }
     await page.goto('http://127.0.0.1:5173/app');await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
     const tasks=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});await tasks.getByLabel('Email or notes',{exact:true}).fill('Send supplier notes by 23 October 2026');await tasks.getByRole('button',{name:'Generate drafts',exact:true}).click();await tasks.getByRole('button',{name:'Review draft',exact:true}).click();
     assert.equal(await page.getByLabel('What needs to be done?',{exact:true}).inputValue(),'Send supplier notes');assert.equal(await page.getByLabel('Due date',{exact:true}).inputValue(),'2026-10-23');assert.equal(writes.length,1);await page.getByRole('button',{name:'Cancel edit',exact:true}).click();
@@ -60,7 +78,7 @@ const assert = require('node:assert/strict');
     await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:ai-usage')));
     await page.getByRole('status').filter({hasText:'AI drafts are paused until 1 November 2026'}).waitFor();
     assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual handover notes stay editable.');
-    for(const call of calls.filter(c=>c.path.endsWith('/ai-run'))){assert.deepEqual(Object.keys(call.args).sort(),['task','text']);assert(['role_responsibility','tasks_extract','tidy_text','weekly_summary','handover_draft'].includes(call.args.task));}
+    for(const call of calls.filter(c=>c.path.endsWith('/ai-run'))){assert.deepEqual(Object.keys(call.args).sort(),call.args.document?['document','task','text']:['task','text']);assert([...Object.keys(structured),'tasks_extract','tidy_text','weekly_summary','handover_draft'].includes(call.args.task));if(call.args.document){assert.equal(call.args.task,'role_document');assert.equal(call.args.document.media_type,'application/pdf');}}
     for(const call of calls.filter(c=>c.params.limit==='100')){assert.equal(call.params.owner_id,`eq.${user.id}`);assert.equal(call.params.company_id,`eq.${company.id}`);assert.equal(call.params.deleted_at,'is.null');assert(!call.params.select.includes('personal'));}
     assert.equal(calls.filter(c=>/capture_detail|capture_list|responsibility_notes/.test(c.path)).length,0,'Summary context must not load private notes or original sources');
     for(const width of [360,768,1024,1440]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`AI page overflow at ${width}`);}

@@ -24,6 +24,12 @@ begin
  result:=public.capture_receive('test-private@capture.example.invalid','team-employee@example.invalid',repeat('c',64),'Supplier review','Inactive person');
  if (result->>'accepted')::boolean then raise exception 'Inactive person accepted'; end if;
  update public.profiles set active=true where id=current_setting('test.employee')::uuid;
+ insert into private.capture_inbound_receipts(address_id,message_hash,capture_id)
+ select address_id,encode(sha256(convert_to(seq.value::text,'UTF8')),'hex'),(select id from public.captures where owner_id=current_setting('test.employee')::uuid and title='Supplier review' limit 1)
+ from generate_series(1,99) as seq(value);
+ result:=public.capture_receive('test-private@capture.example.invalid','team-employee@example.invalid',repeat('d',64),'One too many','Should not be stored');
+ if not (result->>'limited')::boolean then raise exception 'Daily inbound cap not enforced'; end if;
+
 end; $$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
