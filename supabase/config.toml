@@ -12,3 +12,9 @@ entrypoint = "./functions/team-invitations/index.ts"
 verify_jwt = true
 import_map = "./functions/ai-run/deno.json"
 entrypoint = "./functions/ai-run/index.ts"
+
+[functions.capture-inbound]
+# Brevo supplies a separate bearer secret; the handler fails closed without it.
+verify_jwt = false
+entrypoint = "./functions/capture-inbound/index.ts"
+import_map = "./functions/capture-inbound/deno.json"
