@@ -98,6 +98,7 @@ export function TaskPanel({
         <form className="auth-form" onSubmit={save}>
           <Input
             autoFocus
+          data-autofocus=""
             label="What needs to be done?"
             name="title"
             required

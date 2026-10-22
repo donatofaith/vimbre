@@ -79,7 +79,7 @@ function MyDayContent() {
   const access = useRef<HTMLDialogElement>(null),
     dragging = useRef("");
   const summary = useMyDaySummary(profile!.id, revision, true);
-  const key = `${filter}:${search}:${forValue?.kind}:${forValue?.id}:${page}:${revision}`;
+  const key = `${filter}:${search}:${forValue?.kind}:${forValue?.id}:${page}`;
   const current = result?.key === key ? result : null;
   const data = current?.data ?? null;
   const zone = data?.timezone ?? "Europe/London";
@@ -131,7 +131,7 @@ function MyDayContent() {
       window.removeEventListener("vimbre:work-changed", onReturn);
       document.removeEventListener("visibilitychange", onReturn);
     };
-  }, [key, filter, search, forValue, page, taskId, linked]);
+  }, [key, filter, search, forValue, page, taskId, linked, revision]);
   useEffect(() => {
     if (params.get("visibility") === "manager") access.current?.showModal();
   }, [params]);
