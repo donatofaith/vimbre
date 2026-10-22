@@ -110,3 +110,13 @@ describe('deployed entrypoint authorization wiring',()=>{
   expect(readFileSync('src/lib/ai-gateway.ts','utf8')).toContain("invoke('ai-run'")
  })
 })
+
+
+describe('Allowance reset messages', () => {
+ it('uses UTC reset dates and retains manual continuation', async () => {
+  const { allowanceMessage } = await import('../supabase/functions/ai-run/gateway.ts')
+  expect(allowanceMessage('day','2026-10-23T00:00:00Z')).toContain('tomorrow (00:00 UTC)')
+  expect(allowanceMessage('month','2026-11-01T00:00:00Z')).toContain('1 November 2026 (00:00 UTC)')
+  expect(allowanceMessage('month','bad')).toContain('continue by hand')
+ })
+})

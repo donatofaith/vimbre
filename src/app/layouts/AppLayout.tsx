@@ -5,6 +5,7 @@ import {
   Outlet,
   useLocation,
 } from 'react-router-dom'
+import { AIAllowanceNotice } from '../../features/ai/AIAllowanceNotice'
 import { Notifications } from '../../features/notifications/Notifications'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 import { roleLabel } from '../../features/team/team-utils'
@@ -236,6 +237,7 @@ function WorkspaceLayout() {
               {logoutError}
             </p>
           )}
+          <AIAllowanceNotice />
           <Outlet />
         </main>
       </div>

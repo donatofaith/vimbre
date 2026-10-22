@@ -10,7 +10,7 @@ const assert = require('node:assert/strict');
     const user={id:'11111111-1111-4111-8111-111111111111',email:'ai-fixture@example.invalid',role:'authenticated',aud:'authenticated',email_confirmed_at:new Date().toISOString(),app_metadata:{},user_metadata:{}};
     const company={id:'22222222-2222-4222-8222-222222222222',name:'AI fixture',team_mode:'small',created_by:user.id};
     const profile={id:user.id,company_id:company.id,full_name:'Alex Example',email:user.email,active:true,role:'hr_admin',department_id:null};
-    const calls=[], writes=[]; let limited=false;
+    const calls=[], writes=[]; let limited=false; let allowance=null;
     await page.route('https://*.supabase.co/**',async route=>{
       const request=route.request(),url=new URL(request.url());let args={};try{args=request.postDataJSON()||{}}catch{}
       const call={path:url.pathname,method:request.method(),params:Object.fromEntries(url.searchParams),args};calls.push(call);
@@ -22,8 +22,9 @@ const assert = require('node:assert/strict');
       else if(url.pathname.endsWith('/my_invitation'))body=[];
       else if(url.pathname.endsWith('/company_active_member_count'))body=1;
       else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};
+      else if(url.pathname.endsWith('/ai_allowance_summary'))body=allowance;
       else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
-      else if(url.pathname.endsWith('/ai-run')){status=limited?429:200;body=limited?{ok:false,message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}:{ok:true,request_id:'fixture',text:args.task==='tidy_text'?'Review supplier notes each Friday.':args.task==='weekly_summary'?'Recent decisions\nSupplier reviews are monthly.':'Responsibilities\nReview supplier notes.\n\nOpen work\nShare the review notes.'};}
+      else if(url.pathname.endsWith('/ai-run')){status=limited?429:200;body=limited?{ok:false,code:'limit_reached',message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}:{ok:true,request_id:'fixture',text:args.task==='tidy_text'?'Review supplier notes each Friday.':args.task==='weekly_summary'?'Recent decisions\nSupplier reviews are monthly.':'Responsibilities\nReview supplier notes.\n\nOpen work\nShare the review notes.'};}
       else if(url.pathname.endsWith('/role_items')){if(request.method()==='POST'){writes.push(call);body={id:'new-fixture-record'}}else body=url.searchParams.get('select')==='*'||url.searchParams.has('kind')?[]:[{kind:'responsibility',title:'Supplier reviews',details:'Review supplier notes',due_date:null}];}
       else if(url.pathname.endsWith('/decisions'))body=[{title:'Monthly supplier reviews',reason:'Reduce meetings',decided_on:'2026-10-20',decided_by:'Operations',next_step:'Share the notes'}];
       else if(url.pathname.endsWith('/actions'))body=[];
@@ -48,11 +49,20 @@ const assert = require('node:assert/strict');
     await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByLabel('Draft',{exact:true}).waitFor();assert((await page.getByLabel('Draft',{exact:true}).inputValue()).includes('Responsibilities'));
     assert.equal(writes.length,1,'Handover draft must not publish or save itself');await page.getByRole('button',{name:'Discard draft',exact:true}).click();
     limited=true;await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByRole('alert').filter({hasText:'AI limit'}).waitFor();await page.getByRole('button',{name:'Write draft manually',exact:true}).click();await page.getByLabel('Draft',{exact:true}).fill('Manual handover notes stay editable.');assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual handover notes stay editable.');
+    await page.getByRole('link',{name:'Contact support',exact:true}).waitFor();
+    allowance={enabled:true,warning:true,blocked:false,period:'day',daily_percent:80,monthly_percent:10,daily_reset_at:'2026-10-23T00:00:00Z',monthly_reset_at:'2026-11-01T00:00:00Z'};
+    await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:ai-usage')));
+    const quota=page.getByRole('status').filter({hasText:'80% of its daily AI allowance'});await quota.waitFor();
+    allowance={...allowance,blocked:true,period:'month',daily_percent:80,monthly_percent:100};
+    await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:ai-usage')));
+    await page.getByRole('status').filter({hasText:'AI drafts are paused until 1 November 2026'}).waitFor();
+    assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual handover notes stay editable.');
     for(const call of calls.filter(c=>c.path.endsWith('/ai-run'))){assert.deepEqual(Object.keys(call.args).sort(),['task','text']);assert(['tidy_text','weekly_summary','handover_draft'].includes(call.args.task));}
     for(const call of calls.filter(c=>c.params.limit==='100')){assert.equal(call.params.owner_id,`eq.${user.id}`);assert.equal(call.params.company_id,`eq.${company.id}`);assert.equal(call.params.deleted_at,'is.null');assert(!call.params.select.includes('personal'));}
     assert.equal(calls.filter(c=>/capture_detail|capture_list|responsibility_notes/.test(c.path)).length,0,'Summary context must not load private notes or original sources');
     for(const width of [360,768,1024,1440]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`AI page overflow at ${width}`);}
     await page.screenshot({path:'/tmp/vimbre-landing-ai-handover.png',fullPage:true});
+    profile.role='employee';await page.reload();await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();assert.equal(await page.getByRole('complementary',{name:'AI allowance',exact:true}).count(),0,'Employee has no admin allowance banner');
     assert.equal(errors.length,0,JSON.stringify(errors));console.log(JSON.stringify({weeklySummary:'passed',tidyReviewBeforeSave:'passed',handoverDraft:'passed',manualFallback:'passed',sourceScope:'passed',responsive:'passed',providerCalls:0}));
   }finally{await browser.close();await server.close();}
 })().catch(error=>{console.error(error);process.exit(1)});

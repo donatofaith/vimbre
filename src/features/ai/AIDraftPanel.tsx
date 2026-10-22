@@ -14,6 +14,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   const [reviewing, setReviewing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [limited, setLimited] = useState(false)
   const [message, setMessage] = useState('')
   const pending = useRef(false)
   const reference = useRef<{ text: string; id: string } | null>(null)
@@ -22,11 +23,11 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
     if (pending.current) return
     const invalid = validateAIInput(source)
     if (invalid) { setError(invalid); return }
-    pending.current = true; setBusy(true); setError(''); setMessage('')
+    pending.current = true; setBusy(true); setError(''); setLimited(false); setMessage('')
     if (reference.current?.text !== source) reference.current = { text: source, id: crypto.randomUUID() }
     try {
       const result = await runAI(task, source, reference.current!.id)
-      if (!result.ok) { setError(result.message); return }
+      if (!result.ok) { setError(result.message); setLimited(result.code === 'limit_reached'); return }
       if (!result.text.trim() || result.text.length > 60000) { setError('The draft could not be read. You can continue by hand.'); return }
       reference.current = null
       setOutput(result.text); setReviewing(true)
@@ -36,7 +37,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   async function load() {
     if (!loadRecords || pending.current) return
     if (source && !window.confirm('Replace these notes with your current records?')) return
-    pending.current = true; setBusy(true); setError(''); setMessage('')
+    pending.current = true; setBusy(true); setError(''); setLimited(false); setMessage('')
     try { setSource(await loadRecords()); setOutput(''); setReviewing(false); reference.current = null }
     catch { setError('Your records could not be loaded. Paste the notes you want to use.') }
     finally { pending.current = false; setBusy(false) }
@@ -49,6 +50,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
     <Button disabled={busy || !source.trim()} onClick={() => void generate()}>{busy ? 'Preparing draft…' : task === 'tidy_text' ? 'Tidy text' : 'Generate draft'}</Button>
     {!reviewing && <Button variant="secondary" disabled={busy} onClick={() => { setOutput(source); setReviewing(true); setMessage('') }}>Write draft manually</Button>}
     {error && <p className="field-error" role="alert">{error}</p>}
+    {error && limited && <a className="button button-secondary" href="mailto:support@vimbre.com?subject=Vimbre%20AI%20allowance">Contact support</a>}
     {message && <p role="status">{message}</p>}
     {reviewing && <div className="vai-result"><div className="field"><label htmlFor={draftId}>Draft</label><textarea id={draftId} rows={12} value={output} onChange={event => setOutput(event.target.value)} /></div><div className="form-actions">
       {onUse && <Button disabled={!output.trim()} onClick={() => { if (maxApplyLength && output.length > maxApplyLength) { setError(`Shorten the draft to ${maxApplyLength} characters before using it.`); return }; onUse(output) }}>Use this draft</Button>}

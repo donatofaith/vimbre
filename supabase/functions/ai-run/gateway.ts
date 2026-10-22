@@ -10,6 +10,12 @@ export type GatewayDependencies = {
 }
 const origins = new Set(['https://vimbre.com', 'https://www.vimbre.com', 'https://vimbre.vercel.app', 'http://localhost:5173', 'http://127.0.0.1:5173'])
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+export function allowanceMessage(period?: string, resetAt?: string) {
+  if (period === 'day') return 'AI drafts are paused until tomorrow (00:00 UTC). You can continue by hand.'
+  const date = resetAt ? new Date(resetAt) : null
+  if (period === 'month' && date && Number.isFinite(date.getTime())) return `AI drafts are paused until ${new Intl.DateTimeFormat('en-GB', {day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(date)} (00:00 UTC). You can continue by hand.`
+  return 'Your company’s AI limit has been reached. You can continue by hand.'
+}
 const unavailable = 'AI is unavailable right now. You can continue by hand.'
 const messages: Record<string, string> = {
   not_configured: 'AI is not enabled for this company yet. You can continue by hand.',
@@ -39,7 +45,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
   return async function handle(request: Request): Promise<Response> {
     const origin=request.headers.get('origin')
     const headers = {'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin','Access-Control-Allow-Origin':origin&&origins.has(origin)?origin:'https://vimbre.com','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info, idempotency-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version','Access-Control-Allow-Methods':'POST, OPTIONS'}
-    const fail=(status:number,message=unavailable)=>new Response(JSON.stringify({ok:false,message,can_continue_manually:true}),{status,headers})
+    const fail=(status:number,message=unavailable,code?:string)=>new Response(JSON.stringify({ok:false,message,can_continue_manually:true,...(code?{code}:{})}),{status,headers})
     if(origin&&!origins.has(origin))return fail(403,'This app address is not allowed.')
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers})
     if(request.method!=='POST')return fail(405,'Use POST to request an AI draft.')
@@ -58,7 +64,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       const requestId=request.headers.get('idempotency-key')??crypto.randomUUID()
       if(!uuid.test(requestId))return fail(400,'Use a valid request reference. You can continue by hand.')
       const reservation=await deps.begin(identity.userId,requestId,body.task,await fingerprint(body.task,body.text))
-      if(!reservation.ok)return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,messages[reservation.code??'']??unavailable)
+      if(!reservation.ok)return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)
       if(!reservation.route||!reservation.usage_id||reservation.company_id!==identity.companyId) return fail(503)
       const route=reservation.route, attempts:Attempt[]=[]
       let answer=''

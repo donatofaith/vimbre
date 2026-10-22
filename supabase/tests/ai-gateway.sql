@@ -13,6 +13,8 @@ do $$ begin
  begin perform public.ai_gateway_begin(gen_random_uuid(),gen_random_uuid(),'tidy_text',repeat('a',64));raise exception 'Anonymous gateway bypass';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
+-- Provisioning now creates Trial rows. Remove only test-company rows to exercise legacy missing/custom cases.
+delete from public.ai_company_limits where company_id in (select company_id from public.profiles where id in (current_setting('test.admin')::uuid,current_setting('test.other_admin')::uuid));
 set local role service_role;
 do $$ declare r jsonb; id uuid:=gen_random_uuid(); uid uuid; p uuid; f uuid; q public.ai_usage; begin
  if (select count(*) from public.ai_models where enabled and model_name in ('claude-haiku-5-5','claude-sonnet-5-5'))<>2 then raise exception 'Model seeds';end if;

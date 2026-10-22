@@ -33,9 +33,9 @@ No provider calls existed in the inspected application; therefore no feature nee
 
 ## Private tables and quotas
 
-ai_models, ai_task_routes, ai_usage and ai_company_limits have RLS, no customer policies and explicit service-role grants. Customers cannot read/write config, budgets or usage or invoke the privileged accounting RPCs. The service RPCs are SECURITY INVOKER, including private-schema implementations, with PUBLIC/anon/authenticated execution revoked.
+ai_models, ai_task_routes, ai_usage, ai_limits and ai_company_limits have RLS, no customer policies and explicit service-role grants. Customers cannot read/write config, budgets or usage or invoke the privileged accounting RPCs. The service RPCs are SECURITY INVOKER, including private-schema implementations, with PUBLIC/anon/authenticated execution revoked.
 
-ai_usage did not previously exist. ai_company_limits separately stores per-company daily/monthly request caps and USD spend caps. Both are required to make the requested limits enforceable. No monetary or request allowance was supplied, so no company is enabled by default. Missing, disabled or zero caps block spending; this is not connected to subscription billing.
+ai_usage did not previously exist. ai_company_limits separately stores per-company daily/monthly request caps and USD spend caps. Both are required to make the requested limits enforceable. The client approved plan allowances on 22 October. ai_limits stores the shared plan rows; ai_company_limits stores each company’s protected assignment. Existing unconfigured and new companies receive Trial. Missing, disabled or zero effective caps block spending. This is not subscription billing; only server operators can assign paid plans until verified Stripe subscription handling is implemented.
 
 All periods use the server's UTC calendar and the request start timestamp. A company quota row is locked while a request checks ai_usage and inserts its reservation. Pending reservations count towards both limits, so simultaneous requests cannot each claim the same allowance. One logical request reserves the maximum possible primary AND fallback spend, even though most requests use only the primary. This is deliberately conservative.
 
@@ -54,7 +54,7 @@ adapters/index.ts is the extension point. Another provider must implement the sa
 ## Activation
 
 1. Save ANTHROPIC_API_KEY in Vimbre's Supabase Edge Function Secrets. Do not commit it or prefix it with VITE_. The function uses built-in server Supabase credentials separately.
-2. Configure an approved ai_company_limits row through a privileged server/SQL session. Provide a company UUID, daily_request_limit, monthly_request_limit, daily_cost_limit, monthly_cost_limit and enabled=true. Costs are USD. Do not enable other companies or choose unlimited allowances by implication.
+2. The approved Trial allowance is now provisioned. Edit shared plan caps in public.ai_limits through Supabase Table Editor/SQL Editor. Change a company’s ai_company_limits.plan only through an authorized operator or future verified billing webhook. Keep enabled=true. For Enterprise, set all four company caps to the contract values before enabling it. A NULL plan preserves legacy custom caps. Costs are USD. Never accept a browser-supplied plan as proof of payment.
 3. Run one signed-in tidy_text smoke test with non-sensitive text and a fresh Idempotency-Key, after approving the budget. Inspect the private ai_usage row. No paid smoke call was made during implementation.
 4. UI feature wiring is implemented. Keep manual paths working and require review before saving drafts. A real authenticated provider smoke test is still required after allowances are approved.
 
@@ -88,3 +88,26 @@ The migration and ai-run deployment are independent of Vercel. supabase/config.t
 - package.json
 - docs/ai-gateway.md
 - PROJECT_NOTES.md
+
+
+## Approved plan limits, 22 October 2026
+
+| Plan | Requests/day | Requests/month | USD/day | USD/month |
+| --- | --- | --- | --- | --- |
+| Trial | 15 | 100 | 0.25 | 1 |
+| Starter | 40 | 500 | 0.75 | 2 |
+| Growth | 200 | 3000 | 4 | 12 |
+| Business | 1000 | 15000 | 20 | 60 |
+| Enterprise | Per contract | Per contract | Per contract | Per contract |
+
+All four caps apply; the first reached wins. The gateway locks the company row and reads the plan row under a shared lock for every reservation, so a Console edit affects the next request with no code release. Existing explicitly configured or disabled rows are preserved. Trial provision does not invent a subscription, trial duration or expiry; these were not supplied. Operators can disable a company explicitly. Enterprise defaults are zero at company level and fail closed until contract caps are entered.
+
+Days and months reset by UTC calendar boundaries; no reset job or usage deletion is needed. A next request is denied before its conservative primary plus fallback reservation could exceed a spending cap. This can stop AI before a displayed actual spend reaches 100 percent. Pending reservations count; completed costs settle to measured usage, and uncertain bills retain the existing conservative estimate. All other features and manual forms continue working.
+
+Company HR Admins, including the founder displayed as Super admin, see an in-app banner at 80 percent of any request or cost cap. It refreshes on login, focus, returning to the tab, each AI result and every minute while visible. At 100 percent the banner says AI is paused and shows the UTC reset time. Employees and managers receive no admin usage summary. A narrowly scoped authenticated RPC derives the company from auth.uid(), returns aggregates only, and rejects anonymous access. Configuration and raw usage remain service-only. AI limit responses have a plain daily or monthly reset message and a Contact support email action, with manual continuation. No email warning dispatch is added.
+
+Usage logging remains numbers/identifiers and route accounting only. No source text, generated draft or secret is saved in the ledger. The existing fingerprint is a one-way retry hash, not prompt text. No paid provider call was made by these tests.
+
+Files: migration 20261022053534_ai_plan_allowances.sql; supabase/tests/ai-plan-allowances.sql and updated ai-gateway.sql; gateway.ts/types.ts; src/lib/ai-gateway.ts and database.ts; AIAllowanceNotice.tsx, AIDraftPanel.tsx, CaptureAI.tsx, ai.css; AppLayout.tsx; gateway unit and AI browser checks.
+
+Verification: rollback SQL covers exact plan values, automatic Trial provision, live Console edits, independent request/spend daily/monthly caps, pending reservation accounting, UTC boundaries with a non-UTC session, custom Enterprise, disabled companies, cross-company/admin/employee/manager/anonymous boundaries and customer upgrade denial. Existing gateway rollback tests still cover reservation idempotency, fallback billing and snapshot rates. Browser tests cover 80/100 percent notices, contact links, untouched manual drafts, employee hiding and phone/tablet fit.
