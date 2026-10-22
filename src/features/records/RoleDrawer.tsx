@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '../../components/ui/Button'
+import './role-drawer.css'
 export function RoleDrawer({ children, close, title, context = 'My role' }: { context?: string; children: ReactNode; close: () => void; title: string }) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {

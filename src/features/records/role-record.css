@@ -572,18 +572,10 @@
 .vr-section-actions { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; flex-shrink: 0; }
 .vr-ai-unavailable { display: grid; gap: 4px; }
 .vr-ai-unavailable span { color: #52677e; font-size: 12px; }
-.vr-drawer { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(540px,100%); height: 100dvh; max-height: 100dvh; max-width: 100%; border: 0; border-left: 1px solid #e2e8f0; padding: 24px 28px 40px; background: white; color: #102a43; overflow-y: auto; }
-.vr-drawer::backdrop { background: #102a4370; }
-.vr-drawer .vr-drawer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
-.vr-drawer h2, .vr-drawer .record-editor h2 { font: 650 24px/1.4 var(--heading-font); letter-spacing: 0; margin: 0 0 24px; }
-.vr-drawer .record-editor { border: 0; padding: 0; background: none; box-shadow: none; }
-.vr-drawer .auth-form { display: grid; gap: 20px; }
-.vr-drawer .field { min-width: 0; }
-.vr-drawer input[type="file"] { max-width: 100%; white-space: normal; }
 .vr-review { margin-block: 24px; }
 .vr-review article { border-top: 1px solid #e2e8f0; padding-block: 20px; }
 .vr-review h3 { font-size: 16px; }
 .vr-review .record-text, .vr-role-description { white-space: pre-wrap; overflow-wrap: anywhere; }
-@media(max-width:760px) { .vr-section-heading { align-items: flex-start; flex-direction: column; gap: 20px; } .vr-section-actions { width: 100%; } .vr-drawer { padding: 20px 16px 32px; } }
+@media(max-width:760px) { .vr-section-heading { align-items: flex-start; flex-direction: column; gap: 20px; } .vr-section-actions { width: 100%; } }
 
 .vr-review h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }

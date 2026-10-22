@@ -11,6 +11,8 @@ import './capture.css'
 import { CaptureAI } from '../ai/CaptureAI'
 import type { ExtractedDraft } from '../ai/ai-output'
 import { captureDate } from './capture-utils'
+import { CaptureSummary } from '../workspace/MyDayOverview'
+import { useMyDaySummary } from '../workspace/useMyDaySummary'
 
 type Source = {
   id: string
@@ -74,13 +76,14 @@ export function CapturePage() {
 }
 
 function CaptureWorkspace() {
-  const { company } = useAuth()
+  const { company, profile } = useAuth()
   const [params, setParams] = useSearchParams()
   const selected = params.get('capture') ?? ''
 
   const [page, setPage] = useState(0)
   const [archived, setArchived] = useState(false)
   const [revision, setRevision] = useState(0)
+  const summary = useMyDaySummary(profile!.id, revision, true)
 
   const [list, setList] = useState<{
     key: string
@@ -342,7 +345,8 @@ function CaptureWorkspace() {
         )}
       </header>
 
-      <div className="vc-capabilities" aria-label="Capture availability"><span>Email forwarding and file uploads · <strong>Coming soon</strong></span></div>
+      <CaptureSummary data={summary.data ? {...summary.data, pending_drafts: 0} : null} />
+      <div className="vc-capabilities" aria-label="Capture availability"><span>{summary.data?.forwarding_address ? 'File uploads' : 'Email forwarding and file uploads'} · <strong>Coming soon</strong></span></div>
       <ol className="vc-steps" aria-label="Capture workflow">
         <li data-active={!selected}>
           <span>1</span>

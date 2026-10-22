@@ -43,7 +43,7 @@ const assert = require('node:assert/strict');
     await page.goto('http://127.0.0.1:5173/login');await page.getByLabel('Work email',{exact:true}).fill(user.email);await page.getByLabel('Password',{exact:true}).fill('Fixture-password-123');await page.getByRole('button',{name:'Log in',exact:true}).click();
     await page.getByRole('heading',{name:/^Good (morning|afternoon|evening),/}).waitFor();
     await page.getByRole('button',{name:'Weekly summary',exact:true}).click();
-    const summary=page.getByRole('dialog',{name:'Weekly summary',exact:true});await summary.getByRole('button',{name:'Use my records',exact:true}).click();
+    const summary=page.getByRole('dialog',{name:'Weekly summary',exact:true});assert.equal(await summary.evaluate(el=>Math.round(el.getBoundingClientRect().width)),540,'Drawer styles must load before visiting My role');await summary.getByRole('button',{name:'Use my records',exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('dialog textarea')?.value.includes('Supplier reviews'));
     assert((await summary.getByLabel('Notes to use',{exact:true}).inputValue()).includes('Reduce meetings'));
     await summary.getByRole('button',{name:'Generate draft',exact:true}).click();await summary.getByLabel('Draft',{exact:true}).waitFor();assert((await summary.getByLabel('Draft',{exact:true}).inputValue()).includes('Recent decisions'));
@@ -59,7 +59,11 @@ const assert = require('node:assert/strict');
       if(tab==='Documents')await panel.getByLabel('PDF or text file',{exact:true}).setInputFiles({name:'supplier.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-fixture only, intercepted by the test')});
       await panel.getByRole('button',{name:'Generate drafts',exact:true}).click();await panel.getByRole('button',{name:'Review draft',exact:true}).click();
       assert.equal(await page.getByRole('dialog').getByLabel(field,{exact:true}).inputValue(),value);assert.equal(writes.length,1,'AI must not save records');
-      if(tab==='Documents')await page.getByText('Selected file: supplier.pdf.',{exact:false}).waitFor();
+      if(tab==='Documents'){
+        await page.getByText('Selected file: supplier.pdf.',{exact:false}).waitFor();
+        for(const width of [360,768,1440]){await page.setViewportSize({width,height:900});assert(!await page.getByRole('dialog').evaluate(el=>el.scrollWidth>el.clientWidth),'Document review panel overflows');await page.screenshot({path:`/tmp/vimbre-landing-ai-document-${width}.png`,fullPage:true});}
+        await page.setViewportSize({width:1440,height:900});
+      }
       await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
     }
     await page.goto('http://127.0.0.1:5173/app');await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();

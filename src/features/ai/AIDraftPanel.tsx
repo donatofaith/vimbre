@@ -12,6 +12,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   const [source, setSource] = useState(initialText)
   const [output, setOutput] = useState('')
   const [reviewing, setReviewing] = useState(false)
+  const [fromAI, setFromAI] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [limited, setLimited] = useState(false)
@@ -30,7 +31,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
       if (!result.ok) { setError(result.message); setLimited(result.code === 'limit_reached'); return }
       if (!result.text.trim() || result.text.length > 60000) { setError('The draft could not be read. You can continue by hand.'); return }
       reference.current = null
-      setOutput(result.text); setReviewing(true)
+      setOutput(result.text); setReviewing(true); setFromAI(true)
       setMessage('Draft ready. Review names, dates and details.')
     } finally { pending.current = false; setBusy(false) }
   }
@@ -44,11 +45,11 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   }
   return <section className="vai-panel" aria-label={heading}>
     <h2>{heading}</h2>
-    <p>Draft from Vimbre AI. Check before saving.</p>
+    {reviewing && fromAI && <p>Draft from Vimbre AI. Check before saving.</p>}
     {loadRecords && <Button variant="secondary" disabled={busy} onClick={() => void load()}>Use my records</Button>}
     <div className="field"><label htmlFor={sourceId}>Notes to use</label><textarea id={sourceId} rows={8} value={source} disabled={busy} onChange={event => { setSource(event.target.value); setOutput(''); setReviewing(false); setMessage(''); reference.current = null }} placeholder="Add the decisions, work and dates to include." /></div>
     <Button disabled={busy || !source.trim()} onClick={() => void generate()}>{busy ? 'Preparing draft…' : task === 'tidy_text' ? 'Tidy text' : 'Generate draft'}</Button>
-    {!reviewing && <Button variant="secondary" disabled={busy} onClick={() => { setOutput(source); setReviewing(true); setMessage('') }}>Write draft manually</Button>}
+    {!reviewing && <Button variant="secondary" disabled={busy} onClick={() => { setOutput(source); setReviewing(true); setFromAI(false); setMessage('') }}>Write draft manually</Button>}
     {error && <p className="field-error" role="alert">{error}</p>}
     {error && limited && <a className="button button-secondary" href="mailto:support@vimbre.com?subject=Vimbre%20AI%20allowance">Contact support</a>}
     {message && <p role="status">{message}</p>}
