@@ -28,10 +28,12 @@ do $$declare t uuid:=gen_random_uuid();r uuid;d uuid;begin
  if not exists(select 1 from public.role_items where id=r and details like 'Existing notes%' and details like '%Shared with Finance.' and next_step='Existing next step') then raise exception 'Open work context was lost';end if;
  t:=gen_random_uuid();perform public.myday_action(t,'create','{"title":"Monthly reviews","due_date":"2099-01-01"}');perform public.myday_action(t,'status','{"status":"done"}');
  d:=public.myday_action(t,'context','{"kind":"decision","title":"Monthly reviews","details":"Shared notes with Operations.","reason":"Reduce meeting load.","next_step":""}');
- select context_record_id into d from public.actions where id=t;
+ if d is distinct from (select context_record_id from public.actions where id=t) then raise exception 'Context response is inconsistent';end if;
  if not exists(select 1 from public.decisions where id=d and next_step='Shared notes with Operations.') then raise exception 'Decision outcome was lost';end if;
 end $$;
 reset role;
+-- Enable only inside this rollback transaction; never call the HTTP dispatcher.
+update private.task_delivery_config set enabled=true;
 -- Simulate worker time on isolated fixtures. All changes roll back.
 do $$declare u uuid:=current_setting('test.employee')::uuid;c uuid:=current_setting('test.company')::uuid;r uuid;a uuid;t timestamptz:=now();n integer;begin
  insert into public.role_items(owner_id,company_id,kind,title,details,recurrence,due_date) values(u,c,'recurring_deadline','Daily report','Share report','Daily',(t at time zone 'Africa/Lagos')::date) returning id into r;
