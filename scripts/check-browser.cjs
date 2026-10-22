@@ -17,7 +17,12 @@ await page.route('https://*.supabase.co/**',async route=>{
  else if(url.pathname.endsWith('/capture_list'))body={rows:[],count:0};
  else if(url.pathname.endsWith('/company_active_member_count'))body=2;
  else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};
- else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
+ else if(url.pathname.endsWith('/myday_valid_recurrence'))body=true;
+      else if(url.pathname.endsWith('/myday_alerts'))body=[];
+      else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
+      else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};
+      else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
+      else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
  else if(url.pathname.endsWith('/user'))body=user;
  else if(url.pathname.endsWith('/profiles'))body=profile;
  else if(url.pathname.endsWith('/companies')){if(req.method()==='PATCH'){company={...company,...req.postDataJSON()};body={id:company.id};}else body=company;}
@@ -41,4 +46,5 @@ await page.goto('http://127.0.0.1:5173/reset-password');await page.getByText('Th
 await page.goto('http://127.0.0.1:5173/signup');await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.auth-card').evaluate(el=>getComputedStyle(el).animationName),'none');assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth));assert.equal(errors.length,0,JSON.stringify(errors));
 console.log(JSON.stringify({confirmationResendAndCountdown:'passed',passwordVisibility:'passed',protectedRoutes:'passed',signupValidationAndMetadata:'passed',loginAndProfile:'passed',settingsSaveAndReload:'passed',mobileNavigation:'passed',logout:'passed',recoveryRequest:'passed',pkceCallbackAndPasswordUpdate:'passed',resetSessionGuard:'passed',pageErrors:errors,network:'mocked only; no email sent'}));} finally { await browser.close(); await server.close(); }
 })().catch(e=>{console.error(e);process.exit(1)});
+
 

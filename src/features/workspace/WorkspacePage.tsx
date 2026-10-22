@@ -1,3 +1,4 @@
+import { MyDayPage } from '../my-day/MyDayPage'
 import { StructuredAI } from '../ai/StructuredAI'
 import type { StructuredDraft } from '../ai/structured-output'
 import { AIDraftPanel } from '../ai/AIDraftPanel'
@@ -30,10 +31,7 @@ const views: [View, string][] = [
   ['archived', 'Archived'],
 ]
 
-export function WorkspacePage() {
-  const [params] = useSearchParams()
-  return <ActionWorkspace key={params.get('task') ?? 'all'} />
-}
+export function WorkspacePage() { return <MyDayPage /> }
 
 export function TeamMemberActions({
   member,

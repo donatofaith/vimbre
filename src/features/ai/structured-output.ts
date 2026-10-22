@@ -4,7 +4,7 @@ export type StructuredDraft = Record<string, string>
 const fields: Record<DraftKind, Record<string, number>> = {
  responsibility:{title:200,details:5000,recurrence:200}, workstream:{title:200,details:5000,work_status:30,next_step:5000},
  external_contact:{title:200,organisation:200,details:5000,contact_details:400,contact_context:5000}, document:{title:200,details:5000,url:2048},
- recurring_deadline:{title:200,recurrence:200,due_date:10,details:5000}, decision:{title:300,reason:5000,decided_on:10,decided_by:200,next_step:5000,source_url:2048}, task:{title:300,details:5000,due_date:10},
+ recurring_deadline:{title:200,recurrence:200,due_date:10,details:5000}, decision:{title:300,reason:5000,decided_on:10,decided_by:200,next_step:5000,source_url:2048}, task:{title:300,details:5000,due_date:10,due_time:5,department_name:200,external_contact_name:200},
 }
 export function parseStructured(raw: string, kind: DraftKind): StructuredDraft[] {
  const invalid = () => new Error('The draft could not be read. Try again or add it manually.')
@@ -19,6 +19,7 @@ export function parseStructured(raw: string, kind: DraftKind): StructuredDraft[]
    const text=input[key]??''; if(typeof text!=='string' || text.length>max)throw invalid()
    row[key]=text.trim()
    if(key==='due_date'||key==='decided_on') {const d=new Date(`${row[key]}T00:00:00Z`);if(!/^\d{4}-\d{2}-\d{2}$/.test(row[key]) || !Number.isFinite(d.getTime()) || d.toISOString().slice(0,10)!==row[key])row[key]=''}
+   if(key==='due_time'&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(row[key]))row[key]=''
    if(key==='url'||key==='source_url')row[key]=safeRecordUrl(row[key])??''
   }
   if(!row.title)throw invalid()

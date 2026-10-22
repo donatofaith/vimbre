@@ -112,6 +112,11 @@ const assert = require('node:assert/strict')
           team_mode: 'small',
         }
       else if (path.endsWith('/my_invitation')) body = []
+      else if(path.endsWith('/myday_valid_recurrence'))body=true;
+      else if(path.endsWith('/myday_alerts'))body=[];
+      else if(path.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
+      else if(path.endsWith('/myday_notes'))body={rows:[],count:0};
+      else if(path.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
       else if (path.endsWith('/my_day_summary'))
         body = {
           pending_drafts: 0,

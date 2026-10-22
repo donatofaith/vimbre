@@ -1,3 +1,4 @@
+import { WorkPreferences } from '../my-day/WorkPreferences'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
@@ -34,6 +35,6 @@ export function CompanySettings() {
     <p className="settings-plan-link">To change your team structure, <Link to="/#pricing">view plans and subscribe</Link>.</p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your company administrator to change company settings.</p>}</section>{admin && <p><Link to="/app/team">Manage your team</Link> · <Link to="/app/departments">Manage departments</Link></p>}</>
+  </form> : <p>Contact your company administrator to change company settings.</p>}</section>{admin && <p><Link to="/app/team">Manage your team</Link> · <Link to="/app/departments">Manage departments</Link></p>}<WorkPreferences/></>
 }
 

@@ -19,7 +19,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   const [message, setMessage] = useState('')
   const pending = useRef(false)
   const reference = useRef<{ text: string; id: string } | null>(null)
-  const heading = task === 'weekly_summary' ? 'Weekly summary' : task === 'handover_draft' ? 'Draft handover' : 'Tidy text'
+  const heading = task === 'task_context' ? 'Draft outcome' : task === 'weekly_summary' ? 'Weekly summary' : task === 'handover_draft' ? 'Draft handover' : 'Tidy text'
   async function generate() {
     if (pending.current) return
     const invalid = validateAIInput(source)

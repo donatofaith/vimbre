@@ -20,6 +20,12 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
+      myday_tasks: {Args:{p_filter:string;p_query:string;p_for:string;p_page:number;p_task?:string|null;p_decision?:string|null};Returns:Json}
+      myday_valid_recurrence: {Args:{p_date:string;p_rule:string};Returns:boolean}
+      myday_preferences: {Args:{p_save?:Json};Returns:Json}
+      myday_notes: {Args:{p_page:number};Returns:Json}
+      myday_action: {Args:{p_id:string;p_operation:string;p_data:Json};Returns:string}
+      myday_alerts: {Args:Record<PropertyKey,never>;Returns:Json}
       ai_allowance_summary: { Args: Record<PropertyKey, never>; Returns: Json }
       work_notification_inbox: { Args: {p_timezone: string; p_page: number}; Returns: Json }
       work_notification_read: { Args: {p_key: string; p_timezone: string}; Returns: boolean }

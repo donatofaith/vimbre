@@ -22,6 +22,11 @@ const assert = require('node:assert/strict');
       else if (url.pathname.endsWith('/companies')) body = company;
       else if (url.pathname.endsWith('/my_invitation')) body = [];
       else if (url.pathname.endsWith('/work_notification_inbox')) body={unread:0,count:0,items:[]};
+      else if(url.pathname.endsWith('/myday_alerts'))body=[];
+      else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
+      else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};
+      else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
+      else if(url.pathname.endsWith('/myday_valid_recurrence'))body=true;
       else if (url.pathname.endsWith('/my_day_summary')) body = { pending_drafts: drafts.filter(d => d.status === 'pending').length, completed_sections: [], forwarding_address: null };
       else if (url.pathname.endsWith('/actions')) body = [];
       else if (url.pathname.endsWith('/capture_list')) { const rows = sources.filter(s => Boolean(s.deleted_at) === args.p_archived); body = { rows, count: rows.length }; }

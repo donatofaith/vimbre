@@ -1,3 +1,4 @@
+import { MyNotes } from '../my-day/MyNotes'
 import { StructuredAI } from '../ai/StructuredAI'
 import type { StructuredDraft } from '../ai/structured-output'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -384,6 +385,7 @@ function RoleRecordContent() {
 
       {selectedOwner?.role_start_date && <p className="vr-role-since">In this role since <time dateTime={selectedOwner.role_start_date}>{formatRecordDate(selectedOwner.role_start_date)}</time></p>}
       {selectedOwner?.role_description && <p className="vr-role-description">{selectedOwner.role_description}</p>}
+      {own && <MyNotes key={ownerId}/>}
       <ResponsibilityReview manager={manager} revision={revision} changed={reload} />
       {personal && <ResponsibilityPersonal key={`${personal.item.id}:${personal.mode}`} {...personal} close={() => setPersonal(null)} saved={() => {setPersonal(null); setMessage(personal.mode === 'notes' ? 'Notes saved.' : 'Suggestion sent for review.'); reload()}} />}
 

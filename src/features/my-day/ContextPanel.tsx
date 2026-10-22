@@ -1,0 +1,18 @@
+import { useEffect,useState } from 'react'
+import { Button } from '../../components/ui/Button'
+import { Input } from '../../components/ui/Input'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../auth/AuthProvider'
+import { AIDraftPanel } from '../ai/AIDraftPanel'
+import { RoleDrawer } from '../records/RoleDrawer'
+import type { Task } from './types'
+import { changeTask,taskError } from './api'
+export function ContextPanel({task,close,saved}:{task:Task;close:()=>void;saved:()=>void}){
+ const {profile}=useAuth();const [text,setText]=useState(task.completion_note||''),[kind,setKind]=useState('note'),[title,setTitle]=useState(task.title),[ai,setAI]=useState(false),[rows,setRows]=useState<{id:string;title:string}[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ useEffect(()=>{let alive=true;void supabase.from('role_items').select('id,title').eq('owner_id',profile!.id).eq('kind','workstream').is('deleted_at',null).order('title').limit(100).then(({data,error})=>{if(alive){setRows(data??[]);if(error)setError('Open work could not be loaded. Close this panel and try again.')}});return()=>{alive=false}},[profile])
+ return <RoleDrawer context="My day" title="Add to context" close={close}><section className="md-task-panel"><h2>Add to context</h2><p>Saves what you did and decided to your role record, so whoever covers can see it.</p><Button variant="secondary" onClick={()=>setAI(v=>!v)}>Use Vimbre AI</Button>{ai&&<AIDraftPanel task="task_context" initialText={`Completed task: ${task.title}\nDetails: ${task.details}\nOutcome: ${text}`} maxApplyLength={5000} onUse={value=>{setText(value);setAI(false)}}/>}<form className="auth-form" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setError('');const f=new FormData(e.currentTarget);try{await changeTask(task.id,'context',{kind,title,details:text,reason:String(f.get('reason')??''),next_step:String(f.get('next_step')??''),record_id:String(f.get('record_id')??'')});saved()}catch(reason){setError(taskError(reason))}finally{setBusy(false)}}}>
+ <Input label="Title" value={title} onChange={e=>setTitle(e.target.value)} required maxLength={200}/><div className="field"><label htmlFor="md-outcome">What was done, the outcome and any follow up</label><textarea id="md-outcome" value={text} onChange={e=>setText(e.target.value)} rows={6} maxLength={5000} required/></div><fieldset className="md-context-options"><legend>Save to</legend>{[['decision','Decision log'],['workstream','Open work'],['note','My notes']].map(([value,label])=><label key={value}><input type="radio" name="kind" value={value} checked={kind===value} onChange={()=>setKind(value)}/>{label}</label>)}</fieldset>
+ {kind==='decision'&&<div className="field"><label htmlFor="md-context-why">Why was this decided?</label><textarea id="md-context-why" name="reason" required maxLength={5000}/></div>}
+ {kind==='workstream'&&<div className="field"><label htmlFor="md-open-work">Open work to update</label><select id="md-open-work" name="record_id" required><option value="">Choose open work</option>{rows.map(row=><option key={row.id} value={row.id}>{row.title}</option>)}</select><label htmlFor="md-next-step">Next step</label><textarea id="md-next-step" name="next_step" maxLength={5000}/></div>}
+ {kind==='note'&&<p className="field-hint">My notes are private to you.</p>}{error&&<p className="field-error" role="alert">{error}</p>}<div className="md-panel-actions"><Button type="submit" disabled={busy}>{busy?'Saving…':'Save context'}</Button><Button variant="secondary" disabled={busy} onClick={close}>Cancel</Button></div></form></section></RoleDrawer>
+}

@@ -206,7 +206,7 @@ function WorkspaceLayout() {
             <span>{sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>
           </button>
           <div className="vw-breadcrumb">
-            Company
+            {company?.name}
             <span aria-hidden="true">/</span>
             <strong>{pageName}</strong>
           </div>

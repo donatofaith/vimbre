@@ -32,6 +32,11 @@ const assert = require('node:assert/strict');
       else if(url.pathname.endsWith('/company_active_member_count'))body=1;
       else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};
       else if(url.pathname.endsWith('/ai_allowance_summary'))body=allowance;
+      else if(url.pathname.endsWith('/myday_alerts'))body=[];
+      else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
+      else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};
+      else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
+      else if(url.pathname.endsWith('/myday_valid_recurrence'))body=true;
       else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
       else if(url.pathname.endsWith('/ai-run')){status=limited?429:200;body=limited?{ok:false,code:'limit_reached',message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}:{ok:true,request_id:'fixture',text:args.task.startsWith('role_')?JSON.stringify({items:[structured[args.task]]}):args.task==='tasks_extract'?JSON.stringify({items:[{title:'Send supplier notes',details:'Share the review',due_date:'2026-10-23'}]}):args.task==='tidy_text'?'Review supplier notes each Friday.':args.task==='weekly_summary'?'Recent decisions\nSupplier reviews are monthly.':'Responsibilities\nReview supplier notes.\n\nOpen work\nShare the review notes.'};}
       else if(url.pathname.endsWith('/role_items')){if(request.method()==='POST'){writes.push(call);body={id:'new-fixture-record'}}else body=url.searchParams.get('select')==='*'||url.searchParams.has('kind')?[]:[{kind:'responsibility',title:'Supplier reviews',details:'Review supplier notes',due_date:null}];}

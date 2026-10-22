@@ -32,6 +32,7 @@ export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people
     event.preventDefault(); setBusy(true); setError('')
     const form = new FormData(event.currentTarget), text = (name: string) => String(form.get(name) ?? '').trim()
     try {
+      if(kind==='recurring_deadline'){const {data:valid,error:invalid}=await supabase.rpc('myday_valid_recurrence',{p_date:text('due_date'),p_rule:text('recurrence')});if(invalid||valid!==true)throw new Error('Use Daily, Weekly, Monthly, Quarterly, Yearly, Every weekday, Every 2 weeks or First Friday of each month.')}
       let filePath = item?.file_path ?? null
       if (kind === 'document' && file) {
         if (file.size > 10485760) throw new Error('Choose a file smaller than 10 MB.')

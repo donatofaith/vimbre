@@ -1,0 +1,5 @@
+import { createClient } from '@supabase/supabase-js'
+import { mailHandler } from './handler.ts'
+const key=Deno.env.get('BREVO_TRANSACTIONAL_KEY'),sender=Deno.env.get('VIMBRE_REMINDER_SENDER')
+const service=createClient(Deno.env.get('SUPABASE_URL')??'',Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')??'',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(i,o)=>fetch(i,{...o,signal:AbortSignal.timeout(10000)})}})
+Deno.serve(mailHandler({configured:Boolean(key&&sender),async claim(hash){const {data,error}=await service.rpc('task_mail_claim',{p_token_hash:hash});if(error)throw new Error('Dispatch denied');return data},async finish(batch,state){const {error}=await service.rpc('task_mail_finish',{p_batch:batch,p_state:state});if(error)throw new Error('Delivery status unavailable')},send(mail,batch){return fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'Content-Type':'application/json','api-key':key!},body:JSON.stringify({sender:{email:sender!,name:'Vimbre'},to:[{email:batch.email,name:batch.name}],replyTo:{email:'support@vimbre.com',name:'Vimbre Support'},...mail}),signal:AbortSignal.timeout(15000)})}}))

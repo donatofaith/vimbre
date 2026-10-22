@@ -12,3 +12,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 
 
 - Preserve `docs/client-role-review.md`: employee responsibilities are read only, notes are private, suggested changes require approval, and role forms use side panels. Founder display is Super admin; invited HR Admin remains a separate label. Settings changes cannot bypass subscription controls.
+
+- The 22 October client My day brief in docs/client-my-day-v2.md supersedes the earlier My day layout, filters and primary controls. Keep all earlier privacy, team visibility and role permissions. Use the new three-status workflow and explicit Save for context.
