@@ -78,6 +78,11 @@ function MyDayContent() {
     [message, setMessage] = useState("");
   const access = useRef<HTMLDialogElement>(null),
     dragging = useRef("");
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(""), 5000);
+    return () => clearTimeout(timer);
+  }, [message]);
   const summary = useMyDaySummary(profile!.id, revision, true);
   const key = `${filter}:${search}:${forValue?.kind}:${forValue?.id}:${page}`;
   const current = result?.key === key ? result : null;
@@ -505,7 +510,7 @@ function MyDayContent() {
           {error}
         </p>
       )}
-      <CaptureSummary data={summary.data} />
+      <CaptureSummary data={summary.data ? {...summary.data,forwarding_address:null} : null} />
       {data && !data.has_work && (
         <RoleChecklist
           data={summary.data}
@@ -537,6 +542,7 @@ function MyDayContent() {
         </section>
       )}
       {taskArea}
+      <CaptureSummary data={summary.data ? {...summary.data,pending_drafts:0} : null} />
       <footer className="md-footer-links">
         {data?.has_work && (
           <details>

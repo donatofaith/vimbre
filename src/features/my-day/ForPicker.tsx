@@ -49,15 +49,15 @@ export function ForPicker({
           .limit(20),
       ]);
       if (alive) {
-        setError(Boolean(deps.error || contacts.error));
+        setError(Boolean(deps.error || contacts.error)||!Array.isArray(deps.data)||!Array.isArray(contacts.data));
         setRows([
-          ...(deps.data ?? []).map((r) => ({
+          ...(Array.isArray(deps.data)?deps.data:[]).map((r) => ({
             id: r.id,
             kind: "department" as const,
             name: r.name,
             label: `${r.name} (Department)`,
           })),
-          ...(contacts.data ?? []).map((r) => ({
+          ...(Array.isArray(contacts.data)?contacts.data:[]).map((r) => ({
             id: r.id,
             kind: "contact" as const,
             name: r.title,

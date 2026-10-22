@@ -821,3 +821,5 @@
     grid-area: bottom;
   }
 }
+
+.md-page>.vw-draft-notice{justify-self:start;min-height:44px;max-width:100%;margin:0;padding:10px 16px}.md-page>.notice{position:fixed;right:24px;bottom:24px;z-index:35;max-width:min(360px,calc(100vw - 32px));padding:14px 20px;box-shadow:0 8px 24px #102a4314}.md-card-controls select{font-family:var(--body-font);color:#334e68;border:1px solid #dce5f0;border-radius:8px;font-size:12px}.md-page{gap:24px}
