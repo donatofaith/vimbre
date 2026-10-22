@@ -39,7 +39,7 @@ const assert = require('node:assert/strict')
       { id: bob, full_name: 'Bob Example', role: 'employee', active: true },
       { id: cara, full_name: 'Cara Example', role: 'manager', active: true },
     ]
-    let workRows = [], notificationTasks = [], notificationRecords = []
+    let taskAlerts=[];let workRows = [], notificationTasks = [], notificationRecords = []
     const conversations = [],
       messageMap = new Map(),
       read = new Map()
@@ -113,10 +113,10 @@ const assert = require('node:assert/strict')
         }
       else if (path.endsWith('/my_invitation')) body = []
       else if(path.endsWith('/myday_valid_recurrence'))body=true;
-      else if(path.endsWith('/myday_alerts'))body=[];
+      else if(path.endsWith('/myday_alerts'))body=taskAlerts;
       else if(path.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
       else if(path.endsWith('/myday_notes'))body={rows:[],count:0};
-      else if(path.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
+      else if(path.endsWith('/myday_tasks'))body={rows:notificationTasks.filter(t=>!a.p_task||a.p_task===t.id),count:notificationTasks.length,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
       else if (path.endsWith('/my_day_summary'))
         body = {
           pending_drafts: 0,
@@ -407,19 +407,20 @@ const assert = require('node:assert/strict')
     const due='2026-10-20'
     notificationTasks=[{id:taskId,company_id:profile.company_id,owner_id:uid,title:'Submit the budget',details:'',due_date:due,status:'open',deleted_at:null,completion_note:'',created_at:new Date().toISOString()}, {id:crypto.randomUUID(),company_id:profile.company_id,owner_id:uid,title:'Another task',details:'',due_date:due,status:'open',deleted_at:null,completion_note:'',created_at:new Date().toISOString()}]
     notificationRecords=[{id:recordId,company_id:profile.company_id,owner_id:uid,title:'Approve payroll',kind:'responsibility',details:'',due_date:due,recurrence:null,deleted_at:null,created_at:new Date().toISOString()}]
-    workRows=[{notification_key:'task-reminder',source_kind:'task',source_id:taskId,title:'Submit the budget',due_date:due,stage:'today',section:null,read_at:null},{notification_key:'role-reminder',source_kind:'role_item',source_id:recordId,title:'Approve payroll',due_date:due,stage:'approaching',section:'responsibility',read_at:null}]
+    taskAlerts=[{id:crypto.randomUUID(),task_id:taskId,title:'Submit the budget',phase:'due',created_at:new Date().toISOString()}]
+    workRows=[{notification_key:'role-reminder',source_kind:'role_item',source_id:recordId,title:'Approve payroll',due_date:due,stage:'approaching',section:'responsibility',read_at:null}]
     await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:work-changed')))
     await page.getByRole('button',{name:/Notifications/}).click()
     let alerts=page.getByRole('dialog',{name:'Notifications',exact:true})
-    await alerts.getByText('Due today',{exact:true}).waitFor()
+    await alerts.getByText('Due now: Submit the budget',{exact:true}).waitFor()
     await alerts.getByText('Due soon',{exact:true}).waitFor()
     assert.equal(await alerts.getByRole('link').filter({hasText:'Submit the budget'}).getAttribute('href'),`/app?task=${taskId}`)
     await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).click()
     await alerts.getByRole('button',{name:'Mark Approve payroll as read',exact:true}).waitFor({state:'detached'})
     await alerts.getByRole('link').filter({hasText:'Submit the budget'}).click()
     await page.getByRole('link',{name:'All tasks',exact:true}).waitFor()
-    await page.getByRole('heading',{name:'Submit the budget',exact:true}).waitFor()
-    assert.equal(await page.getByRole('heading',{name:'Another task',exact:true}).count(),0)
+    await page.getByRole('button',{name:'Submit the budget',exact:true}).waitFor()
+    assert.equal(await page.getByRole('button',{name:'Another task',exact:true}).count(),0)
     await page.getByRole('link',{name:'All tasks',exact:true}).click()
     await page.getByRole('button',{name:/Notifications/}).click()
     alerts=page.getByRole('dialog',{name:'Notifications',exact:true})
