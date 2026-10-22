@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
-import { TextField } from '../records/RecordForms'
+import { StructuredAI } from '../ai/StructuredAI'
 import { DepartmentPicker } from './DepartmentPicker'
 import { invitationStatus, roleLabel, roles, teamError } from './team-utils'
 type Profile = Database['public']['Tables']['profiles']['Row']
 type Invitation = Database['public']['Tables']['invitations']['Row']
 type Member = Profile & { department: { name: string } | null }
 type Invite = Invitation & { department: { name: string } | null }
+function ResponsibilityContext({value=''}: {value?:string}) {
+ const id=useId()
+ const [text,setText]=useState(value), [open,setOpen]=useState(false)
+ return <section><div className="field"><label htmlFor={id}>What are they responsible for?</label><textarea id={id} name="role_description" rows={4} maxLength={5000} value={text} onChange={event=>setText(event.target.value)} placeholder="e.g. Supplier reviews and the weekly operations report" /></div>
+ <Button variant="secondary" onClick={()=>setOpen(value=>!value)}>{open?'Close AI review':'Use Vimbre AI'}</Button>
+ {open&&<StructuredAI kind="responsibility" choose={draft=>{const next=[text,`${draft.title}. ${draft.details}`].filter(Boolean).join('\n');if(next.length>5000){window.alert('Shorten the responsibilities before adding another draft.');return}setText(next);setOpen(false)}}/>}</section>
+}
 const pageSize = 20
 function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { member: Member; departmentsRequired: boolean; onSaved: () => void; onCancel: () => void }) {
   const { company } = useAuth()
@@ -34,7 +41,7 @@ function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { memb
     <Input label="Full name" name="name" defaultValue={member.full_name} required maxLength={100} />
     <div className="field"><label htmlFor={`role-${member.id}`}>Role</label><select id={`role-${member.id}`} value={role} onChange={event => setRole(event.target.value)}>{roles.map(value => <option key={value} value={value}>{roleLabel(value, member.id === company?.created_by && value === 'hr_admin')}</option>)}</select></div>
     <DepartmentPicker initial={member.department_id ? { id: member.department_id, name: member.department?.name ?? 'Current department' } : null} required={departmentsRequired && role !== 'hr_admin'} />
-    <TextField label="What are they responsible for?" name="role_description" value={member.role_description} placeholder="e.g. Supplier reviews and the weekly operations report" />
+    <ResponsibilityContext value={member.role_description} />
     <Input label="Start date" name="role_start_date" type="date" defaultValue={member.role_start_date ?? ''} />
     <label className="checkbox-line"><input type="checkbox" name="active" defaultChecked={member.active} />Active account</label><p className="muted">Changing a manager’s role or department clears any manager assignment they can no longer hold.</p>
     {error && <p role="alert" className="field-error">{error}</p>}<div className="form-actions"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save member'}</Button><Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel edit</Button></div>
@@ -97,8 +104,7 @@ export function TeamPage() {
     {admin && <section id="invite-teammate" className="card settings-card"><h2>Invite a teammate</h2><p>Invitations expire after seven days.</p><form className="auth-form" key={formVersion} onSubmit={event => { event.preventDefault(); void send('create', new FormData(event.currentTarget)) }}>
       <Input label="Full name" name="name" required maxLength={100} autoComplete="off" /><Input label="Email address" name="email" type="email" required maxLength={320} autoComplete="off" />
       <div className="field"><label htmlFor="invite-role">Role</label><select aria-describedby="invite-role-hint" id="invite-role" value={inviteRole} onChange={event => setInviteRole(event.target.value)}>{roles.map(role => <option key={role} value={role}>{roleLabel(role)}</option>)}</select><p className="field-hint" id="invite-role-hint">Choose Employee for most teammates, Manager for a department lead, or HR Admin for company and team administration.</p></div>
-      <TextField label="What are they responsible for?" name="role_description" placeholder="e.g. Supplier reviews and the weekly operations report" />
-      <div className="vr-ai-unavailable"><Button disabled>Use Vimbre AI</Button><span>Coming soon</span></div>
+      <ResponsibilityContext />
       <Input label="Start date" name="role_start_date" type="date" />
       <DepartmentPicker required={company?.team_mode === 'departments' && inviteRole !== 'hr_admin'} /><Button type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Send invitation'}</Button>
     </form></section>}

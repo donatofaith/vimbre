@@ -1,4 +1,5 @@
-import { AIDraftPanel } from '../ai/AIDraftPanel'
+import { StructuredAI } from '../ai/StructuredAI'
+import type { StructuredDraft } from '../ai/structured-output'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
@@ -129,6 +130,7 @@ function RoleRecordContent() {
     error: boolean
   } | null>(null)
 
+  const [aiRows, setAiRows] = useState<StructuredDraft[] | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [personal, setPersonal] = useState<{item: RoleItem; mode: 'notes' | 'suggest'} | null>(null)
 
@@ -136,6 +138,8 @@ function RoleRecordContent() {
     item?: RoleItem
     decision?: Decision
     initialText?: string
+    initialDraft?: StructuredDraft
+    initialFile?: File
   } | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -275,6 +279,7 @@ function RoleRecordContent() {
   const reload = () => { setRevision(value => value + 1); window.dispatchEvent(new Event('vimbre:work-changed')) }
 
   const saved = () => {
+    if (editor?.initialDraft && aiRows?.length) setAiOpen(true)
     setEditor(null)
     setMessage(
       tab === 'decision' ? 'Decision saved.' : 'Role record saved.',
@@ -283,6 +288,8 @@ function RoleRecordContent() {
   }
 
   function changeView() {
+    setAiOpen(false)
+    setAiRows(null)
     setEditor(null)
     setPage(0)
     setMessage('')
@@ -495,9 +502,9 @@ function RoleRecordContent() {
           <div><h2>{label}</h2><p>{guidance}</p></div>
           {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={() => setAiOpen(true)}>Use Vimbre AI</Button><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
         </div>
-        {aiOpen && canEdit && <RoleDrawer title="Tidy text" close={() => setAiOpen(false)}><AIDraftPanel task="tidy_text" maxApplyLength={5000} onUse={initialText => { setAiOpen(false); setEditor({ initialText }) }} /></RoleDrawer>}
+        {aiOpen && canEdit && <RoleDrawer title="Use Vimbre AI" close={() => setAiOpen(false)}><StructuredAI key={`${ownerId}:${tab}`} kind={tab} cached={aiRows} onDrafts={setAiRows} choose={(initialDraft, initialFile, index) => { setAiRows(rows => rows?.filter((_, i) => i !== index) ?? null); setAiOpen(false); setEditor({ initialDraft, initialFile }) }} /></RoleDrawer>}
         {editor && canEdit && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
-          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} companyId={company!.id} ownerId={ownerId} ownerName={profile!.full_name} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} initialText={editor.initialText} companyId={company!.id} ownerId={ownerId} people={owners} saved={saved} cancel={() => setEditor(null)} />}
+          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} people={owners} initialFile={editor.initialFile} saved={saved} cancel={() => setEditor(null)} />}
         </RoleDrawer>}
 
         <div className="vr-filters">

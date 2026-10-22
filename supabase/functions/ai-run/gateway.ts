@@ -1,5 +1,5 @@
 import { tasks } from './tasks.ts'
-import type { Adapter, Attempt, Reservation, Usage } from './types.ts'
+import type { Adapter, Attempt, Reservation, Usage, AIDocument } from './types.ts'
 import { ProviderError, zeroUsage } from './types.ts'
 export type Identity = { userId: string; companyId: string }
 export type GatewayDependencies = {
@@ -28,14 +28,14 @@ async function boundedBody(request: Request) {
   if (!reader) throw new Error('No body')
   let size = 0; const chunks: Uint8Array[] = []
   try {
-    while (true) { const {done,value} = await reader.read(); if(done)break; size += value.byteLength; if(size>64000)throw new Error('Body too large'); chunks.push(value) }
+    while (true) { const {done,value} = await reader.read(); if(done)break; size += value.byteLength; if(size>2900000)throw new Error('Body too large'); chunks.push(value) }
   } catch (error) { await reader.cancel(); throw error }
   finally { reader.releaseLock() }
   const bytes = new Uint8Array(size); let offset=0; for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
   return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))
 }
-async function fingerprint(task: string, text: string) {
-  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([task,text])))
+async function fingerprint(task: string, text: string, document?: AIDocument) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([task,text,document??null])))
   return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('')
 }
 function measured(usage: Usage | null) {
@@ -54,16 +54,22 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
     try {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
-      let body: {task: string; text: string}
+      let body: {task: string; text: string; document?: AIDocument}
       try {
         const data=await boundedBody(request)
-        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text')||
+        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document')||
           typeof data.task!=='string'||!Object.hasOwn(tasks,data.task)||typeof data.text!=='string'||!data.text.trim()||new TextEncoder().encode(data.text).byteLength>16000)throw new Error('Invalid input')
+        if(data.document!==undefined) {
+          const doc=data.document
+          if(data.task!=='role_document'||!doc||typeof doc!=='object'||Array.isArray(doc)||Object.keys(doc).some(k=>k!=='media_type'&&k!=='data')||doc.media_type!=='application/pdf'||typeof doc.data!=='string'||doc.data.length>2796204||!doc.data.length||doc.data.length%4!==0||!/^[A-Za-z0-9+/]+={0,2}$/.test(doc.data))throw new Error('Invalid document')
+          const decoded=atob(doc.data)
+          if(decoded.length>2097152||!decoded.startsWith('%PDF-'))throw new Error('Invalid document')
+        }
         body=data
       } catch {return fail(400,'Choose a valid AI task and add up to 16 KB of text. You can continue by hand.')}
       const requestId=request.headers.get('idempotency-key')??crypto.randomUUID()
       if(!uuid.test(requestId))return fail(400,'Use a valid request reference. You can continue by hand.')
-      const reservation=await deps.begin(identity.userId,requestId,body.task,await fingerprint(body.task,body.text))
+      const reservation=await deps.begin(identity.userId,requestId,body.task,await fingerprint(body.task,body.text,body.document))
       if(!reservation.ok)return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)
       if(!reservation.route||!reservation.usage_id||reservation.company_id!==identity.companyId) return fail(503)
       const route=reservation.route, attempts:Attempt[]=[]
@@ -75,7 +81,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         let timer:ReturnType<typeof setTimeout>|undefined
         try {
           const deadline=new Promise<never>((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(new ProviderError('timeout',dispatched?null:zeroUsage))},timeoutMs)})
-          const result=await Promise.race([deadline,Promise.resolve().then(()=>deps.adapter(model.provider).generate({model,system:tasks[body.task],text:body.text,maxOutputTokens:route.max_output_tokens,temperature:route.temperature,signal:controller.signal,onDispatch:()=>{dispatched=true}}))])
+          const result=await Promise.race([deadline,Promise.resolve().then(()=>deps.adapter(model.provider).generate({model,system:tasks[body.task],text:body.text,document:body.document,maxOutputTokens:route.max_output_tokens,temperature:route.temperature,signal:controller.signal,onDispatch:()=>{dispatched=true}}))])
           const usable=result.text.trim().length>0 && result.stopReason==='end_turn'
           attempts.push({model_id:model.id,...measured(result),outcome:usable?'success':'failed'})
           if(usable){answer=result.text;break}

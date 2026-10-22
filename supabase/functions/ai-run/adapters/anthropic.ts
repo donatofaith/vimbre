@@ -10,7 +10,8 @@ export function anthropicAdapter(key: string, request: typeof fetch = fetch): Ad
     try {
       if (!key || input.temperature !== null) throw new ProviderError('failed', zeroUsage)
       const headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }
-      const prompt = { model: input.model.model_name, system: input.system, messages: [{ role: 'user', content: input.text }] }
+      const content = input.document ? [{type:'document',source:{type:'base64',media_type:input.document.media_type,data:input.document.data}},{type:'text',text:input.text}] : input.text
+      const prompt = { model: input.model.model_name, system: input.system, messages: [{ role: 'user', content }] }
       // Free preflight keeps Haiku below its 100k-token pricing tier and bounds reservations.
       const countResponse = await request(`${endpoint}/count_tokens`, { method: 'POST', headers, body: JSON.stringify(prompt), signal: input.signal })
       if (!countResponse.ok) throw new ProviderError('failed', zeroUsage)

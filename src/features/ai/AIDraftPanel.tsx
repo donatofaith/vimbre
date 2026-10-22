@@ -44,7 +44,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
   }
   return <section className="vai-panel" aria-label={heading}>
     <h2>{heading}</h2>
-    <p>Review the draft before using it. Your records stay unchanged.</p>
+    <p>Draft from Vimbre AI. Check before saving.</p>
     {loadRecords && <Button variant="secondary" disabled={busy} onClick={() => void load()}>Use my records</Button>}
     <div className="field"><label htmlFor={sourceId}>Notes to use</label><textarea id={sourceId} rows={8} value={source} disabled={busy} onChange={event => { setSource(event.target.value); setOutput(''); setReviewing(false); setMessage(''); reference.current = null }} placeholder="Add the decisions, work and dates to include." /></div>
     <Button disabled={busy || !source.trim()} onClick={() => void generate()}>{busy ? 'Preparing draft…' : task === 'tidy_text' ? 'Tidy text' : 'Generate draft'}</Button>

@@ -1,3 +1,5 @@
+import { StructuredAI } from '../ai/StructuredAI'
+import type { StructuredDraft } from '../ai/structured-output'
 import { AIDraftPanel } from '../ai/AIDraftPanel'
 import { loadOwnRecords } from '../ai/load-records'
 import { RoleDrawer } from '../records/RoleDrawer'
@@ -80,8 +82,11 @@ function ActionWorkspace({
 
   const [editor, setEditor] = useState<{
     action?: Action
+    initialDraft?: StructuredDraft
   } | null>(null)
 
+  const [taskDrafts, setTaskDrafts] = useState<StructuredDraft[] | null>(null)
+  const [tasksAI, setTasksAI] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [finishing, setFinishing] = useState<Action | null>(null)
   const [busy, setBusy] = useState(false)
@@ -216,6 +221,7 @@ function ActionWorkspace({
   }
 
   function saved(text: string) {
+    if (editor?.initialDraft && taskDrafts?.length) setTasksAI(true)
     setEditor(null)
     setFinishing(null)
     setMessage(text)
@@ -306,6 +312,7 @@ function ActionWorkspace({
         <ActionForm
           key={editor.action?.id ?? `new:${decisionId}`}
           action={editor.action}
+          initialDraft={editor.initialDraft}
           ownerId={ownerId}
           companyId={company!.id}
           initialDecision={decisionId}
@@ -334,6 +341,7 @@ function ActionWorkspace({
           </h2>
 
           {own && <div className="vw-task-tools">
+            <Button variant="secondary" onClick={() => setTasksAI(true)}>Use Vimbre AI</Button>
             {!editor && !finishing && <Button onClick={addAction}><WorkspaceIcon name="plus" />Add task</Button>}
             <button
               className="vw-access-button"
@@ -623,6 +631,7 @@ function ActionWorkspace({
           {own && <RoleChecklist data={summary.data} error={Boolean(summary.error)} retry={summary.retry} />}
         </div>
       </section>
+      {own && tasksAI && <RoleDrawer context="My day" title="Use Vimbre AI" close={() => setTasksAI(false)}><StructuredAI kind="task" cached={taskDrafts} onDrafts={setTaskDrafts} choose={(initialDraft, _file, index) => {setTaskDrafts(rows => rows?.filter((_, i) => i !== index) ?? null);setTasksAI(false);setEditor({initialDraft})}} /></RoleDrawer>}
       {own && summaryOpen && <RoleDrawer context="My day" title="Weekly summary" close={() => setSummaryOpen(false)}><AIDraftPanel task="weekly_summary" loadRecords={() => loadOwnRecords(profile!.id, company!.id)} /></RoleDrawer>}
       {own && <Button variant="secondary" onClick={() => setSummaryOpen(true)}>Weekly summary</Button>}
       {own && <nav className="vw-secondary-links" aria-label="More workspace pages"><Link to="/app/handovers"><WorkspaceIcon name="handover" />My handovers</Link><Link to="/app/my-cover-duties"><WorkspaceIcon name="cover" />Cover duties</Link></nav>}

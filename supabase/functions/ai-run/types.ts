@@ -1,6 +1,7 @@
 export type Model = { id: string; provider: string; model_name: string; input_price_per_million: number; output_price_per_million: number; enabled: boolean }
 export type Usage = { inputTokens: number; outputTokens: number }
-export type AdapterInput = { model: Model; system: string; text: string; maxOutputTokens: number; temperature: number | null; signal: AbortSignal; onDispatch: () => void }
+export type AIDocument = { media_type: 'application/pdf'; data: string }
+export type AdapterInput = { document?: AIDocument; model: Model; system: string; text: string; maxOutputTokens: number; temperature: number | null; signal: AbortSignal; onDispatch: () => void }
 export type AdapterOutput = Usage & { text: string; model: string; stopReason: string }
 export type Adapter = { generate: (input: AdapterInput) => Promise<AdapterOutput> }
 export type Route = { task: string; max_output_tokens: number; temperature: number | null; primary: Model; fallback: Model | null }

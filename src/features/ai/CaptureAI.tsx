@@ -25,6 +25,6 @@ export function CaptureAI({ text, choose, rows, setRows, requestId }: { text: st
     {rows === null && <Button disabled={busy} onClick={() => void extract()}>{busy ? 'Drafting…' : 'Draft with Vimbre AI'}</Button>}
     {error && <p className="field-error" role="alert">{error}</p>}
     {error && limited && <a className="button button-secondary" href="mailto:support@vimbre.com?subject=Vimbre%20AI%20allowance">Contact support</a>}
-    {rows !== null && <><p role="status">{rows.length ? 'Review each suggestion before saving a draft.' : 'No suggestions remain to review.'}</p><ul className="vai-proposals">{rows.map((row, index) => <li key={index}><span>{row.kind === 'action' ? 'Task' : row.kind === 'contact' ? 'External contact' : 'Decision'}</span><h3>{row.payload.title}</h3><p>{row.payload.reason || row.payload.details}</p><Button variant="secondary" onClick={() => choose(row)}>Review suggestion</Button></li>)}</ul></>}
+    {rows !== null && <><p role="status">{rows.length ? 'Draft from Vimbre AI. Check before saving.' : 'No suggestions remain to review.'}</p><ul className="vai-proposals">{rows.map((row, index) => <li key={index}><span>{row.kind === 'action' ? 'Task' : row.kind === 'contact' ? 'External contact' : 'Decision'}</span><h3>{row.payload.title}</h3><p>{row.payload.reason || row.payload.details}</p><Button variant="secondary" onClick={() => choose(row)}>Review suggestion</Button></li>)}</ul></>}
   </section>
 }

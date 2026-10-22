@@ -120,3 +120,25 @@ describe('Allowance reset messages', () => {
   expect(allowanceMessage('month','bad')).toContain('continue by hand')
  })
 })
+
+describe('Structured task and PDF requests',()=>{
+ it('routes all structured tasks through the same authenticated budget boundary',async()=>{
+  for(const task of ['role_responsibility','role_workstream','role_external_contact','role_document','role_recurring_deadline','role_decision','tasks_extract']){const app=fixture();expect((await app.call({task,text:'Supplier review notes'})).status).toBe(200);expect(app.deps.begin).toHaveBeenCalledOnce()}
+ })
+ it('allows a bounded PDF only for document drafting and fingerprints its contents',async()=>{
+  const document={media_type:'application/pdf',data:btoa('%PDF-fixture')},app=fixture()
+  expect((await app.call({task:'role_document',text:'Describe this file',document})).status).toBe(200)
+  expect(app.generate.mock.calls[0][0].document).toEqual(document)
+  const hash=(app.deps.begin as ReturnType<typeof vi.fn>).mock.calls[0][3]
+  await app.call({task:'role_document',text:'Describe this file',document:{...document,data:btoa('%PDF-other')}})
+  expect((app.deps.begin as ReturnType<typeof vi.fn>).mock.calls[1][3]).not.toBe(hash)
+  for(const body of [{task:'tidy_text',text:'Text',document},{task:'role_document',text:'Text',document:{...document,data:btoa('not a PDF')}},{task:'role_document',text:'Text',document:{...document,url:'https://internal.invalid'}}])expect((await app.call(body)).status).toBe(400)
+ })
+})
+
+ it('counts and generates using the same PDF content without storing or fetching a URL',async()=>{
+  const bodies:Record<string, any>[]=[]
+  const request=vi.fn(async(_url:unknown,init?:RequestInit)=>{bodies.push(JSON.parse(String(init?.body)));return new Response(JSON.stringify(bodies.length===1?{input_tokens:20}:{model:primary.model_name,usage:{input_tokens:20,output_tokens:10},content:[{type:'text',text:'{"items":[]}'}],stop_reason:'end_turn'}),{status:200})}) as unknown as typeof fetch
+  await anthropicAdapter('fixture-key',request).generate({model:primary,system:'Document draft',text:'Describe the file',document:{media_type:'application/pdf',data:btoa('%PDF-fixture')},temperature:null,maxOutputTokens:4096,signal:new AbortController().signal,onDispatch:()=>{}})
+  expect(bodies[0].messages).toEqual(bodies[1].messages);expect(bodies[1].messages[0].content[0].source).toEqual({type:'base64',media_type:'application/pdf',data:btoa('%PDF-fixture')})
+ })

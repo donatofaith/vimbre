@@ -16,7 +16,9 @@ The owner requests these changes directly on GitHub for Vercel review. This repl
 
 ## External services still required
 
-Vimbre AI controls now use the AI gateway following the owner’s later integration request. Text revisions remain editable and require Use this draft, then the normal Save. Capture extraction, weekly summaries and handover draft previews are connected. Company allowances must be approved and configured before requests can run. Forwarding, document extraction and the handover approval/publishing lifecycle remain separate work. See docs/ai-features.md.
+All six My role tabs now have structured AI drafts using their own fields, with editable review and explicit Save. My day can draft tasks from a pasted email; team setup can draft responsibility context. Document drafts accept PDF and plain text, or a pasted link with notes. Company AI allowances are configured and enforced. See docs/ai-features.md for input bounds and verification.
+
+The email forwarding receiver is implemented but is not live until Brevo, receiving DNS, the webhook secret and verified addresses are configured. Handover summary drafting works; approval, publishing and temporary cover remain separate work.
 
 Stripe checkout and paid plan entitlements are not implemented. Pricing navigation does not subscribe, take payment or unlock team mode. Complete authenticated checkout/webhook processing with the founder's Stripe configuration before enabling paid structure changes. No plan entitlement is invented.
 

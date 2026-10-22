@@ -25,4 +25,4 @@ export function formatRecordDate(value: string) {
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric'}).format(date)
 }
 
-export const addLabels = { responsibility: 'Add responsibility', workstream: 'Add open work', external_contact: 'Add external contact', document: 'Add document', recurring_deadline: 'Add deadline', decision: 'Log a decision' }
+export const addLabels = { responsibility: 'Add a responsibility', workstream: 'Add open work', external_contact: 'Add an external contact', document: 'Add a document', recurring_deadline: 'Add a deadline', decision: 'Log a decision' }
