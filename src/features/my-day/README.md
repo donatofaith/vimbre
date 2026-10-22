@@ -19,7 +19,7 @@ Bell reminders are active. Email dispatch is deliberately disabled until a sendi
 3. After those checks, the operator enables `private.task_delivery_config.enabled` in Supabase. It contains no customer-editable settings. Do not disclose its token hash or the Vault dispatch token.
 4. Run one agreed live reminder test. Confirm one grouped email, the correct signed-in task links, notification controls and the recorded provider outcome.
 
-`my-day-mail` authenticates the cron bearer via SHA256 and a service-only claim RPC. It sends one grouped recipient batch per minute. Browser calls cannot claim email batches. `sent`, `failed` and ambiguous `uncertain` outcomes are stored; an uncertain provider result is not retried blindly. Email action links open authenticated controls; GET never completes, reschedules or snoozes work. No live email or paid AI call is part of automated tests.
+`my-day-mail` authenticates the cron bearer via SHA256 and a service-only claim RPC. It sends grouped recipient batches in a bounded background drain of up to 200 recipients per invocation, with five concurrent deliveries and a 45 second claim window. Remaining work is picked up on the next minute. It stops claiming on provider rejection or uncertainty. Browser calls cannot claim email batches. `sent`, `failed` and ambiguous `uncertain` outcomes are stored; an uncertain provider result is not retried blindly. Email action links open authenticated controls; GET never completes, reschedules or snoozes work. No live email or paid AI call is part of automated tests.
 
 ## Verification
 
