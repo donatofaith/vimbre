@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { RoleDrawer } from "../records/RoleDrawer";
 import { Button } from "../../components/ui/Button";
 import { supabase } from "../../lib/supabase";
-import { useAuth } from "../auth/AuthProvider";
+
 import { taskError } from "./api";
 export function RoleTaskPicker({
   today,
@@ -13,7 +13,7 @@ export function RoleTaskPicker({
   close: () => void;
   saved: () => void;
 }) {
-  const { profile } = useAuth(),
+  const
     [query, setQuery] = useState(""),
     [page, setPage] = useState(0),
     [date, setDate] = useState(today),
@@ -25,19 +25,10 @@ export function RoleTaskPicker({
   useEffect(() => {
     let live = true;
     const t = setTimeout(() => {
-      void supabase
-        .from("role_items")
-        .select("id,title,kind")
-        .eq("owner_id", profile!.id)
-        .in("kind", ["responsibility", "workstream", "recurring_deadline"])
-        .is("deleted_at", null)
-        .ilike("title", `%${query.replace(/[%_]/g, "")}%`)
-        .order("title")
-        .order("id")
-        .range(page * 20, page * 20 + 19)
+      void supabase.rpc('role_workspace', {p_operation:'task_choices', p_data:{query,page}})
         .then(({ data, error }) => {
           if (live) {
-            setRows(data ?? []);
+            setRows((data ?? []) as unknown as {id:string;title:string;kind:string}[]);
             setError(error ? "Your role could not be loaded. Try again." : "");
           }
         });
@@ -46,7 +37,7 @@ export function RoleTaskPicker({
       live = false;
       clearTimeout(t);
     };
-  }, [profile, query, page]);
+  }, [query, page]);
   return (
     <RoleDrawer context="My day" title="Add from My role" close={close}>
       <section className="md-task-panel">

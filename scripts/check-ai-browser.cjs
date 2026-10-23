@@ -20,11 +20,13 @@ const assert = require('node:assert/strict');
       role_decision:{title:'Review suppliers monthly',reason:'Reduce meetings',decided_on:'2026-10-22',decided_by:'Operations',next_step:'Share notes',source_url:''}
     };
 
+ const roleFixture=require('./role-workspace-fixture.cjs')(user);roleFixture.state.items=[{...structured.role_responsibility,kind:'responsibility',role_fields:{}}];roleFixture.state.decisions=[structured.role_decision];
     await page.route('https://*.supabase.co/**',async route=>{
       const request=route.request(),url=new URL(request.url());let args={};try{args=request.postDataJSON()||{}}catch{}
       const call={path:url.pathname,method:request.method(),params:Object.fromEntries(url.searchParams),args};calls.push(call);
       let body={},status=200;
-      if(url.pathname.endsWith('/token'))body={access_token:'ai-fixture-token',refresh_token:'ai-fixture-refresh',token_type:'bearer',expires_in:3600,user};
+      if(url.pathname.endsWith('/role_workspace')){try{body=roleFixture.handle(args)}catch(e){status=500;body={message:e.message}}}
+      else if(url.pathname.endsWith('/token'))body={access_token:'ai-fixture-token',refresh_token:'ai-fixture-refresh',token_type:'bearer',expires_in:3600,user};
       else if(url.pathname.endsWith('/user'))body=user;
       else if(url.pathname.endsWith('/profiles'))body=request.headers().accept?.includes('vnd.pgrst.object')?profile:[profile];
       else if(url.pathname.endsWith('/companies'))body=company;
@@ -54,25 +56,13 @@ const assert = require('node:assert/strict');
     assert((await summary.getByLabel('Notes to use',{exact:true}).inputValue()).includes('Reduce meetings'));
     await summary.getByRole('button',{name:'Generate draft',exact:true}).click();await summary.getByLabel('Draft',{exact:true}).waitFor();assert((await summary.getByLabel('Draft',{exact:true}).inputValue()).includes('Recent decisions'));
     assert.equal(writes.length,0,'Summary generation must not save records');await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),0);
-    await page.goto('http://127.0.0.1:5173/app/role-record?section=responsibility');await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
-    const tidy=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});await tidy.getByLabel('Job title, job description or notes',{exact:true}).fill('review supplier notes each friday');await tidy.getByRole('button',{name:'Generate drafts',exact:true}).click();
-    await tidy.getByText('Draft from Vimbre AI. Check before saving.',{exact:true}).waitFor();assert.equal(writes.length,0);await tidy.getByRole('button',{name:'Review draft',exact:true}).click();
-    const editor=page.getByRole('dialog',{name:'Add to what I handle',exact:true});assert.equal(await editor.getByLabel('What it involves',{exact:true}).inputValue(),'Review supplier notes each Friday.');await editor.getByLabel('Title',{exact:true}).fill('Supplier reviews');
-    assert.equal(writes.length,0,'Applying a revision must still require Save');await editor.getByRole('button',{name:'Save',exact:true}).click();await editor.waitFor({state:'hidden'});assert.equal(writes.length,1);
-    for(const [tab,field,value] of [['What I handle','Next step','Share notes'],['External contacts','Organisation','Acme'],['Documents','What it is for','How to review supplier notes'],['Deadlines','Next due date','2026-11-06'],['Decisions','Why','Reduce meetings']]){
-      await page.getByRole('button',{name:tab,exact:true}).click();await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
-      const panel=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});if(tab==='What I handle')await panel.getByLabel('Is this a responsibility or a project?',{exact:true}).selectOption('workstream');await panel.getByLabel('Email, notes or a short description',{exact:true}).fill('Supplier notes for review');
-      if(tab==='Documents')await panel.getByLabel('PDF or text file',{exact:true}).setInputFiles({name:'supplier.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-fixture only, intercepted by the test')});
-      await panel.getByRole('button',{name:'Generate drafts',exact:true}).click();await panel.getByRole('button',{name:'Review draft',exact:true}).click();
-      assert.equal(await page.getByRole('dialog').getByLabel(field,{exact:true}).inputValue(),value);assert.equal(writes.length,1,'AI must not save records');
-      if(tab==='Documents'){
-        await page.getByText('Selected file: supplier.pdf.',{exact:false}).waitFor();
-        for(const width of [360,768,1440]){await page.setViewportSize({width,height:900});assert(!await page.getByRole('dialog').evaluate(el=>el.scrollWidth>el.clientWidth),'Document review panel overflows');await page.screenshot({path:`/tmp/vimbre-landing-ai-document-${width}.png`,fullPage:true});}
-        await page.setViewportSize({width:1440,height:900});
-      }
-      await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
-      if(tab==='What I handle'){await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();assert.equal(await page.getByRole('dialog').getByLabel('Is this a responsibility or a project?',{exact:true}).inputValue(),'workstream');await page.keyboard.press('Escape');}
+    roleFixture.state.flags.ai=true;
+    await page.goto('http://127.0.0.1:5173/app/role-record');await page.getByRole('button',{name:'Suggest from my work'}).click();await page.getByRole('button',{name:'Review proposal'}).click();
+    let editor=page.getByRole('dialog');assert.equal(await editor.getByLabel('What it involves',{exact:true}).inputValue(),'Review supplier notes each Friday.');assert.equal(roleFixture.state.writes.length,0);await editor.getByRole('button',{name:'Save',exact:true}).click();await editor.waitFor({state:'hidden'});writes.push(roleFixture.state.writes[0]);assert.equal(await page.getByRole('button',{name:'Review proposal'}).count(),0);
+    for(const [tab,field,value] of [['External contacts','Organisation','Acme'],['Documents','What it is for','How to review supplier notes'],['Deadlines','Date','2026-11-06'],['Decisions','Why','Reduce meetings']]){
+      await page.getByRole('button',{name:tab,exact:true}).click();await page.getByRole('button',{name:'Suggest from my work'}).click();await page.getByRole('button',{name:'Review proposal'}).click();editor=page.getByRole('dialog');assert.equal(await editor.getByLabel(field,{exact:true}).inputValue(),value);await editor.getByRole('button',{name:'Cancel',exact:true}).click();
     }
+    const requests=calls.filter(c=>c.path.endsWith('/ai-run')).length;await page.getByRole('button',{name:'Suggest from my work'}).click();assert.equal(calls.filter(c=>c.path.endsWith('/ai-run')).length,requests,'Same confirmed source reuses cached proposal');assert.equal(roleFixture.state.writes.length,1);
     await page.goto('http://127.0.0.1:5173/app/weekly-summary');await page.getByRole('heading',{name:'Weekly summary',exact:true}).waitFor();
     await page.goto('http://127.0.0.1:5173/app/handovers');await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();await page.getByText('Draft from My role',{exact:true}).click();
     await page.getByRole('button',{name:'Use my records',exact:true}).click();await page.waitForFunction(()=>document.querySelector('main textarea')?.value.includes('Supplier reviews'));

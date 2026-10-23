@@ -315,3 +315,10 @@ Customer Capture frontend remains on draft/capture-final-review. The ai-run depl
 ## 23 October 2026: Capture AI deployment approved
 
 Owner explicitly approved deployment of the Capture AI handler and sending capture text to Anthropic when the user requests AI drafting. Deployed tested source dd0e24db123d03dad74a32da22a5e34e6d05d6da as ai-run version 9 with JWT verification retained. This resolves the preceding approval blocker. Console controls and capture-inbound were released separately. Forwarding and uploads remain disabled. Release customer Capture through development; preserve the approved My day behavior.
+
+
+## Final My role phase 1/2 implementation
+
+See docs/client-role-final-review.md. Stable role identity retains knowledge across reassignment without transferring personal notes, existing tasks or private sources. Holder manual editing replaces the previous responsibility-only approval restriction per the new client brief. Manager suggestions and reassignment are server-gated; all phase 2 flags default off. Exact five-tab layout, structured fields, atomic decision replacement, handover draft, role-bound Capture and upcoming deadlines are implemented. My day imports and confirmed AI context use the current holder, including inherited roles.
+
+Local 108 unit tests, app/Edge type checks and production build pass. Transactional database fixtures pass; browser/release verification is pending. Do not claim production release until deployment checks are recorded below.

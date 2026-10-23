@@ -1,3 +1,4 @@
+import {RoleUpcoming} from '../records/RoleUpcoming'
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
@@ -543,7 +544,7 @@ function MyDayContent() {
                   </div>
                 </section>
                 <section className="md-day-group" aria-label="Coming up">
-                  <h3>Coming up</h3>
+                  <h3>Coming up</h3><RoleUpcoming/>
                   {upcoming.length ? (
                     <div className="md-task-list">
                       {upcoming.map((t) => card(t))}

@@ -20,3 +20,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 23 October ranked My day brief in docs/client-my-day-ranked-review.md supersedes My day v2 defaults and layout. List first on every device; pins, timezone filters/counts, explicit context saves, collapsed Done, one Capture entry and sidebar Weekly summary. Preserve owner-only task content and the limited team projection. Approved cover only, scoped reviewer, no implicit role access grants.
 
 - The 23 October final Capture brief in docs/client-capture-final-review.md supersedes prior Capture layout/copy. Explicit AI only, private drafts, accept then confirm, truthful channel flags, shared pipeline, cached duplicate reuse and two redrafts. Keep the ranked My day behavior unchanged.
+
+- The final My role phase 1/2 brief in docs/client-role-final-review.md supersedes prior role restrictions and layout: What I handle first, holder-maintained manual records, other-role views read only, stable role identity, retained replacement history and private author notes. Phase 2 is built behind server flags. Preserve approved My day and Capture behavior.
