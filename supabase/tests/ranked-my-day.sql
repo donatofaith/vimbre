@@ -73,6 +73,8 @@ do $$declare t uuid:=gen_random_uuid();begin
  perform public.myday_action(t,'status','{"status":"done"}');
  perform public.myday_action(t,'context',jsonb_build_object('kind','note','title',repeat('Long task ',25),'details','Completed.'));
  if not exists(select 1 from public.actions where id=t and context_added_at is not null and completion_note='Completed.') then raise exception 'Long task outcome failed';end if;
+ perform public.myday_action(t,'edit',jsonb_build_object('title',repeat('Long task ',25),'due_date',current_date,'status','archived'));
+ if not exists(select 1 from public.actions where id=t and deleted_at is not null and status='done') then raise exception 'Archived editor status failed';end if;
 end $$;
 rollback;
 select 'Ranked My day, counts, three pin cap, My role deduplication, status history, manager projection and approved/cancelled cover passed' result;
