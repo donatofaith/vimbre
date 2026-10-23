@@ -26,6 +26,7 @@ do $$declare d date:=(now() at time zone 'Africa/Lagos')::date;t uuid;v jsonb;ro
  end loop;
  insert into public.role_items(company_id,owner_id,kind,title,details) values(current_setting('test.company')::uuid,auth.uid(),'workstream','Weekly reporting','Confirmed role context') returning id into role_id;
  t:=public.myday_role_task(role_id,d);if t<>public.myday_role_task(role_id,d) then raise exception 'My role duplicate';end if;
+ if (public.myday_tasks('all','','',0,null,null,'role','normal')->>'count')::integer<>1 then raise exception 'Source/priority filters disagree';end if;
  if not exists(select 1 from public.actions where id=t and source_role_id=role_id and source_kind='role') then raise exception 'My role link missing';end if;
  perform set_config('test.role_task',t::text,true);
  perform set_config('test.role_item',role_id::text,true);
@@ -65,6 +66,13 @@ select set_config('request.jwt.claim.sub',current_setting('test.other_admin'),tr
 do $$begin
  begin perform public.team_member_tasks(current_setting('test.employee')::uuid,'open','',0);raise exception 'Cross company projection';exception when insufficient_privilege then null;end;
  if jsonb_array_length(public.myday_handovers()->'rows')<>0 then raise exception 'Cross company handover leaked';end if;
+end $$;
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$declare t uuid:=gen_random_uuid();begin
+ perform public.myday_action(t,'create',jsonb_build_object('title',repeat('Long task ',25),'due_date',current_date));
+ perform public.myday_action(t,'status','{"status":"done"}');
+ perform public.myday_action(t,'context',jsonb_build_object('kind','note','title',repeat('Long task ',25),'details','Completed.'));
+ if not exists(select 1 from public.actions where id=t and context_added_at is not null and completion_note='Completed.') then raise exception 'Long task outcome failed';end if;
 end $$;
 rollback;
 select 'Ranked My day, counts, three pin cap, My role deduplication, status history, manager projection and approved/cancelled cover passed' result;

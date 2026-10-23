@@ -46,7 +46,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('heading',{name:'Good morning, Capture',exact:true}).waitFor();
     await page.getByRole('link', { name: 'Back to website', exact: true }).click(); await page.getByRole('link', { name: 'Open workspace', exact: true }).first().waitFor(); assert.equal(await page.getByRole('link', { name: 'Log in', exact: true }).count(), 0);
     await page.reload(); await page.getByRole('link', { name: 'Open workspace', exact: true }).first().click(); await page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / }).waitFor(); assert.equal(new URL(page.url()).pathname, '/app');
-    await page.getByRole('link', { name: 'Capture an email or notes', exact: true }).click(); await page.getByRole('heading', { name: 'Save what your team decided', exact: true }).waitFor();
+    await page.getByRole('link', { name: 'Capture', exact: true }).first().click(); await page.getByRole('heading', { name: 'Save what your team decided', exact: true }).waitFor();
     await page.getByText('Forward an email, paste notes or upload a file. Vimbre drafts the decisions and tasks for you to confirm.', { exact: true }).waitFor();
     assert.equal(await page.getByText('AI drafting · Coming soon', { exact: true }).count(), 0); await page.getByRole('link', { name: 'My role', exact: true }).waitFor();
     await page.getByRole('heading', { name: 'Nothing is saved until you confirm it.', exact: true }).waitFor();
