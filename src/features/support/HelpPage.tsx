@@ -21,6 +21,7 @@ export function HelpPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const formElement = event.currentTarget
     setBusy(true)
     setError('')
     setTicketNumber(null)
@@ -39,7 +40,7 @@ export function HelpPage() {
         return
       }
       setTicketNumber(result.ticket_number ?? null)
-      event.currentTarget.reset()
+      formElement.reset()
     } catch {
       setError('Support is temporarily unavailable. Please retry in a moment.')
     } finally {
