@@ -310,3 +310,8 @@ Capture review commit dd0e24db123d03dad74a32da22a5e34e6d05d6da passed GitHub Act
 capture-inbound version 4 is deployed from the tested source and uses the new receipt pipeline without AI on arrival. Console capture controls commit 97175cb97760b149864efaa2202b262652710e54 passed Actions 39976334578 and was fast-forwarded to vimbre-console main for deployment.
 
 Customer Capture frontend remains on draft/capture-final-review. The ai-run deployment was blocked by automatic approval review because it can transmit private capture text to Anthropic. No AI handler replacement occurred. Explicit user approval for that payload/destination is required before retrying; then deploy the tested handler, publish the customer frontend and verify deployment. Do not claim the complete Capture release is live before this dependency is resolved. My day remains unchanged.
+
+
+## 23 October 2026: Capture AI deployment approved
+
+Owner explicitly approved deployment of the Capture AI handler and sending capture text to Anthropic when the user requests AI drafting. Deployed tested source dd0e24db123d03dad74a32da22a5e34e6d05d6da as ai-run version 9 with JWT verification retained. This resolves the preceding approval blocker. Console controls and capture-inbound were released separately. Forwarding and uploads remain disabled. Release customer Capture through development; preserve the approved My day behavior.
