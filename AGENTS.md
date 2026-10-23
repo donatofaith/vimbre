@@ -18,3 +18,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 23 October role layout review in docs/client-role-layout-review.md supersedes the prior role tab order and duplicate owner controls. Decisions first; responsibilities/projects share What I handle in the interface only. Preserve stored kinds, legacy links, per-row responsibility restrictions, private notes, approvals and required database validation. Match My day visual styling.
 
 - The 23 October ranked My day brief in docs/client-my-day-ranked-review.md supersedes My day v2 defaults and layout. List first on every device; pins, timezone filters/counts, explicit context saves, collapsed Done, one Capture entry and sidebar Weekly summary. Preserve owner-only task content and the limited team projection. Approved cover only, scoped reviewer, no implicit role access grants.
+
+- The 23 October final Capture brief in docs/client-capture-final-review.md supersedes prior Capture layout/copy. Explicit AI only, private drafts, accept then confirm, truthful channel flags, shared pipeline, cached duplicate reuse and two redrafts. Keep the ranked My day behavior unchanged.

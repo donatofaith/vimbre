@@ -5,7 +5,12 @@ import type { Attempt, Reservation } from './types.ts'
 const secret = (name: string) => Deno.env.get(name)
 // Bound database/Auth I/O separately from the 30-second provider deadline.
 const boundedFetch: typeof fetch = (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10000) })
+const service=()=>createClient(secret('SUPABASE_URL')??'',secret('SUPABASE_SERVICE_ROLE_KEY')??'',{global:{fetch:boundedFetch},auth:{persistSession:false,autoRefreshToken:false}})
 Deno.serve(createGateway({
+  async captureCancel(user,request) { const {error}=await service().rpc('capture_ai_cancel',{p_user:user,p_request:request});if(error)throw error },
+  async captureSource(user,capture) { const {data,error}=await service().rpc('capture_ai_source',{p_user:user,p_capture:capture});if(error)throw error;return data as string },
+  async captureClaim(user,capture,request,task,fingerprint,sourceHash,redraft) { const {data,error}=await service().rpc('capture_ai_claim',{p_user:user,p_capture:capture,p_request:request,p_task:task,p_fingerprint:fingerprint,p_source_hash:sourceHash,p_redraft:redraft});if(error)throw error;return data },
+  async captureComplete(user,request,output,items) { const {error}=await service().rpc('capture_ai_complete',{p_user:user,p_request:request,p_output:output,p_items:items});if(error)throw error },
   async identify(token) {
     const caller=createClient(secret('SUPABASE_URL')??'',secret('SUPABASE_ANON_KEY')??'',{global:{headers:{Authorization:`Bearer ${token}`},fetch:boundedFetch},auth:{persistSession:false,autoRefreshToken:false}})
     const {data,error}=await caller.auth.getUser(token)

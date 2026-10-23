@@ -1,8 +1,13 @@
+import { prepareCaptureText, parseCaptureOutput } from '../_shared/capture-text.ts'
 import { tasks } from './tasks.ts'
 import type { Adapter, Attempt, Reservation, Usage, AIDocument } from './types.ts'
 import { ProviderError, zeroUsage } from './types.ts'
 export type Identity = { userId: string; companyId: string }
 export type GatewayDependencies = {
+  captureCancel?: (user:string,request:string) => Promise<void>
+  captureSource?: (user: string, capture: string) => Promise<string>
+  captureClaim?: (user: string, capture: string, request: string, task: string, fingerprint: string, sourceHash: string, redraft: boolean) => Promise<{cached?:string|null;blocked?:string}>
+  captureComplete?: (user:string, request:string, output:string|null, items:unknown[]|null) => Promise<void>
   identify: (token: string) => Promise<Identity | null>
   begin: (userId: string, requestId: string, task: string, fingerprint: string) => Promise<Reservation>
   finish: (usageId: string, attempts: Attempt[]) => Promise<void>
@@ -54,10 +59,10 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
     try {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
-      let body: {task: string; text: string; document?: AIDocument}
+      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; redraft?:boolean}
       try {
         const data=await boundedBody(request)
-        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document')||
+        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft')||
           typeof data.task!=='string'||!Object.hasOwn(tasks,data.task)||typeof data.text!=='string'||!data.text.trim()||new TextEncoder().encode(data.text).byteLength>16000)throw new Error('Invalid input')
         if(data.document!==undefined) {
           const doc=data.document
@@ -65,12 +70,32 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
           const decoded=atob(doc.data)
           if(decoded.length>2097152||!decoded.startsWith('%PDF-'))throw new Error('Invalid document')
         }
+        if(data.capture_id!==undefined&&(!uuid.test(data.capture_id)||!['capture_extract','tidy_text'].includes(data.task)))throw new Error('Invalid capture')
+        if(data.redraft!==undefined&&typeof data.redraft!=='boolean')throw new Error('Invalid redraft')
+        if(data.task==='capture_extract'&&!data.capture_id)throw new Error('Capture required')
         body=data
       } catch {return fail(400,'Choose a valid AI task and add up to 16 KB of text. You can continue by hand.')}
       const requestId=request.headers.get('idempotency-key')??crypto.randomUUID()
       if(!uuid.test(requestId))return fail(400,'Use a valid request reference. You can continue by hand.')
+      let claimed = false
+      if(body.capture_id) {
+        if(!deps.captureSource||!deps.captureClaim||!deps.captureComplete)return fail(503)
+        const raw=await deps.captureSource(identity.userId,body.capture_id)
+        body.text=prepareCaptureText(raw)
+        if(!body.text)return fail(400,'No text remains after removing email history. Edit the source or add a draft by hand.')
+        const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))
+        const sourceHash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')
+        const claim=await deps.captureClaim(identity.userId,body.capture_id,requestId,body.task,await fingerprint(body.task,body.text),sourceHash,body.redraft===true)
+        if(claim.blocked)return fail(409,claim.blocked)
+        claimed=true
+        if(typeof claim.cached==='string') {
+          await deps.captureComplete(identity.userId,requestId,claim.cached,body.task==='capture_extract'?parseCaptureOutput(claim.cached):null)
+          return new Response(JSON.stringify({ok:true,text:claim.cached,request_id:requestId,cached:true}),{status:200,headers})
+        }
+      }
+      const markFailed=async()=>{if(claimed)await deps.captureComplete!(identity.userId,requestId,null,null)}
       const reservation=await deps.begin(identity.userId,requestId,body.task,await fingerprint(body.task,body.text,body.document))
-      if(!reservation.ok)return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)
+      if(!reservation.ok){if(claimed)await deps.captureCancel?.(identity.userId,requestId);return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)}
       if(!reservation.route||!reservation.usage_id||reservation.company_id!==identity.companyId) return fail(503)
       const route=reservation.route, attempts:Attempt[]=[]
       let answer=''
@@ -92,7 +117,11 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       }
       // Fail closed if logging fails. Retry only this idempotent DB write, never the provider.
       try {await deps.finish(reservation.usage_id,attempts)} catch {await deps.finish(reservation.usage_id,attempts)}
-      if(!answer)return fail(502)
+      if(!answer){await markFailed();return fail(502)}
+      if(claimed) {
+        try { await deps.captureComplete!(identity.userId,requestId,answer,body.task==='capture_extract'?parseCaptureOutput(answer):null) }
+        catch {await markFailed();return fail(502,'The draft could not be read. Your text is still here. You can add a task by hand.')}
+      }
       return new Response(JSON.stringify({ok:true,text:answer,request_id:requestId}),{status:200,headers})
     } catch {return fail(503)}
   }

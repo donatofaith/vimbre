@@ -8,6 +8,8 @@ export type Route = { task: string; max_output_tokens: number; temperature: numb
 export type Reservation = { ok: boolean; code?: string; period?: 'day' | 'month'; reset_at?: string; usage_id?: string; company_id?: string; route?: Route }
 export type Attempt = { model_id: string; input_tokens: number | null; output_tokens: number | null; outcome: 'success' | 'failed' | 'timeout' }
 export class ProviderError extends Error {
-  constructor(public readonly kind: 'failed' | 'timeout', public readonly usage: Usage | null = null) { super('AI provider unavailable') }
+  readonly kind: 'failed' | 'timeout'
+  readonly usage: Usage | null
+  constructor(kind: 'failed' | 'timeout', usage: Usage | null = null) { super('AI provider unavailable');this.kind=kind;this.usage=usage }
 }
 export const zeroUsage = { inputTokens: 0, outputTokens: 0 }

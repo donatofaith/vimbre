@@ -1,0 +1,34 @@
+import {useState} from 'react'
+import type {FormEvent} from 'react'
+import {useAuth} from '../auth/AuthProvider'
+import {Input} from '../../components/ui/Input'
+import {Button} from '../../components/ui/Button'
+import type {CaptureDraft,CaptureOptions,Choice} from './capture-types'
+import {draftLabels} from './capture-types'
+export function ChoiceField({label,name,rows,value='',onChange}:{label:string;name:string;rows:Choice[];value?:string;onChange?:(v:string)=>void}) {
+ return <label className="field vc-choice"><span>{label}</span><select name={name} defaultValue={value} onChange={e=>onChange?.(e.target.value)}><option value="">None</option>{rows.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label>
+}
+export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,accept,discard,cancel}:{draft?:CaptureDraft;options:CaptureOptions;people:Choice[];busy:boolean;accepted:boolean;duplicate:boolean;accept:(data:Record<string,string>)=>Promise<void>;discard:()=>void;cancel?:()=>void}) {
+ const {profile}=useAuth()
+ const [kind,setKind]=useState(draft?.kind??'action'),[editing,setEditing]=useState(!accepted),[error,setError]=useState('')
+ const p=draft?.payload??{},v=(key:string)=>p[key]??''
+ async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string,string>;try{await accept({...data,kind});setEditing(false)}catch{setError('This draft could not be updated. Your changes are still here.')}}
+ return <li className="vc-review-card" data-accepted={accepted}>
+  <form onSubmit={e=>void submit(e)}><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
+  {duplicate&&<p className="vc-warning" role="status">A similar item already exists. Check it before confirming.</p>}
+  {accepted&&!editing?<><h3>{v('title')}</h3><p className="vc-prewrap">{v(kind==='decision'?'reason':'details')}</p><div className="form-actions"><Button variant="secondary" disabled={busy} onClick={()=>setEditing(true)}>Edit</Button><Button variant="secondary" disabled={busy} onClick={discard}>Discard</Button></div></>:<>
+  <fieldset disabled={busy} className="vc-fields">
+   <label className="field"><span>Type</span><select name="type" value={kind} onChange={e=>setKind(e.target.value)}><option value="decision">Decision</option><option value="action">Task</option><option value="summary">Conversation summary</option>{kind==='contact'&&<option value="contact">External contact</option>}</select></label>
+   <Input label="Title" name="title" defaultValue={v('title')} placeholder="e.g. Share the supplier review notes" maxLength={200} required/>
+   <label className="field"><span>{kind==='decision'?'Why':'Details'}</span><textarea name={kind==='decision'?'reason':'details'} defaultValue={v(kind==='decision'?'reason':'details')} required={kind==='decision'} rows={3} maxLength={5000}/></label>
+   {kind==='decision'&&<><div className="form-grid"><Input label="Decision date" name="decided_on" type="date" defaultValue={v('decided_on')||options.today} required/><Input label="Who decided?" name="decided_by" defaultValue={v('decided_by')} maxLength={200}/></div><Input label="Next step" name="next_step" defaultValue={v('next_step')} maxLength={5000}/></>}
+   <div className="form-grid"><label className="field"><span>Owner</span><select name="owner_id" defaultValue={v('owner_id')||profile!.id}><option value={profile!.id}>Me</option>{people.filter(r=>r.id!==profile!.id).map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label><ChoiceField label="Record" name="record_id" rows={options.records} value={v('record_id')}/></div>
+   {kind==='action'&&<><div className="form-grid"><Input label="Due date" name="due_date" type="date" defaultValue={v('due_date')} required/><Input label="Due time (optional)" name="due_time" type="time" defaultValue={v('due_time')}/></div><div className="form-grid"><label className="field"><span>Priority</span><select name="priority" defaultValue={v('priority')||'normal'}><option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option></select></label><label className="field"><span>Reminder</span><select name="reminder_option" defaultValue={v('reminder_option')||'at_time'}><option value="at_time">At due time</option><option value="30_minutes">30 minutes before</option><option value="1_hour">1 hour before</option><option value="day_before">Day before</option></select></label></div></>}
+   <div className="form-grid"><ChoiceField label="Department" name="department_id" rows={options.departments} value={v('department_id')}/><ChoiceField label="External contact" name="external_contact_id" rows={options.contacts} value={v('external_contact_id')}/></div>
+   {kind==='contact'&&<><Input label="Contact email" name="contact_email" type="email" defaultValue={v('contact_email')}/><Input label="Contact phone" name="contact_phone" defaultValue={v('contact_phone')}/></>}
+   {error&&<p className="field-error" role="alert">{error}</p>}
+   <div className="form-actions"><Button type="submit">Accept</Button><Button variant="secondary" onClick={discard}>Discard</Button>{cancel&&<Button variant="secondary" onClick={cancel}>Cancel</Button>}</div>
+  </fieldset></>}
+  </form>
+ </li>
+}
