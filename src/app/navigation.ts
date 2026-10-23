@@ -8,4 +8,5 @@ export const navigation = [
   { label: 'Team', path: '/app/team', available: true, leaders: true },
   { label: 'Departments', path: '/app/departments', available: true, leaders: true },
   { available: true, label: 'Settings', path: '/app/settings' },
+  { available: true, label: 'Help and support', path: '/app/help' },
 ] as const
