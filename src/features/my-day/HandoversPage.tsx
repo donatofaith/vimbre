@@ -284,6 +284,7 @@ function HandoverEditor({
         <label>
           Title
           <input
+            data-autofocus=""
             name="title"
             required
             maxLength={200}
@@ -291,9 +292,9 @@ function HandoverEditor({
             placeholder="e.g. Operations cover"
           />
         </label>
-        <label>
-          Cover person
-          <select name="cover" required defaultValue={handover?.cover_id ?? ""}>
+        <div className="field">
+          <label htmlFor="ho-cover">Cover person</label>
+          <select id="ho-cover" name="cover" required defaultValue={handover?.cover_id ?? ""}>
             <option value="">Choose a teammate</option>
             {people?.map((p) => (
               <option key={p.id} value={p.id}>
@@ -301,10 +302,11 @@ function HandoverEditor({
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          Reviewer
+        </div>
+        <div className="field">
+          <label htmlFor="ho-reviewer">Reviewer</label>
           <select
+            id="ho-reviewer"
             name="reviewer"
             required
             defaultValue={handover?.reviewer_id ?? ""}
@@ -316,7 +318,7 @@ function HandoverEditor({
               </option>
             ))}
           </select>
-        </label>
+        </div>
         {hasMore && (
           <Button
             variant="secondary"

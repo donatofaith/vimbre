@@ -1650,3 +1650,4 @@
 }
 
 .md-quick-context{display:grid;gap:10px;width:100%}.md-quick-context label{display:grid;gap:8px;font-size:12px;color:#52677e}.md-quick-context input{max-width:100%;min-height:44px}.md-quick-context .md-text-button{justify-self:start}
+@media(max-width:767px){.md-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;gap:0}.md-filters button{padding:7px 2px;white-space:nowrap;font-size:10px}.md-filters .md-tab-count{display:block;width:fit-content;margin:5px auto 0;min-height:18px}.md-heading-tools .md-visibility{font-size:10px}}
