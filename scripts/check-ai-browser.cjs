@@ -70,6 +70,7 @@ const assert = require('node:assert/strict');
         await page.setViewportSize({width:1440,height:900});
       }
       await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+      if(tab==='What I handle'){await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();assert.equal(await page.getByRole('dialog').getByLabel('Is this a responsibility or a project?',{exact:true}).inputValue(),'workstream');await page.keyboard.press('Escape');}
     }
     await page.goto('http://127.0.0.1:5173/app');await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
     const tasks=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});await tasks.getByLabel('Email or notes',{exact:true}).fill('Send supplier notes by 23 October 2026');await tasks.getByRole('button',{name:'Generate drafts',exact:true}).click();await tasks.getByRole('button',{name:'Review draft',exact:true}).click();

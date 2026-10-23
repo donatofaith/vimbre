@@ -159,10 +159,11 @@ function RoleRecordContent() {
   const selectedOwner = own ? profile : chosenOwner ?? owners.find(row => row.id === ownerId)
   const manager = profile?.role === 'hr_admin' || profile?.role === 'manager'
   const canManage = profile?.role === 'hr_admin' || profile?.role === 'manager' && Boolean(profile.department_id) && profile.department_id === selectedOwner?.department_id
+  const activeFormKind = canManage ? formKind : 'workstream'
   const canEdit = own || canManage
-  const editorKind: ItemKind = editor?.item?.kind as ItemKind ?? editor?.kind ?? (tab === 'handled' ? formKind : tab === 'decision' ? 'workstream' : tab)
+  const editorKind: ItemKind = editor?.item?.kind as ItemKind ?? editor?.kind ?? (tab === 'handled' ? activeFormKind : tab === 'decision' ? 'workstream' : tab)
   const canEditForm = canEdit && (editorKind !== 'responsibility' || canManage)
-  const aiKind = tab === 'handled' ? formKind : tab
+  const aiKind = tab === 'handled' ? activeFormKind : tab
   const canUseAI = canEdit && (aiKind !== 'responsibility' || canManage)
 
   const key =
@@ -382,7 +383,6 @@ function RoleRecordContent() {
   const addLabel = addTitles[tab]
 
   function openEditor() {
-    setFormKind(profile?.role === 'employee' ? 'workstream' : 'responsibility')
     setEditor({})
     setError('')
     setMessage('')
@@ -456,14 +456,14 @@ function RoleRecordContent() {
 
         <div className="vr-section-heading">
           <div><h2>{label}</h2><p>{guidance}</p></div>
-          {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={openEditor}>{addLabel}</Button><Link className="button button-secondary" to="/app/capture">Add from an email or notes</Link><Button variant="secondary" disabled={busy} onClick={() => {setFormKind(profile?.role === 'employee' ? 'workstream' : 'responsibility'); setAiOpen(true)}}>Use Vimbre AI</Button></div>}
+          {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={openEditor}>{addLabel}</Button><Link className="button button-secondary" to="/app/capture">Add from an email or notes</Link><Button variant="secondary" disabled={busy} onClick={() => setAiOpen(true)}>Use Vimbre AI</Button></div>}
         </div>
         {aiOpen && canEdit && <RoleDrawer title="Use Vimbre AI" close={() => setAiOpen(false)}>
-          {tab === 'handled' && <HandleType value={formKind} change={value => {setFormKind(value); setAiRows(null)}} responsibilities={canManage} />}
+          {tab === 'handled' && <HandleType value={activeFormKind} change={value => {setFormKind(value); setAiRows(null)}} responsibilities={canManage} />}
           {canUseAI && <StructuredAI key={`${ownerId}:${aiKind}`} kind={aiKind} cached={aiRows} onDrafts={setAiRows} choose={(initialDraft, initialFile, index) => { setAiRows(rows => rows?.filter((_, i) => i !== index) ?? null); setAiOpen(false); setEditor({ initialDraft, initialFile, kind: aiKind === 'decision' ? undefined : aiKind }) }} />}
         </RoleDrawer>}
         {editor && canEditForm && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
-          {tab === 'handled' && !editor.item && !editor.initialDraft && <HandleType value={formKind} change={setFormKind} responsibilities={canManage} />}
+          {tab === 'handled' && !editor.item && !editor.initialDraft && <HandleType value={activeFormKind} change={value => {setFormKind(value); setAiRows(null)}} responsibilities={canManage} />}
           {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? editorKind} kind={editorKind} item={editor.item} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} people={owners} initialFile={editor.initialFile} saved={saved} cancel={() => setEditor(null)} />}
         </RoleDrawer>}
 
