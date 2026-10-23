@@ -180,6 +180,7 @@ export function TaskPanel({
                   <option value="open">To do</option>
                   <option value="in_progress">In progress</option>
                   <option value="done">Done</option>
+                  {task && <option value="archived">Archived</option>}
                 </select>
               </div>
               <div className="field">

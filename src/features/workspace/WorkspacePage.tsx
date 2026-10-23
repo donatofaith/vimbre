@@ -453,7 +453,7 @@ function ActionWorkspace({
                                 ? 'In progress'
                                 : action.status === 'done'
                                   ? 'Done'
-                                  : 'Open'}
+                                  : 'To do'}
                             </span>
 
                             {!action.deleted_at &&

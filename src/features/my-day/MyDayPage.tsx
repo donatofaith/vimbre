@@ -176,7 +176,9 @@ function MyDayContent() {
           ? values.pinned
             ? "Task pinned."
             : "Task unpinned."
-          : "Task updated.",
+          : op === "context"
+            ? "Added to context."
+            : "Task updated.",
       );
       refresh();
     } catch (e) {
@@ -214,6 +216,13 @@ function MyDayContent() {
         edit={(t) => setEditor({ task: t })}
         remind={setReminder}
         context={setContext}
+        quickContext={(t, outcome) =>
+          void act(t, "context", {
+            kind: "note",
+            title: t.title,
+            details: outcome.trim() || t.completion_note || "Completed.",
+          })
+        }
         record={setRecord}
         drag={(id) => {
           dragging.current = id;

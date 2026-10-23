@@ -58,6 +58,12 @@ export function TaskRecord({
           {task.deleted_at ? "Archived" : label(task.status)}
         </p>
         {task.details && <p className="record-text">{task.details}</p>}
+        {task.context_added_at && task.completion_note && (
+          <>
+            <h3>Outcome</h3>
+            <p className="record-text">{task.completion_note}</p>
+          </>
+        )}
         <h3>Status history</h3>
         {error ? (
           <p role="alert">
@@ -103,6 +109,7 @@ export function TaskCard({
   edit,
   remind,
   context,
+  quickContext,
   record,
   drag,
 }: {
@@ -116,10 +123,12 @@ export function TaskCard({
   edit: (task: Task) => void;
   remind: (task: Task) => void;
   context: (task: Task) => void;
+  quickContext: (task: Task, outcome: string) => void;
   record: (task: Task) => void;
   drag: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(initialOpen),
+  const [outcome, setOutcome] = useState(task.completion_note ?? ""),
+    [open, setOpen] = useState(initialOpen),
     id = useId(),
     source = task.source_role_id ?? task.recurring_id;
   const overdue =
@@ -273,9 +282,34 @@ export function TaskCard({
               </button>
             </>
           ) : (
-            <button className="md-text-button" onClick={() => context(task)}>
-              Add to context
-            </button>
+            <div className="md-quick-context">
+              <label>
+                What happened? (optional)
+                <input
+                  maxLength={5000}
+                  value={outcome}
+                  onChange={(e) => setOutcome(e.target.value)}
+                />
+              </label>
+              <span className="field-hint">
+                Save to My notes, private to you.
+              </span>
+              <button
+                className="md-text-button"
+                disabled={busy}
+                onClick={() => quickContext(task, outcome)}
+              >
+                Add to context
+              </button>
+              {open && (
+                <button
+                  className="md-text-button md-muted"
+                  onClick={() => context(task)}
+                >
+                  Choose where to save
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
