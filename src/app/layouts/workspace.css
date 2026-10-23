@@ -881,3 +881,55 @@
 
 /* Workspace refinement approved with the My day brief. */
 .vw-brand-surface{background:transparent!important;padding:0!important;box-shadow:none!important;border:0!important}.vw-sidebar .vimbre-logo-full{filter:brightness(0) invert(1);width:96px;height:auto}.vw-content{padding:36px 40px 48px}.settings-card,.vr-module,.vc-detail{margin-block:24px}.vw-topbar{background:#ffffffeb}.vw-topbar .vw-breadcrumb{min-width:0}.vw-breadcrumb{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vw-page-heading h1,.page-heading h1{letter-spacing:-.01em}.vw-page-heading p,.page-heading p{line-height:1.7}@media(max-width:767px){.vw-content{padding:24px 16px 40px}.vw-breadcrumb{max-width:150px}.settings-card,.vr-module,.vc-detail{margin-block:20px}}
+
+/* 23 October visual refresh. Scoped to the workspace, never the public site. */
+.vw-shell.app-shell {
+  --workspace-shadow: 0 1px 3px rgb(16 42 67 / 3%), 0 12px 32px rgb(16 42 67 / 4%);
+  background: #f1f5f9;
+}
+.vw-shell .button { border-radius: 10px; min-height: 44px; }
+.vw-shell .button-primary { background: var(--blue-hover); color: #fff; }
+.vw-shell .card { border-radius: 18px; box-shadow: var(--workspace-shadow); }
+.vw-shell .vw-navigation a,
+.vw-shell .vw-utilities a,
+.vw-shell .vw-utilities button { border-radius: 12px; font-size: 13px; }
+.vw-shell .vw-navigation a.active,
+.vw-shell .vw-utilities a.active {
+  background: #2563d9;
+  color: #fff;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 10%);
+}
+.vw-sidebar .vw-nav-heading { color: #b1c4d3; padding-top: 4px; }
+.vw-account { border-radius: 14px; background: rgb(255 255 255 / 4%); padding: 16px 10px; }
+.vw-topbar { border-bottom-color: rgb(16 42 67 / 7%); }
+.vw-collapse-sidebar { border: 1px solid #e2e8f0; background: #fff; border-radius: 12px; }
+.vw-content { padding: 32px 32px 48px; }
+.vw-shell :is(input, select, textarea) { border-radius: 10px; }
+.vw-shell :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--blue-hover);
+  outline-offset: 3px;
+}
+.vw-sidebar :is(a, button):focus-visible { outline-color: #fff; }
+@media (min-width: 761px) {
+  .vw-sidebar {
+    top: 12px;
+    margin: 12px 0 12px 12px;
+    height: calc(100dvh - 24px);
+    border-radius: 20px;
+    padding: 26px 12px 14px;
+    background: #102a43;
+    box-shadow: 0 12px 32px rgb(16 42 67 / 10%);
+    scrollbar-width: thin;
+    scrollbar-color: #52677e transparent;
+  }
+  .vw-company { margin-block: 24px; }
+  .vw-topbar { margin-inline: 12px; padding-inline: 20px; }
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .vw-content { padding: 28px 20px 40px; }
+}
+@media (max-width: 760px) {
+  .vw-sidebar { background: #102a43; }
+  .vw-content { padding: 24px 16px 40px; }
+  .vw-topbar { padding-inline: 16px; }
+}

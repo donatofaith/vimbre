@@ -823,3 +823,124 @@
 }
 
 .md-page>.vw-draft-notice{justify-self:start;min-height:44px;max-width:100%;margin:0;padding:10px 16px}.md-page>.notice{position:fixed;right:24px;bottom:24px;z-index:35;max-width:min(360px,calc(100vw - 32px));padding:14px 20px;box-shadow:0 8px 24px #102a4314}.md-card-controls select{font-family:var(--body-font);color:#334e68;border:1px solid #dce5f0;border-radius:8px;font-size:12px}.md-page{gap:24px}
+
+/* Reference inspired composition in the approved Vimbre palette. */
+.md-page { gap: 24px; }
+.md-page-heading {
+  position: relative;
+  isolation: isolate;
+  padding: 30px;
+  border-radius: 22px;
+  background: var(--navy);
+  border: 1px solid rgb(255 255 255 / 8%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(16 42 67 / 8%);
+}
+.md-page-heading::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 95% 0, rgb(47 128 237 / 22%), transparent 65%);
+}
+.md-page-heading h1 { color: #fff; font-size: clamp(26px, 2.4vw, 36px); margin-block: 10px; }
+.md-page-heading .md-date-label { color: #bed0e0; }
+.md-page-heading .md-live-line { color: #d7e3ec; }
+.md-main-actions { max-width: 310px; padding-top: 0; gap: 8px; }
+.md-page-heading .md-main-actions .button {
+  flex-grow: 1;
+  justify-content: center;
+  font-size: 12px;
+  padding: 11px 12px;
+}
+.md-page-heading .md-main-actions > .button:first-child { flex-basis: 100%; }
+.md-page-heading .button-secondary { border-color: rgb(255 255 255 / 18%); background: rgb(255 255 255 / 8%); color: #fff; }
+.md-page-heading .button-secondary:hover { background: rgb(255 255 255 / 14%); }
+.md-page-heading :is(a, button):focus-visible { outline-color: #fff; }
+.md-work-section {
+  padding: 26px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--workspace-shadow);
+  gap: 22px;
+}
+.md-section-heading h2 { font-size: 20px; }
+.md-filters { border-color: transparent; background: #f1f5f9; border-radius: 12px; }
+.md-filters button[aria-pressed="true"] { background: #fff; color: #102a43; box-shadow: 0 1px 4px rgb(16 42 67 / 10%); }
+.md-view-toggle { background: #f8fafc; }
+.md-filter-row { max-width: none; gap: 16px; }
+.md-filter-row input { background: #f8fafc; border-color: #e2e8f0; min-height: 44px; }
+.md-board { gap: 16px; }
+.md-board-column { background: #f8fafc; padding: 14px; border-color: #e8edf4; border-radius: 16px; }
+.md-board-column > h3 { justify-content: flex-start; gap: 8px; }
+.md-board-column > h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #64748b; }
+.md-column-in_progress { background: #f0f6ff; }
+.md-column-in_progress > h3::before { background: var(--blue-hover); }
+.md-column-done { background: #f5faf7; }
+.md-column-done > h3::before { background: #27714e; }
+.md-board-column > h3 > span { background: rgb(16 42 67 / 5%); min-width: 23px; height: 23px; font-size: 11px; }
+.md-task-card { border-radius: 14px; padding: 18px; gap: 12px; box-shadow: 0 2px 6px rgb(16 42 67 / 3%); }
+.md-task-title { font-size: 14px; line-height: 1.65; }
+.md-for-chip { border-radius: 7px; background: #eaf2fe; color: #235cb0; }
+.md-column-empty { border: 1px dashed #d5deea; border-radius: 12px; padding: 28px 12px; margin: 0; background: rgb(255 255 255 / 50%); }
+.md-card-controls { border-top: 1px solid #edf2f7; padding-top: 12px; }
+.md-empty { background: #f8fafc; border-radius: 16px; padding-block: 64px; }
+.md-page > .vw-role-guide {
+  display: grid;
+  grid-template-columns: minmax(200px, .85fr) minmax(0, 1.6fr);
+  column-gap: 36px;
+  align-content: start;
+  padding: 26px;
+  border: 1px solid #dce6f2;
+  border-radius: 20px;
+  background: #eaf2fe;
+}
+.md-page > .vw-role-guide > :not(ul) { grid-column: 1; }
+.md-page > .vw-role-guide h2 { font-size: 19px; line-height: 1.5; margin: 10px 0 16px; }
+.md-page > .vw-role-guide .vw-eyebrow { color: #235cb0; }
+.md-page > .vw-role-guide progress { margin-top: 12px; height: 5px; }
+.md-page > .vw-role-guide ul { grid-column: 2; grid-row: 1 / span 5; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.md-page > .vw-role-guide li { border: 0; min-width: 0; }
+.md-page > .vw-role-guide li a { height: 100%; min-height: 54px; padding: 12px; border: 1px solid #dce6f2; border-radius: 12px; background: #fff; font-size: 12px; gap: 8px; }
+.md-page > .vw-role-guide li a > svg { width: 16px; height: 16px; color: #2563d9; }
+.md-page > .vw-role-guide li a:hover { text-decoration: none; background: #f8fafc; }
+.md-footer-links { border-top: 0; padding: 0 4px; }
+.md-footer-links > details { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 10px 20px; }
+.md-footer-links > div { gap: 12px; }
+.md-footer-links > div > :is(a, button) { text-decoration: none; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+.md-page > .vw-forward-card { border-radius: 16px; background: #fff; box-shadow: var(--workspace-shadow); }
+@media (min-width: 1280px) {
+  .md-main-actions { min-width: 270px; }
+}
+@media (max-width: 1279px) {
+  .md-page-heading { flex-direction: column; gap: 22px; }
+  .md-main-actions { max-width: none; width: 100%; justify-content: flex-start; }
+  .md-page-heading .md-main-actions > .button { flex-grow: 0; }
+  .md-page-heading .md-main-actions > .button:first-child { flex-basis: auto; }
+  .md-board { gap: 10px; }
+  .md-board-column { padding: 10px; }
+  .md-task-card { padding: 14px; }
+}
+@media (max-width: 1023px) {
+  .md-page > .vw-role-guide { grid-template-columns: 1fr; gap: 0; }
+  .md-page > .vw-role-guide ul { grid-column: 1; grid-row: auto; margin-top: 20px; }
+}
+@media (max-width: 767px) {
+  .md-page-heading { padding: 24px 20px; border-radius: 18px; gap: 24px; }
+  .md-page-heading h1 { font-size: 27px; }
+  .md-main-actions { display: flex; }
+  .md-page-heading .md-main-actions > .button { flex: 1 1 100%; min-height: 46px; }
+  .md-work-section { padding: 20px 14px; border-radius: 18px; gap: 20px; }
+  .md-filters { gap: 2px; justify-content: flex-start; }
+  .md-filters button { flex-grow: 1; padding-inline: 8px; }
+  .md-board { gap: 16px; }
+  .md-board-column { padding: 14px; }
+  .md-task-card { padding: 18px; }
+  .md-page > .vw-role-guide { padding: 22px 18px; border-radius: 18px; }
+  .md-page > .vw-role-guide h2 { font-size: 18px; }
+  .md-page > .vw-role-guide ul { grid-template-columns: 1fr; gap: 8px; }
+  .md-page > .vw-role-guide li a { min-height: 48px; }
+}
