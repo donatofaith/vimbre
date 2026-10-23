@@ -645,3 +645,12 @@
   .vr-page .vr-list .form-actions { flex-wrap: wrap; }
 }
 @media(prefers-reduced-motion: reduce) { .vr-page .vr-list > li { animation: none; } }
+
+.vr-purpose-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.vr-visibility .vw-access-button { min-height: 44px; font-size: 13px; }
+.vr-role-context { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px 28px; border-left: 2px solid #d5e3f6; padding: 4px 0 4px 16px; }
+.vr-role-context p { font-size: 14px; line-height: 1.7; }
+.vr-page .md-private-notes { margin: 0; padding: 20px 24px; border-radius: 16px; box-shadow: var(--workspace-shadow); }
+.vr-page .md-private-notes h2 { font: 650 17px/1.5 var(--heading-font); }
+.vr-page .md-private-notes p { font-size: 14px; }
+.vr-page .vr-list .badge, .vr-kind-badge { font-size: 13px; }

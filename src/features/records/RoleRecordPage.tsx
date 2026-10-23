@@ -406,17 +406,10 @@ function RoleRecordContent() {
           {profile?.role !== 'employee' && <RoleOwnerPicker name={ownerName} rows={owners} query={ownerSearch} search={setOwnerSearch} error={ownerError} disabled={busy} choose={row => {setChosenOwner(row); setOwnerId(row.id); setOwnerName(row.full_name); setArchived(false); setSearch(''); setQuery(''); setTypeFilter('all'); setDecisionStatus('all'); changeView()}} />}
         </div>
       </header>
+      <div className="vr-purpose-bar">
       <p className="vr-purpose"><WorkspaceIcon name="handover" />So someone can pick up your work without asking you.</p>
-
-      {selectedOwner?.role_start_date && <p className="vr-role-since">In this role since <time dateTime={selectedOwner.role_start_date}>{formatRecordDate(selectedOwner.role_start_date)}</time></p>}
-      {selectedOwner?.role_description && <p className="vr-role-description">{selectedOwner.role_description}</p>}
-      {own && <MyNotes key={ownerId}/>}
-      <ResponsibilityReview manager={manager} revision={revision} changed={reload} />
-      {personal && <ResponsibilityPersonal key={`${personal.item.id}:${personal.mode}`} {...personal} close={() => setPersonal(null)} saved={() => {setPersonal(null); setMessage(personal.mode === 'notes' ? 'Notes saved.' : 'Suggestion sent for review.'); reload()}} />}
-
-      {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
       <section
-        className="form-actions"
+        className="vr-visibility"
         aria-label="Role record visibility"
       >
         <button
@@ -429,6 +422,16 @@ function RoleRecordContent() {
         </button>
       </section>
 
+      </div>
+
+      {(selectedOwner?.role_start_date || selectedOwner?.role_description) && <div className="vr-role-context">
+      {selectedOwner?.role_start_date && <p className="vr-role-since">In this role since <time dateTime={selectedOwner.role_start_date}>{formatRecordDate(selectedOwner.role_start_date)}</time></p>}
+      {selectedOwner?.role_description && <p className="vr-role-description">{selectedOwner.role_description}</p>}
+      </div>}
+      <ResponsibilityReview manager={manager} revision={revision} changed={reload} />
+      {personal && <ResponsibilityPersonal key={`${personal.item.id}:${personal.mode}`} {...personal} close={() => setPersonal(null)} saved={() => {setPersonal(null); setMessage(personal.mode === 'notes' ? 'Notes saved.' : 'Suggestion sent for review.'); reload()}} />}
+
+      {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
       {message && (
         <p className="notice" role="status">
           {message}
@@ -759,6 +762,7 @@ function RoleRecordContent() {
 
       </section>
 
+      {own && <MyNotes key={ownerId}/>}
       <dialog
         ref={accessDialog}
         className="vw-dialog"

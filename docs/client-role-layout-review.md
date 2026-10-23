@@ -11,7 +11,7 @@ The owner authorizes the applicable changes in the supplied role review screensh
 - Search/archive controls appear only when the tab has saved records, including archived-only records, or a filter is active. This preserves access to restored items and empty search recovery.
 - Exact purpose line and progress label. Empty sections link to Capture. No duplicate add/footer/explainer cards.
 - Contacts support Paste an email signature, reviewing extracted name/email/phone and preserving already entered fields. Nothing saves until Save. Contacts require a name and email or phone in this form.
-- Brand tokens, navy/blue palette and fonts match My day. Larger tabs/body text, 44px controls, rounded cards, responsive widths and reduced motion. Private notes and review UI are retained.
+- Brand tokens, navy/blue palette and fonts match My day. Larger tabs/body text, 44px controls, rounded cards, responsive widths and reduced motion. Private notes and review UI are retained. The completed-task notes viewer is compact and below the records; the privacy control sits beside the purpose line.
 
 ## Boundaries and conflicts
 

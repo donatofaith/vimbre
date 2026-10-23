@@ -1,5 +1,7 @@
 # Client role and dashboard review, 21 October 2026
 
+The 23 October layout update in [client-role-layout-review.md](client-role-layout-review.md) supersedes the tab order, combined work presentation and owner picker below. Its stated boundaries preserve these access, privacy and validation rules.
+
 The owner requests these changes directly on GitHub for Vercel review. This replaces the earlier owner-only role editing rules, not Capture privacy or personal task permissions.
 
 ## Implemented
