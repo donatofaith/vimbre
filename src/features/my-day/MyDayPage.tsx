@@ -11,6 +11,7 @@ import { TaskPanel } from "./TaskPanel";
 import { ForPicker } from "./ForPicker";
 import { ContextPanel } from "./ContextPanel";
 import { ReminderPanel } from "./ReminderPanel";
+import { UpcomingPreview } from "./UpcomingPreview";
 import { TaskCard, TaskRecord } from "./TaskCard";
 import { RoleTaskPicker } from "./RoleTaskPicker";
 import { changeTask, taskError } from "./api";
@@ -32,7 +33,8 @@ const filters = [
 ] as const;
 export function MyDayPage() {
   const { profile } = useAuth();
-  return <MyDayContent key={profile!.id} />;
+  const [params] = useSearchParams();
+  return <MyDayContent key={`${profile!.id}:${params.get("task")??""}:${params.get("decision")??""}`} />;
 }
 function MyDayContent() {
   const { profile } = useAuth(),
@@ -282,7 +284,7 @@ function MyDayContent() {
     <div className="md-empty">
       <WorkspaceIcon name="tick" />
       <p>
-        {filter === "today"
+        {filter === "today" && !search && !forValue && !source && !priority
           ? "You’re clear for today."
           : filter === "overdue"
             ? "No overdue tasks."
@@ -290,13 +292,9 @@ function MyDayContent() {
               ? "No archived tasks."
               : "No tasks match these filters."}
       </p>
-      {filter === "today" && (
+      {filter === "today" && !search && !forValue && !source && !priority && (
         <>
-          {upcoming.slice(0, 3).map((t) => (
-            <Link key={t.id} to={`/app?task=${t.id}`}>
-              {t.title}
-            </Link>
-          ))}
+          <UpcomingPreview owner={profile!.id} company={profile!.company_id} today={today}/>
           <Link className="button button-primary" to="/app/capture">
             Capture
           </Link>
