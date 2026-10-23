@@ -7,3 +7,5 @@
 .vr-drawer .field { min-width: 0; }
 .vr-drawer input[type="file"] { max-width: 100%; white-space: normal; }
 @media(max-width:760px) { .vr-drawer { padding: 20px 16px 32px; } }
+.vr-drawer { font-size: 14px; }
+.vr-drawer .field-hint { font-size: 13px; }

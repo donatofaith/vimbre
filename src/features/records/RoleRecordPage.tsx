@@ -11,18 +11,21 @@ import { Input } from '../../components/ui/Input'
 import { safeSearch } from '../team/team-utils'
 import { ItemForm, DecisionForm } from './RecordForms'
 import type { RoleItem, Decision } from './RecordForms'
-import { itemKinds, recordError, safeRecordUrl, addLabels } from './record-utils'
+import { recordError, safeRecordUrl } from './record-utils'
 import type { ItemKind } from './record-utils'
 import { recordExamples } from './record-examples'
 import { RoleDrawer } from './RoleDrawer'
 import { ResponsibilityReview, ResponsibilityPersonal } from './ResponsibilityReview'
 import { formatRecordDate } from './record-utils'
+import { RoleOwnerPicker } from './RoleOwnerPicker'
+import type { RoleOwner as Owner } from './RoleOwnerPicker'
 import './role-record.css'
 
-type Tab = ItemKind | 'decision'
-type Owner = { id: string; full_name: string; department_id: string | null; role_description: string; role_start_date: string | null }
+type Tab = Exclude<ItemKind, 'responsibility' | 'workstream'> | 'handled' | 'decision'
+const tabs = [['decision', 'Decisions'], ['handled', 'What I handle'], ['external_contact', 'External contacts'], ['document', 'Documents'], ['recurring_deadline', 'Deadlines']] as const
+const addTitles = { decision: 'Add decision', handled: 'Add to what I handle', external_contact: 'Add contact', document: 'Add document', recurring_deadline: 'Add deadline' }
 
-const guides: Record<Tab, { examples: string[]; empty: string }> = {
+const guides: Record<ItemKind | 'decision', { examples: string[]; empty: string }> = {
   responsibility: {
     examples: [
       'Prepare the weekly report',
@@ -103,6 +106,7 @@ function RoleRecordContent() {
   const accessDialog = useRef<HTMLDialogElement>(null)
 
   const [ownerId, setOwnerId] = useState(profile!.id)
+  const [chosenOwner, setChosenOwner] = useState<Owner | null>(null)
   const [ownerName, setOwnerName] = useState(profile!.full_name)
   const [ownerSearch, setOwnerSearch] = useState('')
   const [owners, setOwners] = useState<Owner[]>([])
@@ -112,8 +116,10 @@ function RoleRecordContent() {
   const requestedRecord = sectionParams.get('record') ?? ''
   const recordId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedRecord) ? requestedRecord : ''
   const requestedSection = sectionParams.get('section')
-  const tab: Tab = requestedSection === 'decision' || itemKinds.some(([kind]) => kind === requestedSection)
-    ? requestedSection as Tab : 'responsibility'
+  const tab: Tab = requestedSection === 'responsibility' || requestedSection === 'workstream' ? 'handled' : tabs.some(([value]) => value === requestedSection) ? requestedSection as Tab : 'decision'
+  const [typeFilter, setTypeFilter] = useState<'all' | 'responsibility' | 'workstream'>(requestedSection === 'responsibility' || requestedSection === 'workstream' ? requestedSection : 'all')
+  const [formKind, setFormKind] = useState<'responsibility' | 'workstream'>(profile?.role === 'employee' ? 'workstream' : 'responsibility')
+  const [progress, setProgress] = useState<{owner: string; filled: number; error: boolean} | null>(null)
   const setTab = (value: Tab) => setSectionParams({ section: value })
   const [archived, setArchived] = useState(false)
   const [page, setPage] = useState(0)
@@ -129,6 +135,7 @@ function RoleRecordContent() {
     decisions: Decision[]
     count: number
     error: boolean
+    total: number
   } | null>(null)
 
   const [aiRows, setAiRows] = useState<StructuredDraft[] | null>(null)
@@ -141,6 +148,7 @@ function RoleRecordContent() {
     initialText?: string
     initialDraft?: StructuredDraft
     initialFile?: File
+    kind?: ItemKind
   } | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -148,14 +156,18 @@ function RoleRecordContent() {
   const [error, setError] = useState('')
 
   const own = ownerId === profile!.id
-  const selectedOwner = own ? profile : owners.find(row => row.id === ownerId)
+  const selectedOwner = own ? profile : chosenOwner ?? owners.find(row => row.id === ownerId)
   const manager = profile?.role === 'hr_admin' || profile?.role === 'manager'
   const canManage = profile?.role === 'hr_admin' || profile?.role === 'manager' && Boolean(profile.department_id) && profile.department_id === selectedOwner?.department_id
-  const canEdit = tab === 'responsibility' ? canManage : own || canManage
+  const canEdit = own || canManage
+  const editorKind: ItemKind = editor?.item?.kind as ItemKind ?? editor?.kind ?? (tab === 'handled' ? formKind : tab === 'decision' ? 'workstream' : tab)
+  const canEditForm = canEdit && (editorKind !== 'responsibility' || canManage)
+  const aiKind = tab === 'handled' ? formKind : tab
+  const canUseAI = canEdit && (aiKind !== 'responsibility' || canManage)
 
   const key =
     `${ownerId}:${tab}:${archived}:${page}:` +
-    `${revision}:${query}:${decisionStatus}:${recordId}`
+    `${revision}:${query}:${decisionStatus}:${recordId}:${typeFilter}`
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -176,6 +188,7 @@ function RoleRecordContent() {
         .from('profiles')
         .select('id,full_name,department_id,role_description,role_start_date')
         .eq('active', true)
+        .eq('company_id', company!.id)
         .ilike('full_name', `%${safeSearch(ownerSearch)}%`)
         .order('full_name')
         .order('id')
@@ -191,12 +204,17 @@ function RoleRecordContent() {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [profile?.role, ownerSearch])
+  }, [profile?.role, ownerSearch, company?.id])
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      const totals = (tab === 'decision'
+        ? supabase.from('decisions').select('id', {count: 'exact', head: true}).eq('owner_id', ownerId)
+        : tab === 'handled'
+          ? supabase.from('role_items').select('id', {count: 'exact', head: true}).eq('owner_id', ownerId).in('kind', ['responsibility', 'workstream'])
+          : supabase.from('role_items').select('id', {count: 'exact', head: true}).eq('owner_id', ownerId).eq('kind', tab)).then(value => value)
       if (tab === 'decision') {
         let request = supabase
           .from('decisions')
@@ -221,8 +239,11 @@ function RoleRecordContent() {
           .range(page * 20, page * 20 + 19)
 
         if (!cancelled) {
+          const total = await totals
+          if (cancelled) return
           setResult({
             key,
+            total: total.count ?? count ?? 0,
             items: [],
             decisions: data ?? [],
             count: count ?? 0,
@@ -234,9 +255,10 @@ function RoleRecordContent() {
           .from('role_items')
           .select('*', { count: 'exact' })
           .eq('owner_id', ownerId)
-          .eq('kind', tab)
+
           .ilike('title', `%${query}%`)
 
+        request = tab === 'handled' ? (typeFilter === 'all' ? request.in('kind', ['responsibility', 'workstream']) : request.eq('kind', typeFilter)) : request.eq('kind', tab)
         if (recordId) request = request.eq('id', recordId)
 
         request = archived
@@ -249,8 +271,11 @@ function RoleRecordContent() {
           .range(page * 20, page * 20 + 19)
 
         if (!cancelled) {
+          const total = await totals
+          if (cancelled) return
           setResult({
             key,
+            total: total.count ?? count ?? 0,
             items: data ?? [],
             decisions: [],
             count: count ?? 0,
@@ -265,9 +290,22 @@ function RoleRecordContent() {
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, tab, archived, page, query, decisionStatus, recordId])
+  }, [key, ownerId, tab, archived, page, query, decisionStatus, recordId, typeFilter])
 
 
+  useEffect(() => {
+    let alive = true
+    async function loadProgress() {
+      const checks = await Promise.all(tabs.map(([value]) => {
+        if (value === 'decision') return supabase.from('decisions').select('id', {count: 'exact', head: true}).eq('owner_id', ownerId).is('deleted_at', null)
+        const request = supabase.from('role_items').select('id', {count: 'exact', head: true}).eq('owner_id', ownerId).is('deleted_at', null)
+        return value === 'handled' ? request.in('kind', ['responsibility', 'workstream']) : request.eq('kind', value)
+      }))
+      if (alive) setProgress({owner: ownerId, filled: checks.filter(result => (result.count ?? 0) > 0).length, error: checks.some(result => Boolean(result.error))})
+    }
+    void loadProgress()
+    return () => { alive = false }
+  }, [ownerId, revision])
 
   useEffect(() => {
     void supabase
@@ -339,19 +377,12 @@ function RoleRecordContent() {
 
   const current = result?.key === key ? result : null
 
-  const label =
-    tab === 'decision'
-      ? 'Decision log'
-      : itemKinds.find(row => row[0] === tab)![1]
-
-  const guidance =
-    tab === 'decision'
-      ? 'What was decided, why, and what happens next.'
-      : recordExamples[tab].guidance
-
-  const addLabel = addLabels[tab]
+  const label = tabs.find(([value]) => value === tab)![1]
+  const guidance = tab === 'handled' ? 'Responsibilities and projects you handle.' : tab === 'decision' ? 'What was decided, why, and what happens next.' : recordExamples[tab].guidance
+  const addLabel = addTitles[tab]
 
   function openEditor() {
+    setFormKind(profile?.role === 'employee' ? 'workstream' : 'responsibility')
     setEditor({})
     setError('')
     setMessage('')
@@ -359,6 +390,7 @@ function RoleRecordContent() {
 
   function selectTab(value: Tab) {
     setTab(value)
+    setTypeFilter('all')
     setArchived(false)
     setSearch('')
     setQuery('')
@@ -368,20 +400,13 @@ function RoleRecordContent() {
 
   return (
     <div className="vr-page">
-      <header className="vw-page-heading">
-        <div>
-          <span className="vw-eyebrow">
-            {company?.name ?? 'Your workspace'}
-          </span>
-
-          <h1 tabIndex={-1} aria-label="Role record">
-            {own ? 'My role' : ownerName}
-          </h1>
-
-
+      <header className="vw-page-heading vr-page-heading">
+        <div><span className="vw-eyebrow">{company?.name ?? 'Your workspace'}</span><h1 tabIndex={-1}>My role</h1><p>What someone covering you would need to know.</p></div>
+        <div className="vr-header-tools">{progress?.owner === ownerId && !progress.error && <p className="vr-progress">Ready for handover: {progress.filled} of 5 areas filled</p>}
+          {profile?.role !== 'employee' && <RoleOwnerPicker name={ownerName} rows={owners} query={ownerSearch} search={setOwnerSearch} error={ownerError} disabled={busy} choose={row => {setChosenOwner(row); setOwnerId(row.id); setOwnerName(row.full_name); setArchived(false); setSearch(''); setQuery(''); setTypeFilter('all'); setDecisionStatus('all'); changeView()}} />}
         </div>
-
       </header>
+      <p className="vr-purpose"><WorkspaceIcon name="handover" />So someone can pick up your work without asking you.</p>
 
       {selectedOwner?.role_start_date && <p className="vr-role-since">In this role since <time dateTime={selectedOwner.role_start_date}>{formatRecordDate(selectedOwner.role_start_date)}</time></p>}
       {selectedOwner?.role_description && <p className="vr-role-description">{selectedOwner.role_description}</p>}
@@ -390,68 +415,6 @@ function RoleRecordContent() {
       {personal && <ResponsibilityPersonal key={`${personal.item.id}:${personal.mode}`} {...personal} close={() => setPersonal(null)} saved={() => {setPersonal(null); setMessage(personal.mode === 'notes' ? 'Notes saved.' : 'Suggestion sent for review.'); reload()}} />}
 
       {recordId && <Link to={`/app/role-record?section=${tab}`}>All records</Link>}
-      {profile?.role !== 'employee' && (
-        <section
-          className="vr-owner"
-          aria-label="Choose a role record"
-        >
-          <h2>{own ? 'Your role' : ownerName}</h2>
-
-          <div className="form-grid">
-            <Input
-              label="Find a team member"
-              type="search"
-              value={ownerSearch}
-              disabled={busy}
-              onChange={event => setOwnerSearch(event.target.value)}
-            />
-
-            <div className="field">
-              <label htmlFor="record-owner">Role record owner</label>
-
-              <select
-                id="record-owner"
-                value={ownerId}
-                disabled={busy}
-                onChange={event => {
-                  const id = event.target.value
-
-                  setOwnerId(id)
-                  setOwnerName(
-                    id === profile!.id
-                      ? profile!.full_name
-                      : owners.find(row => row.id === id)?.full_name ??
-                          'Team member',
-                  )
-                  changeView()
-                }}
-              >
-                <option value={profile!.id}>My role record</option>
-
-                {ownerId !== profile!.id &&
-                  !owners.some(row => row.id === ownerId) && (
-                    <option value={ownerId}>{ownerName}</option>
-                  )}
-
-                {owners
-                  .filter(row => row.id !== profile!.id)
-                  .map(row => (
-                    <option key={row.id} value={row.id}>
-                      {row.full_name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
-
-          {ownerError && (
-            <p role="alert">
-              Team choices could not be loaded. Try searching again.
-            </p>
-          )}
-        </section>
-      )}
-
       <section
         className="form-actions"
         aria-label="Role record visibility"
@@ -483,33 +446,26 @@ function RoleRecordContent() {
         aria-label="Role record sections and records"
       >
         <nav className="vr-tabs" aria-label="Role record sections">
-          {[
-            ...itemKinds,
-            ['decision', 'Decision log'] as const,
-          ].map(([value, title]) => (
-            <button
-              type="button"
-              key={value}
-              aria-label={title}
-              aria-pressed={tab === value}
-              disabled={busy}
-              onClick={() => selectTab(value)}
-            >
-              {value === 'decision' ? 'Decision log' : title}
-            </button>
+          {tabs.map(([value, title]) => (
+            <button type="button" key={value} aria-label={title} aria-pressed={tab === value} disabled={busy} onClick={() => selectTab(value)}>{title}</button>
           ))}
         </nav>
 
         <div className="vr-section-heading">
           <div><h2>{label}</h2><p>{guidance}</p></div>
-          {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={() => setAiOpen(true)}>Use Vimbre AI</Button><Button variant="secondary" disabled={busy} onClick={openEditor}>{addLabel}</Button></div>}
+          {canEdit && !archived && <div className="vr-section-actions"><Button disabled={busy} onClick={openEditor}>{addLabel}</Button><Link className="button button-secondary" to="/app/capture">Add from an email or notes</Link><Button variant="secondary" disabled={busy} onClick={() => {setFormKind(profile?.role === 'employee' ? 'workstream' : 'responsibility'); setAiOpen(true)}}>Use Vimbre AI</Button></div>}
         </div>
-        {aiOpen && canEdit && <RoleDrawer title="Use Vimbre AI" close={() => setAiOpen(false)}><StructuredAI key={`${ownerId}:${tab}`} kind={tab} cached={aiRows} onDrafts={setAiRows} choose={(initialDraft, initialFile, index) => { setAiRows(rows => rows?.filter((_, i) => i !== index) ?? null); setAiOpen(false); setEditor({ initialDraft, initialFile }) }} /></RoleDrawer>}
-        {editor && canEdit && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
-          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? tab} kind={tab} item={editor.item} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} people={owners} initialFile={editor.initialFile} saved={saved} cancel={() => setEditor(null)} />}
+        {aiOpen && canEdit && <RoleDrawer title="Use Vimbre AI" close={() => setAiOpen(false)}>
+          {tab === 'handled' && <HandleType value={formKind} change={value => {setFormKind(value); setAiRows(null)}} responsibilities={canManage} />}
+          {canUseAI && <StructuredAI key={`${ownerId}:${aiKind}`} kind={aiKind} cached={aiRows} onDrafts={setAiRows} choose={(initialDraft, initialFile, index) => { setAiRows(rows => rows?.filter((_, i) => i !== index) ?? null); setAiOpen(false); setEditor({ initialDraft, initialFile, kind: aiKind === 'decision' ? undefined : aiKind }) }} />}
+        </RoleDrawer>}
+        {editor && canEditForm && <RoleDrawer title={editor.item || editor.decision ? 'Edit record' : addLabel} close={() => setEditor(null)}>
+          {tab === 'handled' && !editor.item && !editor.initialDraft && <HandleType value={formKind} change={setFormKind} responsibilities={canManage} />}
+          {tab === 'decision' ? <DecisionForm key={editor.decision?.id ?? 'new-decision'} decision={editor.decision} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} ownerName={ownerName} saved={saved} cancel={() => setEditor(null)} /> : <ItemForm key={editor.item?.id ?? editorKind} kind={editorKind} item={editor.item} initialText={editor.initialText} initialDraft={editor.initialDraft} companyId={company!.id} ownerId={ownerId} people={owners} initialFile={editor.initialFile} saved={saved} cancel={() => setEditor(null)} />}
         </RoleDrawer>}
 
-        <div className="vr-filters">
+        {tab === 'handled' && <div className="vr-kind-filter" role="group" aria-label="Work types">{([['all', 'All'], ['responsibility', 'Responsibilities'], ['workstream', 'Projects']] as const).map(([value, title]) => <button type="button" key={value} aria-pressed={typeFilter === value} onClick={() => {setTypeFilter(value); setPage(0)}}>{title}</button>)}</div>}
+        {(Boolean(current?.total) || Boolean(query) || archived || decisionStatus !== 'all' || page > 0) && <div className="vr-filters">
           <div className="vr-search">
             <Input
               label="Search titles"
@@ -556,7 +512,7 @@ function RoleRecordContent() {
             />
             Show archived records
           </label>
-        </div>
+        </div>}
 
         <div className="vr-records-grid">
           <div
@@ -595,13 +551,13 @@ function RoleRecordContent() {
                     ? 'Try another title or change your filters.'
                     : archived
                       ? 'Archived records will appear here when you have them.'
-                      : own && tab === 'responsibility' && !canManage
+                      : own && tab === 'handled' && typeFilter === 'responsibility' && !canManage
                         ? 'Your manager will add your responsibilities.'
                         : own
-                        ? guides[tab].empty
+                        ? guides[tab === 'handled' ? 'workstream' : tab].empty
                         : 'This team member has not added records in this section.'}
                 </p>
-
+                {own && !query && !archived && <Link to="/app/capture">Or capture an email and we will fill this in.</Link>}
               </div>
             ) : (
               <>
@@ -609,6 +565,7 @@ function RoleRecordContent() {
                   {current.items.map(item => (
                     <li key={item.id}>
                       <article>
+                        {tab === 'handled' && <span className="vr-kind-badge">{item.kind === 'responsibility' ? 'Responsibility' : 'Project'}</span>}
                         <h3>{item.title}</h3>
 
                         {item.details && (
@@ -652,7 +609,7 @@ function RoleRecordContent() {
                         </WebLink>
                       </article>
 
-                      {canEdit && (
+                      {canEdit && (item.kind !== 'responsibility' || canManage) && (
                         <div className="form-actions">
                           {!archived && (
                             <Button
@@ -706,7 +663,7 @@ function RoleRecordContent() {
 
                         <p>
                           {decision.workstream_id
-                            ? `Open work: ${
+                            ? `Project: ${
                                 decision.workstream?.title ??
                                 'Linked open work'
                               }${
@@ -838,4 +795,8 @@ function DocumentFile({path}: {path: string}) {
   const [busy,setBusy]=useState(false)
   useEffect(()=>{if(!url)return;const timer=setTimeout(()=>setUrl(''),55000);return()=>clearTimeout(timer)},[url])
   return <div className="form-actions">{url ? <a href={url} target="_blank" rel="noopener noreferrer">Open uploaded document</a> : <Button variant="secondary" disabled={busy} onClick={async()=>{setBusy(true);setError('');const {data,error}=await supabase.storage.from('role-documents').createSignedUrl(path,60);setBusy(false);if(error)setError('Could not open the document. Please retry.');else setUrl(data.signedUrl)}}>{busy?'Preparing document…':'View uploaded document'}</Button>}{error && <p role="alert">{error}</p>}</div>
+}
+
+function HandleType({value, change, responsibilities}: {value: 'responsibility' | 'workstream'; change: (value: 'responsibility' | 'workstream') => void; responsibilities: boolean}) {
+  return <div className="field vr-handle-type"><label htmlFor="handle-type">Is this a responsibility or a project?</label><select id="handle-type" value={value} onChange={event => change(event.target.value as 'responsibility' | 'workstream')}>{responsibilities && <option value="responsibility">Responsibility</option>}<option value="workstream">Project</option></select></div>
 }

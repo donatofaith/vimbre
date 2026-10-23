@@ -1,6 +1,6 @@
 import type { StructuredDraft } from '../ai/structured-output'
 import { AIDraftPanel } from '../ai/AIDraftPanel'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database'
 import { localDate, recordError, safeRecordUrl } from './record-utils'
 import type { ItemKind } from './record-utils'
+import { parseContactSignature } from './contact-signature'
 import { recordExamples } from './record-examples'
 export type RoleItem = Database['public']['Tables']['role_items']['Row']
 export type Decision = Database['public']['Tables']['decisions']['Row'] & { workstream?: { title: string; deleted_at: string | null } | null }
@@ -24,6 +25,8 @@ export function TextField({ label, name, value = '', required = false, maxLength
 
 export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people, initialText, initialDraft, initialFile }: Context & { initialDraft?: StructuredDraft; initialFile?: File; initialText?: string; item?: RoleItem; kind: ItemKind; people: {id: string; full_name: string}[] }) {
   const example = recordExamples[kind]
+  const formRef = useRef<HTMLFormElement>(null)
+  const [signatureOpen, setSignatureOpen] = useState(false), [signature, setSignature] = useState(''), [signatureMessage, setSignatureMessage] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   const [file, setFile] = useState<File | null>(initialFile ?? null)
   // Retain a completed upload on a failed database save so retries never duplicate it.
@@ -62,13 +65,13 @@ export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people
   }
   const titleLabel = kind === 'external_contact' || kind === 'workstream' ? 'Name' : kind === 'recurring_deadline' ? 'What is due' : 'Title'
   const detailLabel = kind === 'responsibility' ? 'What it involves' : kind === 'workstream' ? 'What is happening' : kind === 'external_contact' ? 'What they help with' : kind === 'document' ? 'What it is for' : 'Note'
-  return <section className="record-editor" aria-label="Role item editor"><h2>{item ? `Edit ${headings[kind]}` : `Add ${headings[kind]}`}</h2>{initialDraft && <p className="notice">Draft from Vimbre AI. Check before saving.</p>}<form className="auth-form" onSubmit={save}>
+  return <section className="record-editor" aria-label="Role item editor"><h2>{item ? `Edit ${headings[kind]}` : `Add ${headings[kind]}`}</h2>{initialDraft && <p className="notice">Draft from Vimbre AI. Check before saving.</p>}<form ref={formRef} className="auth-form" onSubmit={save}>
     <Input autoFocus label={titleLabel} placeholder={example.title} name="title" defaultValue={item?.title ?? initialDraft?.title} required maxLength={200} />
-    {kind === 'external_contact' && <Input label="Organisation" name="organisation" maxLength={200} defaultValue={item?.organisation ?? initialDraft?.organisation} placeholder="e.g. Acme Supplies" />}
+    {kind === 'external_contact' && <><Button variant="secondary" onClick={() => setSignatureOpen(value => !value)}>Paste an email signature</Button>{signatureOpen && <div className="vr-signature"><label htmlFor="email-signature">Email signature</label><textarea id="email-signature" value={signature} onChange={event => setSignature(event.target.value)} maxLength={5000} rows={4} /><Button variant="secondary" disabled={!signature.trim()} onClick={() => {const parsed = parseContactSignature(signature); const name = formRef.current?.elements.namedItem('title'); const contact = formRef.current?.elements.namedItem('contact_details'); if (name instanceof HTMLInputElement && !name.value.trim()) name.value = parsed.name; if (contact instanceof HTMLInputElement && !contact.value.trim()) contact.value = parsed.contact; setSignatureMessage(parsed.contact ? 'Check the contact details before saving.' : 'No email or phone found. Add the contact details below.')}}>Fill contact fields</Button>{signatureMessage && <p role="status">{signatureMessage}</p>}</div>}<Input label="Organisation" name="organisation" maxLength={200} defaultValue={item?.organisation ?? initialDraft?.organisation} placeholder="e.g. Acme Supplies" /></>}
     <TextField label={detailLabel} name="details" placeholder={example.details} value={item?.details ?? initialDraft?.details ?? initialText} />
     {kind === 'responsibility' && <><div className="field"><label htmlFor="recurrence">How often</label><select id="recurrence" name="recurrence" defaultValue={item?.recurrence ?? initialDraft?.recurrence ?? 'As needed'}>{item?.recurrence && !['Daily','Weekly','Monthly','As needed'].includes(item.recurrence) && <option>{item.recurrence}</option>}{['Daily','Weekly','Monthly','As needed'].map(value => <option key={value}>{value}</option>)}</select></div><div className="field"><label htmlFor="backup">Backup person (optional)</label><select name="backup_person_id" id="backup" defaultValue={item?.backup_person_id ?? ''}><option value="">No backup person</option>{item?.backup_person_id && !people.some(p => p.id === item.backup_person_id) && <option value={item.backup_person_id}>Current backup person</option>}{people.filter(p => p.id !== ownerId).map(p => <option value={p.id} key={p.id}>{p.full_name}</option>)}</select></div></>}
     {kind === 'workstream' && <><div className="field"><label htmlFor="work-status">Status</label><select id="work-status" name="work_status" defaultValue={item?.work_status ?? initialDraft?.work_status ?? 'in_progress'}><option value="in_progress">In progress</option><option value="waiting">Waiting</option><option value="on_hold">On hold</option><option value="done">Done</option></select></div><TextField label="Next step" name="next_step" value={item?.next_step ?? initialDraft?.next_step} placeholder="e.g. Share the review notes with Operations" /></>}
-    {kind === 'external_contact' && <><Input label="Email or phone" name="contact_details" maxLength={400} defaultValue={item?.contact_details || initialDraft?.contact_details || [item?.contact_email, item?.contact_phone].filter(Boolean).join(' · ')} placeholder="e.g. ada@example.com" /><TextField label="What to know before contacting them" name="contact_context" value={item?.contact_context ?? initialDraft?.contact_context} /></>}
+    {kind === 'external_contact' && <><Input label="Email or phone" name="contact_details" required maxLength={400} defaultValue={item?.contact_details || initialDraft?.contact_details || [item?.contact_email, item?.contact_phone].filter(Boolean).join(' · ')} placeholder="e.g. ada@example.com" /><TextField label="What to know before contacting them" name="contact_context" value={item?.contact_context ?? initialDraft?.contact_context} /></>}
     {kind === 'document' && <><div className="field"><label htmlFor="document-link">Link (optional)</label><input id="document-link" name="url" type="url" placeholder={example.url} maxLength={2048} defaultValue={item?.url ?? initialDraft?.url ?? ''} /><label htmlFor="document-file">Or upload a file</label><input id="document-file" type="file" accept=".pdf,.txt,.png,.jpg,.jpeg,.docx,.xlsx" onChange={event => { setFile(event.target.files?.[0] ?? null); setUploaded(null) }} /><p className="field-hint">PDF, text, images, Word or Excel. Up to 10 MB.{item?.file_path && !file ? ' A file is already attached.' : ''}{file ? ` Selected file: ${file.name}.` : ''}</p></div></>}
     {kind === 'recurring_deadline' && <><Input label="How often" name="recurrence" placeholder="e.g. First Friday of each month" maxLength={200} defaultValue={item?.recurrence ?? initialDraft?.recurrence ?? ''} required /><Input label="Next due date" name="due_date" type="date" defaultValue={item?.due_date ?? initialDraft?.due_date ?? ''} required /></>}
     {error && <p role="alert" className="field-error">{error}</p>}<div className="form-actions"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button><Button variant="secondary" disabled={busy} onClick={cancel}>Cancel</Button></div>
