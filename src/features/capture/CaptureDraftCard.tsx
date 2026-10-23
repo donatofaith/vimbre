@@ -1,5 +1,6 @@
-import {useState} from 'react'
+import {useEffect,useState} from 'react'
 import type {FormEvent} from 'react'
+import {supabase} from '../../lib/supabase'
 import {useAuth} from '../auth/AuthProvider'
 import {Input} from '../../components/ui/Input'
 import {Button} from '../../components/ui/Button'
@@ -12,6 +13,9 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
  const {profile}=useAuth()
  const [kind,setKind]=useState(draft?.kind??'action'),[editing,setEditing]=useState(!accepted),[error,setError]=useState('')
  const p=draft?.payload??{},v=(key:string)=>p[key]??''
+ const [owner,setOwner]=useState(v('owner_id')||profile!.id),[choices,setChoices]=useState(options),[choiceError,setChoiceError]=useState(false)
+ useEffect(()=>{if(owner===profile!.id)return;let alive=true;void supabase.rpc('capture_pipeline',{p_operation:'options',p_data:{owner_id:owner}}).then(({data,error})=>{if(alive){setChoiceError(Boolean(error));if(!error&&data&&typeof data==='object'&&'today' in data)setChoices(data as unknown as CaptureOptions)}});return()=>{alive=false}},[owner,profile])
+ const activeChoices=owner===profile!.id?options:choices
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string,string>;try{await accept({...data,kind});setEditing(false)}catch{setError('This draft could not be updated. Your changes are still here.')}}
  return <li className="vc-review-card" data-accepted={accepted}>
   <form onSubmit={e=>void submit(e)}><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
@@ -22,11 +26,11 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
    <Input label="Title" name="title" defaultValue={v('title')} placeholder="e.g. Share the supplier review notes" maxLength={200} required/>
    <label className="field"><span>{kind==='decision'?'Why':'Details'}</span><textarea name={kind==='decision'?'reason':'details'} defaultValue={v(kind==='decision'?'reason':'details')} required={kind==='decision'} rows={3} maxLength={5000}/></label>
    {kind==='decision'&&<><div className="form-grid"><Input label="Decision date" name="decided_on" type="date" defaultValue={v('decided_on')||options.today} required/><Input label="Who decided?" name="decided_by" defaultValue={v('decided_by')} maxLength={200}/></div><Input label="Next step" name="next_step" defaultValue={v('next_step')} maxLength={5000}/></>}
-   <div className="form-grid"><label className="field"><span>Owner</span><select name="owner_id" defaultValue={v('owner_id')||profile!.id}><option value={profile!.id}>Me</option>{people.filter(r=>r.id!==profile!.id).map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label><ChoiceField label="Record" name="record_id" rows={options.records} value={v('record_id')}/></div>
+   <div className="form-grid"><label className="field"><span>Owner</span><select name="owner_id" value={owner} onChange={e=>setOwner(e.target.value)}><option value={profile!.id}>Me</option>{people.filter(r=>r.id!==profile!.id).map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label><ChoiceField label="Record" name="record_id" key={'record:'+owner} rows={activeChoices.records} value={owner===(v('owner_id')||profile!.id)?v('record_id'):''}/></div>
    {kind==='action'&&<><div className="form-grid"><Input label="Due date" name="due_date" type="date" defaultValue={v('due_date')} required/><Input label="Due time (optional)" name="due_time" type="time" defaultValue={v('due_time')}/></div><div className="form-grid"><label className="field"><span>Priority</span><select name="priority" defaultValue={v('priority')||'normal'}><option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option></select></label><label className="field"><span>Reminder</span><select name="reminder_option" defaultValue={v('reminder_option')||'at_time'}><option value="at_time">At due time</option><option value="30_minutes">30 minutes before</option><option value="1_hour">1 hour before</option><option value="day_before">Day before</option></select></label></div></>}
-   <div className="form-grid"><ChoiceField label="Department" name="department_id" rows={options.departments} value={v('department_id')}/><ChoiceField label="External contact" name="external_contact_id" rows={options.contacts} value={v('external_contact_id')}/></div>
+   <div className="form-grid"><ChoiceField label="Department" name="department_id" rows={options.departments} value={v('department_id')}/><ChoiceField label="External contact" name="external_contact_id" key={'contact:'+owner} rows={activeChoices.contacts} value={owner===(v('owner_id')||profile!.id)?v('external_contact_id'):''}/></div>
    {kind==='contact'&&<><Input label="Contact email" name="contact_email" type="email" defaultValue={v('contact_email')}/><Input label="Contact phone" name="contact_phone" defaultValue={v('contact_phone')}/></>}
-   {error&&<p className="field-error" role="alert">{error}</p>}
+   {choiceError&&<p className="field-error" role="alert">This owner’s Records and contacts could not be loaded. Choose the owner again.</p>}{error&&<p className="field-error" role="alert">{error}</p>}
    <div className="form-actions"><Button type="submit">Accept</Button><Button variant="secondary" onClick={discard}>Discard</Button>{cancel&&<Button variant="secondary" onClick={cancel}>Cancel</Button>}</div>
   </fieldset></>}
   </form>

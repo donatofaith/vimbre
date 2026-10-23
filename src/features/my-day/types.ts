@@ -3,6 +3,8 @@ export type Task = {
   priority?: "high" | "normal" | "low";
   pinned_at?: string | null;
   rank?: number;
+  capture_id?: string | null;
+  capture_record_id?: string | null;
   source_role_id?: string | null;
   recurring_id?: string | null;
   source_role_kind?: string | null;

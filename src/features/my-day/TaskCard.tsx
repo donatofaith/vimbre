@@ -64,6 +64,7 @@ export function TaskRecord({
             <p className="record-text">{task.completion_note}</p>
           </>
         )}
+        {task.capture_record_id && <Link to={`/app/role-record?section=workstream&record=${task.capture_record_id}`}>Open linked Record</Link>}
         <h3>Status history</h3>
         {error ? (
           <p role="alert">

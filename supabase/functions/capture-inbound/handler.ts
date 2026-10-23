@@ -1,4 +1,4 @@
-type Receive = (value:{address:string;sender:string;messageHash:string;title:string;text:string})=>Promise<void>
+type Receive = (value:{address:string;sender:string;messageHash:string;title:string;text:string;sentDate?:string})=>Promise<void>
 async function digest(value:string){return new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))}
 async function matches(actual:string,expected:string){const a=await digest(actual),b=await digest(expected);let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0}
 async function body(request:Request){
@@ -28,7 +28,7 @@ export function inboundHandler(secret:string|undefined,receive:Receive){return a
    const recipients=item.Recipients.map((r:unknown)=>typeof r==='string'?r:r&&typeof r==='object'&&'Address' in r?r.Address:null)
    if(recipients.some((r:unknown)=>typeof r!=='string'||r.length>320))return reply(400)
    const hash=Array.from(await digest(item.MessageId),byte=>byte.toString(16).padStart(2,'0')).join('')
-   for(const address of new Set<string>(recipients))items.push({address,sender:item.From.Address,messageHash:hash,title:typeof item.Subject==='string'?item.Subject.slice(0,200):'Forwarded email',text})
+   for(const address of new Set<string>(recipients))items.push({address,sender:item.From.Address,messageHash:hash,title:typeof item.Subject==='string'?item.Subject.slice(0,200):'Forwarded email',text,...(typeof item.Date==='string'?{sentDate:item.Date}:{})})
   }
   // Unknown addresses and senders return the same response; no mailbox enumeration.
   try{for(const item of items)await receive(item)}catch{return reply(503)}

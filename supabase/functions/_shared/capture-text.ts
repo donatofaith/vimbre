@@ -3,7 +3,9 @@ export function prepareCaptureText(raw: string) {
   const lines = raw.replace(/\r\n?/g, '\n').split('\n')
   const kept: string[] = []
   for (const line of lines) {
-    if (/^\s*(?:On .{3,200} wrote:|From:\s|Sent from my\b|_{4,}|-{2,}\s*Original Message|CONFIDENTIAL(?:ITY)?(?: NOTICE)?\b|Disclaimer:|--\s*$)/i.test(line)) break
+    if (/^\s*From:\s/i.test(line)) { if(kept.some(l=>l.trim()))break;continue }
+    if (!kept.some(l=>l.trim()) && /^\s*(?:To|Subject|Sent|Date|Cc):/i.test(line)) continue
+    if (/^\s*(?:On .{3,200} wrote:|Sent from my\b|_{4,}|-{2,}\s*Original Message|CONFIDENTIAL(?:ITY)?(?: NOTICE)?\b|Disclaimer:|--\s*$)/i.test(line)) break
     if (/^\s*>/.test(line)) continue
     kept.push(line)
   }

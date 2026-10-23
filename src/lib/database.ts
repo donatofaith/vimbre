@@ -20,6 +20,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
+      capture_notifications: {Args:{p_seen?:string|null};Returns:Json}
       capture_pipeline: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}
       myday_people: {Args:{p_query?:string;p_page?:number};Returns:Json}
       myday_task_history: {Args:{p_id:string};Returns:Json}
