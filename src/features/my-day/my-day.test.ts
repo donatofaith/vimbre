@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { dateInZone, addDays, parseDay } from "./types";
+import { dateInZone, addDays, parseDay, taskDate } from "./types";
+import type { Task } from "./types";
 import { morningTomorrow } from "./reminder-time";
 describe("personal task dates", () => {
   it("uses the selected timezone across midnight", () => {
@@ -35,4 +36,14 @@ describe("personal task dates", () => {
       }),
     ).toBeNull();
   });
+});
+
+it("shows timed tasks on the saved timezone date across midnight", () => {
+ const task={due_date:"2026-10-22",due_time:"23:30",due_at:"2026-10-22T23:30:00Z"} as Task;
+ expect(taskDate(task,"Africa/Lagos")).toContain("23 Oct 2026");
+ expect(taskDate(task,"America/New_York")).toContain("22 Oct 2026");
+});
+it("keeps a date-only deadline on its calendar day", () => {
+ const task={due_date:"2026-10-22",due_time:null,due_at:"2026-10-22T09:00:00Z"} as Task;
+ expect(taskDate(task,"Pacific/Kiritimati")).toBe("22 Oct 2026");
 });

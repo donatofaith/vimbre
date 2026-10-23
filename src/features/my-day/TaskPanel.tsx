@@ -68,6 +68,7 @@ export function TaskPanel({
         due_time: time,
         details: get("details"),
         status: get("status"),
+        priority: get("priority"),
         reminder_option: get("reminder_option"),
         completion_note: get("completion_note"),
         source_url: url,
@@ -98,7 +99,7 @@ export function TaskPanel({
         <form className="auth-form" onSubmit={save}>
           <Input
             autoFocus
-          data-autofocus=""
+            data-autofocus=""
             label="What needs to be done?"
             name="title"
             required
@@ -138,6 +139,18 @@ export function TaskPanel({
             value={time}
             onChange={(e) => setTime(e.target.value)}
           />
+          <div className="field">
+            <label htmlFor="md-priority">Priority</label>
+            <select
+              id="md-priority"
+              name="priority"
+              defaultValue={task?.priority ?? "normal"}
+            >
+              <option value="high">High</option>
+              <option value="normal">Normal</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
           <ForPicker
             suggestion={draft?.department_name || draft?.external_contact_name}
             value={forValue}

@@ -51,6 +51,7 @@ const { randomUUID } = require('node:crypto');
         }
       }
       else if (url.pathname.endsWith('/decisions')) body = url.searchParams.get('owner_id')===`eq.${colleague.id}` ? [{...decision,id:randomUUID(),owner_id:colleague.id,title:'Confirmed team decision',reason:'Approved by Finance.',decided_by:'Finance',decided_on:'2026-10-16',status:'live',source_url:null}] : [decision];
+      else if(url.pathname.endsWith('/team_member_tasks')){let rows=actions.filter(t=>t.owner_id===args.p_owner&&(Boolean(t.deleted_at)===(args.p_view==='archived'))&&(args.p_view==='done'?t.status==='done':t.status!=='done'));body={rows:rows.map(({id,title,status,due_date,completed_at,deleted_at})=>({id,title,status,due_date,completed_at,deleted_at,department_name:'Operations'})),count:rows.length};}
       else if (url.pathname.endsWith('/actions')) {
         if (['POST', 'PATCH'].includes(req.method())) {
           if (failSave) { status = 500; body = { message: 'Test save failure' }; }
@@ -103,7 +104,7 @@ const { randomUUID } = require('node:crypto');
       await trigger.click();
       const dialog=page.getByRole('dialog',{name:'Team visibility',exact:true});await dialog.waitFor();
       assert.equal(page.url(),before,'visibility must keep the current page');
-      await dialog.getByText('Managers can read responsibilities, open work, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records within their department. HR Admins can read these across the company.',{exact:true}).waitFor();
+      await dialog.getByText('Managers see tasks within their department. Company administrators see tasks across the company.',{exact:true}).waitFor();
       await dialog.getByRole('button',{name:'Close access details',exact:true}).click();
       assert.equal(await dialog.isVisible(),false);assert(await trigger.evaluate(el=>document.activeElement===el));
       await trigger.click();await page.keyboard.press('Escape');assert.equal(await dialog.isVisible(),false);
@@ -112,7 +113,7 @@ const { randomUUID } = require('node:crypto');
     await page.setViewportSize({width:360,height:800});
     await page.getByRole('link', { name: colleague.full_name, exact: true }).click(); await page.getByRole('heading', { name: `${colleague.full_name}’s tasks`, exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Add task', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: /^Complete / }).count(), 0);
-    await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Colleague completed report', exact: true }).waitFor(); await page.getByText('Figures checked and report sent.', { exact: false }).waitFor();
+    await page.getByRole('button', { name: 'Recently done', exact: true }).click(); await page.getByRole('heading', { name: 'Colleague completed report', exact: true }).waitFor(); assert.equal(await page.getByText('Figures checked and report sent.', { exact: false }).count(),0,'Private task outcomes stay with the owner');
     assert.equal(await page.getByRole('button', { name: /^Edit / }).count(), 0); await page.screenshot({ path: '/tmp/vimbre-team-activity-mobile.png', fullPage: true, animations: 'disabled' }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth));
     await page.getByRole('heading', { name: 'Confirmed team decision', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Back to team overview', exact: true }).click();

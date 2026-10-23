@@ -4,26 +4,22 @@ import { Button } from "../../components/ui/Button";
 import { WorkspaceIcon } from "../../components/ui/WorkspaceIcon";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../auth/AuthProvider";
-import { StructuredAI } from "../ai/StructuredAI";
-import type { StructuredDraft } from "../ai/structured-output";
-import { RoleDrawer } from "../records/RoleDrawer";
-import { CaptureSummary, RoleChecklist } from "../workspace/MyDayOverview";
+import { CaptureSummary } from "../workspace/MyDayOverview";
 import { useMyDaySummary } from "../workspace/useMyDaySummary";
 import { WorkVisibilityDetails } from "../workspace/WorkVisibilityDetails";
-import { AIDraftPanel } from "../ai/AIDraftPanel";
-import { loadOwnRecords } from "../ai/load-records";
 import { TaskPanel } from "./TaskPanel";
 import { ForPicker } from "./ForPicker";
 import { ContextPanel } from "./ContextPanel";
 import { ReminderPanel } from "./ReminderPanel";
+import { TaskCard, TaskRecord } from "./TaskCard";
+import { RoleTaskPicker } from "./RoleTaskPicker";
 import { changeTask, taskError } from "./api";
 import {
+  dateInZone,
   greetingInZone,
   parseDay,
-  statuses,
   sourceLabels,
-  taskDate,
-  dateInZone,
+  statuses,
 } from "./types";
 import type { DayData, Task, ForOption } from "./types";
 import "./my-day.css";
@@ -35,88 +31,105 @@ const filters = [
   ["archived", "Archived"],
 ] as const;
 export function MyDayPage() {
-  const [params] = useSearchParams();
   const { profile } = useAuth();
-  return <MyDayContent key={`${profile!.id}:${params.get("task") ?? ""}`} />;
+  return <MyDayContent key={profile!.id} />;
 }
 function MyDayContent() {
-  const { profile, company } = useAuth(),
-    [params] = useSearchParams();
-  const [clock, setClock] = useState(() => new Date());
-  const taskId = params.get("task") ?? "";
-  const linked = params.get("decision") ?? "";
+  const { profile } = useAuth(),
+    [params] = useSearchParams(),
+    taskId = params.get("task") ?? "",
+    linked = params.get("decision") ?? "";
   const [filter, setFilter] = useState(taskId || linked ? "all" : "today"),
     [query, setQuery] = useState(""),
     [search, setSearch] = useState(""),
     [forValue, setFor] = useState<ForOption | null>(null),
+    [source, setSource] = useState(""),
+    [priority, setPriority] = useState(""),
     [page, setPage] = useState(0),
-    [revision, setRevision] = useState(0);
+    [revision, setRevision] = useState(0),
+    [clock, setClock] = useState(() => new Date());
   const [layout, setLayout] = useState<"list" | "board">(() => {
     try {
       const v = localStorage.getItem("vimbre:myday-view");
       if (v === "list" || v === "board") return v;
     } catch {}
-    return window.matchMedia("(max-width: 767px)").matches ? "list" : "board";
+    return "list";
   });
   const [result, setResult] = useState<{
       key: string;
       data: DayData | null;
       error: boolean;
     } | null>(null),
-    [editor, setEditor] = useState<{
-      task?: Task;
-      draft?: StructuredDraft;
-    } | null>(null),
-    [aiOpen, setAI] = useState(false),
-    [drafts, setDrafts] = useState<StructuredDraft[] | null>(null);
-  const [context, setContext] = useState<Task | null>(null),
+    [editor, setEditor] = useState<{ task?: Task } | null>(null),
+    [context, setContext] = useState<Task | null>(null),
     [reminder, setReminder] = useState<Task | null>(null),
-    [summaryOpen, setSummaryOpen] = useState(false),
-    [dismissedAction, setDismissedAction] = useState(false);
-  const [busy, setBusy] = useState(""),
+    [record, setRecord] = useState<Task | null>(null),
+    [rolePicker, setRolePicker] = useState(false),
+    [dismissed, setDismissed] = useState(false),
+    [busy, setBusy] = useState(""),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
   const access = useRef<HTMLDialogElement>(null),
-    dragging = useRef("");
-  useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(() => setMessage(""), 5000);
-    return () => clearTimeout(timer);
-  }, [message]);
+    dragging = useRef(""),
+    pending = useRef(false);
   const summary = useMyDaySummary(profile!.id, revision, true);
-  const key = `${filter}:${search}:${forValue?.kind}:${forValue?.id}:${page}`;
-  const current = result?.key === key ? result : null;
-  const data = current?.data ?? null;
-  const zone = data?.timezone ?? "Europe/London";
-  const today = data?.today ?? dateInZone(zone);
+  const key = JSON.stringify([
+      filter,
+      search,
+      forValue,
+      source,
+      priority,
+      page,
+      taskId,
+      linked,
+    ]),
+    current = result?.key === key ? result : null,
+    data = current?.data ?? null;
+  const zone =
+      data?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    today = data?.today ?? dateInZone(zone);
   const refresh = () => {
     setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(""), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
+  useEffect(() => {
+    const t = setTimeout(() => {
       setSearch(query);
       setPage(0);
     }, 250);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, [query]);
   useEffect(() => {
-    let alive = true;
+    let live = true;
+    let version = 0;
     const load = async () => {
-      const { data, error } = await supabase.rpc("myday_tasks", {
-        p_filter: filter,
-        p_query: search,
-        p_for: forValue ? `${forValue.kind}:${forValue.id}` : "",
-        p_page: page,
-        p_task: taskId || null,
-        p_decision: linked || null,
-      });
-      if (alive)
-        setResult({
-          key,
-          data: parseDay(data),
-          error: Boolean(error) || !parseDay(data),
+      const request = ++version;
+      try {
+        const { data, error } = await supabase.rpc("myday_tasks", {
+          p_filter: filter,
+          p_query: search,
+          p_for: forValue ? `${forValue.kind}:${forValue.id}` : "",
+          p_source: source,
+          p_priority: priority,
+          p_page: page,
+          p_task: taskId || null,
+          p_decision: linked || null,
         });
+        if (live && request === version)
+          setResult({
+            key,
+            data: parseDay(data),
+            error: Boolean(error) || !parseDay(data),
+          });
+      } catch {
+        if (live && request === version)
+          setResult({ key, data: null, error: true });
+      }
     };
     void load();
     const onReturn = () => {
@@ -125,380 +138,187 @@ function MyDayContent() {
         void load();
       }
     };
-    const timer = setInterval(onReturn, 60000);
+    const t = setInterval(onReturn, 60000);
     window.addEventListener("focus", onReturn);
     window.addEventListener("vimbre:work-changed", onReturn);
     document.addEventListener("visibilitychange", onReturn);
     return () => {
-      alive = false;
-      clearInterval(timer);
+      live = false;
+      clearInterval(t);
       window.removeEventListener("focus", onReturn);
       window.removeEventListener("vimbre:work-changed", onReturn);
       document.removeEventListener("visibilitychange", onReturn);
     };
-  }, [key, filter, search, forValue, page, taskId, linked, revision]);
+  }, [
+    key,
+    filter,
+    search,
+    forValue,
+    source,
+    priority,
+    page,
+    taskId,
+    linked,
+    revision,
+  ]);
   useEffect(() => {
     if (params.get("visibility") === "manager") access.current?.showModal();
   }, [params]);
-  async function act(
-    task: Task,
-    operation: string,
-    values: Record<string, unknown>,
-  ) {
-    if (busy) return;
+  async function act(task: Task, op: string, values: Record<string, unknown>) {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(task.id);
     setError("");
     try {
-      await changeTask(task.id, operation, values);
+      await changeTask(task.id, op, values);
       setMessage(
-        operation === "status"
-          ? "Task updated."
-          : operation === "archive"
-            ? "Task archived."
-            : "Task restored.",
+        op === "pin"
+          ? values.pinned
+            ? "Task pinned."
+            : "Task unpinned."
+          : "Task updated.",
       );
-      if (operation === "status" && values.status === "done")
-        setContext({ ...task, status: "done" });
       refresh();
     } catch (e) {
-      setError(taskError(e));
+      setError(
+        op === "pin" && (e as { code?: string }).code === "22023"
+          ? "You can pin up to three unfinished tasks. Unpin one to pin another."
+          : taskError(e),
+      );
     } finally {
       setBusy("");
+      pending.current = false;
     }
   }
-  function changeLayout(value: "board" | "list") {
-    setLayout(value);
-    try {
-      localStorage.setItem("vimbre:myday-view", value);
-    } catch {}
-  }
-  const rows = data?.rows ?? [];
-  const selected = rows.find((row) => row.id === taskId);
-  const requestedReminder =
-    !dismissedAction && params.has("task_action") && selected?.status!=="done" && !selected?.deleted_at ? selected : null;
-  function taskCard(task: Task) {
+  const rows = data?.rows ?? [],
+    allRows = [...rows, ...(data?.done_today ?? []), ...(data?.upcoming ?? [])],
+    selected = rows.find((t) => t.id === taskId),
+    requested =
+      !dismissed &&
+      params.has("task_action") &&
+      selected?.status !== "done" &&
+      !selected?.deleted_at
+        ? selected
+        : null;
+  function card(task: Task, rank?: number) {
     return (
-      <article
-        className="md-task-card"
+      <TaskCard
         key={task.id}
-        draggable={!task.deleted_at && !busy}
-        onDragStart={(e) => {
-          dragging.current = task.id;
-          e.dataTransfer.setData("text/plain", task.id);
-          e.dataTransfer.effectAllowed = "move";
+        task={task}
+        zone={zone}
+        now={clock}
+        rank={rank}
+        initialOpen={task.id === taskId}
+        busy={Boolean(busy)}
+        act={(t, o, v) => void act(t, o, v)}
+        edit={(t) => setEditor({ task: t })}
+        remind={setReminder}
+        context={setContext}
+        record={setRecord}
+        drag={(id) => {
+          dragging.current = id;
         }}
-        onDragEnd={() => {
-          dragging.current = "";
-        }}
-      >
-        <div className="md-card-top">
-          <span
-            className={`md-source md-source-${task.source_kind ?? "manual"}`}
-          >
-            <WorkspaceIcon
-              name={
-                task.source_kind === "email"
-                  ? "capture"
-                  : task.source_kind === "recurring_deadline"
-                    ? "calendar"
-                    : "record"
-              }
-            />
-            {sourceLabels[task.source_kind ?? "manual"]}
-          </span>
-          {task.status !== "done" &&
-            task.due_at &&
-            new Date(task.due_at) < clock && (
-              <span className="md-overdue">Overdue</span>
-            )}
-        </div>
-        <button className="md-task-title" onClick={() => setEditor({ task })}>
-          {task.title}
-        </button>
-        {(task.department_name || task.external_contact_name) && (
-          <span className="md-for-chip">
-            {task.department_name || task.external_contact_name}
-          </span>
-        )}
-        <div className="md-card-date">
-          <WorkspaceIcon name="calendar" />
-          <time dateTime={task.due_at ?? task.due_date}>
-            {taskDate(task, zone)}
-          </time>
-        </div>
-        {task.details && <p className="md-card-details">{task.details}</p>}
-        {task.deleted_at ? (
-          <Button
-            variant="secondary"
-            disabled={Boolean(busy)}
-            onClick={() => void act(task, "restore", {})}
-          >
-            Restore task
-          </Button>
-        ) : (
-          <>
-            <div className="md-card-controls">
-              <label className="sr-only" htmlFor={`status-${task.id}`}>
-                Status for {task.title}
-              </label>
-              <select
-                id={`status-${task.id}`}
-                aria-label={`Status for ${task.title}`}
-                value={task.status}
-                disabled={Boolean(busy)}
-                onChange={(e) =>
-                  void act(task, "status", { status: e.target.value })
-                }
-              >
-                {statuses.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              {task.status !== "done" && (
-                <button
-                  className="md-remind-button"
-                  onClick={() => setReminder(task)}
-                >
-                  <WorkspaceIcon name="bell" />
-                  Remind me
-                </button>
-              )}
-            </div>
-            <div className="md-card-bottom">
-              {task.status === "done" ? (
-                task.context_added_at ? (
-                  <span className="md-context-added">
-                    <WorkspaceIcon name="tick" />
-                    Added to context
-                  </span>
-                ) : (
-                  <button
-                    className="md-text-button"
-                    onClick={() => setContext(task)}
-                  >
-                    Add to context
-                  </button>
-                )
-              ) : (
-                <button
-                  className="md-text-button"
-                  onClick={() => void act(task, "status", { status: "done" })}
-                  disabled={Boolean(busy)}
-                >
-                  Mark done
-                </button>
-              )}
-              <button
-                className="md-text-button md-muted"
-                onClick={() => {
-                  if (window.confirm(`Archive “${task.title}”?`))
-                    void act(task, "archive", {});
-                }}
-                disabled={Boolean(busy)}
-              >
-                Archive
-              </button>
-            </div>
-          </>
-        )}
-      </article>
+      />
     );
   }
-  const taskArea = (
-    <section className="md-work-section" aria-labelledby="md-tasks-heading">
-      <div className="md-section-heading">
-        <h2 id="md-tasks-heading">Your tasks</h2>
-        <button
-          className="md-visibility"
-          onClick={() => access.current?.showModal()}
-        >
-          <WorkspaceIcon name="eye" />
-          What my manager can see
-        </button>
-      </div>
-      <div className="md-toolbar">
-        <nav className="md-filters" aria-label="Task views">
-          {filters.map(([value, label]) => (
-            <button
-              key={value}
-              aria-pressed={filter === value}
-              onClick={() => {
-                setFilter(value);
-                setPage(0);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="md-view-toggle" aria-label="Task layout">
-          {(["list", "board"] as const).map((value) => (
-            <button
-              key={value}
-              aria-pressed={layout === value}
-              onClick={() => changeLayout(value)}
-            >
-              {value === "list" ? "List" : "Board"}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="md-filter-row">
-        <div className="field">
-          <label htmlFor="md-search">Search tasks</label>
-          <input
-            id="md-search"
-            type="search"
-            placeholder="Search your tasks"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <ForPicker
-          filter
-          value={forValue}
-          onChange={(v) => {
-            setFor(v);
-            setPage(0);
-          }}
-        />
-      </div>
-      {(taskId || linked) && (
-        <Link className="md-text-button" to="/app">
-          All tasks
-        </Link>
-      )}
-      {!current ? (
-        <div className="md-empty" role="status">
-          Loading tasks…
-        </div>
-      ) : current.error ? (
-        <div className="md-empty">
-          <p role="alert">Tasks could not be loaded.</p>
-          <Button onClick={refresh}>Retry tasks</Button>
-        </div>
-      ) : layout === "board" && filter !== "archived" ? (
-        <div className="md-board">
-          {statuses.map(([status, label]) => (
-            <section
+  function board(items: Task[]) {
+    return (
+      <div className="md-board">
+        {statuses.map(([status, label]) => {
+          const tasks = items.filter((t) => t.status === status);
+          return (
+            <details
               className={`md-board-column md-column-${status}`}
               key={status}
-              aria-label={label}
+              open={status !== "done"}
               onDragOver={(e) => {
-                if (dragging.current) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                }
+                if (dragging.current) e.preventDefault();
               }}
               onDrop={(e) => {
                 e.preventDefault();
-                const task = rows.find((t) => t.id === dragging.current);
+                const task = allRows.find((t) => t.id === dragging.current);
                 dragging.current = "";
-                if (task && task.status !== status)
+                if (task && !task.deleted_at && task.status !== status)
                   void act(task, "status", { status });
               }}
             >
-              <h3>
+              <summary>
                 {label}
-                <span>
-                  {rows.filter((row) => row.status === status).length}
-                </span>
-              </h3>
+                <span>{tasks.length}</span>
+              </summary>
               <div className="md-column-cards">
-                {rows.filter((row) => row.status === status).map(taskCard)}
-                {!rows.some((row) => row.status === status) && (
+                {tasks.map((t) => card(t, t.rank))}
+                {!tasks.length && (
                   <p className="md-column-empty">
                     {status === "done"
-                      ? "No tasks finished in the last seven days."
+                      ? "No completed tasks."
                       : status === "in_progress"
                         ? "No tasks in progress."
-                        : filter === "today"
-                          ? "Nothing due today."
-                          : "No tasks to do."}
+                        : "No tasks to do."}
                   </p>
                 )}
               </div>
-            </section>
+            </details>
+          );
+        })}
+      </div>
+    );
+  }
+  const done = data?.done_today ?? [],
+    upcoming = data?.upcoming ?? [],
+    waiting = data?.drafts_waiting ?? summary.data?.pending_drafts ?? 0,
+    handovers = data?.handovers_waiting ?? [],
+    decisions = data?.decisions_waiting ?? 0;
+  const empty = (
+    <div className="md-empty">
+      <WorkspaceIcon name="tick" />
+      <p>
+        {filter === "today"
+          ? "You’re clear for today."
+          : filter === "overdue"
+            ? "No overdue tasks."
+            : filter === "archived"
+              ? "No archived tasks."
+              : "No tasks match these filters."}
+      </p>
+      {filter === "today" && (
+        <>
+          {upcoming.slice(0, 3).map((t) => (
+            <Link key={t.id} to={`/app?task=${t.id}`}>
+              {t.title}
+            </Link>
           ))}
-        </div>
-      ) : rows.length ? (
-        <div className="md-task-list">{rows.map(taskCard)}</div>
-      ) : (
-        <div className="md-empty">
-          <WorkspaceIcon name="tick" />
-          <p>
-            {filter === "today"
-              ? "Nothing due today."
-              : filter === "overdue"
-                ? "No overdue tasks."
-                : filter === "archived"
-                  ? "No archived tasks."
-                  : "No tasks match these filters."}
-          </p>
-        </div>
+          <Link className="button button-primary" to="/app/capture">
+            Capture
+          </Link>
+        </>
       )}
-      {data && data.count > 60 && (
-        <div className="pagination">
-          <Button
-            variant="secondary"
-            disabled={!page}
-            onClick={() => setPage((v) => v - 1)}
-          >
-            Previous tasks
-          </Button>
-          <span>Page {page + 1}</span>
-          <Button
-            variant="secondary"
-            disabled={(page + 1) * 60 >= data.count}
-            onClick={() => setPage((v) => v + 1)}
-          >
-            Next tasks
-          </Button>
-        </div>
-      )}
-    </section>
+    </div>
   );
+  const setup = [
+      ["capture", "Capture one item", "/app/capture"],
+      ["role", "Fill My role", "/app/role-record"],
+      ["reminder", "Set one reminder", "/app/settings"],
+      ["cover", "Name a cover person", "/app/handovers"],
+    ] as const,
+    completed = setup.filter(([k]) => data?.checklist?.[k]).length;
   return (
     <div className="md-page">
       <header className="md-page-heading">
         <div>
-          <span className="md-date-label">
-            {new Intl.DateTimeFormat("en-GB", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              timeZone: zone,
-            }).format(clock)}
-          </span>
           <h1 tabIndex={-1}>
             {greetingInZone(zone)}, {profile!.full_name.trim().split(/\s+/)[0]}
           </h1>
           <p className="md-live-line">
             {data
-              ? data.counts.todo + data.counts.progress + data.counts.overdue
-                ? `${data.counts.todo} to do, ${data.counts.progress} in progress, ${data.counts.overdue} overdue.`
-                : "Nothing due today."
-              : current?.error
-                ? ""
-                : "Loading your tasks…"}
+              ? `${data.counts.todo + data.counts.progress} to do, ${decisions + handovers.length} ${decisions + handovers.length === 1 ? "decision" : "decisions"} waiting, ${data.counts.done ?? done.length} done`
+              : "Loading your tasks…"}
           </p>
         </div>
-        <div className="md-main-actions">
-          <Button onClick={() => setAI(true)}>
-            <WorkspaceIcon name="record" />
-            Use Vimbre AI
-          </Button>
-          <Button variant="secondary" onClick={() => setEditor({})}>
-            <WorkspaceIcon name="plus" />
-            Add a task
-          </Button>
-          <Link className="button button-secondary" to="/app/capture">
-            <WorkspaceIcon name="capture" />
-            Capture an email or notes
-          </Link>
-        </div>
+        <Link className="button button-primary" to="/app/capture">
+          <WorkspaceIcon name="capture" />
+          Capture
+        </Link>
       </header>
       {message && (
         <p className="notice" role="status">
@@ -510,116 +330,327 @@ function MyDayContent() {
           {error}
         </p>
       )}
-      <CaptureSummary data={summary.data ? {...summary.data,forwarding_address:null} : null} />
-      {data && !data.has_work && (
-        <RoleChecklist
-          data={summary.data}
-          error={Boolean(summary.error)}
-          retry={summary.retry}
-        />
-      )}
-      {data && data.context_waiting.length > 0 && (
-        <section
-          className="md-context-pending"
-          aria-label="Completed tasks to add to context"
-        >
-          <div>
-            <WorkspaceIcon name="tick" />
-            <strong>
-              {data.context_waiting.length} completed{" "}
-              {data.context_waiting.length === 1 ? "task" : "tasks"} to add to
-              context
-            </strong>
+      <section className="md-work-section" aria-labelledby="md-tasks-heading">
+        <div className="md-section-heading">
+          <h2 id="md-tasks-heading">Your tasks</h2>
+          <div className="md-heading-tools">
+            <button
+              className="md-visibility"
+              onClick={() => access.current?.showModal()}
+            >
+              <WorkspaceIcon name="eye" />
+              What my manager can see
+            </button>
+            <Button variant="secondary" onClick={() => setEditor({})}>
+              Add a task
+            </Button>
+            <button
+              className="md-text-button"
+              onClick={() => setRolePicker(true)}
+            >
+              Add from My role
+            </button>
           </div>
-          <div>
-            {data.context_waiting.map((task) => (
-              <button key={task.id} onClick={() => setContext(task)}>
-                {task.title}
-                <WorkspaceIcon name="arrow" />
+        </div>
+        <div className="md-toolbar">
+          <nav className="md-filters" aria-label="Task views">
+            {filters.map(([v, l]) => (
+              <button
+                key={v}
+                aria-label={l}
+                aria-pressed={filter === v}
+                onClick={() => {
+                  setFilter(v);
+                  setPage(0);
+                }}
+              >
+                {l}
+                <span className="md-tab-count">
+                  {data?.tab_counts?.[v] ?? 0}
+                </span>
+              </button>
+            ))}
+          </nav>
+          <div className="md-view-toggle" aria-label="Task layout">
+            {(["list", "board"] as const).map((v) => (
+              <button
+                key={v}
+                aria-pressed={layout === v}
+                onClick={() => {
+                  setLayout(v);
+                  try {
+                    localStorage.setItem("vimbre:myday-view", v);
+                  } catch {}
+                }}
+              >
+                {v === "list" ? "List" : "Board"}
               </button>
             ))}
           </div>
-        </section>
-      )}
-      {taskArea}
-      <CaptureSummary data={summary.data ? {...summary.data,pending_drafts:0} : null} />
-      <footer className="md-footer-links">
-        {data?.has_work && (
-          <details>
-            <summary>Get started</summary>
-            <RoleChecklist
-              data={summary.data}
-              error={Boolean(summary.error)}
-              retry={summary.retry}
-            />
-          </details>
-        )}
-        <div>
-          <Link to="/app/handovers">My handovers</Link>
-          <Link to="/app/my-cover-duties">Cover duties</Link>
-          <button onClick={() => setSummaryOpen(true)}>Weekly summary</button>
         </div>
-      </footer>
+        <details className="md-filter-disclosure">
+          <summary>
+            Search and filter
+            {search || forValue || source || priority ? " · Active" : ""}
+          </summary>
+          <div className="md-filter-row">
+            <div className="field">
+              <label htmlFor="md-search">Search tasks</label>
+              <input
+                id="md-search"
+                type="search"
+                placeholder="Search your tasks"
+                maxLength={100}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <ForPicker
+              filter
+              value={forValue}
+              onChange={(v) => {
+                setFor(v);
+                setPage(0);
+              }}
+            />
+            <div className="field">
+              <label htmlFor="md-source">Source</label>
+              <select
+                id="md-source"
+                value={source}
+                onChange={(e) => {
+                  setSource(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <option value="">All sources</option>
+                {Object.entries(sourceLabels).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {v === "recurring_deadline" ? "Recurring deadline" : l}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="md-filter-priority">Priority</label>
+              <select
+                id="md-filter-priority"
+                value={priority}
+                onChange={(e) => {
+                  setPriority(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <option value="">All priorities</option>
+                <option value="high">High</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            {(query || forValue || source || priority) && (
+              <button
+                className="md-text-button"
+                onClick={() => {
+                  setQuery("");
+                  setSearch("");
+                  setFor(null);
+                  setSource("");
+                  setPriority("");
+                  setPage(0);
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        </details>
+        {(taskId || linked) && (
+          <Link className="md-text-button" to="/app">
+            All tasks
+          </Link>
+        )}
+        {!current ? (
+          <p role="status">Loading tasks…</p>
+        ) : current.error ? (
+          <div className="md-empty">
+            <p role="alert">Tasks could not be loaded.</p>
+            <Button onClick={refresh}>Retry tasks</Button>
+          </div>
+        ) : (
+          <>
+            {filter === "today" && <h3 className="md-group-title">Do first</h3>}
+            {rows.length ? (
+              layout === "board" && filter !== "archived" ? (
+                board(rows)
+              ) : (
+                <div className="md-task-list">
+                  {rows.map((t, i) => card(t, t.rank ?? page * 60 + i + 1))}
+                </div>
+              )
+            ) : (
+              empty
+            )}
+            {data && data.count > 60 && (
+              <div className="pagination">
+                <Button
+                  variant="secondary"
+                  disabled={!page}
+                  onClick={() => setPage((v) => v - 1)}
+                >
+                  Previous tasks
+                </Button>
+                <span>Page {page + 1}</span>
+                <Button
+                  variant="secondary"
+                  disabled={(page + 1) * 60 >= data.count}
+                  onClick={() => setPage((v) => v + 1)}
+                >
+                  Next tasks
+                </Button>
+              </div>
+            )}
+            {filter === "today" && (
+              <>
+                <section className="md-day-group" aria-label="Waiting on you">
+                  <h3>Waiting on you</h3>
+                  <div className="md-waiting-links">
+                    {decisions > 0 && (
+                      <Link to="/app/capture">
+                        {decisions} {decisions === 1 ? "decision" : "decisions"}{" "}
+                        to confirm
+                      </Link>
+                    )}
+                    {waiting > 0 && (
+                      <Link to="/app/capture">
+                        {waiting} {waiting === 1 ? "draft" : "drafts"} to review
+                      </Link>
+                    )}
+                    {handovers.map((h) => (
+                      <Link key={h.id} to="/app/handovers">
+                        Review handover: {h.title}
+                      </Link>
+                    ))}
+                    {!waiting && !handovers.length && !decisions && (
+                      <p>Nothing waiting for your review.</p>
+                    )}
+                  </div>
+                </section>
+                <section className="md-day-group" aria-label="Coming up">
+                  <h3>Coming up</h3>
+                  {upcoming.length ? (
+                    <div className="md-task-list">
+                      {upcoming.map((t) => card(t))}
+                    </div>
+                  ) : (
+                    <p>No upcoming tasks in the next seven days.</p>
+                  )}
+                </section>
+                {(data?.covering ?? []).map((h) => (
+                  <section
+                    key={h.id}
+                    className="md-day-group"
+                    aria-label={`Covering for ${h.owner_name}`}
+                  >
+                    <h3>Covering for {h.owner_name}</h3>
+                    <Link to="/app/my-cover-duties">View cover</Link>
+                    <ul className="md-cover-tasks">
+                      {(data?.cover_tasks ?? [])
+                        .filter((t) => t.owner_id === h.owner_id)
+                        .map((t) => (
+                          <li key={t.id}>
+                            <strong>{t.title}</strong>
+                            <span>
+                              {h.owner_name} ·{" "}
+                              {statuses.find(([v]) => v === t.status)?.[1] ??
+                                "To do"}
+                            </span>
+                            <time>
+                              {new Intl.DateTimeFormat("en-GB", {
+                                dateStyle: "medium",
+                                timeZone: zone,
+                              }).format(new Date(t.due_at))}
+                            </time>
+                          </li>
+                        ))}
+                    </ul>
+                  </section>
+                ))}
+                <details className="md-day-group md-done-group">
+                  <summary>
+                    Done today <span>{data?.counts.done ?? done.length}</span>
+                  </summary>
+                  {done.length ? (
+                    <div className="md-task-list">
+                      {done.map((t) => card(t))}
+                    </div>
+                  ) : (
+                    <p>No tasks completed today.</p>
+                  )}
+                </details>
+              </>
+            )}
+          </>
+        )}
+      </section>
+      <CaptureSummary
+        data={summary.data ? { ...summary.data, pending_drafts: 0 } : null}
+      />
+      {data?.checklist && completed < 4 && (
+        <details className="md-setup">
+          <summary>
+            Get started <span>{completed} of 4 done</span>
+          </summary>
+          <ul>
+            {setup.map(([k, l, path]) => (
+              <li key={k}>
+                <Link to={path}>
+                  <WorkspaceIcon name={data.checklist![k] ? "tick" : "arrow"} />
+                  {l}
+                  {data.checklist![k] && (
+                    <span className="sr-only">, done</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}
           task={editor.task}
-          draft={editor.draft}
           today={today}
           close={() => setEditor(null)}
           saved={() => {
-            if (editor.draft && drafts?.length) setAI(true);
             setEditor(null);
             setMessage("Task saved.");
             refresh();
           }}
         />
       )}
-      {aiOpen && (
-        <RoleDrawer
-          context="My day"
-          title="Use Vimbre AI"
-          close={() => setAI(false)}
-        >
-          <StructuredAI
-            kind="task"
-            referenceDate={today}
-            cached={drafts}
-            onDrafts={setDrafts}
-            loadRecords={async () => {
-              const { data, error } = await supabase
-                .from("role_items")
-                .select("kind,title,details,recurrence,due_date,next_step")
-                .eq("owner_id", profile!.id)
-                .eq("company_id", company!.id)
-                .in("kind", [
-                  "responsibility",
-                  "workstream",
-                  "recurring_deadline",
-                ])
-                .is("deleted_at", null)
-                .limit(100);
-              if (error) throw error;
-              return `Time zone: ${zone}\n${(data ?? []).map((r) => `${r.kind === "responsibility" ? "Responsibility" : r.kind === "workstream" ? "Open work" : "Recurring deadline"}: ${r.title}\n${r.details}\n${r.recurrence ? `Repeats: ${r.recurrence}\n` : ""}${r.due_date ? `Due: ${r.due_date}\n` : ""}${r.next_step ? `Next step: ${r.next_step}` : ""}`).join("\n\n")}`;
-            }}
-            choose={(draft, _file, index) => {
-              setDrafts((v) => v?.filter((_, i) => i !== index) ?? null);
-              setAI(false);
-              setEditor({ draft });
-            }}
-          />
-        </RoleDrawer>
+      {rolePicker && (
+        <RoleTaskPicker
+          today={today}
+          close={() => setRolePicker(false)}
+          saved={() => {
+            setRolePicker(false);
+            setMessage("Task added from My role.");
+            refresh();
+          }}
+        />
       )}
-      {(reminder || requestedReminder) && (
+      {(reminder || requested) && (
         <ReminderPanel
-          id={(reminder || requestedReminder)!.id}
-          title={(reminder || requestedReminder)!.title}
+          id={(reminder || requested)!.id}
+          title={(reminder || requested)!.title}
           zone={zone}
-          alert={Boolean(requestedReminder)}
-          initialReschedule={Boolean(requestedReminder)&&params.get("task_action")==="reschedule"}
+          alert={Boolean(requested)}
+          initialReschedule={
+            Boolean(requested) && params.get("task_action") === "reschedule"
+          }
           close={() => {
             setReminder(null);
-            setDismissedAction(true);
+            setDismissed(true);
           }}
           changed={refresh}
         />
@@ -635,17 +666,8 @@ function MyDayContent() {
           }}
         />
       )}
-      {summaryOpen && (
-        <RoleDrawer
-          context="My day"
-          title="Weekly summary"
-          close={() => setSummaryOpen(false)}
-        >
-          <AIDraftPanel
-            task="weekly_summary"
-            loadRecords={() => loadOwnRecords(profile!.id, company!.id)}
-          />
-        </RoleDrawer>
+      {record && (
+        <TaskRecord task={record} zone={zone} close={() => setRecord(null)} />
       )}
       <dialog
         ref={access}

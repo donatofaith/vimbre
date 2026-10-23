@@ -1,16 +1,6 @@
 export function WorkPrivacyNotice() {
   return <>You can see confirmed tasks and decisions. You cannot see private drafts or the original emails.</>
 }
-
-export function WorkVisibilityDetails({ team = false }: { team?: boolean }) {
-  return <>
-    <p><WorkPrivacyNotice /></p>
-    <p>{team
-      ? 'Managers can read responsibilities, open work, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records within their department. HR Admins can read these across the company.'
-      : 'Managers in your department can read your responsibilities, open work, external contacts, document links, recurring deadlines, decisions, tasks, completion notes and archived records. Your company’s HR Admin can read these across the company.'}</p>
-    <p>{team
-      ? 'Employees can edit their own role records except responsibilities. Managers can edit role records in their department, and company administrators can edit all role records. Other employees and managers outside the department cannot read it. If someone has no department, only that person and company HR Admins can read their work.'
-      : 'Only you can change your tasks. Managers outside your department and other employees cannot read them. If you have no department, only you and company HR Admins can read them.'}</p>
-  </>
+export function WorkVisibilityDetails({team=false}:{team?:boolean}) {
+  return <><p><WorkPrivacyNotice /></p><h3>Task fields managers can see</h3><ul><li>Title</li><li>Status</li><li>Due date</li><li>Department</li></ul><p>{team ? 'Managers see tasks within their department. Company administrators see tasks across the company.' : 'Your department manager and company administrators can see these task fields.'}</p><h3>What stays private</h3><p>Task details, original emails, source links, Capture drafts, personal notes and unsaved AI drafts.</p><p>Role records and confirmed decisions follow your company’s existing access rules. Only the task owner can change their tasks.</p></>
 }
-

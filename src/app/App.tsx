@@ -7,6 +7,8 @@ import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 import { HomePage } from '../features/public/HomePage'
 
+const WeeklySummaryPage = lazy(() => import('../features/my-day/WeeklySummaryPage').then(module => ({default:module.WeeklySummaryPage})))
+const CoverPage = lazy(() => import('../features/my-day/HandoversPage').then(module => ({default:module.CoverPage})))
 const HandoverDraftPage = lazy(() => import('../features/ai/HandoverDraftPage').then(module => ({ default: module.HandoverDraftPage })))
 
 const LegalPage = lazy(() => import('../features/public/LegalPage').then(module => ({ default: module.LegalPage })))
@@ -153,6 +155,7 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<WorkspacePage />} />
+              <Route path="weekly-summary" element={<WeeklySummaryPage />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="capture" element={<CapturePage />} />
               <Route path="role-record" element={<RoleRecordPage />} />
@@ -167,11 +170,7 @@ export function App() {
               <Route
                 path="my-cover-duties"
                 element={
-                  <FeaturePage
-                    title="Cover duties"
-                    description="Temporary access, acknowledgement and progress tracking are coming soon."
-                    embedded
-                  />
+                  <CoverPage />
                 }
               />
 

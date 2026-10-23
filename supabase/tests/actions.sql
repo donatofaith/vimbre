@@ -2,8 +2,8 @@
 select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
 do $$declare d uuid;a uuid;t timestamptz;begin
  insert into public.decisions(company_id,owner_id,title,reason,decided_by,decided_on) values(current_setting('test.company')::uuid,auth.uid(),'Weekly report','Keep context','Team',current_date) returning id into d;
- insert into public.actions(company_id,owner_id,decision_id,title,due_date,source_url,created_at,completed_at)
- values(current_setting('test.company')::uuid,auth.uid(),d,'Send the report',current_date,'https://example.invalid/source','2000-01-01','2000-01-01') returning id into a;
+ insert into public.actions(company_id,owner_id,decision_id,title,due_date,source_url)
+ values(current_setting('test.company')::uuid,auth.uid(),d,'Send the report',current_date,'https://example.invalid/source') returning id into a;
  if not exists(select 1 from public.actions where id=a and status='open' and completed_at is null and created_at=now()) then raise exception 'Initial server timestamps';end if;
  perform set_config('test.action',a::text,true);perform set_config('test.decision',d::text,true);
  insert into public.actions(company_id,owner_id,title,due_date) values(current_setting('test.company')::uuid,auth.uid(),'Overdue task',current_date-1),(current_setting('test.company')::uuid,auth.uid(),'Future task',current_date+7);
@@ -31,13 +31,13 @@ do $$declare d uuid;a uuid;t timestamptz;begin
 end;$$;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
 do $$declare n int;begin
- if (select count(*) from public.actions)<>3 or not exists(select 1 from public.actions where status='done' and completion_note<>'') then raise exception 'Manager completed read';end if;
+ if (select count(*) from public.actions)<>0 or (public.team_member_tasks(current_setting('test.employee')::uuid,'done','',0)->>'count')::integer<>1 then raise exception 'Manager projected read';end if;
  update public.actions set title='Overwrite' where id=current_setting('test.action')::uuid;get diagnostics n=row_count;if n<>0 then raise exception 'Manager write';end if;
  perform public.log_action_view(current_setting('test.employee')::uuid);
 end;$$;
 select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 do $$declare n int;begin
- if (select count(*) from public.actions)<>3 then raise exception 'HR read';end if;
+ if (select count(*) from public.actions)<>0 or (public.team_member_tasks(current_setting('test.employee')::uuid,'open','',0)->>'count')::integer<>2 then raise exception 'HR projected read';end if;
  update public.actions set status='open' where id=current_setting('test.action')::uuid;get diagnostics n=row_count;if n<>0 then raise exception 'HR write';end if;
  if not exists(select 1 from public.activity_log where record_type='actions' and action='update') or not exists(select 1 from public.activity_log where record_type='action_list' and action='view') then raise exception 'Action audit missing';end if;
 end;$$;

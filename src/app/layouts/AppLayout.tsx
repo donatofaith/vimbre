@@ -20,6 +20,7 @@ import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 const icons: Record<string, string> = {
   '/app': 'home',
   '/app/capture': 'capture',
+  '/app/weekly-summary': 'calendar',
   '/app/role-record': 'record',
   '/app/handovers': 'handover',
   '/app/my-cover-duties': 'cover',

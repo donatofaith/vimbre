@@ -131,6 +131,12 @@ function ActionWorkspace({
     let cancelled = false
 
     async function load() {
+      if(member) {
+        const {data,error} = await supabase.rpc('team_member_tasks',{p_owner:ownerId,p_view:view,p_query:query,p_page:page,p_decision:decisionId||null})
+        const result=data as unknown as {rows:Action[];count:number}|null
+        if(!cancelled)setResult({key,rows:result?.rows??[],count:result?.count??0,error:Boolean(error)||!Array.isArray(result?.rows)})
+        return
+      }
       let request = supabase
         .from('actions')
         .select(
@@ -200,7 +206,7 @@ function ActionWorkspace({
     return () => {
       cancelled = true
     }
-  }, [key, ownerId, view, query, page, today, decisionId, taskId])
+  }, [key, ownerId, view, query, page, today, decisionId, taskId, member])
 
   useEffect(() => {
     void supabase

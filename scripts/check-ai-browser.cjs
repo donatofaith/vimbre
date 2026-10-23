@@ -35,6 +35,7 @@ const assert = require('node:assert/strict');
       else if(url.pathname.endsWith('/myday_alerts'))body=[];
       else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Europe/London',reminder_time:'09:00',email_enabled:true,email_delivery_ready:false};
       else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};
+      else if(url.pathname.endsWith('/myday_handovers'))body={rows:[]};
       else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-22',timezone:'Europe/London',counts:{todo:0,progress:0,overdue:0},has_work:false,context_waiting:[]};
       else if(url.pathname.endsWith('/myday_valid_recurrence'))body=true;
       else if(url.pathname.endsWith('/my_day_summary'))body={pending_drafts:0,completed_sections:[],forwarding_address:null};
@@ -72,10 +73,8 @@ const assert = require('node:assert/strict');
       await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
       if(tab==='What I handle'){await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();assert.equal(await page.getByRole('dialog').getByLabel('Is this a responsibility or a project?',{exact:true}).inputValue(),'workstream');await page.keyboard.press('Escape');}
     }
-    await page.goto('http://127.0.0.1:5173/app');await page.getByRole('button',{name:'Use Vimbre AI',exact:true}).click();
-    const tasks=page.getByRole('dialog',{name:'Use Vimbre AI',exact:true});await tasks.getByLabel('Email or notes',{exact:true}).fill('Send supplier notes by 23 October 2026');await tasks.getByRole('button',{name:'Generate drafts',exact:true}).click();await tasks.getByRole('button',{name:'Review draft',exact:true}).click();
-    assert.equal(await page.getByLabel('What needs to be done?',{exact:true}).inputValue(),'Send supplier notes');assert.equal(await page.getByLabel('Due date',{exact:true}).inputValue(),'2026-10-23');assert.equal(writes.length,1);await page.getByRole('button',{name:'Cancel edit',exact:true}).click();
-    await page.goto('http://127.0.0.1:5173/app/handovers');await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();
+    await page.goto('http://127.0.0.1:5173/app/weekly-summary');await page.getByRole('heading',{name:'Weekly summary',exact:true}).waitFor();
+    await page.goto('http://127.0.0.1:5173/app/handovers');await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();await page.getByText('Draft from My role',{exact:true}).click();
     await page.getByRole('button',{name:'Use my records',exact:true}).click();await page.waitForFunction(()=>document.querySelector('main textarea')?.value.includes('Supplier reviews'));
     await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByLabel('Draft',{exact:true}).waitFor();assert((await page.getByLabel('Draft',{exact:true}).inputValue()).includes('Responsibilities'));
     assert.equal(writes.length,1,'Handover draft must not publish or save itself');await page.getByRole('button',{name:'Discard draft',exact:true}).click();
