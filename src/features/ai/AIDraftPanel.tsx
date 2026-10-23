@@ -5,9 +5,9 @@ import type { AITask } from '../../lib/ai-gateway'
 import { validateAIInput } from './ai-output'
 import './ai.css'
 
-type Props = { task: Exclude<AITask, 'capture_extract'>; initialText?: string; onUse?: (text: string) => void; loadRecords?: () => Promise<string>; maxApplyLength?: number }
+type Props = { showHeading?: boolean; task: Exclude<AITask, 'capture_extract'>; initialText?: string; onUse?: (text: string) => void; loadRecords?: () => Promise<string>; maxApplyLength?: number }
 /** Source and draft stay in this mounted panel. Only the user's explicit action applies a revision. */
-export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxApplyLength }: Props) {
+export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxApplyLength, showHeading = true }: Props) {
   const sourceId = useId(), draftId = useId()
   const [source, setSource] = useState(initialText)
   const [output, setOutput] = useState('')
@@ -44,7 +44,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
     finally { pending.current = false; setBusy(false) }
   }
   return <section className="vai-panel" aria-label={heading}>
-    <h2>{heading}</h2>
+    {showHeading && <h2>{heading}</h2>}
     {reviewing && fromAI && <p>Draft from Vimbre AI. Check before saving.</p>}
     {loadRecords && <Button variant="secondary" disabled={busy} onClick={() => void load()}>Use my records</Button>}
     <div className="field"><label htmlFor={sourceId}>Notes to use</label><textarea id={sourceId} rows={8} value={source} disabled={busy} onChange={event => { setSource(event.target.value); setOutput(''); setReviewing(false); setMessage(''); reference.current = null }} placeholder="Add the decisions, work and dates to include." /></div>

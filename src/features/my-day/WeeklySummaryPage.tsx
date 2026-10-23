@@ -8,6 +8,7 @@ export function WeeklySummaryPage() {
       <h1 tabIndex={-1}>Weekly summary</h1>
       <AIDraftPanel
         task="weekly_summary"
+        showHeading={false}
         loadRecords={() => loadOwnRecords(profile!.id, company!.id)}
       />
     </section>

@@ -81,7 +81,7 @@ export function TaskRecord({
                 <strong>
                   {h.previous_status
                     ? `${label(h.previous_status)} → ${label(h.status)}`
-                    : label(h.status)}
+                    : `Recorded as ${label(h.status)}`}
                 </strong>
                 <time dateTime={h.created_at}>
                   {new Intl.DateTimeFormat("en-GB", {
