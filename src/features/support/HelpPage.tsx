@@ -128,16 +128,16 @@ export function HelpPage() {
       <div className="support-chat">
         {newRequestOpen ?           <form className="support-request-form" onSubmit={submit}>
             <div className="support-form-heading"><span className="eyebrow">New request</span><h2>Contact Vimbre Support</h2></div>
-            <Input label="Subject" name="subject" value={requestDraft.subject} onChange={event => setRequestDraft(current => ({...current, subject: event.target.value}))} required maxLength={200} placeholder="What do you need help with?" />
+            <Input label="Subject" name="subject" disabled={busy} value={requestDraft.subject} onChange={event => setRequestDraft(current => ({...current, subject: event.target.value}))} required maxLength={200} placeholder="What do you need help with?" />
             <div className="field">
               <label htmlFor="support-category">Category</label>
-              <select id="support-category" name="category" value={requestDraft.category} onChange={event => setRequestDraft(current => ({...current, category: event.target.value}))} required>
+              <select id="support-category" name="category" disabled={busy} value={requestDraft.category} onChange={event => setRequestDraft(current => ({...current, category: event.target.value}))} required>
                 <option value="billing">Billing</option><option value="how_to">Using Vimbre</option><option value="bug">Report a problem</option><option value="feature_idea">Feature suggestion</option><option value="other">Other</option>
               </select>
             </div>
             <div className="field">
               <label htmlFor="support-message">Message</label>
-              <textarea id="support-message" name="message" value={requestDraft.message} onChange={event => setRequestDraft(current => ({...current, message: event.target.value}))} required maxLength={10000} rows={5} placeholder="Describe the problem and what you expected to happen…" />
+              <textarea id="support-message" name="message" disabled={busy} value={requestDraft.message} onChange={event => setRequestDraft(current => ({...current, message: event.target.value}))} required maxLength={10000} rows={5} placeholder="Describe the problem and what you expected to happen…" />
             </div>
             <p className="muted">Do not include passwords or sensitive personal information. Up to three tickets per day.</p>
             <div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>Back to messages</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
@@ -148,7 +148,7 @@ export function HelpPage() {
               {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}><div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div><p>{message.body}</p></article>)}
               {!detail.messages.length && <p className="muted">Your request is in the support queue. Replies will appear here.</p>}
             </div>
-            <form className="support-reply-form" onSubmit={sendReply}><div className="field"><label htmlFor="support-reply">Reply to Vimbre Support</label><textarea id="support-reply" value={reply} onChange={event => setReplies(current => ({...current, [selected]: event.target.value}))} required maxLength={10000} rows={3} placeholder="Write your reply…" /></div><div className="support-reply-actions"><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div></form>
+            <form className="support-reply-form" onSubmit={sendReply}><div className="field"><label htmlFor="support-reply">Reply to Vimbre Support</label><textarea id="support-reply" disabled={busy} value={reply} onChange={event => setReplies(current => ({...current, [selected]: event.target.value}))} required maxLength={10000} rows={3} placeholder="Write your reply…" /></div><div className="support-reply-actions"><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div></form>
           </>}
         </>}
       </div>
