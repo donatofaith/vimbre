@@ -11,6 +11,7 @@ if(op==='submit'){row.status='pending';row.display_status='submitted'}
 if(op==='approve'){row.status='approved';row.display_status='active';row.approved_at=new Date().toISOString()}
 if(op==='request_changes'){row.status='declined';row.display_status='changes_requested';row.review_comment=d.comment}
 if(op==='take_back'){row.status='completed';row.display_status='completed'}
+if(op==='return_summary')row.sections.return_summary=d.summary;
 if(op==='cancel'){row.status='cancelled';row.display_status='cancelled'}
 if(op==='cover_task')row.items.find(i=>i.id===d.task).status='done';
 state.history.push({version:row.version,operation:op,actor:'Alex Example',at:new Date().toISOString()});return row||{};

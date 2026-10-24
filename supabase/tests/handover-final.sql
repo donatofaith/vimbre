@@ -46,7 +46,7 @@ select set_config('request.jwt.claim.sub',current_setting('test.employee'),true)
 do $$declare h uuid:=current_setting('test.handover')::uuid;j jsonb;begin
  if (select status from public.actions where id=current_setting('test.htask')::uuid)<>'done' then raise exception 'Cover completion lost';end if;
  if (select owner_id from public.actions where id=current_setting('test.htask')::uuid)<>auth.uid() then raise exception 'Task ownership moved';end if;
- perform public.handover_workspace('take_back',h);j:=public.handover_workspace('get',h);if j->'handover'->>'status'<>'completed' then raise exception 'Take back did not complete';end if;
+ perform public.handover_workspace('take_back',h);perform public.handover_workspace('return_summary',h,'{"summary":"Report completed"}');j:=public.handover_workspace('get',h);if j->'handover'->>'status'<>'completed' then raise exception 'Take back did not complete';end if;
  begin perform public.handover_workspace('share',h,jsonb_build_object('expires',now()+interval '1 day'));raise exception 'Sharing bypassed flag';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
