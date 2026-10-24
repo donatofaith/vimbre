@@ -62,6 +62,19 @@ end$$;
 reset role;
 select private.activate_handovers();
 do $$begin if not exists(select 1 from private.handover_history where handover_id=current_setting('test.sudden')::uuid and operation='active' and actor_id is null) then raise exception 'Active status not logged';end if;end$$;
+insert into private.role_features(company_id,reassignment) values(current_setting('test.company')::uuid,true) on conflict(company_id) do update set reassignment=true;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$declare h uuid:=gen_random_uuid();begin
+ perform public.handover_workspace('save',h,jsonb_build_object('role_id',current_setting('test.hrole'),'title','Role exit','handover_type','exit','cover_id',current_setting('test.admin'),'reviewer_id',current_setting('test.manager'),'starts_on',current_date,'ends_on',current_date,'sections',jsonb_build_object('priorities','Transfer reporting'),'items','[]'::jsonb));
+ begin perform public.myday_handover(h,'submit');raise exception 'Legacy endpoint bypassed structured review';exception when insufficient_privilege then null;end;
+ perform public.handover_workspace('submit',h);perform set_config('test.exit',h::text,true);
+end$$;
+select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
+select public.handover_workspace('approve',current_setting('test.exit')::uuid);
+select public.handover_workspace('take_back',current_setting('test.exit')::uuid,jsonb_build_object('new_holder',current_setting('test.manager')));
+reset role;
+do $$begin if not exists(select 1 from public.role_profiles where id=current_setting('test.hrole')::uuid and holder_id=current_setting('test.manager')::uuid) then raise exception 'Exit role was not reassigned';end if;end$$;
 -- Service-only AI cache/redraft limits; no provider request.
 do $$declare h uuid:=current_setting('test.handover')::uuid;u uuid:=current_setting('test.employee')::uuid;r uuid;j jsonb;begin
  for n in 1..3 loop r:=gen_random_uuid();j:=public.handover_ai_claim(u,h,r,'handover_return',repeat(n::text,64),false);if j->>'blocked' is not null then raise exception 'Allowed draft blocked';end if;perform public.handover_ai_complete(u,r,'Return draft',false);end loop;
