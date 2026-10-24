@@ -15,7 +15,7 @@ Longer sources are rejected rather than silently truncated. Users can paste the 
 
 ## Provider registration required before live account consent
 
-Callback for all apps: `https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-connect/callback`. Register it exactly. Trello OAuth1 sends a per-attempt state query parameter on the callback. Successful/declined consent redirects only to `https://vimbre.com/app/capture`; browser URLs never receive provider access/refresh tokens.
+Callback for all apps: `https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-connect/callback`. Register it exactly. Trello OAuth1 sends a per-attempt state query parameter on the callback. The callback returns only to the trusted Vimbre origin where the flow began. A short-lived authorization code travels in a URL fragment, is removed immediately, and is exchanged only after authenticated account and browser-nonce verification. Access/refresh tokens never reach the browser. The server never persists the callback code for another browser to retrieve. Real OAuth acceptance uses the production Vimbre domains; localhost is for intercepted tests.
 
 Set these **server-only Edge Function secrets** in the Vimbre Supabase project, never in VITE variables or Git:
 
@@ -32,7 +32,7 @@ The unauthenticated `/capabilities` endpoint returns configured booleans only. A
 
 ## Security and lifecycle
 
-New private RLS tables, with all client table grants revoked. Tokens and short-lived OAuth grant material are encrypted in Supabase Vault. The service-only RPC checks service identity and active membership; credentials are company/user-bound. OAuth state is hashed, expires after ten minutes and is consumed once. Google/Microsoft use PKCE; Slack uses confidential OAuth plus state; Trello uses signed OAuth1. Token refresh uses a connection lease to avoid concurrent refresh-token rotation. Owner removal/disconnect deletes stored Vault secrets, including account-delete cascades. Per-user request limits apply.
+New private RLS tables, with all client table grants revoked. Tokens and short-lived OAuth grant material are encrypted in Supabase Vault. The service-only RPC checks service identity and active membership; credentials are company/user-bound. OAuth state is hashed, expires after ten minutes and is consumed once. Completion is bound to both the initiating browser nonce and the authenticated Vimbre account, so forwarding a consent link cannot attach a different person’s account. Google/Microsoft use PKCE; Slack uses confidential OAuth plus state; Trello uses signed OAuth1. Token refresh uses a connection lease to avoid concurrent refresh-token rotation. Owner removal/disconnect deletes stored Vault secrets, including account-delete cascades. Per-user request limits apply.
 
 `capture-connect` has its own live `getUser` verification on authenticated POST actions. Gateway JWT verification is disabled solely to allow signed-state provider callbacks; no authenticated action relies on that setting. Callback failures return no codes, tokens or provider body. HTTP errors contain safe codes. Provider API hosts/paths are fixed; source identifiers are encoded, redirects refused and response bodies bounded. The Console cannot access these private tables or Vault payloads.
 

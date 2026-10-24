@@ -12,9 +12,7 @@ Deno.serve(async req=>{
  const reply=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers})
  if(req.method==='GET'&&parsed.pathname.endsWith('/capabilities'))return reply(200,{providers:providers.map(p=>({provider:p,configured:configured(p)}))})
  if(req.method==='GET'&&parsed.pathname.endsWith('/callback')){
-  let done=false
-  try{const state=parsed.searchParams.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))throw new Error('connection_expired');const grant=await service('state_claim',null,{hash:await digest(state)});const p=grant.provider as Provider;if(parsed.searchParams.has('error')||parsed.searchParams.has('denied'))throw new Error('connection_declined');const tokens=await exchange(p,parsed.searchParams,grant.secret,callback);await service('store',grant.user_id,{provider:p,company_id:grant.company_id,secret:tokens});done=true}catch{/* Never return provider bodies, authorization codes or tokens. */}
-  return new Response(null,{status:303,headers:{Location:home+'?connection='+(done?'connected':'failed'),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}})
+  try{const state=parsed.searchParams.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))throw new Error('connection_expired');const binding=await service('state_redirect',null,{hash:await digest(state)});if(!origins.has(binding.origin)||!binding.origin.startsWith('https://'))throw new Error('access_denied');const fragment=new URLSearchParams({tool_connect:'1',state});for(const name of ['code','oauth_token','oauth_verifier','error','denied']){const value=parsed.searchParams.get(name);if(value&&value.length<=4096)fragment.set(name,value)}return new Response(null,{status:303,headers:{Location:binding.origin+'/app/capture#'+fragment,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}})}catch{return new Response(null,{status:303,headers:{Location:home+'?connection=failed','Cache-Control':'no-store','Referrer-Policy':'no-referrer'}})}
  }
  if(origin&&!origins.has(origin))return reply(403,{ok:false,code:'access_denied'})
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers})
@@ -25,9 +23,12 @@ Deno.serve(async req=>{
   const user=data.user.id,raw=await req.text();if(raw.length>6000)return reply(413,{ok:false,code:'invalid_input'});const input=JSON.parse(raw);if(!input||typeof input!=='object'||Array.isArray(input))return reply(400,{ok:false,code:'invalid_input'})
   const connections=await service('list',user)
   if(input.action==='status')return reply(200,{ok:true,providers:providers.map(p=>({provider:p,name:names[p],configured:configured(p),connection:connections.find((c:any)=>c.provider===p)||null}))})
+  if(input.action==='complete'){
+   if(!input.params||typeof input.params!=='object'||Array.isArray(input.params))return reply(400,{ok:false,code:'invalid_input'});const params=new URLSearchParams();for(const name of ['state','code','oauth_token','oauth_verifier','error','denied'])if(typeof input.params[name]==='string')params.set(name,input.params[name]);const state=params.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))return reply(400,{ok:false,code:'invalid_input'});const grant=await service('state_claim',user,{hash:await digest(state)});if(params.has('error')||params.has('denied'))return reply(400,{ok:false,code:'connection_declined'});const p=grant.provider as Provider;const tokens=await exchange(p,params,grant.secret,callback);await service('store',user,{provider:p,company_id:grant.company_id,secret:tokens});return reply(200,{ok:true})
+  }
   if(input.action==='connect'){
    const p=input.provider as Provider;if(!providers.includes(p))return reply(400,{ok:false,code:'invalid_input'});if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
-   const state=random(),flow=await start(p,state,callback,random());await service('state_create',user,{hash:await digest(state),provider:p,secret:flow.secret});return reply(200,{ok:true,url:flow.url})
+   const state=random(),flow=await start(p,state,callback,random());await service('state_create',user,{hash:await digest(state),provider:p,secret:flow.secret,return_origin:origins.has(origin)&&origin.startsWith('https://')?origin:'https://vimbre.com'});return reply(200,{ok:true,url:flow.url,state})
   }
   if(!['sources','import','disconnect'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false

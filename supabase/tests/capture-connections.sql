@@ -21,9 +21,10 @@ begin
  v:=public.capture_connection_service('get',a,jsonb_build_object('id',conn));if v->'secret'->>'access_token'<>'new-grant' then raise exception 'stale refresh overwrote new consent';end if;
  perform public.capture_connection_service('unlock',a,jsonb_build_object('id',conn,'lease_token',v->>'lease_token'));
 
- perform public.capture_connection_service('state_create',a,jsonb_build_object('provider','slack','hash','synthetic-state','secret',jsonb_build_object('verifier','synthetic-verifier')));
- v:=public.capture_connection_service('state_claim',null,jsonb_build_object('hash','synthetic-state'));if v->'secret'->>'verifier'<>'synthetic-verifier' then raise exception 'state failed';end if;
- denied:=false;begin perform public.capture_connection_service('state_claim',null,jsonb_build_object('hash','synthetic-state'));exception when others then denied:=true;end;if not denied then raise exception 'state replay';end if;
+ perform public.capture_connection_service('state_create',a,jsonb_build_object('provider','slack','hash','synthetic-state','return_origin','https://vimbre.com','secret',jsonb_build_object('verifier','synthetic-verifier')));
+ denied:=false;begin perform public.capture_connection_service('state_claim',b,jsonb_build_object('hash','synthetic-state'));exception when others then denied:=true;end;if not denied then raise exception 'cross user callback claim';end if;
+ v:=public.capture_connection_service('state_claim',a,jsonb_build_object('hash','synthetic-state'));if v->'secret'->>'verifier'<>'synthetic-verifier' then raise exception 'state failed';end if;
+ denied:=false;begin perform public.capture_connection_service('state_claim',a,jsonb_build_object('hash','synthetic-state'));exception when others then denied:=true;end;if not denied then raise exception 'state replay';end if;
  perform public.capture_connection_service('remove',a,jsonb_build_object('id',conn));if exists(select 1 from vault.secrets where id=v_secret) then raise exception 'secret retained';end if;
  update public.profiles set active=false where id=a;denied:=false;begin perform public.capture_connection_service('list',a);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'inactive access';end if;
 end $$;
