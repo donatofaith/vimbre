@@ -31,7 +31,7 @@ export function HelpPage() {
   const [refresh, setRefresh] = useState(0)
 
   async function call(action: string, payload: Record<string, unknown> = {}) {
-    const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload })
+    const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload as import('../../lib/database.types').Json })
     if (failure) throw failure
     return (data ?? {}) as unknown as Result
   }
