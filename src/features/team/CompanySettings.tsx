@@ -1,3 +1,4 @@
+import '../handovers/handover.css'
 import { WorkPreferences } from '../my-day/WorkPreferences'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
@@ -27,7 +28,7 @@ export function CompanySettings() {
     } catch { setError('Could not save your settings. Check your connection and administrator access, then retry.') }
     finally { setBusy(false) }
   }
-  return <><div className="page-heading"><h1 tabIndex={-1}>Company settings</h1><p>Your account: {profile.full_name} · {roleLabel(profile.role, company.created_by === profile.id)}</p></div><section className="card settings-card"><h2>{company.name}</h2>{admin ? <form className="auth-form" onSubmit={save} key={company.updated_at}>
+  return <div className="settings-layout"><div className="page-heading"><h1 tabIndex={-1}>Company settings</h1><p>Your account: {profile.full_name} · {roleLabel(profile.role, company.created_by === profile.id)}</p></div><section className="card settings-card"><h2>{company.name}</h2>{admin ? <form className="auth-form" onSubmit={save} key={company.updated_at}>
     <Input label="Company name" name="company" defaultValue={company.name} required maxLength={120} autoComplete="organization" />
     <Input label="Account email" type="email" value={session?.user.email ?? profile.email} readOnly />
     <Input label="Company contact email" type="email" value={company.contact_email ?? ''} readOnly />
@@ -35,6 +36,6 @@ export function CompanySettings() {
     <p className="settings-plan-link">To change your team structure, <Link to="/#pricing">view plans and subscribe</Link>.</p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your company administrator to change company settings.</p>}</section>{admin && <p><Link to="/app/team">Manage your team</Link> · <Link to="/app/departments">Manage departments</Link></p>}<WorkPreferences/></>
+  </form> : <p>Contact your company administrator to change company settings.</p>}</section><WorkPreferences/></div>
 }
 

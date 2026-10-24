@@ -7,6 +7,9 @@ const secret = (name: string) => Deno.env.get(name)
 const boundedFetch: typeof fetch = (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10000) })
 const service=()=>createClient(secret('SUPABASE_URL')??'',secret('SUPABASE_SERVICE_ROLE_KEY')??'',{global:{fetch:boundedFetch},auth:{persistSession:false,autoRefreshToken:false}})
 Deno.serve(createGateway({
+  async handoverSource(user,id,kind){const {data,error}=await service().rpc('handover_ai_source',{p_user:user,p_handover:id,p_kind:kind});if(error)throw error;return data as string},
+  async handoverClaim(user,id,request,kind,fingerprint,redraft){const {data,error}=await service().rpc('handover_ai_claim',{p_user:user,p_handover:id,p_request:request,p_kind:kind,p_fingerprint:fingerprint,p_redraft:redraft});if(error)throw error;return data},
+  async handoverComplete(user,request,output,cancel){const {error}=await service().rpc('handover_ai_complete',{p_user:user,p_request:request,p_output:output,p_cancel:cancel});if(error)throw error},
   async captureCancel(user,request) { const {error}=await service().rpc('capture_ai_cancel',{p_user:user,p_request:request});if(error)throw error },
   async captureSource(user,capture) { const {data,error}=await service().rpc('capture_ai_source',{p_user:user,p_capture:capture});if(error)throw error;return data as string },
   async captureClaim(user,capture,request,task,fingerprint,sourceHash,redraft) { const {data,error}=await service().rpc('capture_ai_claim',{p_user:user,p_capture:capture,p_request:request,p_task:task,p_fingerprint:fingerprint,p_source_hash:sourceHash,p_redraft:redraft});if(error)throw error;return data },
@@ -31,3 +34,4 @@ Deno.serve(createGateway({
   },
   adapter(provider) {return providerAdapter(provider,secret)},
 }))
+

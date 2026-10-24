@@ -22,3 +22,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 23 October final Capture brief in docs/client-capture-final-review.md supersedes prior Capture layout/copy. Explicit AI only, private drafts, accept then confirm, truthful channel flags, shared pipeline, cached duplicate reuse and two redrafts. Keep the ranked My day behavior unchanged.
 
 - The final My role phase 1/2 brief in docs/client-role-final-review.md supersedes prior role restrictions and layout: What I handle first, holder-maintained manual records, other-role views read only, stable role identity, retained replacement history and private author notes. Phase 2 is built behind server flags. Preserve approved My day and Capture behavior.
+
+- The 24 October final Handovers brief in docs/client-handover-final-review.md supersedes the earlier handover UI: four steps, explicit manager review, selected-task cover access, take back, version history and gated phase 2. No duplicate sidebar navigation in Handovers or Settings; keep precise record links, requested wording and actionable errors.

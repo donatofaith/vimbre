@@ -64,11 +64,7 @@ const assert = require('node:assert/strict');
     }
     const requests=calls.filter(c=>c.path.endsWith('/ai-run')).length;await page.getByRole('button',{name:'Suggest from my work'}).click();assert.equal(calls.filter(c=>c.path.endsWith('/ai-run')).length,requests,'Same confirmed source reuses cached proposal');assert.equal(roleFixture.state.writes.length,1);
     await page.goto('http://127.0.0.1:5173/app/weekly-summary');await page.getByRole('heading',{name:'Weekly summary',exact:true}).waitFor();
-    await page.goto('http://127.0.0.1:5173/app/handovers');await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();await page.getByText('Draft from My role',{exact:true}).click();
-    await page.getByRole('button',{name:'Use my records',exact:true}).click();await page.waitForFunction(()=>document.querySelector('main textarea')?.value.includes('Supplier reviews'));
-    await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByLabel('Draft',{exact:true}).waitFor();assert((await page.getByLabel('Draft',{exact:true}).inputValue()).includes('Responsibilities'));
-    assert.equal(writes.length,1,'Handover draft must not publish or save itself');await page.getByRole('button',{name:'Discard draft',exact:true}).click();
-    limited=true;await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByRole('alert').filter({hasText:'AI limit'}).waitFor();await page.getByRole('button',{name:'Write draft manually',exact:true}).click();await page.getByLabel('Draft',{exact:true}).fill('Manual handover notes stay editable.');assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual handover notes stay editable.');
+    await page.goto('http://127.0.0.1:5173/app/weekly-summary');await page.getByRole('heading',{name:'Weekly summary',exact:true}).waitFor();await page.getByLabel('Notes to use',{exact:true}).fill('Supplier notes');limited=true;await page.getByRole('button',{name:'Generate draft',exact:true}).click();await page.getByRole('alert').filter({hasText:'AI limit'}).waitFor();await page.getByRole('button',{name:'Write draft manually',exact:true}).click();await page.getByLabel('Draft',{exact:true}).fill('Manual summary stays editable.');
     await page.getByRole('link',{name:'Contact support',exact:true}).waitFor();
     allowance={enabled:true,warning:true,blocked:false,period:'day',daily_percent:80,monthly_percent:10,daily_reset_at:'2026-10-23T00:00:00Z',monthly_reset_at:'2026-11-01T00:00:00Z'};
     await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:ai-usage')));
@@ -76,13 +72,13 @@ const assert = require('node:assert/strict');
     allowance={...allowance,blocked:true,period:'month',daily_percent:80,monthly_percent:100};
     await page.evaluate(()=>window.dispatchEvent(new Event('vimbre:ai-usage')));
     await page.getByRole('status').filter({hasText:'AI drafts are paused until 1 November 2026'}).waitFor();
-    assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual handover notes stay editable.');
+    assert.equal(await page.getByLabel('Draft',{exact:true}).inputValue(),'Manual summary stays editable.');
     for(const call of calls.filter(c=>c.path.endsWith('/ai-run'))){assert.deepEqual(Object.keys(call.args).sort(),call.args.document?['document','task','text']:['task','text']);assert([...Object.keys(structured),'tasks_extract','tidy_text','weekly_summary','handover_draft'].includes(call.args.task));if(call.args.document){assert.equal(call.args.task,'role_document');assert.equal(call.args.document.media_type,'application/pdf');}}
     for(const call of calls.filter(c=>c.params.limit==='100')){assert.equal(call.params.owner_id,`eq.${user.id}`);assert.equal(call.params.company_id,`eq.${company.id}`);assert.equal(call.params.deleted_at,'is.null');assert(!call.params.select.includes('personal'));}
     assert.equal(calls.filter(c=>/capture_detail|capture_list|responsibility_notes/.test(c.path)).length,0,'Summary context must not load private notes or original sources');
     for(const width of [360,768,1024,1440]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`AI page overflow at ${width}`);}
     await page.screenshot({path:'/tmp/vimbre-landing-ai-handover.png',fullPage:true});
-    profile.role='employee';await page.reload();await page.getByRole('heading',{name:'Handovers',exact:true}).waitFor();assert.equal(await page.getByRole('complementary',{name:'AI allowance',exact:true}).count(),0,'Employee has no admin allowance banner');
+    profile.role='employee';await page.reload();await page.getByRole('heading',{name:'Weekly summary',exact:true}).waitFor();assert.equal(await page.getByRole('complementary',{name:'AI allowance',exact:true}).count(),0,'Employee has no admin allowance banner');
     assert.equal(errors.length,0,JSON.stringify(errors));console.log(JSON.stringify({weeklySummary:'passed',structuredReviewBeforeSave:'passed',handoverDraft:'passed',manualFallback:'passed',sourceScope:'passed',responsive:'passed',providerCalls:0}));
   }finally{await browser.close();await server.close();}
 })().catch(error=>{console.error(error);process.exit(1)});

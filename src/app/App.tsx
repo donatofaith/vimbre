@@ -7,6 +7,7 @@ import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 import { HomePage } from '../features/public/HomePage'
 
+const SharedHandoverPage = lazy(() => import('../features/handovers/HandoversPage').then(module => ({default:module.SharedHandoverPage})))
 const WeeklySummaryPage = lazy(() => import('../features/my-day/WeeklySummaryPage').then(module => ({default:module.WeeklySummaryPage})))
 const CoverPage = lazy(() => import('../features/my-day/HandoversPage').then(module => ({default:module.CoverPage})))
 const HandoverDraftPage = lazy(() => import('../features/ai/HandoverDraftPage').then(module => ({ default: module.HandoverDraftPage })))
@@ -129,6 +130,7 @@ export function App() {
         }
       >
         <Routes>
+      <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
           <Route path="/privacy" element={<LegalPage page="privacy" />} />
           <Route path="/terms" element={<LegalPage page="terms" />} />

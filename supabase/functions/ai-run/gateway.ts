@@ -4,6 +4,9 @@ import type { Adapter, Attempt, Reservation, Usage, AIDocument } from './types.t
 import { ProviderError, zeroUsage } from './types.ts'
 export type Identity = { userId: string; companyId: string }
 export type GatewayDependencies = {
+  handoverSource?: (user:string,id:string,kind:string)=>Promise<string>
+  handoverClaim?: (user:string,id:string,request:string,kind:string,fingerprint:string,redraft:boolean)=>Promise<{cached?:string|null;blocked?:string}>
+  handoverComplete?: (user:string,request:string,output:string|null,cancel:boolean)=>Promise<void>
   captureCancel?: (user:string,request:string) => Promise<void>
   captureSource?: (user: string, capture: string) => Promise<string>
   captureClaim?: (user: string, capture: string, request: string, task: string, fingerprint: string, sourceHash: string, redraft: boolean) => Promise<{cached?:string|null;blocked?:string}>
@@ -59,10 +62,10 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
     try {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
-      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; redraft?:boolean}
+      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean}
       try {
         const data=await boundedBody(request)
-        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft')||
+        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft'&&k!=='handover_id')||
           typeof data.task!=='string'||!Object.hasOwn(tasks,data.task)||typeof data.text!=='string'||!data.text.trim()||new TextEncoder().encode(data.text).byteLength>16000)throw new Error('Invalid input')
         if(data.document!==undefined) {
           const doc=data.document
@@ -71,6 +74,8 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
           if(decoded.length>2097152||!decoded.startsWith('%PDF-'))throw new Error('Invalid document')
         }
         if(data.capture_id!==undefined&&(!uuid.test(data.capture_id)||!['capture_extract','tidy_text'].includes(data.task)))throw new Error('Invalid capture')
+        if(data.handover_id!==undefined&&(!uuid.test(data.handover_id)||!['handover_draft','handover_return'].includes(data.task)||data.capture_id))throw new Error('Invalid handover')
+        if(['handover_draft','handover_return'].includes(data.task)&&!data.handover_id)throw new Error('Handover required')
         if(data.redraft!==undefined&&typeof data.redraft!=='boolean')throw new Error('Invalid redraft')
         if(data.task==='capture_extract'&&!data.capture_id)throw new Error('Capture required')
         body=data
@@ -93,9 +98,18 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
           return new Response(JSON.stringify({ok:true,text:claim.cached,request_id:requestId,cached:true}),{status:200,headers})
         }
       }
-      const markFailed=async()=>{if(claimed)await deps.captureComplete!(identity.userId,requestId,null,null)}
+      let handoverClaimed=false
+      if(body.handover_id){
+        if(!deps.handoverSource||!deps.handoverClaim||!deps.handoverComplete)return fail(503)
+        body.text=await deps.handoverSource(identity.userId,body.handover_id,body.task)
+        const claim=await deps.handoverClaim(identity.userId,body.handover_id,requestId,body.task,await fingerprint(body.task,body.text),body.redraft===true)
+        if(claim.blocked)return fail(409,claim.blocked)
+        handoverClaimed=true
+        if(typeof claim.cached==='string')return new Response(JSON.stringify({ok:true,text:claim.cached,request_id:requestId,cached:true}),{status:200,headers})
+      }
+      const markFailed=async()=>{if(handoverClaimed)await deps.handoverComplete!(identity.userId,requestId,null,false);if(claimed)await deps.captureComplete!(identity.userId,requestId,null,null)}
       const reservation=await deps.begin(identity.userId,requestId,body.task,await fingerprint(body.task,body.text,body.document))
-      if(!reservation.ok){if(claimed)await deps.captureCancel?.(identity.userId,requestId);return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)}
+      if(!reservation.ok){if(handoverClaimed)await deps.handoverComplete!(identity.userId,requestId,null,true);if(claimed)await deps.captureCancel?.(identity.userId,requestId);return fail(reservation.code==='limit_reached'?429:reservation.code==='already_requested'||reservation.code==='idempotency_conflict'?409:403,reservation.code==='limit_reached'?allowanceMessage(reservation.period,reservation.reset_at):messages[reservation.code??'']??unavailable,reservation.code==='limit_reached'?'limit_reached':undefined)}
       if(!reservation.route||!reservation.usage_id||reservation.company_id!==identity.companyId) return fail(503)
       const route=reservation.route, attempts:Attempt[]=[]
       let answer=''
@@ -122,7 +136,9 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         try { await deps.captureComplete!(identity.userId,requestId,answer,body.task==='capture_extract'?parseCaptureOutput(answer):null) }
         catch {await markFailed();return fail(502,'The draft could not be read. Your text is still here. You can add a task by hand.')}
       }
+      if(handoverClaimed)await deps.handoverComplete!(identity.userId,requestId,answer,false)
       return new Response(JSON.stringify({ok:true,text:answer,request_id:requestId}),{status:200,headers})
     } catch {return fail(503)}
   }
 }
+
