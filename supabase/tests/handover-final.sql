@@ -27,6 +27,13 @@ do $$declare h uuid:=current_setting('test.handover')::uuid;j jsonb;begin
  perform public.handover_workspace('submit',h);
 end$$;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
+reset role;
+update public.profiles set active=false where id=current_setting('test.admin')::uuid;
+set local role authenticated;
+do $$begin begin perform public.handover_workspace('approve',current_setting('test.handover')::uuid);raise exception 'Inactive cover approved';exception when check_violation then null;end;end$$;
+reset role;
+update public.profiles set active=true where id=current_setting('test.admin')::uuid;
+set local role authenticated;
 select public.handover_workspace('approve',current_setting('test.handover')::uuid);
 select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 do $$declare h uuid:=current_setting('test.handover')::uuid;j jsonb;begin
@@ -52,6 +59,16 @@ do $$declare j jsonb;h uuid:=current_setting('test.handover')::uuid;begin
  perform public.handover_workspace('revoke_share',h,jsonb_build_object('share',j->>'id'));
  if public.handover_shared(j->>'token') is not null then raise exception 'Revoked share works';end if;
 end$$;
+do $$declare j jsonb;begin
+ j:=public.handover_workspace('share',current_setting('test.handover')::uuid,jsonb_build_object('expires',now()+interval '1 day'));perform set_config('test.public_token',j->>'token',true);perform set_config('test.public_share',j->>'id',true);
+end$$;
+set local role anon;
+do $$begin if public.handover_shared(current_setting('test.public_token'))->>'title'<>'Operations handover' then raise exception 'Anonymous shared snapshot missing';end if;end$$;
+reset role;
+update private.handover_shares set expires_at=now()-interval '1 minute' where id=current_setting('test.public_share')::uuid;
+set local role anon;
+do $$begin if public.handover_shared(current_setting('test.public_token')) is not null then raise exception 'Expired link readable';end if;end$$;
+set local role authenticated;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
 do $$declare h uuid:=gen_random_uuid();j jsonb;begin
  j:=public.handover_workspace('save',h,jsonb_build_object('owner_id',current_setting('test.employee'),'role_id',current_setting('test.hrole'),'title','Sudden cover','handover_type','sudden','cover_id',current_setting('test.admin'),'reviewer_id',current_setting('test.manager'),'starts_on',current_date,'ends_on',current_date+1,'sections',jsonb_build_object('priorities','Review the role deadlines'),'inclusions','["notes","work"]'::jsonb,'items','[]'::jsonb));

@@ -1,0 +1,2 @@
+-- Revalidate membership at approval, not just when the draft was saved.
+do $$declare definition text;begin select pg_get_functiondef('private.handover_workspace(text,uuid,jsonb)'::regprocedure) into definition;definition:=replace(definition,'if operation=''request_changes'' and','if operation=''approve'' and not exists(select 1 from public.profiles where id=h.cover_id and company_id=c and active) then raise check_violation using message=''Choose an active cover person before approving'';end if; if operation=''request_changes'' and');execute definition;end$$;
