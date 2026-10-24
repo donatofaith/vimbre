@@ -6,6 +6,7 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 import { HomePage } from '../features/public/HomePage'
+import { HelpPage } from '../features/support/HelpPage'
 
 const SharedHandoverPage = lazy(() => import('../features/handovers/HandoversPage').then(module => ({default:module.SharedHandoverPage})))
 const WeeklySummaryPage = lazy(() => import('../features/my-day/WeeklySummaryPage').then(module => ({default:module.WeeklySummaryPage})))
@@ -186,6 +187,7 @@ export function App() {
                 element={<DepartmentsPage />}
               />
               <Route path="settings" element={<CompanySettings />} />
+              <Route path="help" element={<HelpPage />} />
 
               <Route
                 path="*"
