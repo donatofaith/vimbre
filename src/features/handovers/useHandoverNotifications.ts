@@ -1,5 +1,0 @@
-import {useEffect,useState} from 'react'
-import {useAuth} from '../auth/AuthProvider'
-import {handoverRpc} from './model'
-type Inbox={count:number;rows:{id:string;handover_id:string;message:string}[]}
-export function useHandoverNotifications(){const {profile}=useAuth();const [value,setValue]=useState<Inbox>({count:0,rows:[]}),[error,setError]=useState(false),[revision,setRevision]=useState(0);useEffect(()=>{let live=true;const load=()=>{if(document.hidden)return;void handoverRpc('notifications').then(d=>{if(!live)return;const inbox=d as unknown as Inbox;if(Array.isArray(inbox.rows)&&Number.isInteger(inbox.count))setValue(inbox);setError(false)}).catch(()=>{if(live)setError(true)})};load();const timer=setInterval(load,30000);window.addEventListener('vimbre:work-changed',load);window.addEventListener('focus',load);return()=>{live=false;clearInterval(timer);window.removeEventListener('vimbre:work-changed',load);window.removeEventListener('focus',load)}},[profile?.id,revision]);return {...value,error,refresh:()=>setRevision(v=>v+1)}}

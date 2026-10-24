@@ -1,2 +1,0 @@
--- Concurrent first-page requests must reuse the same new role.
-do $$declare definition text;begin select pg_get_functiondef('private.ensure_role(uuid)'::regprocedure) into definition; if position('declare rid uuid;begin' in definition)=0 then raise exception 'Inspect role initializer';end if; definition:=replace(definition,'declare rid uuid;begin','declare rid uuid;begin perform pg_advisory_xact_lock(hashtextextended(''stable-role:''||p_owner::text,0));');execute definition;end$$;

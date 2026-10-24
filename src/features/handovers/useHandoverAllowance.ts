@@ -1,3 +1,0 @@
-import {useEffect,useState} from 'react'
-import {supabase} from '../../lib/supabase'
-export function useHandoverAllowance(){const [text,setText]=useState('');useEffect(()=>{let live=true;const load=()=>{void supabase.rpc('ai_allowance_summary',{}).then(({data})=>{const a=data as {daily_request_limit?:number;daily_requests?:number;enabled?:boolean};if(live)setText(a?.enabled?`${Math.max(0,(a.daily_request_limit??0)-(a.daily_requests??0))} AI requests remaining today`:'AI is unavailable. You can write manually.')})};load();window.addEventListener('vimbre:ai-usage',load);return()=>{live=false;window.removeEventListener('vimbre:ai-usage',load)}},[]);return text}

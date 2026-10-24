@@ -1,3 +1,0 @@
-Vimbre is a work intelligence layer for connecting conversations, decisions, actions and outcomes. It helps teams track work, build context and prepare handover drafts. The website is https://vimbre.com/.
-
-Current capture methods are typed notes and pasted email or meeting text. When enabled for a company, AI prepares drafts that users review and confirm. Users can prepare a handover draft from their own confirmed records or notes. Direct integrations, email forwarding and handover approval and publishing are planned. Contact hello@vimbre.com for general enquiries or support@vimbre.com for account help.
