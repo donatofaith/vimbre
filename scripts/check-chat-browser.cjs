@@ -367,7 +367,7 @@ const assert = require('node:assert/strict')
     await page
       .getByRole('button', { name: 'Back to latest messages', exact: false })
       .click()
-    for (const width of [320, 360, 390, 768, 1024, 1440]) {
+    for (const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]) {
       await page.setViewportSize({ width, height: 950 })
       await page.getByLabel('Message', { exact: true }).waitFor()
       assert(await page.locator('.vw-topbar .chat-launcher').isVisible())
@@ -447,7 +447,7 @@ const assert = require('node:assert/strict')
         idempotentRetry: 'passed',
         recordLinks: 'passed',
         safeTextRendering: 'passed',
-        responsiveWidths: [320, 360, 390, 768, 1024, 1440],
+        responsiveWidths: [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920],
         accessRevocation: 'passed',
       }),
     )

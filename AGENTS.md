@@ -24,3 +24,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The final My role phase 1/2 brief in docs/client-role-final-review.md supersedes prior role restrictions and layout: What I handle first, holder-maintained manual records, other-role views read only, stable role identity, retained replacement history and private author notes. Phase 2 is built behind server flags. Preserve approved My day and Capture behavior.
 
 - The 24 October final Handovers brief in docs/client-handover-final-review.md supersedes the earlier handover UI: four steps, explicit manager review, selected-task cover access, take back, version history and gated phase 2. No duplicate sidebar navigation in Handovers or Settings; keep precise record links, requested wording and actionable errors.
+
+- The 24 October device review in docs/responsive-review.md requires full-width tablet content and a collapsible workspace Menu through 1024px. Preserve desktop collapse preferences without hiding the tablet menu. Safari native controls must fit their fields; never mask clipped controls with document overflow rules.

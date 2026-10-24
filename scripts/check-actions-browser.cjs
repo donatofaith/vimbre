@@ -80,7 +80,7 @@ const { randomUUID } = require('node:crypto');
     await page.getByRole('button', { name: 'Menu', exact: true }).click(); await page.getByRole('link', { name: 'Team activity', exact: true }).click(); await page.getByRole('heading', { name: 'Team activity', exact: true }).waitFor();
     await page.getByText('See what your team has captured, finished and left open.',{exact:true}).waitFor();
     await page.getByRole('link', { name: colleague.full_name, exact: true }).waitFor();
-    for (const width of [320,360,390,768,1024,1440]) {
+    for (const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]) {
       await page.setViewportSize({width,height:900});
       assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`team overview overflow at ${width}`);
       const geometry=await page.locator('.vt-members').evaluate(table=>{

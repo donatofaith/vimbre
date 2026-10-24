@@ -69,7 +69,7 @@ const assert = require('node:assert/strict');
     await page.locator('.rs-brand .vimbre-logo-full').waitFor();
     assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/favicon-192.png');
     await page.waitForFunction(() => [...document.querySelectorAll('.rs-site img.vimbre-logo')].every(img => img.complete && img.naturalWidth > 0));
-    for (const width of [320, 390, 640, 768, 1440]) {
+    for (const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]) {
       await page.setViewportSize({width, height: 900});
       assert(await page.locator('.rs-brand .vimbre-logo-full').isVisible());
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `Brand header overflow at ${width}`);
@@ -95,7 +95,7 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByRole('link',{name:/hello@vimbre.com/}).getAttribute('href'),'mailto:hello@vimbre.com?subject=Vimbre%20enquiry');
     await page.waitForFunction(()=>{const top=document.querySelector('#contact').getBoundingClientRect().top;return top>=0&&top<innerHeight});
     assert(await page.locator('#contact').evaluate(el=>el.getBoundingClientRect().top>=0&&el.getBoundingClientRect().top<innerHeight));
-    for(const width of [320,390,640,768,1440]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth), `Contact overflow at ${width}`);}
+    for(const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth), `Contact overflow at ${width}`);}
     assert.equal(await page.getByRole('contentinfo').getByRole('link').count(),7);
     await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Open website menu',exact:true}).click();await page.getByRole('navigation',{name:'Public',exact:true}).getByRole('link',{name:'FAQ',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Open website menu',exact:true}).getAttribute('aria-expanded'),'false');
     await page.goto('http://127.0.0.1:5173/contact');await page.getByRole('heading',{name:'How can we help?',exact:true}).waitFor();assert.equal(new URL(page.url()).pathname,'/');assert.equal(new URL(page.url()).hash,'#contact');
@@ -120,7 +120,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('button',{name:'What I handle',exact:true}).click();page.on('dialog',d=>d.accept());await page.locator('.rf-record').getByRole('button',{name:'Archive',exact:true}).click();await page.getByLabel('Record status').selectOption('archived');await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByLabel('Record status').selectOption('active');await page.getByRole('heading',{name:'Weekly review',exact:true}).waitFor();
     roleFixture.state.failRead=true;await page.reload();await page.getByRole('button',{name:'Retry role'}).waitFor();roleFixture.state.failRead=false;await page.getByRole('button',{name:'Retry role'}).click();await page.getByRole('button',{name:'Add work',exact:true}).waitFor();
     for(let i=0;i<22;i++)roleFixture.state.items.push({id:'extra-'+i,kind:'responsibility',title:'Responsibility '+i,role_fields:{},deleted_at:null});await page.reload();await page.getByRole('button',{name:'Next records'}).click();await page.getByText('Page 2',{exact:true}).waitFor();
-    for(const width of [360,768,1024,1440]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`Role overflow ${width}`);await page.screenshot({path:`/tmp/vimbre-landing-role-final-${width}.png`,fullPage:true});}
+    for(const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`Role overflow ${width}`);await page.screenshot({path:`/tmp/vimbre-landing-role-final-${width}.png`,fullPage:true});}
     await page.setViewportSize({width:360,height:800});await page.getByRole('button',{name:'Add work',exact:true}).click();editor=page.getByRole('dialog');assert(!await editor.evaluate(el=>el.scrollWidth>el.clientWidth));await page.keyboard.press('Escape');
     roleFixture.state.own=false;roleFixture.state.notes='';roleFixture.state.can_suggest=true;await page.reload();await page.getByText('Viewing Record Owner’s role. Read only.',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Add work',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Save notes',exact:true}).count(),0);await page.getByRole('button',{name:'Suggest edits',exact:true}).waitFor();
     await page.setViewportSize({width:1440,height:900});

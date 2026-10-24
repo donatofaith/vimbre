@@ -1,0 +1,47 @@
+const {webkit}=require('playwright');const assert=require('node:assert/strict');const {randomUUID}=require('node:crypto');
+(async()=>{const {createServer}=await import('vite');const server=await createServer({server:{host:'127.0.0.1',port:5173,strictPort:true}});await server.listen();const browser=await webkit.launch({headless:true});try{
+ const page=await browser.newPage({viewport:{width:820,height:1180},isMobile:true,hasTouch:true,deviceScaleFactor:2});page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const user={id:randomUUID(),email:'capture@example.invalid',role:'authenticated',aud:'authenticated',email_confirmed_at:new Date().toISOString(),app_metadata:{},user_metadata:{}};const company={id:randomUUID(),name:'Capture fixture',team_mode:'small',created_by:user.id};const profile={id:user.id,company_id:company.id,full_name:'Alex Owner',email:user.email,active:true,role:'hr_admin'};const sources=[],items=[],calls=[];let mode='limit',failConfirm=false;
+ const detail=id=>{const source=sources.find(s=>s.id===id);return source?{source,items:items.filter(d=>d.capture_id===id)}:null};
+ await page.route('https://*.supabase.co/**',async route=>{const req=route.request(),url=new URL(req.url());let args={};try{args=req.postDataJSON()||{}}catch{}calls.push({path:url.pathname,args});let body={},status=200;
+ if(url.pathname.endsWith('/token'))body={access_token:'capture-fixture',refresh_token:'fixture-refresh',token_type:'bearer',expires_in:3600,user};else if(url.pathname.endsWith('/user'))body=user;else if(url.pathname.endsWith('/profiles'))body=profile;else if(url.pathname.endsWith('/companies'))body=company;else if(url.pathname.endsWith('/my_invitation'))body=[];
+ else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Africa/Lagos',reminder_time:'09:00',email_enabled:false,email_delivery_ready:false};else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-23',timezone:'Africa/Lagos',tab_counts:{today:0,week:0,overdue:0,all:0,archived:0},done_today:[],upcoming:[],handovers_waiting:[],covering:[],cover_tasks:[],has_work:true,checklist:{capture:true,role:true,reminder:true,cover:true}};else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};else if(url.pathname.endsWith('/myday_alerts'))body=[];else if(url.pathname.endsWith('/actions'))body=[];
+ else if(url.pathname.endsWith('/capture_list')){const rows=sources.filter(s=>Boolean(s.deleted_at)===args.p_archived).map(s=>({...s,items_created:items.filter(d=>d.capture_id===s.id&&d.status==='confirmed').length}));body={rows,count:rows.length}}
+ else if(url.pathname.endsWith('/capture_detail'))body=detail(args.p_id);
+ else if(url.pathname.endsWith('/capture_pipeline')){
+  if(args.p_operation==='options')body={today:'2026-10-23',remaining:8,ai_enabled:true,forwarding:false,upload:false,address:null,records:[],departments:[],contacts:[]};else if(args.p_operation==='duplicates')body=[];
+  else if(args.p_operation==='confirm'){if(failConfirm){status=500;body={message:'Fixture failure'}}else{for(const input of args.p_data.items){const d=items.find(d=>d.id===input.id);assert.equal(d.version,input.version);d.status='confirmed';d.action_id=d.kind==='action'?randomUUID():null;d.decision_id=d.kind==='decision'?randomUUID():null;d.version++}sources.find(s=>s.id===args.p_id).status='saved';body=detail(args.p_id)}}
+ }
+ else if(url.pathname.endsWith('/capture_change')){const data=args.p_data;if(args.p_operation==='create'){sources.push({id:args.p_id,...data,status:'needs_review',draft_attempts:0,deleted_at:null});body=args.p_id}else if(args.p_operation==='source'){sources.find(s=>s.id===args.p_capture).source_text=data.source_text;body=args.p_id}else if(args.p_operation==='add'){items.push({id:args.p_id,capture_id:args.p_capture,kind:data.kind,payload:data,status:'pending',version:1});sources.find(s=>s.id===args.p_capture).status='drafts_ready';body=args.p_id}else if(args.p_operation==='edit'){const d=items.find(d=>d.id===args.p_id);d.payload=data;d.kind=data.kind;d.version++;body=d.id}else if(args.p_operation==='discard'){const d=items.find(d=>d.id===args.p_id);d.status='discarded';d.version++;body=d.id}else if(['archive','restore'].includes(args.p_operation)){const s=sources.find(s=>s.id===args.p_capture);s.deleted_at=args.p_operation==='archive'?new Date().toISOString():null;s.status=s.deleted_at?'archived':'needs_review';body=s.id}}
+ else if(url.pathname.endsWith('/ai-run')){if(mode==='limit'){status=429;body={ok:false,message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}}else if(args.task==='tidy_text')body={ok:true,request_id:randomUUID(),text:'We agreed to review suppliers monthly.'};else{const s=sources.find(s=>s.id===args.capture_id);assert(s);s.draft_attempts++;s.status='drafts_ready';items.push({id:randomUUID(),capture_id:s.id,kind:'decision',status:'pending',version:1,payload:{title:'Review suppliers monthly',reason:'Reduce meeting load',decided_by:'Operations',decided_on:'2026-10-23'}},{id:randomUUID(),capture_id:s.id,kind:'action',status:'pending',version:1,payload:{title:'Share review notes',due_date:''}});body={ok:true,request_id:randomUUID(),text:JSON.stringify({decisions:[],tasks:[],summaries:[]})}}}
+ await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+ });
+ await page.goto('http://127.0.0.1:5173/login');await page.getByLabel('Work email').fill(user.email);await page.getByLabel('Password',{exact:true}).fill('fixture-password');await page.getByRole('button',{name:'Log in',exact:true}).click();await page.getByRole('heading',{name:/^Good (morning|afternoon|evening)/}).waitFor();await page.goto('http://127.0.0.1:5173/app/capture');await page.getByRole('heading',{name:'Capture the conversation.',exact:true}).waitFor();
+
+ const matrix=[['small-phone',320,740],['android',360,800],['iphone',390,844],['large-phone',430,932],['phone-landscape',844,390],['ipad',768,1024],['ipad-air',820,1180],['ipad-pro',834,1194],['ipad-pro-large',1024,1366],['ipad-landscape',1180,820],['ipad-pro-landscape',1366,1024]];
+ async function fits(label){
+  const problems=await page.locator('main').evaluate(main=>{
+   const issues=[];if(document.documentElement.scrollWidth>innerWidth+1)issues.push('document overflow');
+   for(const el of main.querySelectorAll('input:not([type=checkbox]):not([type=radio]),select,textarea,button,a.button')){
+    const r=el.getBoundingClientRect();if(!r.width||!r.height||getComputedStyle(el).visibility==='hidden')continue;
+    if(el.closest('[role=tablist],.vr-tabs,.md-tabs'))continue;
+    if(r.left< -1||r.right>innerWidth+1)issues.push((el.getAttribute('aria-label')||el.name||el.textContent).slice(0,60)+' outside viewport');
+    if(el.matches('input,select,textarea')){const p=el.parentElement.getBoundingClientRect();if(r.width>p.width+1)issues.push((el.name||el.id)+' wider than field');if(parseFloat(getComputedStyle(el).fontSize)<16)issues.push((el.name||el.id)+' may trigger iOS focus zoom')}
+   }return issues;
+  });assert.deepEqual(problems,[],label);
+ }
+ for(const [name,width,height] of matrix){
+  await page.setViewportSize({width,height});
+  const source=page.getByLabel('Email or notes',{exact:true});await source.waitFor();await source.fill('Confirm the supplier review on Friday.');
+  await page.locator('.vc-details').evaluate(el=>el.open=true);
+  await page.getByLabel('Source date',{exact:true}).fill('2026-10-24');
+  await fits('Capture '+name);
+  if(width<=1024){assert(await page.getByRole('button',{name:'Menu',exact:true}).isVisible());const sidebar=await page.locator('.vw-sidebar').boundingBox();assert(sidebar.width>=width-2,'Tablet sidebar must not take a content column');await page.getByRole('button',{name:'Menu',exact:true}).click();await page.getByRole('link',{name:'My role',exact:true}).waitFor();await page.getByRole('button',{name:'Close menu',exact:true}).click();}
+  await source.focus();assert.equal(await source.inputValue(),'Confirm the supplier review on Friday.');
+  if(['ipad','ipad-air','ipad-pro-large','ipad-landscape'].includes(name))await page.screenshot({path:`/tmp/vimbre-landing-responsive-capture-${name}.png`,fullPage:true});
+ }
+ await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();await page.setViewportSize({width:820,height:1180});assert(await page.getByRole('button',{name:'Menu',exact:true}).isVisible(),'Desktop collapsed preference must not hide tablet menu');
+ await page.getByRole('button',{name:'Add draft manually',exact:true}).click();await page.getByLabel('Title',{exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Capture draft '+name)}
+ await page.goto('http://127.0.0.1:5173/app/settings');await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Settings '+name)}
+ assert.equal(calls.filter(c=>c.path.endsWith('/ai-run')).length,0);assert.deepEqual(errors,[]);console.log('WebKit touch layout, date fields, tablet menus, collapsed preference, Capture draft and Settings passed across '+matrix.length+' device sizes');
+ }finally{await browser.close();await server.close()}})().catch(e=>{console.error(e);process.exit(1)});

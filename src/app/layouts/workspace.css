@@ -933,3 +933,37 @@
   .vw-content { padding: 24px 16px 40px; }
   .vw-topbar { padding-inline: 16px; }
 }
+
+/* Tablets need the full workspace width, including iPad portrait and split view. */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .vw-shell.app-shell,
+  .vw-shell.app-shell[data-sidebar-collapsed="true"] { display: block; }
+  .vw-shell > .vw-sidebar,
+  .vw-shell[data-sidebar-collapsed="true"] > .vw-sidebar {
+    display: flex; position: relative; top: auto; margin: 0; height: auto;
+    border-radius: 0; padding: 16px 24px; overflow: visible;
+  }
+  .vw-shell .vw-brand { padding: 0; }
+  .vw-menu {
+    display: block; min-height: 44px; padding: 9px 14px;
+    border: 1px solid #ffffff30; border-radius: 8px;
+    background: #ffffff0a; color: #fff; font: inherit; cursor: pointer;
+  }
+  .vw-company, .vw-account,
+  .vw-sidebar[data-open="false"] .vw-navigation,
+  .vw-sidebar[data-open="false"] .vw-utilities { display: none; }
+  .vw-navigation { padding-top: 18px; margin-bottom: 0; }
+  .vw-utilities { margin-top: 14px; padding-top: 12px; }
+  .vw-collapse-sidebar { display: none; }
+  .vw-topbar { height: 64px; margin: 0; padding-inline: 24px; }
+  .vw-content { padding: 28px 24px 40px; }
+  .vw-shell .vw-content > .settings-card { max-width: 100%; }
+}
+/* Grid children and native Safari date fields must be allowed to shrink. */
+.vw-content, .vw-content > *, .vw-shell .field { min-width: 0; }
+.vw-shell :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+.vw-shell :is(h1, h2, h3), .vw-shell .button { overflow-wrap: anywhere; }
+@media (pointer: coarse) {
+  .vw-shell :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 16px; }
+  .vw-shell .button, .vw-menu { min-height: 44px; }
+}

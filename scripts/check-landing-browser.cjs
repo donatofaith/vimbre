@@ -35,7 +35,7 @@ const { chromium } = require('playwright');
     const text = await page.locator('.rs-site').innerText();
     assert(!/[—–-]/.test(text), 'No dashes in visible copy');
     assert(!/\b(seamless|powerful|streamline|empower|unlock|leverage|robust|cutting edge|revolutionise|journey|ecosystem|synergy|continuity)\b/i.test(text), 'No banned copy');
-    for (const width of [320,360,390,640,768,1024,1280,1440]) {
+    for (const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]) {
       await page.setViewportSize({ width, height: 900 });
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Overflow at ' + width);
       const toolsFit=await page.locator('.rs-tools-visual').evaluate(visual=>{
@@ -56,7 +56,7 @@ const { chromium } = require('playwright');
       });
       assert(layout.inside && layout.sceneFits, 'Cover cards fit the product viewport at '+width);
       assert(!layout.overlap, 'Cover cards do not overlap at '+width);
-      if ([360,768,1024,1440].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
+      if ([320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
       if (width === 1440) {
         const lines = await page.locator('h1').evaluate(el => el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
         assert(lines >= 1.9 && lines <= 2.1, 'Centered headline occupies two desktop lines');
