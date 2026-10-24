@@ -8,7 +8,7 @@ if(op==='populate')return {summary:'Operations handover',priorities:d.priorities
 if(state.failSave)throw Error('Test save failure');state.writes.push({op,id,data:d});
 if(op==='save'){if(!row){row={id,owner_id:user.id,created_by:user.id,owner_name:'Alex Example',cover_name:person.full_name,reviewer_name:person.full_name,status:'draft',display_status:'draft',version:0};state.rows.unshift(row)}Object.assign(row,d,{version:row.version+1,structured:true});row.cover_name=state.people.find(p=>p.id===d.cover_id)?.name||null;row.reviewer_name=state.people.find(p=>p.id===d.reviewer_id)?.name||null;}
 if(op==='submit'){row.status='pending';row.display_status='submitted'}
-if(op==='approve'){row.status='approved';row.display_status='active';row.approved_at=new Date().toISOString()}
+if(op==='approve'){row.status='approved';row.display_status='active';row.approved_at=new Date().toISOString();row.items.forEach(i=>i.approved=true)}
 if(op==='request_changes'){row.status='declined';row.display_status='changes_requested';row.review_comment=d.comment}
 if(op==='take_back'){row.status='completed';row.display_status='completed'}
 if(op==='return_summary')row.sections.return_summary=d.summary;

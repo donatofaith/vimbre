@@ -38,7 +38,8 @@ select public.handover_workspace('approve',current_setting('test.handover')::uui
 select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 do $$declare h uuid:=current_setting('test.handover')::uuid;j jsonb;begin
  j:=public.myday_tasks('today','','',0);if j::text like '%DO NOT SHARE%' or (j->'cover_tasks')::text like '%Unselected private task%' then raise exception 'Unselected task reached cover projection';end if;
- j:=public.handover_workspace('get',h);if j->'handover'->>'display_status'<>'active' then raise exception 'Start date did not activate cover';end if;
+ j:=public.handover_workspace('get',h);if j->'handover'->'items'->0->>'approved'<>'true' then raise exception 'Approved item state missing';end if;
+ if j->'handover'->>'display_status'<>'active' then raise exception 'Start date did not activate cover';end if;
  begin perform public.handover_workspace('cover_task',h,jsonb_build_object('task',current_setting('test.hprivate')));raise exception 'Unselected task writable';exception when insufficient_privilege then null;end;
  perform public.handover_workspace('cover_task',h,jsonb_build_object('task',current_setting('test.htask')));
 end$$;
