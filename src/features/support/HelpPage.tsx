@@ -18,6 +18,7 @@ const errors: Record<string, string> = {
   not_found: 'That support ticket could not be found.',
 }
 const statusLabel = (status: string) => status.replaceAll('_', ' ')
+const formatDate = (value: string) => new Date(value).toLocaleString()
 
 export function HelpPage() {
   const [busy, setBusy] = useState(false)
@@ -51,6 +52,7 @@ export function HelpPage() {
   useEffect(() => {
     if (!selected) { setDetail(null); return }
     let live = true
+    setDetail(null)
     void call('detail', { ticket_id: selected }).then(result => {
       if (!live) return
       if (result.ok) setDetail(result.data as Detail)
@@ -101,7 +103,8 @@ export function HelpPage() {
     {ticketNumber !== null && <p className="notice" role="status">Request received. Your ticket number is #{ticketNumber}.</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
-    <section className="card settings-card">
+
+    {!selected && <section className="card settings-card">
       <form className="auth-form" onSubmit={submit}>
         <h2>Contact support</h2>
         <Input label="Subject" name="subject" required maxLength={200} placeholder="Briefly describe what you need help with" />
@@ -118,32 +121,45 @@ export function HelpPage() {
         <p className="muted">Please do not include passwords or sensitive personal information. You can submit up to three tickets per day.</p>
         <Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send support request'}</Button>
       </form>
-    </section>
-    <section className="card settings-card">
-      <div className="page-heading">
-        <h2>Your support requests</h2>
-        <Button type="button" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Refresh</Button>
-      </div>
-      {!tickets.length ? <p className="muted">Your submitted requests will appear here.</p> : <div className="support-ticket-list">
-        {tickets.map(ticket => <button type="button" key={ticket.id} className="ticket-row" onClick={() => { setSelected(ticket.id); setError(''); setNotice('') }}>
-          <strong>#{ticket.ticket_number} · {ticket.subject}</strong>
-          <span>{statusLabel(ticket.status)} · Updated {new Date(ticket.updated_at).toLocaleString()}</span>
-        </button>)}
-      </div>}
-      {detail && <div className="support-conversation">
-        <h3>Ticket #{detail.ticket.ticket_number}: {detail.ticket.subject}</h3>
-        <p className="muted">Status: {statusLabel(detail.ticket.status)}</p>
-        <div className="thread">
-          {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}>
-            <p className="eyebrow">{message.sender_kind === 'staff' ? 'Vimbre support' : 'You'} · {new Date(message.created_at).toLocaleString()}</p>
-            <p>{message.body}</p>
-          </article>)}
-          {!detail.messages.length && <p>No messages yet.</p>}
+    </section>}
+
+    <section className="card settings-card support-center">
+      {!selected ? <>
+        <div className="support-list-heading">
+          <div><h2>Your support requests</h2><p className="muted">Select a request to open the conversation. Select it again to collapse it.</p></div>
+          <Button type="button" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Refresh</Button>
         </div>
-        <form className="auth-form" onSubmit={sendReply}>
-          <div className="field"><label htmlFor="support-reply">Reply to support</label><textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} required maxLength={10000} rows={4} placeholder="Write your reply…" /></div>
-          <Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send reply'}</Button>
-        </form>
+        {!tickets.length ? <p className="muted">Your submitted requests will appear here.</p> : <div className="support-ticket-list">
+          {tickets.map(ticket => <button type="button" key={ticket.id} className="ticket-row" aria-expanded={selected === ticket.id} onClick={() => { setSelected(ticket.id); setError(''); setNotice('') }}>
+            <span className="ticket-row-main">
+              <strong>#{ticket.ticket_number} · {ticket.subject}</strong>
+              <span className="ticket-row-meta"><span className={'ticket-status status-' + ticket.status}>{statusLabel(ticket.status)}</span><span>Updated {formatDate(ticket.updated_at)}</span></span>
+            </span>
+            <span className="ticket-chevron" aria-hidden="true">›</span>
+          </button>)}
+        </div>}
+      </> : <div className="support-chat">
+        <div className="support-chat-header">
+          <Button type="button" onClick={() => { setSelected(''); setDetail(null); setReply(''); setError(''); setNotice('') }}>← All requests</Button>
+          <div className="support-chat-title">
+            <span className="eyebrow">Support request #{detail?.ticket.ticket_number ?? tickets.find(t => t.id === selected)?.ticket_number ?? ''}</span>
+            <h2>{detail?.ticket.subject ?? tickets.find(t => t.id === selected)?.subject ?? 'Loading conversation…'}</h2>
+            {detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}
+          </div>
+        </div>
+        {!detail ? <p className="muted" role="status">Loading conversation…</p> : <>
+          <div className="support-chat-thread" aria-label="Support conversation">
+            {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}>
+              <div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div>
+              <p>{message.body}</p>
+            </article>)}
+            {!detail.messages.length && <div className="support-empty-thread"><p>Your request is in our support queue.</p><p className="muted">Send a message below if you have more details to add. Our team will reply here.</p></div>}
+          </div>
+          <form className="support-reply-form" onSubmit={sendReply}>
+            <div className="field"><label htmlFor="support-reply">Message</label><textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} required maxLength={10000} rows={3} placeholder="Write a message to Vimbre Support…" /></div>
+            <div className="support-reply-actions"><span className="muted">Replies stay in this conversation.</span><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div>
+          </form>
+        </>}
       </div>}
     </section>
   </>
