@@ -509,6 +509,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      submit_customer_support: { Args: { p_body: string; p_category: string; p_subject: string }; Returns: Json }
       accept_invitation: { Args: { p_id: string }; Returns: undefined }
       cancel_invitation: { Args: { p_id: string }; Returns: undefined }
       complete_invitation_delivery: {
