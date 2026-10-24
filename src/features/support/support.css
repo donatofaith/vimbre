@@ -76,3 +76,4 @@
 
 .support-page .field-error{color:#9e2727}
 .support-title{display:flex;gap:16px;align-items:center}.support-brand-icon{display:grid;place-items:center;flex-shrink:0;width:52px;height:52px;border-radius:14px;background:#e5edfc;color:#245ac2}.support-brand-icon svg{width:28px;height:28px}.support-contact-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}.support-contact-options a{display:grid;gap:8px;padding:18px 20px;background:white;border:1px solid #dce3ed;border-radius:12px;color:#17243a;text-decoration:none;overflow-wrap:anywhere}.support-contact-options span{font-size:13px;color:#245ac2}.support-contact-options a:hover{border-color:#8ea9d8}@media(max-width:600px){.support-contact-options{grid-template-columns:minmax(0,1fr)}.support-title{gap:12px}.support-brand-icon{width:44px;height:44px}.support-title h1{font-size:26px}}
+.support-error>.button{flex-shrink:0;white-space:nowrap}.support-error>p{min-width:0}
