@@ -8,7 +8,7 @@ Title Handovers; “Pass your work on so nothing stops while you’re away.” P
 
 ## Four steps
 
-1. Details: Planned leave, Exit or Sudden absence (latter two flagged); dates; cover required before submission; manager defaults to line manager. No health detail fields.
+1. Details: Planned leave, Exit or Sudden absence (latter two flagged); dates; cover required before submission; manager defaults to line manager. Reason is optional and uses general choices. No health detail fields.
 2. What to include: select role work, active decisions, contacts, documents, deadlines, own notes; choose open tasks individually; decisions can be marked Do not change; What comes first priorities and Watch outs. Use my role and records imports the selected confirmed content without AI.
 3. Draft: Generate draft or Write manually; editable Summary, What comes first, Open tasks, Decisions to keep, Contacts, Documents, Dates, Watch outs, Notes. Keep What I handle content as a separate editable section too. Banner “Draft. Check before you submit.”
 4. Review and submit: confirm cover/dates/priorities, then Submit to manager. Saving a draft does not submit it.
