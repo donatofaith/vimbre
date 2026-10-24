@@ -1,0 +1,13 @@
+.vai-panel { display: grid; gap: 20px; padding: 24px; min-width: 0; }
+.vai-panel h2, .vai-panel p { margin: 0; }
+.vai-panel textarea { width: 100%; max-width: 100%; min-height: 100px; resize: vertical; overflow-wrap: anywhere; }
+.vai-panel .field { display: grid; gap: 8px; min-width: 0; }
+.vai-panel > .button { justify-self: start; }
+.vai-result { display: grid; gap: 16px; padding-top: 20px; border-top: 1px solid var(--border, #e2e8f0); }
+.vai-proposals { display: grid; gap: 12px; padding: 0; list-style: none; }
+.vai-proposals li { border: 1px solid var(--border, #e2e8f0); padding: 16px; border-radius: 12px; overflow-wrap: anywhere; }
+.vai-proposals h3 { margin: 8px 0; }
+.vai-inline { margin-top: 8px; }
+@media (max-width: 640px) { .vai-panel { padding: 16px; } }
+
+.vai-allowance{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;margin-bottom:24px;border:1px solid #e1c76e;border-radius:12px;background:#fff8df;color:#513b12;font-size:14px;line-height:1.6}.vai-allowance p{margin:6px 0 0}.vai-allowance a{flex-shrink:0;min-height:44px}@media(max-width:639px){.vai-allowance{align-items:flex-start;flex-direction:column}}

@@ -1,0 +1,611 @@
+.vc-page {
+  min-width: 0;
+}
+
+.vc-page .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.vc-steps {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 27px;
+}
+
+.vc-steps li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #64748b;
+  font-size: 12px;
+  flex: 1;
+}
+
+.vc-steps li:not(:last-child)::after {
+  content: "";
+  height: 1px;
+  background: #dce5f0;
+  flex: 1;
+  margin-left: 10px;
+}
+
+.vc-steps span {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #53677a;
+}
+
+.vc-steps li[data-active="true"] {
+  color: #102a43;
+  font-weight: 600;
+}
+
+.vc-steps li[data-active="true"] span {
+  background: #2f80ed;
+  color: white;
+}
+
+.vc-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(250px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.vc-card {
+  background: #fff;
+  border: 1px solid #dce5f0;
+  border-radius: 13px;
+  padding: 23px;
+  min-width: 0;
+}
+
+.vc-card h2 {
+  font-size: 21px;
+  line-height: 1.4;
+  margin: 0 0 20px;
+}
+
+.vc-card h3 {
+  font-size: 17px;
+  line-height: 1.4;
+  margin: 0 0 12px;
+}
+
+.vc-form > fieldset,
+.vc-draft-form > fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.vc-page .field {
+  min-width: 0;
+  margin: 0;
+}
+
+.vc-page .field label {
+  font-size: 12px;
+}
+
+.vc-page .field input,
+.vc-page .field select,
+.vc-page .field textarea {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  background: white;
+  color: #102a43;
+  border: 1px solid #cbd9e9;
+  border-radius: 8px;
+  padding: 11px 12px;
+}
+
+.vc-page textarea {
+  resize: vertical;
+  line-height: 1.8;
+}
+
+.vc-page textarea::placeholder {
+  color: #78899d;
+}
+
+.vc-source-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 17px;
+}
+
+.vc-source-fields > .field:first-child {
+  grid-column: 1 / -1;
+}
+
+.vc-note {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #64748b;
+  margin: 0;
+}
+
+.vc-page .form-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.vc-page .form-actions > a {
+  font-size: 12px;
+}
+
+.vc-page .form-actions .button {
+  font-size: 12px;
+}
+
+.vc-card-footer {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 17px;
+  margin: 22px 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.vc-guide {
+  background: linear-gradient(135deg, #edf6ff, #e9f2fd);
+  border: 1px solid #d9e7f9;
+  border-radius: 13px;
+  padding: 27px 24px;
+}
+
+.vc-guide h2 {
+  font-size: 25px;
+  line-height: 1.35;
+  letter-spacing:var(--heading-letter-spacing);
+  margin: 5px 0 25px;
+}
+
+.vc-guide-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 25px 0;
+}
+
+.vc-guide-row h3 {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 3px 0 5px;
+}
+
+.vc-guide-row p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #64748b;
+  margin: 0;
+}
+
+.vc-guide .vr-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 43px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: #2f80ed;
+  background: #dfeeff;
+}
+
+.vc-guide .vr-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.vc-guide-note {
+  border-top: 1px solid #d1e1f4;
+  padding-top: 23px;
+  margin: 28px 0 15px;
+  font-size: 14px;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+.vc-history {
+  margin-top: 20px;
+}
+
+.vc-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.vc-section-heading h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.vc-section-heading .vw-eyebrow {
+  margin-bottom: 7px;
+}
+
+.vc-section-heading .button {
+  font-size: 11px;
+  padding: 8px 12px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.vc-source {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 15px 17px;
+  border-radius: 9px;
+  margin: 0 0 24px;
+}
+
+.vc-source summary {
+  font-size: 13px;
+  color: #1e66d1;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.vc-source p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 380px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #53677a;
+  margin: 16px 0 0;
+}
+
+.vc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  min-height: 230px;
+  padding: 22px;
+}
+
+.vc-empty h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.vc-empty p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  max-width: 45ch;
+}
+
+.vc-history-empty {
+  min-height: 150px;
+  padding: 12px;
+}
+
+.vc-history-empty > svg {
+  width: 30px;
+  height: 30px;
+  color: #7b91a8;
+}
+
+.vc-archive-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.vc-archive-filter input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2f80ed;
+}
+
+.vc-page .vc-source-list,
+.vc-page .vc-drafts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vc-source-list li + li {
+  border-top: 1px solid #e2e8f0;
+}
+
+.vc-source-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  padding: 15px 10px;
+  color: #102a43;
+  font: inherit;
+  width: 100%;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.vc-source-list button:hover,
+.vc-source-list button[aria-current="true"] {
+  background: #edf5ff;
+}
+
+.vc-source-list strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.vc-source-list span {
+  font-size: 11px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.vc-drafts > li {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px;
+  margin: 0 0 15px;
+  overflow-wrap: anywhere;
+}
+
+.vc-drafts h3 {
+  margin: 13px 0 10px;
+}
+
+.vc-drafts p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #53677a;
+}
+
+.vc-drafts .vc-text {
+  white-space: pre-wrap;
+}
+
+.vc-drafts .form-actions {
+  margin-top: 17px;
+  gap: 8px;
+}
+
+.vc-drafts .form-actions .button {
+  font-size: 11px;
+  padding: 8px 11px;
+  min-height: 34px;
+}
+
+.vc-drafts a {
+  font-size: 12px;
+}
+
+.vc-draft-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  color: #53677a;
+}
+
+.vc-draft-meta span {
+  border-radius: 5px;
+  padding: 4px 8px;
+  background: #edf5ff;
+}
+
+.vc-draft-form {
+  padding: 20px;
+  background: #f8fbff;
+  border: 1px solid #d9e7f9;
+  border-radius: 10px;
+  margin: 0 0 23px;
+}
+
+.vc-error {
+  font-size: 13px;
+  color: #b42318;
+}
+
+.vc-page button:focus-visible,
+.vc-page summary:focus-visible {
+  outline: 2px solid #2f80ed;
+  outline-offset: 3px;
+}
+
+.vc-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+  .vc-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-guide {
+    padding: 24px;
+  }
+
+  .vc-guide h2 {
+    font-size: 23px;
+  }
+
+  .vc-guide-row {
+    margin: 20px 0;
+  }
+
+  .vc-guide-note {
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 760px) {
+  .vc-card {
+    padding: 18px;
+  }
+
+  .vc-steps {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .vc-steps li {
+    font-size: 10px;
+    gap: 6px;
+    flex: initial;
+  }
+
+  .vc-steps span {
+    width: 23px;
+    height: 23px;
+  }
+
+  .vc-steps li:not(:last-child)::after {
+    display: none;
+  }
+
+  .vc-source-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-source-fields > .field:first-child {
+    grid-column: auto;
+  }
+
+  .vc-section-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .vc-card h2 {
+    font-size: 19px;
+  }
+
+  .vc-source-list button {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .vc-source-list span {
+    flex-shrink: 1;
+  }
+
+  .vc-draft-form {
+    padding: 15px;
+  }
+
+  .vc-page .vw-page-heading h1 {
+    max-width: none;
+  }
+
+  .vc-guide {
+    padding: 22px 18px;
+  }
+}
+
+.vc-capabilities { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 22px; color: #64748b; font-size: 12px; line-height: 1.6; }
+.vc-capabilities strong { font-weight: 600; }
+.vc-saved { border-top: 1px solid #dce5f0; margin-top: 28px; padding-top: 22px; }
+
+
+/* Capture follows the compact My day surfaces and spacing. */
+.vc-page{display:grid;gap:24px;padding-bottom:32px;max-width:1400px;margin-inline:auto}
+.vc-page .vw-page-heading{margin-bottom:0}
+.vc-page .vc-steps{margin:0;max-width:650px}
+.vc-page .vc-card{border-radius:20px;padding:26px;box-shadow:0 1px 2px rgb(16 42 67 / 3%),0 8px 24px rgb(16 42 67 / 3%)}
+.vc-page .vc-card h2{font-size:20px;letter-spacing:var(--heading-letter-spacing);margin-bottom:20px}
+.vc-page .vc-card h3{letter-spacing:0}
+.vc-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:5px;background:#f1f5f9;border-radius:12px;gap:5px;margin-bottom:24px}
+.vc-channels button{min-height:54px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;border:0;border-radius:9px;background:transparent;color:#53677a;padding:9px;font:inherit;font-size:13px;cursor:pointer}
+.vc-channels button[aria-selected=true]{background:#fff;color:#102a43;box-shadow:0 1px 5px rgb(16 42 67 / 8%);font-weight:600}
+.vc-channels button:disabled{opacity:1;color:#64748b;cursor:not-allowed}
+.vc-channels small{font-size:10px;background:#e2e8f0;border-radius:5px;padding:3px 6px}
+.vc-fields{display:grid;gap:18px;border:0;padding:0;margin:0;min-width:0}
+.vc-compose{max-width:1050px}
+.vc-compose textarea{min-height:170px}
+.vc-page .field>span{display:block;font-size:12px;margin-bottom:8px;font-weight:500}
+.vc-page .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.vc-page .field input,.vc-page .field select{min-height:44px;height:44px}
+.vc-page textarea{line-height:1.65}
+.vc-counter{display:flex;gap:8px 16px;justify-content:space-between;flex-wrap:wrap;font-size:12px;color:#64748b}
+.vc-details{border-top:1px solid #e2e8f0;padding-top:14px}
+.vc-details>summary{cursor:pointer;color:#53677a;font-size:13px;padding-block:6px}
+.vc-details .vc-fields{padding-top:20px}
+.vc-review-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:start}
+.vc-original{position:sticky;top:95px;display:grid;gap:18px}
+.vc-page .vc-original h2{margin:0}
+.vc-original .form-actions{margin-top:0}
+.vc-capture-title{margin:0}
+.vc-capture-title h2{margin:10px 0 6px;font-size:24px;letter-spacing:var(--heading-letter-spacing)}
+.vc-review-banner{background:#edf5ff;border:1px solid #d8e8ff;color:#264b72;border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.6;margin:0 0 20px}
+.vc-page .vc-review-card{border-radius:14px;padding:20px;margin-bottom:18px}
+.vc-page .vc-review-card[data-accepted=true]{border-color:#93b8ed;background:#fbfdff}
+.vc-page .vc-review-card .vc-section-heading{margin-bottom:16px}
+.vc-accepted{font-size:12px;color:#1d6c4c}
+.vc-chip{display:inline-flex;font-size:11px;font-weight:500;padding:5px 9px;border-radius:6px;background:#edf5ff;color:#36567c;line-height:1.5}
+.vc-warning{color:#80530d;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px}
+.vc-bulk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-bottom:22px}
+.vc-confirm{padding:18px 0;border-top:1px solid #e2e8f0;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.vc-confirm p{font-size:13px;color:#53677a}
+.vc-page .vc-history{margin:8px 0 0}
+.vc-page .vc-source-list button{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto auto;font-size:12px;padding:18px 8px;gap:16px}
+.vc-page .vc-source-list span{white-space:normal}
+.vc-prewrap{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:14px}
+.vc-improvement{max-width:1050px}
+.vc-improvement .vc-prewrap{max-height:300px;overflow:auto}
+.vc-text-button{border:0;background:transparent;color:#2563d9;text-decoration:underline;font:inherit;cursor:pointer}
+.vc-page .vc-error{border:1px solid #fecaca;background:#fff5f5;border-radius:12px;padding:16px;color:#b42318}
+.vc-page .vc-error p{margin:0 0 12px}
+.vc-drop{display:grid;gap:12px;place-items:center;border:1px dashed #93b8ed;border-radius:12px;padding:24px;background:#f8fbff;margin-bottom:20px;cursor:pointer}
+.vc-drop small{color:#64748b}
+.vc-address{overflow-wrap:anywhere}
+@media(max-width:1100px){.vc-review-grid{grid-template-columns:1fr}.vc-original{position:static}.vc-original textarea{min-height:190px;max-height:330px}.vc-page .vc-source-list button{grid-template-columns:minmax(0,1fr) auto}.vc-page .vc-source-list button strong{grid-column:1/-1}}
+@media(max-width:640px){.vc-page{gap:20px}.vc-page .vc-card{padding:18px;border-radius:16px}.vc-page .form-grid{grid-template-columns:1fr}.vc-channels{gap:3px;padding:4px}.vc-channels button{font-size:11px;flex-direction:column;min-height:68px}.vc-channels small{font-size:9px}.vc-page .vc-review-card{padding:16px}.vc-page .vc-steps{flex-wrap:nowrap;gap:10px}.vc-steps li{flex:1}.vc-bulk{grid-template-columns:1fr}.vc-counter{font-size:11px}.vc-page .form-actions .button{min-height:44px}.vc-confirm .button{width:100%}}
+@media(prefers-reduced-motion:no-preference){.vc-review-card{animation:vc-enter .25s ease-out both}@keyframes vc-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}}
+
+/* Keep native date/select controls inside their grid tracks on iPad Safari. */
+.vc-page .field { min-width: 0; }
+.vc-page .field :is(input, select, textarea) { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.vc-page input[type="date"] { -webkit-appearance: none; appearance: none; text-align: left; }
+.vc-page input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
+@media (max-width: 760px) {
+  .vc-page .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Safari's native select baseline needs room at the touch font size. */
+.vc-page .field :is(input, select) { height: auto; min-height: 48px; padding: 10px 14px; line-height: 1.5; }
+.vc-page .field select {
+  -webkit-appearance: none; appearance: none; padding-right: 38px; background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2352677e' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;
+}
+.vc-connect{padding:24px 26px;border:1px solid #dce5ef;border-radius:18px;background:#fff}.vc-connect-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.vc-connect-heading h2,.vc-connect-heading h3{margin:0;font-size:19px}.vc-connect-heading p{margin:6px 0 0;font-size:13px;color:#607087}.vc-tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}.vc-tool-grid article{min-width:0;border:1px solid #e0e7ef;border-radius:12px;padding:18px}.vc-tool-grid h3{font-size:16px;margin:12px 0 8px}.vc-tool-grid p{font-size:13px;color:#607087}.vc-tool-mark{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#edf3ff;color:#245ac2;font-weight:650}.vc-connected-sources{margin-top:20px}.vc-connected-sources ul{list-style:none;padding:0;display:grid;gap:10px}.vc-connected-sources li button{display:grid;gap:8px;text-align:left;width:100%;min-width:0;padding:16px;border:1px solid #dce5ef;border-radius:10px;background:#f9fbfe;color:#17334e;font:inherit;cursor:pointer;overflow-wrap:anywhere}.vc-connected-sources li span{font-size:12px;color:#607087}.vc-connected-sources li strong{overflow-wrap:anywhere}.vc-connect .vc-note{margin-top:16px}.vc-connect .form-actions{gap:8px}.vc-connect .button{white-space:normal}@media(max-width:900px){.vc-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.vc-tool-grid{grid-template-columns:minmax(0,1fr)}.vc-connect{padding:18px}.vc-connect-heading{align-items:flex-start;flex-direction:column}}

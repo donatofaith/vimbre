@@ -1,0 +1,26 @@
+project_id = "vimbre"
+
+[functions.team-invitations]
+# The handler verifies the JWT with Auth.getUser, then checks HR membership in SQL.
+# This supports current signing keys instead of relying on the legacy gateway verifier.
+verify_jwt = false
+import_map = "./functions/team-invitations/deno.json"
+entrypoint = "./functions/team-invitations/index.ts"
+
+[functions.ai-run]
+# User JWT at the platform boundary, plus Auth.getUser and protected active profile in the handler.
+verify_jwt = true
+import_map = "./functions/ai-run/deno.json"
+entrypoint = "./functions/ai-run/index.ts"
+
+[functions.capture-inbound]
+# Brevo supplies a separate bearer secret; the handler fails closed without it.
+verify_jwt = false
+entrypoint = "./functions/capture-inbound/index.ts"
+import_map = "./functions/capture-inbound/deno.json"
+
+[functions.my-day-mail]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/my-day-mail/index.ts"
+import_map = "./functions/my-day-mail/deno.json"

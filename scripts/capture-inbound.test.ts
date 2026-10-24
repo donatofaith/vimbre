@@ -1,0 +1,10 @@
+import { describe, it, expect, vi } from 'vitest'
+import { inboundHandler } from '../supabase/functions/capture-inbound/handler'
+const secret='fixture-only-token-that-is-at-least-32-characters'
+const item={MessageId:'<fixture@example.invalid>',From:{Address:'owner@example.invalid'},Recipients:['capture@inbound.example.invalid'],Subject:'Supplier review',ExtractedMarkdownMessage:'Review suppliers monthly.',ExtractedMarkdownSignature:'Ada, Operations',RawHtmlBody:'<script>not used</script>'}
+function setup(key:string|undefined=secret){const receive=vi.fn(async(_value:{address:string;sender:string;messageHash:string;title:string;text:string})=>{}),handle=inboundHandler(key,receive);return {receive,call:(data:unknown={items:[item]},token=secret)=>handle(new Request('https://example.invalid',{method:'POST',headers:{authorization:`Bearer ${token}`},body:JSON.stringify(data)}))}}
+describe('Inbound capture boundary',()=>{
+ it('fails closed until configured and authenticates before reading payloads',async()=>{const disabled=setup('');expect((await disabled.call()).status).toBe(503);const app=setup();expect((await app.call(undefined,'wrong')).status).toBe(401);expect(app.receive).not.toHaveBeenCalled()})
+ it('uses envelope recipients, plain source text and a hashed message reference',async()=>{const app=setup();expect((await app.call()).status).toBe(200);expect(app.receive).toHaveBeenCalledOnce();const value=app.receive.mock.calls[0][0];expect(value).toMatchObject({address:item.Recipients[0],sender:item.From.Address,text:'Review suppliers monthly.\n\nAda, Operations'});expect(value.messageHash).toMatch(/^[a-f0-9]{64}$/);expect(JSON.stringify(value)).not.toContain('<script>')})
+ it('bounds batches, recipients and text, skips spam and never downloads attachments',async()=>{const app=setup();expect((await app.call({items:Array(11).fill(item)})).status).toBe(400);expect((await app.call({items:[{...item,SpamScore:9}]})).status).toBe(200);expect((await app.call({items:[{...item,ExtractedMarkdownMessage:'x'.repeat(16001)}]})).status).toBe(200);expect(app.receive).not.toHaveBeenCalled()})
+})

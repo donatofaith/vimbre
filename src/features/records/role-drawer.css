@@ -1,0 +1,11 @@
+.vr-drawer { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(540px,100%); height: 100dvh; max-height: 100dvh; max-width: 100%; border: 0; border-left: 1px solid #e2e8f0; padding: 24px 28px 40px; background: white; color: #102a43; overflow-y: auto; }
+.vr-drawer::backdrop { background: #102a4370; }
+.vr-drawer .vr-drawer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+.vr-drawer h2, .vr-drawer .record-editor h2 { font: 650 24px/1.4 var(--heading-font); letter-spacing: 0; margin: 0 0 24px; }
+.vr-drawer .record-editor { border: 0; padding: 0; background: none; box-shadow: none; }
+.vr-drawer .auth-form { display: grid; gap: 20px; }
+.vr-drawer .field { min-width: 0; }
+.vr-drawer input[type="file"] { max-width: 100%; white-space: normal; }
+@media(max-width:760px) { .vr-drawer { padding: 20px 16px 32px; } }
+.vr-drawer { font-size: 14px; }
+.vr-drawer .field-hint { font-size: 13px; }

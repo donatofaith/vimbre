@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" class="vimbre-booting">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#102A43" />
+    <meta name="description" content="Vimbre connects conversations, decisions, actions and outcomes across supported tools, helping teams track work, build context and prepare handovers." />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
+    <link rel="preload" as="image" type="image/svg+xml" href="/vimbre-lockup-compact-colour.svg" />
+    <title>Vimbre | Work Intelligence and Handover Context</title>
+    <link rel="canonical" href="https://vimbre.com/" />
+    <meta property="og:title" content="Vimbre | Work Intelligence and Handover Context" />
+    <meta property="og:description" content="The missing layer behind your work." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://vimbre.com/vimbre-work-context-og-1200.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Vimbre. The missing layer behind your work." />
+    <meta name="twitter:title" content="Vimbre | Work Intelligence and Handover Context" />
+    <meta name="twitter:description" content="The missing layer behind your work." />
+    <meta name="twitter:image" content="https://vimbre.com/vimbre-work-context-og-1200.png" />
+    <meta property="og:url" content="https://vimbre.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      html.vimbre-booting { overflow: hidden; }
+      #vimbre-boot { position:fixed;inset:0;z-index:9999;display:grid;place-content:center;justify-items:center;gap:28px;background:#fff;color:#102a43;transition:opacity 250ms ease; }
+      #vimbre-boot.leaving { opacity:0;pointer-events:none; }
+      .boot-brand { display:flex;align-items:center;justify-content:center; }
+      .boot-logo { display:block;width:clamp(180px,45vw,264px);height:auto; }
+      .boot-track { width:132px;height:3px;background:#eaf2fe;border-radius:4px;overflow:hidden; }
+      .boot-track i { display:block;width:100%;height:100%;background:#2f80ed;transform-origin:left;animation:boot-progress 1500ms ease-in-out infinite; }
+      .boot-label { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+      @keyframes boot-progress { 0% { transform:scaleX(.1); } 70%,100% { transform:scaleX(1); } }
+      @media(prefers-reduced-motion:reduce) { #vimbre-boot { transition:none; }.boot-track i { animation:none; } }
+    </style>
+  </head>
+  <body>
+    <div id="vimbre-boot" role="status" aria-live="polite"><div class="boot-brand"><img class="boot-logo" src="/vimbre-lockup-compact-colour.svg" width="153" height="48" alt="Vimbre" fetchpriority="high" /></div><span class="boot-track" aria-hidden="true"><i></i></span><span class="boot-label">Loading Vimbre</span></div>
+    <script>
+      (() => {
+        const started = performance.now(); let finishing = false;
+        const remove = () => { document.getElementById('vimbre-boot')?.remove(); document.documentElement.classList.remove('vimbre-booting'); };
+        const finish = () => {
+          if (finishing) return; finishing = true;
+          const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+          const logo = document.querySelector('.boot-logo');
+          const image = logo && logo.decode ? logo.decode().catch(() => {}) : Promise.resolve();
+          Promise.race([Promise.all([fonts, image]), new Promise(resolve => setTimeout(resolve, 1500))]).then(() => {
+            setTimeout(() => { document.getElementById('vimbre-boot')?.classList.add('leaving'); setTimeout(remove, 250); }, Math.max(0, 650 - (performance.now() - started)));
+          });
+        };
+        window.addEventListener('vimbre:ready', finish, { once:true });
+        requestAnimationFrame(() => { if (document.querySelector('#root h1')) finish(); });
+        setTimeout(finish, 3000); setTimeout(remove, 5000);
+      })();
+    </script>
+    <noscript><style>#vimbre-boot{display:none}html.vimbre-booting{overflow:auto}</style></noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
