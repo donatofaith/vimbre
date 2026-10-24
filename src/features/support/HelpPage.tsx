@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import './support.css'
+import {WorkspaceIcon} from '../../components/ui/WorkspaceIcon'
 
 type Result = { ok?: boolean; code?: string; ticket_number?: number; data?: unknown }
 type Ticket = { id: string; ticket_number: number; subject: string; category: string; status: string; created_at: string; updated_at: string; first_reply_at: string | null }
@@ -108,9 +109,10 @@ export function HelpPage() {
 
   return <div className="support-page">
     <div className="page-heading support-page-heading">
-      <h1 tabIndex={-1}>Help and support</h1>
+      <div className="support-title"><span className="support-brand-icon"><WorkspaceIcon name="support"/></span><h1 tabIndex={-1}>Help and support</h1></div>
       <p>Contact Vimbre Support and follow your requests.</p>
     </div>
+    <div className="support-contact-options"><a href="mailto:support@vimbre.com?subject=Vimbre%20support"><strong>Account and workspace support</strong><span>support@vimbre.com</span></a><a href="mailto:hello@vimbre.com"><strong>General enquiries</strong><span>hello@vimbre.com</span></a></div>
     {ticketNumber !== null && <p className="notice" role="status">Request received. Your ticket number is #{ticketNumber}.</p>}
     {notice && ticketNumber === null && <p className="notice" role="status">{notice}</p>}
     {error && <div className="support-error"><p className="field-error" role="alert">{error}</p><Button variant="secondary" disabled={busy || loading} onClick={() => setRefresh(n => n + 1)}>Retry</Button></div>}

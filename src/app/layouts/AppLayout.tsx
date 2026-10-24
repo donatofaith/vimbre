@@ -20,6 +20,7 @@ import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 const icons: Record<string, string> = {
   '/app': 'home',
   '/app/capture': 'capture',
+  '/app/help': 'support',
   '/app/weekly-summary': 'calendar',
   '/app/role-record': 'record',
   '/app/handovers': 'handover',
@@ -52,7 +53,6 @@ function WorkspaceLayout() {
   const [loggingOut, setLoggingOut] = useState(false)
 
   const menuButton = useRef<HTMLButtonElement>(null)
-  const help = useRef<HTMLDialogElement>(null)
 
   const initials =
     profile?.full_name
@@ -215,13 +215,7 @@ function WorkspaceLayout() {
           <div className="vw-topbar-actions">
             <ChatLauncher />
             <Notifications />
-            <button
-              type="button"
-              className="vw-help"
-              onClick={() => help.current?.showModal()}
-            >
-              Help
-            </button>
+
 
             <span
               className="vw-avatar"
@@ -243,22 +237,7 @@ function WorkspaceLayout() {
         </main>
       </div>
 
-      <dialog
-        className="vw-dialog"
-        ref={help}
-        aria-labelledby="vw-help-title"
-      >
-        <h2 id="vw-help-title">Contact support</h2>
-        <p>Help with your account or workspace.</p>
-        <p><a href="mailto:support@vimbre.com?subject=Vimbre%20support">support@vimbre.com</a></p>
-        <p><Link to="/#contact" onClick={() => help.current?.close()}>All contact options</Link></p>
 
-        <form method="dialog">
-          <button className="button button-primary">
-            Close help
-          </button>
-        </form>
-      </dialog>
     </div>
   )
 }
