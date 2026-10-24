@@ -18,6 +18,8 @@ function failure(e:unknown){const code=(e as {code?:string})?.code;return code==
 export function CapturePage(){const {profile}=useAuth();return <CaptureWorkspace key={profile!.id}/>}
 function CaptureWorkspace(){
  const {profile}=useAuth(),[params,setParams]=useSearchParams(),selected=params.get('capture')??'',roleProfile=params.get('role')??''
+ const [roleName,setRoleName]=useState('');
+ useEffect(()=>{if(!roleProfile)return;let live=true;void supabase.rpc('role_workspace',{p_operation:'get',p_role:roleProfile}).then(({data,error})=>{if(live&&!error)setRoleName((data as unknown as {role:{title:string}})?.role?.title||'My role')});return()=>{live=false}},[roleProfile]);
  const [options,setOptions]=useState<CaptureOptions>(defaults),[optionsError,setOptionsError]=useState(false),[people,setPeople]=useState<Choice[]>([])
  const [revision,setRevision]=useState(0),[page,setPage]=useState(0),[archived,setArchived]=useState(false),[channel,setChannel]=useState('paste')
  const [listing,setListing]=useState<{rows:CaptureSource[];count:number}|null>(null),[listError,setListError]=useState(false)
@@ -47,6 +49,7 @@ function CaptureWorkspace(){
  async function upload(file:File){setBusy(true);setError('');try{const {extractCaptureFile}=await import('./capture-file');const result=await extractCaptureFile(file);setText(result);setFile(file);setChannel('upload')}catch(e){setError(e instanceof Error?e.message:'This file could not be read. Paste its text instead.')}finally{setBusy(false)}}
  return <div className="vc-page">
   <header className="vw-page-heading"><div><h1>Capture the conversation.</h1><p>{options.forwarding&&options.upload?'Paste an email or notes, forward an email, or upload a file. Vimbre drafts the decisions and tasks for you to confirm.':'Paste an email or notes. Vimbre drafts the decisions and tasks for you to confirm.'}</p></div>{selected&&<Button variant="secondary" disabled={busy} onClick={()=>open('')}>New capture</Button>}</header>
+  {roleProfile&&<p>For role: <Link to={`/app/role-record?role=${roleProfile}`}>{roleName||'My role'}</Link></p>}
   <ol className="vc-steps" aria-label="Capture workflow">{['Add','Review drafts','Confirm'].map((s,i)=><li key={s} data-active={i===(recordView?2:selected?1:0)}><span>{i+1}</span>{s}</li>)}</ol>
   {message&&<div className="notice" role="status">{message}{saved.length>0&&<div className="form-actions"><Link to="/app">Open My day</Link><button type="button" className="vc-text-button" onClick={()=>setRecordView(true)}>Open the Record</button></div>}</div>}
   {error&&<div className="vc-error" role="alert"><p>{error}</p><Button variant="secondary" disabled={busy} onClick={()=>void manualEntry()}>Add a task by hand</Button></div>}

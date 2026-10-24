@@ -86,6 +86,7 @@ const assert = require('node:assert/strict')
         items: items.reverse(),
       }
     }
+    const roleFixture=require('./role-workspace-fixture.cjs')(user)
     await page.route('https://*.supabase.co/**', async (route) => {
       const req = route.request(),
         path = new URL(req.url()).pathname
@@ -95,7 +96,8 @@ const assert = require('node:assert/strict')
       } catch {}
       let body = {},
         status = 200
-      if (path.endsWith('/token'))
+      if(path.endsWith('/role_workspace')){roleFixture.state.items=notificationRecords;body=roleFixture.handle(a)}
+      else if (path.endsWith('/token'))
         body = {
           access_token: 'chat-test-token',
           refresh_token: 'chat-test-refresh',
@@ -430,7 +432,7 @@ const assert = require('node:assert/strict')
     await page.getByRole('link',{name:'All records',exact:true}).click()
     assert.equal(await page.getByRole('button',{name:'Add a responsibility',exact:true}).count(),0)
     assert.equal(await page.getByLabel('Deadline (optional)',{exact:true}).count(),0)
-    assert(await page.getByRole('button',{name:'My notes',exact:true}).isVisible())
+    assert(await page.getByRole('button',{name:'Save notes',exact:true}).isVisible())
     assert.deepEqual(errors, [])
     console.log(
       JSON.stringify({
