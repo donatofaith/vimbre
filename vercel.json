@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/capture/callback",
+      "destination": "/api/capture/callback"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

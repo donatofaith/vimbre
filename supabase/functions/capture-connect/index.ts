@@ -3,7 +3,7 @@ import {providers,names,configured,start,exchange,refresh,sources,read,revoke,ra
 import type {Provider,Tokens} from './providers.ts'
 const url=Deno.env.get('SUPABASE_URL')!,key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,anon=Deno.env.get('SUPABASE_ANON_KEY')!
 const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})
-const callback=url+'/functions/v1/capture-connect/callback',home='https://vimbre.com/app/capture'
+const callback=url+'/functions/v1/capture-connect/callback',brandedCallback='https://vimbre.com/api/capture/callback',home='https://vimbre.com/app/capture'
 const origins=new Set(['https://vimbre.com','https://www.vimbre.com','https://vimbre.vercel.app','https://vimbre.co.uk','https://www.vimbre.co.uk','http://127.0.0.1:5173','http://localhost:5173'])
 async function service(action:string,user:string|null,data:Record<string,unknown>={}){const r=await db.rpc('capture_connection_service',{p_action:action,p_user:user,p_data:data});if(r.error)throw new Error(r.error.message.includes('connection_busy')?'connection_busy':r.error.message.includes('rate_limited')?'rate_limited':'access_denied');return r.data}
 Deno.serve(async req=>{
@@ -24,11 +24,11 @@ Deno.serve(async req=>{
   const connections=await service('list',user)
   if(input.action==='status')return reply(200,{ok:true,providers:providers.map(p=>({provider:p,name:names[p],configured:configured(p),connection:connections.find((c:any)=>c.provider===p)||null}))})
   if(input.action==='complete'){
-   if(!input.params||typeof input.params!=='object'||Array.isArray(input.params))return reply(400,{ok:false,code:'invalid_input'});const params=new URLSearchParams();for(const name of ['state','code','oauth_token','oauth_verifier','error','denied'])if(typeof input.params[name]==='string')params.set(name,input.params[name]);const state=params.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))return reply(400,{ok:false,code:'invalid_input'});const grant=await service('state_claim',user,{hash:await digest(state)});if(params.has('error')||params.has('denied'))return reply(400,{ok:false,code:'connection_declined'});const p=grant.provider as Provider;const tokens=await exchange(p,params,grant.secret,callback);await service('store',user,{provider:p,company_id:grant.company_id,secret:tokens});return reply(200,{ok:true})
+   if(!input.params||typeof input.params!=='object'||Array.isArray(input.params))return reply(400,{ok:false,code:'invalid_input'});const params=new URLSearchParams();for(const name of ['state','code','oauth_token','oauth_verifier','error','denied'])if(typeof input.params[name]==='string')params.set(name,input.params[name]);const state=params.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))return reply(400,{ok:false,code:'invalid_input'});const grant=await service('state_claim',user,{hash:await digest(state)});if(params.has('error')||params.has('denied'))return reply(400,{ok:false,code:'connection_declined'});const p=grant.provider as Provider;const redirect=grant.secret.redirect_uri||callback;if(redirect!==callback&&(!(p==='gmail'||p==='drive')||redirect!==brandedCallback))throw new Error('access_denied');const tokens=await exchange(p,params,grant.secret,redirect);await service('store',user,{provider:p,company_id:grant.company_id,secret:tokens});return reply(200,{ok:true})
   }
   if(input.action==='connect'){
    const p=input.provider as Provider;if(!providers.includes(p))return reply(400,{ok:false,code:'invalid_input'});if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
-   const state=random(),flow=await start(p,state,callback,random());await service('state_create',user,{hash:await digest(state),provider:p,secret:flow.secret,return_origin:origins.has(origin)&&origin.startsWith('https://')?origin:'https://vimbre.com'});return reply(200,{ok:true,url:flow.url,state})
+   const redirect=p==='gmail'||p==='drive'?brandedCallback:callback;const state=random(),flow=await start(p,state,redirect,random());await service('state_create',user,{hash:await digest(state),provider:p,secret:{...flow.secret,redirect_uri:redirect},return_origin:origins.has(origin)&&origin.startsWith('https://')?origin:'https://vimbre.com'});return reply(200,{ok:true,url:flow.url,state})
   }
   if(!['sources','import','disconnect'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false
