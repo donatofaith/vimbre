@@ -16,9 +16,11 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
  else if(url.pathname.endsWith('/ai-run')){if(mode==='limit'){status=429;body={ok:false,message:'Your company has reached its AI limit. You can continue by hand.',can_continue_manually:true}}else if(args.task==='tidy_text')body={ok:true,request_id:randomUUID(),text:'We agreed to review suppliers monthly.'};else{const s=sources.find(s=>s.id===args.capture_id);assert(s);s.draft_attempts++;s.status='drafts_ready';items.push({id:randomUUID(),capture_id:s.id,kind:'decision',status:'pending',version:1,payload:{title:'Review suppliers monthly',reason:'Reduce meeting load',decided_by:'Operations',decided_on:'2026-10-23'}},{id:randomUUID(),capture_id:s.id,kind:'action',status:'pending',version:1,payload:{title:'Share review notes',due_date:''}});body={ok:true,request_id:randomUUID(),text:JSON.stringify({decisions:[],tasks:[],summaries:[]})}}}
  await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
  });
+ const matrix=[['small-phone',320,740],['android',360,800],['iphone',390,844],['large-phone',430,932],['phone-landscape',844,390],['ipad',768,1024],['ipad-air',820,1180],['ipad-pro',834,1194],['ipad-pro-large',1024,1366],['ipad-landscape',1180,820],['ipad-pro-landscape',1366,1024]];
+ for(const path of ['/privacy','/terms','/signup','/forgot','/login']){await page.goto('http://127.0.0.1:5173'+path);await page.getByRole('heading',{level:1}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits(path+' '+name)}}
  await page.goto('http://127.0.0.1:5173/login');await page.getByLabel('Work email').fill(user.email);await page.getByLabel('Password',{exact:true}).fill('fixture-password');await page.getByRole('button',{name:'Log in',exact:true}).click();await page.getByRole('heading',{name:/^Good (morning|afternoon|evening)/}).waitFor();await page.goto('http://127.0.0.1:5173/app/capture');await page.getByRole('heading',{name:'Capture the conversation.',exact:true}).waitFor();
 
- const matrix=[['small-phone',320,740],['android',360,800],['iphone',390,844],['large-phone',430,932],['phone-landscape',844,390],['ipad',768,1024],['ipad-air',820,1180],['ipad-pro',834,1194],['ipad-pro-large',1024,1366],['ipad-landscape',1180,820],['ipad-pro-landscape',1366,1024]];
+
  async function fits(label){
   const problems=await page.locator('main').evaluate(main=>{
    const issues=[];if(document.documentElement.scrollWidth>innerWidth+1)issues.push('document overflow');
