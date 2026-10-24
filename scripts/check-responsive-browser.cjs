@@ -42,6 +42,6 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
  }
  await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();await page.setViewportSize({width:820,height:1180});assert(await page.getByRole('button',{name:'Menu',exact:true}).isVisible(),'Desktop collapsed preference must not hide tablet menu');
  await page.getByRole('button',{name:'Add draft manually',exact:true}).click();await page.getByLabel('Title',{exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Capture draft '+name)}
- await page.goto('http://127.0.0.1:5173/app/settings');await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Settings '+name)}
+ await page.goto('http://127.0.0.1:5173/app/settings');await page.getByRole('heading',{name:'Company settings',exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Settings '+name)}
  assert.equal(calls.filter(c=>c.path.endsWith('/ai-run')).length,0);assert.deepEqual(errors,[]);console.log('WebKit touch layout, date fields, tablet menus, collapsed preference, Capture draft and Settings passed across '+matrix.length+' device sizes');
  }finally{await browser.close();await server.close()}})().catch(e=>{console.error(e);process.exit(1)});

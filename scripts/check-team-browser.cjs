@@ -67,6 +67,7 @@ const assert = require('node:assert/strict');
     await page.getByLabel('Company name',{exact:true}).fill('Team test company');await page.getByRole('button',{name:'Save settings',exact:true}).click();await page.getByRole('status').filter({hasText:'Company settings saved.'}).waitFor();
     const settingsWrite=requests.filter(row=>row.path.endsWith('/companies')&&row.args).at(-1);assert.deepEqual(Object.keys(settingsWrite.args),['name']);
     await page.getByRole('link',{name:'Team',exact:true}).click();
+    for(const [path,title] of [['team','Team'],['departments','Departments']]){await page.goto('http://127.0.0.1:5173/app/'+path);await page.getByRole('heading',{name:title,exact:true}).waitFor();for(const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]){await page.setViewportSize({width,height:1000});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),`${title} overflow ${width}`)}}await page.goto('http://127.0.0.1:5173/app/team');await page.getByRole('heading',{name:'Team',exact:true}).waitFor();
     await page.setViewportSize({ width: 360, height: 800 }); assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await page.screenshot({ path: process.env.VIMBRE_TEAM_SCREENSHOT || '/tmp/vimbre-team-mobile.png', fullPage: true });
     // A different browser accepts a valid implicit email link. No metadata grants access.
     Object.assign(user, { id: '55555555-5555-4555-8555-555555555555', email: 'teammate@example.invalid', user_metadata: {} });
