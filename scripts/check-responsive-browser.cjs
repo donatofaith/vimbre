@@ -28,6 +28,7 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
     const r=el.getBoundingClientRect();if(!r.width||!r.height||getComputedStyle(el).visibility==='hidden')continue;
     if(el.closest('[role=tablist],.vr-tabs,.md-tabs'))continue;
     if(r.left< -1||r.right>innerWidth+1)issues.push((el.getAttribute('aria-label')||el.name||el.textContent).slice(0,60)+' outside viewport');
+    if(el.closest('.vc-page')&&el.matches('input:not([type=checkbox]):not([type=radio]),select')){const css=getComputedStyle(el),needed=parseFloat(css.lineHeight)+parseFloat(css.paddingTop)+parseFloat(css.paddingBottom)+parseFloat(css.borderTopWidth)+parseFloat(css.borderBottomWidth);if(Number.isFinite(needed)&&r.height+1<needed)issues.push((el.name||el.id)+' clips control text vertically')}
     if(el.matches('input,select,textarea')){const p=el.parentElement.getBoundingClientRect();if(r.width>p.width+1)issues.push((el.name||el.id)+' wider than field');if(parseFloat(getComputedStyle(el).fontSize)<16)issues.push((el.name||el.id)+' may trigger iOS focus zoom')}
    }return issues;
   });assert.deepEqual(problems,[],label);
