@@ -17,6 +17,8 @@ do $$declare rid uuid; d uuid; replacement uuid; i uuid; contact uuid; j jsonb;b
  j:=public.role_workspace('replace',rid,jsonb_build_object('id',d,'kind','decision','title','Quarterly reviews','fields',jsonb_build_object('reason','Stable supplier','decided_by','Owner','decided_on','2026-10-23')));replacement:=(j->>'id')::uuid;
  if not exists(select 1 from public.decisions where id=d and status='replaced' and replaced_by_id=replacement) or not exists(select 1 from public.decisions where id=replacement and replaces_id=d) then raise exception 'Broken replacement chain';end if;
  begin perform public.role_workspace('replace',rid,jsonb_build_object('id',d,'kind','decision','title','Duplicate','fields','{}'::jsonb));raise exception 'Double replacement accepted';exception when check_violation then null;end;
+ begin update public.decisions set reason='Rewrite history' where id=d;raise exception 'Replaced decision edited directly';exception when check_violation then null;end;
+ begin perform public.role_workspace('ai_source',rid,'{"kind":"responsibility"}');raise exception 'Disabled AI accepted';exception when insufficient_privilege then null;end;
  perform public.role_workspace('notes',rid,'{"body":"Private holder notes"}');
  j:=public.role_workspace('save',rid,'{"kind":"external_contact","title":"Supplier","fields":{"contact_details":"supplier@example.invalid","contact_context":"Fast delivery","last_contacted":"2026-10-23"}}');contact:=(j->>'id')::uuid;perform set_config('test.contact',contact::text,true);
  j:=public.role_workspace('save',rid,'{"kind":"recurring_deadline","title":"One off filing","fields":{"due_date":"2026-10-25","recurrence":"Once","details":"Submit report"}}');perform set_config('test.deadline',j->>'id',true);
@@ -25,7 +27,7 @@ do $$declare rid uuid; d uuid; replacement uuid; i uuid; contact uuid; j jsonb;b
 end$$;
 reset role;
 update public.role_profiles set department_id=current_setting('test.department')::uuid,manager_id=current_setting('test.manager')::uuid where id=current_setting('test.role')::uuid;
-insert into private.role_features(company_id,manager_review,reassignment,readiness,recurring) values(current_setting('test.company')::uuid,true,true,true,true);
+insert into private.role_features(company_id,manager_review,reassignment,readiness,recurring,ai) values(current_setting('test.company')::uuid,true,true,true,true,true);
 set local role authenticated;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
 do $$declare r uuid:=current_setting('test.role')::uuid;j jsonb;begin
@@ -38,6 +40,10 @@ select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 do $$declare j jsonb;r uuid:=current_setting('test.role')::uuid;begin
  perform public.role_workspace('resolve',r,jsonb_build_object('id',current_setting('test.proposal'),'status','accepted'));
  if not exists(select 1 from public.role_items where id=current_setting('test.item')::uuid and details='Suggested report details') then raise exception 'Acceptance did not apply suggestion';end if;
+ j:=public.role_workspace('ai_source',r,'{"kind":"responsibility"}');
+ if j->>'source' like '%Private holder notes%' then raise exception 'AI included private notes';end if;
+ perform public.role_workspace('ai_cache',r,jsonb_build_object('kind','responsibility','fingerprint',j->>'fingerprint','output','{"items":[]}'));
+ j:=public.role_workspace('ai_source',r,'{"kind":"responsibility"}');if j->>'cached' is null then raise exception 'AI cache missing';end if;
  perform public.role_workspace('review_area',r,'{"area":"document","empty":true}');
  perform public.role_workspace('recurring',r,jsonb_build_object('id',current_setting('test.item'),'fields',jsonb_build_object('due_date','2026-10-25','recurrence','Monthly')));
  perform public.role_workspace('reassign',r,jsonb_build_object('holder',current_setting('test.employee')));
