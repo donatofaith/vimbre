@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react'
 import {Button} from '../../components/ui/Button'
 import {Input} from '../../components/ui/Input'
 import {RoleDrawer} from '../records/RoleDrawer'
-import {supabase} from '../../lib/supabase'
+import {useHandoverAllowance} from './useHandoverAllowance'
 import {runAI} from '../../lib/ai-gateway'
 import {useAuth} from '../auth/AuthProvider'
 import {handoverRpc,emptySections,parseHandoverDraft,sectionLabels,typeNames} from './model'
@@ -12,11 +12,11 @@ import {localDate} from '../records/record-utils'
 export function HandoverEditor({initial,flags,close,saved}:{initial?:Handover;flags:Record<string,boolean>;close:()=>void;saved:()=>void}){
  const {profile}=useAuth();const [id]=useState(()=>initial?.id??crypto.randomUUID());const [version,setVersion]=useState(initial?.version??0);
  const [details,setDetails]=useState({title:initial?.title||'Planned leave handover',owner_id:initial?.owner_id||profile!.id,role_id:initial?.role_id||'',handover_type:initial?.handover_type??'leave',starts_on:initial?.starts_on||localDate(),ends_on:initial?.ends_on||localDate(),cover_id:initial?.cover_id||'',reviewer_id:initial?.reviewer_id||''});
- const [options,setOptions]=useState<Options|null>(null),[optionsError,setOptionsError]=useState(false),[reload,setReload]=useState(0),[step,setStep]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[allowance,setAllowance]=useState('');
+ const [options,setOptions]=useState<Options|null>(null),[optionsError,setOptionsError]=useState(false),[reload,setReload]=useState(0),[step,setStep]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const [inclusions,setInclusions]=useState<string[]>(initial?.inclusions??['work','decisions','contacts','documents','dates','notes']);const [items,setItems]=useState<Handover['items']>(initial?.items??[]);const [sections,setSections]=useState({...emptySections(),...(initial?.sections??{}),...(!initial?.structured&&initial?.body?{summary:initial.body}:{})} as Record<Section,string>);const [drafted,setDrafted]=useState(false);
  const [checks,setChecks]=useState({cover:false,dates:false,priorities:false});
  useEffect(()=>{let live=true;void handoverRpc('options',null,{owner:details.owner_id,...(details.role_id?{role:details.role_id}:{})}).then(data=>{if(!live)return;const o=data as unknown as Options;setOptions(o);setOptionsError(false);setDetails(d=>({...d,role_id:o.role.id,reviewer_id:d.reviewer_id||o.role.manager_id||'',cover_id:d.cover_id||o.role.cover_id||''}))}).catch(()=>{if(live)setOptionsError(true)});return()=>{live=false}},[details.owner_id,details.role_id,reload]);
- useEffect(()=>{let live=true;void supabase.rpc('ai_allowance_summary',{}).then(({data})=>{const a=data as {daily_request_limit?:number;daily_requests?:number;enabled?:boolean};if(live)setAllowance(a?.enabled?`${Math.max(0,(a.daily_request_limit??0)-(a.daily_requests??0))} AI requests remaining today`:'AI is unavailable. You can write manually.')});return()=>{live=false}},[drafted]);
+ const allowance=useHandoverAllowance();
  function change(key:string,value:string){setDetails(d=>({...d,[key]:value}));setError('')}
  function content(key:Section,value:string){setSections(s=>({...s,[key]:value}));setChecks(c=>({...c,priorities:false}))}
  function choose(kind:'task'|'decision',row:{id:string;title:string},checked:boolean){setItems(v=>checked?[...v,{...row,kind,do_not_change:false}]:v.filter(i=>i.id!==row.id||i.kind!==kind))}

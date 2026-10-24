@@ -103,13 +103,9 @@ export function WorkPreferences() {
             />
             Email me task reminders
           </label>
-          <p className="muted">
-            Task reminders always appear in Notifications.
-          </p>
           {!prefs.email_delivery_ready && (
             <p className="notice">
-              Email reminders are not available yet. Your notification reminders
-              will still arrive.
+              Email delivery is not enabled for this workspace. Reminders appear in Notifications.
             </p>
           )}
           <Button type="submit" disabled={busy}>
