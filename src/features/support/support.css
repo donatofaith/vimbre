@@ -1,6 +1,6 @@
 .support-page{max-width:1280px;margin:0 auto}
 .support-page-heading{margin-bottom:24px}
-.support-page-heading h1{color:#fff}
+.support-page-heading h1{color:#17243a}
 .support-workspace{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);min-height:600px;background:var(--surface,#fff);border:1px solid #dce3ed;border-radius:16px;overflow:hidden;color:#17243a}
 .support-sidebar{min-width:0;padding:24px 16px;background:#f7f9fc;border-right:1px solid #dce3ed}
 .support-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
@@ -73,3 +73,5 @@
 .support-page .button{min-height:44px}
 }
 
+
+.support-page .field-error{color:#9e2727}
