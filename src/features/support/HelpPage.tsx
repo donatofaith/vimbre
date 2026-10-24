@@ -33,7 +33,7 @@ export function HelpPage() {
   async function call(action: string, payload: Record<string, unknown> = {}) {
     const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload })
     if (failure) throw failure
-    return data as Result
+    return (data ?? {}) as unknown as Result
   }
 
   useEffect(() => {
