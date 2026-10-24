@@ -964,6 +964,6 @@
 .vw-shell :is(input, select, textarea) { min-width: 0; max-width: 100%; }
 .vw-shell :is(h1, h2, h3), .vw-shell .button { overflow-wrap: anywhere; }
 @media (pointer: coarse) {
-  .vw-shell :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 16px; }
+  .vw-shell .vw-content :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 16px; }
   .vw-shell .button, .vw-menu { min-height: 44px; }
 }
