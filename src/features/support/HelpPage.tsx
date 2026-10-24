@@ -30,6 +30,7 @@ export function HelpPage() {
   const [detail, setDetail] = useState<Detail | null>(null)
   const [reply, setReply] = useState('')
   const [refresh, setRefresh] = useState(0)
+  const [newRequestOpen, setNewRequestOpen] = useState(false)
 
   async function call(action: string, payload: Record<string, unknown> = {}) {
     const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload as import('../../lib/database.types').Json })
@@ -75,6 +76,7 @@ export function HelpPage() {
       setTicketNumber(result.ticket_number ?? null)
       setNotice('Your request has been sent. You can follow the conversation below.')
       formElement.reset()
+      setNewRequestOpen(false)
       setRefresh(n => n + 1)
     } catch { setError('Support is temporarily unavailable. Please retry in a moment.') }
     finally { setBusy(false) }
@@ -94,73 +96,95 @@ export function HelpPage() {
     finally { setBusy(false) }
   }
 
+  const activeTicket = tickets.find(ticket => ticket.id === selected)
+
   return <>
     <div className="page-heading">
       <span className="eyebrow">Vimbre support</span>
       <h1 tabIndex={-1}>Help and support</h1>
-      <p>Send our team a question, report a problem, or continue an existing conversation.</p>
+      <p>Message our team and keep every support request in one place.</p>
     </div>
     {ticketNumber !== null && <p className="notice" role="status">Request received. Your ticket number is #{ticketNumber}.</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
 
-    {!selected && <section className="card settings-card">
-      <form className="auth-form" onSubmit={submit}>
-        <h2>Contact support</h2>
-        <Input label="Subject" name="subject" required maxLength={200} placeholder="Briefly describe what you need help with" />
-        <div className="field">
-          <label htmlFor="support-category">What is this about?</label>
-          <select id="support-category" name="category" defaultValue="how_to" required>
-            <option value="billing">Billing</option><option value="how_to">Using Vimbre</option><option value="bug">Report a problem</option><option value="feature_idea">Feature suggestion</option><option value="other">Something else</option>
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="support-message">Details</label>
-          <textarea id="support-message" name="message" required minLength={1} maxLength={10000} rows={7} placeholder="Tell us what happened and what you expected." />
-        </div>
-        <p className="muted">Please do not include passwords or sensitive personal information. You can submit up to three tickets per day.</p>
-        <Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send support request'}</Button>
-      </form>
-    </section>}
-
     <section className="card settings-card support-center">
-      {!selected ? <>
-        <div className="support-list-heading">
-          <div><h2>Your support requests</h2><p className="muted">Select a request to open the conversation. Select it again to collapse it.</p></div>
-          <Button type="button" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Refresh</Button>
-        </div>
-        {!tickets.length ? <p className="muted">Your submitted requests will appear here.</p> : <div className="support-ticket-list">
-          {tickets.map(ticket => <button type="button" key={ticket.id} className="ticket-row" aria-expanded={selected === ticket.id} onClick={() => { setSelected(ticket.id); setError(''); setNotice('') }}>
-            <span className="ticket-row-main">
-              <strong>#{ticket.ticket_number} · {ticket.subject}</strong>
-              <span className="ticket-row-meta"><span className={'ticket-status status-' + ticket.status}>{statusLabel(ticket.status)}</span><span>Updated {formatDate(ticket.updated_at)}</span></span>
-            </span>
-            <span className="ticket-chevron" aria-hidden="true">›</span>
-          </button>)}
-        </div>}
-      </> : <div className="support-chat">
-        <div className="support-chat-header">
-          <Button type="button" onClick={() => { setSelected(''); setDetail(null); setReply(''); setError(''); setNotice('') }}>← All requests</Button>
-          <div className="support-chat-title">
-            <span className="eyebrow">Support request #{detail?.ticket.ticket_number ?? tickets.find(t => t.id === selected)?.ticket_number ?? ''}</span>
-            <h2>{detail?.ticket.subject ?? tickets.find(t => t.id === selected)?.subject ?? 'Loading conversation…'}</h2>
-            {detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}
+      <div className="support-workspace" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 0.8fr) minmax(0, 1.7fr)', gap: 20, alignItems: 'stretch' }}>
+        <aside className="support-sidebar" style={{ minWidth: 0 }}>
+          <div className="support-list-heading">
+            <div><h2>Support messages</h2><p className="muted">Your requests and replies</p></div>
+            <Button type="button" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Refresh</Button>
           </div>
-        </div>
-        {!detail ? <p className="muted" role="status">Loading conversation…</p> : <>
-          <div className="support-chat-thread" aria-label="Support conversation">
-            {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}>
-              <div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div>
-              <p>{message.body}</p>
-            </article>)}
-            {!detail.messages.length && <div className="support-empty-thread"><p>Your request is in our support queue.</p><p className="muted">Send a message below if you have more details to add. Our team will reply here.</p></div>}
+          <Button type="button" disabled={busy} onClick={() => { setNewRequestOpen(open => !open); setSelected(''); setError(''); setNotice('') }}>
+            {newRequestOpen ? 'Cancel new request' : '+ New request'}
+          </Button>
+          {newRequestOpen && <form className="auth-form" onSubmit={submit} style={{ marginTop: 16 }}>
+            <h3>Contact support</h3>
+            <Input label="Subject" name="subject" required maxLength={200} placeholder="What do you need help with?" />
+            <div className="field">
+              <label htmlFor="support-category">Category</label>
+              <select id="support-category" name="category" defaultValue="how_to" required>
+                <option value="billing">Billing</option><option value="how_to">Using Vimbre</option><option value="bug">Report a problem</option><option value="feature_idea">Feature suggestion</option><option value="other">Something else</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="support-message">Message</label>
+              <textarea id="support-message" name="message" required maxLength={10000} rows={5} placeholder="Tell us what happened…" />
+            </div>
+            <p className="muted">Do not include passwords or sensitive personal information. Up to three tickets per day.</p>
+            <Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button>
+          </form>}
+          <div className="support-ticket-list" style={{ marginTop: 14, display: 'grid', gap: 8 }}>
+            {!tickets.length ? <p className="muted">Your submitted requests will appear here.</p> : tickets.map(ticket => {
+              const isActive = selected === ticket.id
+              return <button type="button" key={ticket.id} className={'ticket-row' + (isActive ? ' ticket-row-active' : '')} aria-expanded={isActive} onClick={() => { setSelected(isActive ? '' : ticket.id); setReply(''); setError(''); setNotice(''); setNewRequestOpen(false) }} style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}>
+                <span className="ticket-row-main">
+                  <strong>#{ticket.ticket_number} · {ticket.subject}</strong>
+                  <span className="ticket-row-meta"><span className={'ticket-status status-' + ticket.status}>{statusLabel(ticket.status)}</span><span>Updated {formatDate(ticket.updated_at)}</span></span>
+                </span>
+                <span className="ticket-chevron" aria-hidden="true">{isActive ? '⌄' : '›'}</span>
+              </button>
+            })}
           </div>
-          <form className="support-reply-form" onSubmit={sendReply}>
-            <div className="field"><label htmlFor="support-reply">Message</label><textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} required maxLength={10000} rows={3} placeholder="Write a message to Vimbre Support…" /></div>
-            <div className="support-reply-actions"><span className="muted">Replies stay in this conversation.</span><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div>
-          </form>
-        </>}
-      </div>}
+        </aside>
+
+        <main className="support-chat" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 420 }}>
+          {!selected ? <div className="support-empty-thread" style={{ margin: 'auto', textAlign: 'center', padding: 28 }}>
+            <h2>Your conversations</h2>
+            <p className="muted">Choose a ticket on the left to view messages and reply. Your conversation will stay here while you switch between requests.</p>
+          </div> : <>
+            <div className="support-chat-header">
+              <div className="support-chat-title">
+                <span className="eyebrow">Support request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span>
+                <h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Loading conversation…'}</h2>
+                {detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}
+                <span className="muted">{detail ? 'Updated ' + formatDate(detail.ticket.updated_at) : ''}</span>
+              </div>
+              <Button type="button" onClick={() => { setSelected(''); setDetail(null); setReply(''); setError(''); setNotice('') }}>Collapse</Button>
+            </div>
+            {!detail ? <p className="muted" role="status">Loading conversation…</p> : <>
+              <div className="support-chat-thread" aria-label="Support conversation" style={{ flex: 1, minHeight: 240 }}>
+                {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}>
+                  <div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div>
+                  <p>{message.body}</p>
+                </article>)}
+                {!detail.messages.length && <div className="support-empty-thread"><p>Your request is in our support queue.</p><p className="muted">Add more details below. Our team will reply here.</p></div>}
+              </div>
+              <form className="support-reply-form" onSubmit={sendReply}>
+                <div className="field"><label htmlFor="support-reply">Message</label><textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} required maxLength={10000} rows={3} placeholder="Write a message to Vimbre Support…" /></div>
+                <div className="support-reply-actions"><span className="muted">Replies stay in this conversation.</span><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div>
+              </form>
+            </>}
+          </>}
+        </main>
+      </div>
     </section>
+    <style>{`
+      @media (max-width: 760px) {
+        .support-workspace { grid-template-columns: minmax(0, 1fr) !important; }
+        .support-chat { min-height: 320px !important; }
+      }
+      .ticket-row-active { outline: 1px solid var(--border-color, currentColor); }
+    `}</style>
   </>
 }
