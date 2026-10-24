@@ -1,10 +1,6 @@
 -- Customer-safe support inbox and reply RPCs. Staff-only private notes are never returned.
 create or replace function private.customer_support(p_action text, p_payload jsonb default '{}'::jsonb)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
+returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := auth.uid();
   target uuid;
@@ -20,16 +16,17 @@ begin
     return jsonb_build_object('ok',false,'code','invalid_input');
   end if;
 
-  if p_action='list' then
-    select coalesce(jsonb_agg(to_jsonb(x) order by x.updated_at desc),'[]'::jsonb)
-      into result
-      from (
-        select id,ticket_number,subject,category,status,created_at,updated_at,first_reply_at
-        from public.console_support_tickets
-        where customer_user_id=uid
-        order by updated_at desc
-        limit 100
-      ) x;
+  if p_action='submit' then
+    return private.submit_customer_support(
+      p_payload->>'subject', p_payload->>'category', p_payload->>'body'
+    );
+  elsif p_action='list' then
+    select coalesce(jsonb_agg(to_jsonb(x) order by x.updated_at desc),'[]'::jsonb) into result
+    from (
+      select id,ticket_number,subject,category,status,created_at,updated_at,first_reply_at
+      from public.console_support_tickets where customer_user_id=uid
+      order by updated_at desc limit 100
+    ) x;
     return jsonb_build_object('ok',true,'data',result);
   elsif p_action='detail' then
     begin target := (p_payload->>'ticket_id')::uuid; exception when others then target := null; end;
