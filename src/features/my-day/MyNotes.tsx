@@ -34,7 +34,7 @@ export function MyNotes() {
           aria-expanded={open}
           aria-label="My notes from completed tasks"
         >
-          My notes
+          Notes from completed tasks
         </button>
       </h2>
       {open && (
