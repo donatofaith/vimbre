@@ -5,6 +5,8 @@ export type Task = {
   rank?: number;
   capture_id?: string | null;
   capture_record_id?: string | null;
+  stable_role_item_id?: string | null;
+  source_role_profile_id?: string | null;
   source_role_id?: string | null;
   recurring_id?: string | null;
   source_role_kind?: string | null;

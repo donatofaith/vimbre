@@ -55,6 +55,7 @@ do $$declare j jsonb;r uuid:=current_setting('test.role')::uuid;begin
  if j->>'notes'<>'' then raise exception 'Notes moved to new holder';end if;
  j:=public.role_workspace('own_records');if jsonb_array_length(j->'items')<3 then raise exception 'Inherited confirmed context missing';end if;
  perform public.myday_role_task(current_setting('test.item')::uuid,'2026-10-25');
+ j:=public.myday_tasks('all','','',0);if j->'rows'->0->>'source_role_profile_id' is distinct from r::text then raise exception 'Inherited task source lost role link';end if;
  j:=public.role_workspace('handover',r);if j->>'body' like '%Private holder notes%' then raise exception 'Prior holder notes entered new handover';end if;
 end$$;
 select set_config('request.jwt.claim.sub',current_setting('test.other_admin'),true);

@@ -131,7 +131,7 @@ export function TaskCard({
   const [outcome, setOutcome] = useState(task.completion_note ?? ""),
     [open, setOpen] = useState(initialOpen),
     id = useId(),
-    source = task.source_role_id ?? task.recurring_id;
+    source = task.source_role_id ?? task.stable_role_item_id ?? task.recurring_id;
   const overdue =
     task.status !== "done" && !task.deleted_at && new Date(task.due_at) < now;
   return (
@@ -231,7 +231,7 @@ export function TaskCard({
           {task.details && <p className="record-text">{task.details}</p>}
           {source && (
             <Link
-              to={`/app/role-record?section=${task.source_role_kind ?? "recurring_deadline"}&record=${source}`}
+              to={`/app/role-record?section=${task.source_role_kind ?? "recurring_deadline"}&record=${source}${task.source_role_profile_id ? `&role=${task.source_role_profile_id}` : ""}`}
             >
               My role record
             </Link>
