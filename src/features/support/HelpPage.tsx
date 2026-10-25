@@ -39,7 +39,7 @@ export function HelpPage() {
   const [requestDraft, setRequestDraft] = useState({subject: '', category: 'how_to', message: ''})
   const [refresh, setRefresh] = useState(0)
   const [newRequestOpen, setNewRequestOpen] = useState(false)
-  useEffect(()=>{const id=new URLSearchParams(location.search).get('ticket')||'';if(/^[a-f0-9-]{36}$/i.test(id)){setSelected(id);setNewRequestOpen(false)}},[location.search])
+  useEffect(()=>{const id=new URLSearchParams(location.search).get('ticket')||'';if(/^[a-f0-9-]{36}$/i.test(id)){setSelected(id);setNewRequestOpen(false)}},[location.search,location.key])
 
   async function call(action: string, payload: Record<string, unknown> = {}) {
     const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload as import('../../lib/database.types').Json })
