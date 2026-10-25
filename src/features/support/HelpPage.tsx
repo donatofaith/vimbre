@@ -1,3 +1,4 @@
+import {useLocation} from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -23,6 +24,7 @@ const statusLabel = (status: string) => ({ open: 'Open', in_progress: 'In progre
 const formatDate = (value: string) => new Date(value).toLocaleString()
 
 export function HelpPage() {
+  const location=useLocation()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -37,6 +39,7 @@ export function HelpPage() {
   const [requestDraft, setRequestDraft] = useState({subject: '', category: 'how_to', message: ''})
   const [refresh, setRefresh] = useState(0)
   const [newRequestOpen, setNewRequestOpen] = useState(false)
+  useEffect(()=>{const id=new URLSearchParams(location.search).get('ticket')||'';if(/^[a-f0-9-]{36}$/i.test(id)){setSelected(id);setNewRequestOpen(false)}},[location.search])
 
   async function call(action: string, payload: Record<string, unknown> = {}) {
     const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload as import('../../lib/database.types').Json })
