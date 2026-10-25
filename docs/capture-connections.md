@@ -15,7 +15,7 @@ Longer sources are rejected rather than silently truncated. Users can paste the 
 
 ## Provider registration required before live account consent
 
-Callback for Microsoft, Slack and Trello: `https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-connect/callback`. Register it exactly. Trello OAuth1 sends a per-attempt state query parameter on the callback. The callback returns only to the trusted Vimbre origin where the flow began. A short-lived authorization code travels in a URL fragment, is removed immediately, and is exchanged only after authenticated account and browser-nonce verification. Access/refresh tokens never reach the browser. The server never persists the callback code for another browser to retrieve. Real OAuth acceptance uses the production Vimbre domains; localhost is for intercepted tests.
+Callback for Slack and Trello: `https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-connect/callback`. Register it exactly. Trello OAuth1 sends a per-attempt state query parameter on the callback. The callback returns only to the trusted Vimbre origin where the flow began. A short-lived authorization code travels in a URL fragment, is removed immediately, and is exchanged only after authenticated account and browser-nonce verification. Access/refresh tokens never reach the browser. The server never persists the callback code for another browser to retrieve. Real OAuth acceptance uses the production Vimbre domains; localhost is for intercepted tests.
 
 Set these **server-only Edge Function secrets** in the Vimbre Supabase project, never in VITE variables or Git:
 
@@ -50,8 +50,14 @@ Primary references: https://developers.google.com/identity/protocols/oauth2/web-
 
 ## Branded Google callback — 25 October 2026
 
-Google Gmail/Drive now start new consent requests with `https://vimbre.com/api/capture/callback`. Add this exact URI to the Google OAuth web client before reconnecting. Retain the old Supabase URI while earlier ten minute consent attempts finish. No Cloudflare DNS record, Supabase custom-domain add-on or new server credential is needed. Other providers retain their original callback until separately migrated.
+Google Gmail/Drive now start new consent requests with `https://vimbre.com/api/capture/callback`. Add this exact URI to the Google OAuth web client before reconnecting. Retain the old Supabase URI while earlier ten minute consent attempts finish. No Cloudflare DNS record, Supabase custom-domain add-on or new server credential is needed. Microsoft Outlook/Teams also use this branded callback as recorded below. Slack and Trello retain their original callback.
 
 The Vercel Node function forwards only bounded OAuth parameters to the fixed Supabase callback server-side, refuses automatic redirects, and accepts only the existing trusted Capture fragment destinations. It never exchanges provider tokens, stores secrets or logs query parameters. Invalid state, duplicate parameters, unexpected redirects and upstream failures return a generic failure without codes. The original browser nonce and authenticated, single-use user/company grant checks remain required. Each new grant stores its exact redirect URI encrypted alongside PKCE material, so exchange uses the URI that began consent and existing old grants still work.
 
 This changes the callback domain, not Google's verification status. Google brand/scope verification and any required security assessment remain external requirements. Cloudflare DNS, payment settings and My day are unchanged.
+
+## Branded Microsoft callback — 26 October 2026
+
+Outlook and Teams now start new consent requests with `https://vimbre.com/api/capture/callback`. Register this exact URI under Microsoft Entra > Vimbre Capture > Authentication > Web before connecting. Client ID and secret stay in Supabase. Existing pending grants retain their original URI, and the browser nonce, PKCE, authenticated owner/company and single-use checks are unchanged. No additional permissions or access grants are introduced.
+
+Deployed capture-connect version 12. Callback/provider tests (20) and Edge TypeScript checks pass. The Microsoft publisher association is publicly hosted as JSON for application 6786dd5e-575f-4158-866b-8a22f039e4a3. Publisher domain ownership is separate from verified publisher status. Real Microsoft consent and selected-source import remain to be tested by the operator after registering the URI.
