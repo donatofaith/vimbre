@@ -1,5 +1,5 @@
 import {useLocation} from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
@@ -26,6 +26,7 @@ const formatDate = (value: string) => new Date(value).toLocaleString()
 
 export function HelpPage() {
   const location=useLocation()
+  const sending=useRef(false),messagesEnd=useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -78,6 +79,8 @@ export function HelpPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if(sending.current)return
+    sending.current=true
     const formElement = event.currentTarget
     setBusy(true); setError(''); setNotice(''); setTicketNumber(null)
     const form = new FormData(formElement)
@@ -94,12 +97,13 @@ export function HelpPage() {
       setNewRequestOpen(false)
       setRefresh(n => n + 1)
     } catch { setError('Support is temporarily unavailable. Please retry in a moment.') }
-    finally { setBusy(false) }
+    finally { sending.current=false;setBusy(false) }
   }
 
   async function sendReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selected || !reply.trim()) return
+    if (!selected || !reply.trim() || sending.current) return
+    sending.current=true
     setBusy(true); setError(''); setNotice('')
     try {
       const result = await call('reply', { ticket_id: selected, body: reply.trim() })
@@ -108,10 +112,12 @@ export function HelpPage() {
       setNotice('Reply sent to support.')
       setRefresh(n => n + 1)
     } catch { setError('Your reply could not be sent. Please retry.') }
-    finally { setBusy(false) }
+    finally { sending.current=false;setBusy(false) }
   }
 
+  useEffect(()=>{messagesEnd.current?.scrollIntoView({block:'nearest'})},[detail?.messages.length,selected])
   const activeTicket = tickets.find(ticket => ticket.id === selected)
+  const visibleTickets=tickets.filter(t=>t.subject.toLowerCase().includes(search.toLowerCase())&&(view==='all'||view==='active'&&!['resolved','closed'].includes(t.status)||view==='resolved'&&['resolved','closed'].includes(t.status)))
 
   return <div className="support-page">
     <div className="page-heading support-page-heading">
@@ -127,10 +133,11 @@ export function HelpPage() {
         <Button className="support-new-request" disabled={busy} onClick={() => { setNewRequestOpen(true); setSelected(''); setError(''); setNotice(''); setTicketNumber(null) }}>New request</Button>
         <div className="support-request-filters"><label className="sr-only" htmlFor="request-search">Search requests</label><input id="request-search" placeholder="Search requests" value={search} onChange={e=>setSearch(e.target.value)}/><label className="sr-only" htmlFor="request-view">Request status</label><select id="request-view" value={view} onChange={e=>setView(e.target.value)}><option value="all">All requests</option><option value="active">Active requests</option><option value="resolved">Resolved requests</option></select></div>
         <div className="support-ticket-list" aria-busy={loading}>
-          {!tickets.length ? <p className="support-list-empty" role="status">{loading ? 'Loading requests…' : error ? 'Requests could not be loaded.' : 'No requests yet. Contact support to start a conversation.'}</p> : tickets.filter(t=>t.subject.toLowerCase().includes(search.toLowerCase())&&(view==='all'||view==='active'&&!['resolved','closed'].includes(t.status)||view==='resolved'&&['resolved','closed'].includes(t.status))).map(ticket => <button type="button" key={ticket.id} className={'ticket-row' + (selected === ticket.id ? ' ticket-row-active' : '')} aria-current={selected === ticket.id ? 'true' : undefined} disabled={busy} onClick={() => { setSelected(ticket.id); setError(''); setNotice(''); setTicketNumber(null); setNewRequestOpen(false) }}>
+          {!tickets.length ? <p className="support-list-empty" role="status">{loading ? 'Loading requests…' : error ? 'Requests could not be loaded.' : 'No requests yet. Contact support to start a conversation.'}</p> : visibleTickets.map(ticket => <button type="button" key={ticket.id} className={'ticket-row' + (selected === ticket.id ? ' ticket-row-active' : '')} aria-current={selected === ticket.id ? 'true' : undefined} disabled={busy} onClick={() => { setSelected(ticket.id); setError(''); setNotice(''); setTicketNumber(null); setNewRequestOpen(false) }}>
             <span className="ticket-row-top"><span>#{ticket.ticket_number}</span><span className={'ticket-status status-' + ticket.status}>{statusLabel(ticket.status)}</span></span>
             <strong>{ticket.subject}</strong><time dateTime={ticket.updated_at}>{formatDate(ticket.updated_at)}</time>
           </button>)}
+          {tickets.length>0&&visibleTickets.length===0&&<p className="support-list-empty">No requests match this view.</p>}
         </div>
       </aside>
       <div className="support-chat">
@@ -154,6 +161,7 @@ export function HelpPage() {
           {detailError ? <div className="support-empty-thread"><p className="field-error" role="alert">{detailError}</p><Button variant="secondary" onClick={() => setRefresh(n => n + 1)}>Retry conversation</Button></div> : !detail ? <p className="support-loading" role="status">Loading conversation…</p> : <>
             <SupportApproval key={selected} ticket={selected}/><div className="support-chat-thread" role="region" aria-label="Support conversation" tabIndex={0}>
               {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}><div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div><p>{message.body}</p></article>)}
+              <div ref={messagesEnd}/>
               {!detail.messages.length && <p className="muted">Your request is in the support queue. Replies will appear here.</p>}
             </div>
             <form className="support-reply-form" onSubmit={sendReply}><div className="field"><label htmlFor="support-reply">Reply to Vimbre Support</label><textarea id="support-reply" disabled={busy} value={reply} onChange={event => setReplies(current => ({...current, [selected]: event.target.value}))} required maxLength={10000} rows={3} placeholder="Write your reply…" /></div><div className="support-reply-actions"><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div></form>

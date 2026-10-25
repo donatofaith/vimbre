@@ -84,3 +84,5 @@
 @media(max-width:700px){.support-workspace{height:calc(100svh - 225px);min-height:530px}.support-sidebar{height:100%;padding:20px 16px}.support-chat{height:100%;min-height:0}.support-chat-header{flex-direction:column-reverse;align-items:flex-start;padding:16px 20px;gap:14px}.support-chat-thread{max-height:none;padding:20px 16px;gap:22px}.support-reply-form{padding:14px 16px 18px}.support-request-form{padding:24px 20px;min-height:0}.support-chat-title h2{font-size:17px}.support-chat-title .ticket-status{margin-top:3px}.support-contact-options a{padding:16px}.support-empty-thread{padding:24px}}
 
 .support-approval{padding:18px 24px;background:#f1f6fe;border-bottom:1px solid #d9e6f9;max-height:280px;overflow:auto;flex-shrink:0}.support-approval h3{margin:0;font-size:15px}.support-approval p{font-size:13px;line-height:1.6}.support-approval>div{display:flex;gap:12px;flex-wrap:wrap}.support-approval button{min-height:44px;padding:10px 14px;border:1px solid #a2b9de;border-radius:8px;background:white;color:#174b9a;font:inherit;font-size:13px;cursor:pointer}
+
+@media(max-height:740px){.support-workspace{min-height:360px;height:calc(100dvh - 225px)}}
