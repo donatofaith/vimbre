@@ -87,6 +87,7 @@ const assert = require('node:assert/strict')
       }
     }
     const roleFixture=require('./role-workspace-fixture.cjs')(user)
+    let serviceRows=[],serviceReads=[]
     await page.route('https://*.supabase.co/**', async (route) => {
       const req = route.request(),
         path = new URL(req.url()).pathname
@@ -96,7 +97,8 @@ const assert = require('node:assert/strict')
       } catch {}
       let body = {},
         status = 200
-      if(path.endsWith('/role_workspace')){roleFixture.state.items=notificationRecords;body=roleFixture.handle(a)}
+      if(path.endsWith('/console_customer_notices')){if(a.p_action==='read'){serviceReads.push(a.p_id);serviceRows=serviceRows.map(n=>n.id===a.p_id?{...n,read_at:new Date().toISOString()}:n)}body={ok:true,data:{unread:serviceRows.filter(n=>!n.read_at).length,items:serviceRows}}}
+      else if(path.endsWith('/role_workspace')){roleFixture.state.items=notificationRecords;body=roleFixture.handle(a)}
       else if (path.endsWith('/token'))
         body = {
           access_token: 'chat-test-token',
@@ -433,6 +435,13 @@ const assert = require('node:assert/strict')
     assert.equal(await page.getByRole('button',{name:'Add a responsibility',exact:true}).count(),0)
     assert.equal(await page.getByLabel('Deadline (optional)',{exact:true}).count(),0)
     assert(await page.getByRole('button',{name:'Save notes',exact:true}).isVisible())
+    serviceRows=[{id:crypto.randomUUID(),title:'Support replied to request #42',body:'Open your request to read the reply.',link:'/app/help?ticket=11111111-1111-4111-8111-111111111111',kind:'support',read_at:null}]
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')))
+    await page.getByRole('button',{name:/Notifications/}).click()
+    const serviceDialog=page.getByRole('dialog',{name:'Notifications',exact:true})
+    const supportNotice=serviceDialog.getByRole('link').filter({hasText:'Support replied to request #42'})
+    await supportNotice.waitFor();assert.equal(await supportNotice.getAttribute('href'),serviceRows[0].link)
+    await supportNotice.click();await page.waitForURL('**/app/help?ticket=*');await page.waitForTimeout(150);assert(serviceReads.includes(serviceRows[0].id))
     assert.deepEqual(errors, [])
     console.log(
       JSON.stringify({

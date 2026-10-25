@@ -1,3 +1,4 @@
+import {useServiceNotifications} from './useServiceNotifications'
 import {useHandoverNotifications} from '../handovers/useHandoverNotifications'
 import {useCaptureNotifications} from '../capture/useCaptureNotifications'
 import { TaskAlerts } from '../my-day/TaskAlerts'
@@ -12,19 +13,22 @@ import { reminderDate, reminderLabel, reminderPath } from './notification-utils'
 export function Notifications() {
  const {inbox,error:chatError,refresh:refreshChat}=useChat()
  const [page,setPage]=useState(0)
+ const service=useServiceNotifications()
  const handovers=useHandoverNotifications()
  const captures=useCaptureNotifications()
  const tasks=useTaskAlerts()
  const work=useWorkNotifications(page)
  const dialog=useRef<HTMLDialogElement>(null)
- const unread=inbox.unread+work.data.unread+tasks.rows.length+captures.count+handovers.count
- return <><button className="chat-bell" type="button" aria-label={`Notifications${unread?`, ${unread} unread`:''}`} onClick={()=>{work.refresh();refreshChat();tasks.refresh();captures.refresh();handovers.refresh();dialog.current?.showModal()}}><WorkspaceIcon name="bell"/>{unread>0&&<span className="chat-count">{unread>99?'99+':unread}</span>}</button>
+ const unread=service.unread+inbox.unread+work.data.unread+tasks.rows.length+captures.count+handovers.count
+ return <><button className="chat-bell" type="button" aria-label={`Notifications${unread?`, ${unread} unread`:''}`} onClick={()=>{service.refresh();work.refresh();refreshChat();tasks.refresh();captures.refresh();handovers.refresh();dialog.current?.showModal()}}><WorkspaceIcon name="bell"/>{unread>0&&<span className="chat-count">{unread>99?'99+':unread}</span>}</button>
  <dialog ref={dialog} className="vw-dialog chat-notifications" aria-labelledby="workspace-notifications-title"><div className="chat-dialog-heading"><h2 id="workspace-notifications-title">Notifications</h2><button className="button button-secondary" onClick={()=>dialog.current?.close()}>Close</button></div>
  {work.error&&<p role="alert" className="field-error">Deadline reminders could not be loaded. <button type="button" onClick={work.refresh}>Retry</button></p>}
  {work.readError&&<p role="alert" className="field-error">The notification could not be marked as read. Please retry.</p>}
  {chatError&&<p role="alert" className="field-error">Message notifications could not be refreshed. <button type="button" onClick={refreshChat}>Retry</button></p>}
  {work.loading&&<p role="status">Loading reminders…</p>}
- {!work.error&&!chatError&&!work.loading&&work.data.count===0&&inbox.items.length===0&&tasks.rows.length===0&&captures.count===0&&handovers.count===0&&<p>No unread notifications.</p>}
+ {!work.error&&!chatError&&!work.loading&&service.rows.length===0&&work.data.count===0&&inbox.items.length===0&&tasks.rows.length===0&&captures.count===0&&handovers.count===0&&<p>No unread notifications.</p>}
+ {service.error&&<p role="alert">Support and announcements could not be refreshed. <button onClick={service.refresh}>Retry</button></p>}
+ {service.rows.length>0&&<section><h3>Updates</h3><ul>{service.rows.map(n=><li key={n.id} data-unread={!n.read_at}><Link to={n.link} onClick={()=>{void service.read(n.id);dialog.current?.close()}}><strong>{n.title}</strong><span>{n.body}</span></Link></li>)}</ul></section>}
  {tasks.error&&<p role="alert" className="field-error">Task reminders could not be loaded. <button onClick={tasks.refresh}>Retry task reminders</button></p>}
  {captures.error&&<p className="field-error" role="alert">Capture notifications could not be loaded. <button onClick={captures.refresh}>Retry capture notifications</button></p>}
  {captures.rows.length>0&&<section aria-labelledby="capture-alerts-title"><h3 id="capture-alerts-title">Captures</h3><ul>{captures.rows.map(n=><li key={n.id}><Link to={`/app/capture?capture=${n.id}`} onClick={()=>dialog.current?.close()}><strong>New capture received.</strong><span>{n.title}</span></Link></li>)}</ul></section>}

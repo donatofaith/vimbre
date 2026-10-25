@@ -28,7 +28,7 @@ export function HelpPage() {
   const [notice, setNotice] = useState('')
   const [ticketNumber, setTicketNumber] = useState<number | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>([])
-  const [selected, setSelected] = useState('')
+  const [selected, setSelected] = useState(() => {const id=new URLSearchParams(window.location.search).get('ticket')||'';return /^[a-f0-9-]{36}$/i.test(id)?id:''})
   const [detail, setDetail] = useState<Detail | null>(null)
   const [replies, setReplies] = useState<Record<string, string>>({})
   const reply = replies[selected] ?? ''

@@ -23,6 +23,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       handover_workspace: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}
       handover_shared: {Args:{p_token:string};Returns:Json}
       role_workspace: {Args:{p_operation:string;p_role?:string|null;p_data?:Json};Returns:Json}
+      console_customer_notices: {Args:{p_action:string;p_id?:string|null};Returns:Json}
       capture_notifications: {Args:{p_seen?:string|null};Returns:Json}
       capture_pipeline: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}
       myday_people: {Args:{p_query?:string;p_page?:number};Returns:Json}
