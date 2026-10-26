@@ -96,7 +96,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         if(claim.blocked)return fail(409,claim.blocked)
         claimed=true
         if(typeof claim.cached==='string') {
-          await deps.captureComplete(identity.userId,requestId,claim.cached,body.task==='capture_extract'?parseCaptureOutput(claim.cached):null)
+          await deps.captureComplete(identity.userId,requestId,claim.cached,body.task==='capture_extract'?parseCaptureOutput(claim.cached,body.text):null)
           return new Response(JSON.stringify({ok:true,text:claim.cached,request_id:requestId,cached:true}),{status:200,headers})
         }
       }
@@ -135,7 +135,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       try {await deps.finish(reservation.usage_id,attempts)} catch {await deps.finish(reservation.usage_id,attempts)}
       if(!answer){await markFailed();return fail(502)}
       if(claimed) {
-        try { await deps.captureComplete!(identity.userId,requestId,answer,body.task==='capture_extract'?parseCaptureOutput(answer):null) }
+        try { await deps.captureComplete!(identity.userId,requestId,answer,body.task==='capture_extract'?parseCaptureOutput(answer,body.text):null) }
         catch {await markFailed();return fail(502,'The draft could not be read. Your text is still here. You can add a task by hand.')}
       }
       if(handoverClaimed)await deps.handoverComplete!(identity.userId,requestId,answer,false)

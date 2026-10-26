@@ -16,7 +16,7 @@ export function prepareCaptureText(raw: string) {
   return result
 }
 export type CaptureProposal = { kind: 'decision' | 'action' | 'summary' | 'contact'; payload: Record<string,string> }
-export function parseCaptureOutput(raw: string): CaptureProposal[] {
+export function parseCaptureOutput(raw: string, source=''): CaptureProposal[] {
   if (raw.length > 60000) throw new Error('Draft response is too long')
   const value = JSON.parse(raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''))
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid drafts')
@@ -34,6 +34,8 @@ export function parseCaptureOutput(raw: string): CaptureProposal[] {
       if(key==='external_contacts')rows.push({kind:'contact',payload:{title:text(r.name,200),details:[text(r.organisation,200),text(r.contact_details,400),text(r.context)].filter(Boolean).join('\n')}})
     }
   }
+  for(const row of rows){const input=[...(value.decisions||[]),...(value.tasks||[])].find((r:Record<string,unknown>)=>r.decision===row.payload.title||r.title===row.payload.title);const excerpt=text(input?.source_excerpt,2000);if(excerpt&&source.includes(excerpt))row.payload.source_excerpt=excerpt;row.payload.source_owner=text(input?.owner,200)}
   if(rows.length>60||rows.some(r=>!r.payload.title))throw new Error('Invalid drafts')
-  return rows
+  const seen=new Set<string>();return rows.filter(row=>{const key=JSON.stringify([row.kind,row.payload.title.toLocaleLowerCase(),row.payload.due_date||'']);if(seen.has(key))return false;seen.add(key);return true})
 }
+

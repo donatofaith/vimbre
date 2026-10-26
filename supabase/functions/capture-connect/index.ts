@@ -1,3 +1,5 @@
+import {search,filters} from './search.ts'
+import {preview} from './preview.ts'
 import {prepareSource,updateSource} from './source-updates.ts'
 import type {Reference} from './source-updates.ts'
 import {createClient} from '@supabase/supabase-js'
@@ -25,12 +27,14 @@ Deno.serve(async req=>{
   const user=data.user.id,raw=await req.text();if(raw.length>6000)return reply(413,{ok:false,code:'invalid_input'});const input=JSON.parse(raw);if(!input||typeof input!=='object'||Array.isArray(input))return reply(400,{ok:false,code:'invalid_input'})
   const connections=await service('list',user)
   async function sourceService(action:string,payload:Record<string,unknown>){const {data,error}=await db.rpc('myday_source_service',{p_user:user,p_action:action,p_data:payload});if(error)throw Error(['write_disabled','invalid_source'].includes(error.message)?error.message:'access_denied');return data}
-  if(input.action==='status')return reply(200,{ok:true,providers:providers.map(p=>({provider:p,name:names[p],configured:configured(p),connection:connections.find((c:any)=>c.provider===p)||null}))})
+  async function searchService(action:string,payload:Record<string,unknown>={}){const r=await db.rpc('capture_search_service',{p_user:user,p_action:action,p_data:payload});if(r.error)throw Error(r.error.message.includes('search_expired')?'search_expired':'access_denied');return r.data}
+  if(input.action==='status')return reply(200,{ok:true,...await searchService('policy'),providers:providers.map(p=>({provider:p,name:names[p],configured:configured(p),connection:connections.find((c:any)=>c.provider===p)||null}))})
   if(input.action==='complete'){
    if(!input.params||typeof input.params!=='object'||Array.isArray(input.params))return reply(400,{ok:false,code:'invalid_input'});const params=new URLSearchParams();for(const name of ['state','code','oauth_token','oauth_verifier','error','denied'])if(typeof input.params[name]==='string')params.set(name,input.params[name]);const state=params.get('state');if(!state||!/^[a-f0-9]{64}$/.test(state))return reply(400,{ok:false,code:'invalid_input'});const grant=await service('state_claim',user,{hash:await digest(state)});if(params.has('error')||params.has('denied'))return reply(400,{ok:false,code:'connection_declined'});const p=grant.provider as Provider;const redirect=grant.secret.redirect_uri||callback;if(redirect!==callback&&(!(p==='gmail'||p==='drive'||p==='outlook'||p==='teams'||p==='slack'||p==='trello')||redirect!==brandedCallback))throw new Error('access_denied');const tokens=await exchange(p,params,grant.secret,redirect);await service('store',user,{provider:p,company_id:grant.company_id,secret:{...tokens,write:grant.secret.write==='true'}});return reply(200,{ok:true})
   }
   if(input.action==='connect'){
    const p=input.provider as Provider;if(!providers.includes(p))return reply(400,{ok:false,code:'invalid_input'});if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
+   const policy=await searchService('policy');if(!policy.allowed.includes(p))throw Error('access_denied');
    if(input.write===true)await sourceService('write_allowed',{provider:p});
    const redirect=p==='gmail'||p==='drive'||p==='outlook'||p==='teams'||p==='slack'||p==='trello'?brandedCallback:callback;const state=random(),flow=await start(p,state,redirect,random(),input.write===true);await service('state_create',user,{hash:await digest(state),provider:p,secret:{...flow.secret,redirect_uri:redirect,write:input.write===true?'true':'false'},return_origin:origins.has(origin)&&origin.startsWith('https://')?origin:'https://vimbre.com'});return reply(200,{ok:true,url:flow.url,state})
   }
@@ -41,15 +45,28 @@ Deno.serve(async req=>{
     try{await updateSource(context,tokens,input.operation,input.body,payload.list_id,input.request_id);await sourceService('finish',{...payload,state:'sent'});return reply(200,{ok:true})}catch(e){await sourceService('finish',{...payload,state:e instanceof Error&&e.message==='uncertain'?'uncertain':'failed'});throw e}
    }finally{await service('unlock',user,{id:connection.id,secret:tokens,lease_token:stored.lease_token})}
   }
-  if(!['sources','import','disconnect'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
+  if(!['sources','import','disconnect','search','preview'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false
   try{
    if(input.action==='disconnect'){await revoke(p,tokens);await service('remove',user,{id:input.id,lease_token:stored.lease_token});removed=true;return reply(200,{ok:true})}
    if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
    tokens=await refresh(p,tokens)
+   if(input.action==='search'){
+    const f=filters(input.filters),fingerprint=await digest(JSON.stringify(f)),base={connection:input.id,fingerprint};
+    const cursor=input.cursor?await searchService('cursor',{...base,token:input.cursor}):'';
+    if(input.cursor&&!cursor)throw Error('search_expired');
+    const data=await searchService('page_get',{...base,cursor})||await searchService('page_put',{...base,cursor,page:await search(p,tokens,f,cursor)});
+    const captured=await searchService('captured',{connection:input.id});
+    return reply(200,{ok:true,rows:data.rows.map((r:any)=>({...r,captured:captured[r.reference]||null})).filter((r:any)=>!f.notCaptured||!r.captured),next:data.next?data.cache:null,cache:data.cache})
+   }
+   if(input.action==='preview'){
+    const row=await searchService('selected_row',{connection:input.id,cache:input.cache,reference:input.reference}),source=await preview(p,tokens,row);
+    await sourceService('remember',{provider:p,source:source.source,container:source.container,text:source.text});
+    const result=await searchService('preview_put',{connection:input.id,source});return reply(200,{ok:true,...result,source})
+   }
    if(input.action==='sources')return reply(200,{ok:true,rows:await sources(p,tokens,typeof input.container==='string'?input.container:'')})
    if(typeof input.source!=='string')return reply(400,{ok:false,code:'invalid_input'})
    const container=typeof input.container==='string'?input.container:'',source=await read(p,tokens,input.source,container);await sourceService('remember',{provider:p,source:input.source,container,text:source.text});return reply(200,{ok:true,source})
   }finally{if(!removed)await service('unlock',user,{id:input.id,secret:tokens,lease_token:stored.lease_token})}
- }catch(e){const allowed=new Set(['sign_in','access_denied','setup_required','connection_busy','rate_limited','provider_busy','reconnect','provider_unavailable','source_too_large','source_empty','invalid_source','unsupported_file','write_disabled','uncertain']);const code=e instanceof Error&&allowed.has(e.message)?e.message:'unavailable';return reply(code==='access_denied'?403:code==='sign_in'?401:code==='rate_limited'?429:400,{ok:false,code})}
+ }catch(e){const allowed=new Set(['sign_in','access_denied','setup_required','connection_busy','rate_limited','provider_busy','reconnect','provider_unavailable','source_too_large','source_empty','invalid_source','unsupported_file','write_disabled','uncertain','search_expired']);const code=e instanceof Error&&allowed.has(e.message)?e.message:'unavailable';return reply(code==='access_denied'?403:code==='sign_in'?401:code==='rate_limited'?429:400,{ok:false,code})}
 })

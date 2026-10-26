@@ -30,3 +30,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 24 October owner request in docs/capture-connections.md adds user-selected external sources through the existing Capture review/confirm pipeline. My day stays unchanged. Never claim provider connection availability without registered OAuth apps, server secrets and verified consent. Tokens remain owner-private in Vault; no Console access. Keep Support's headset icon and contact emails on that page, with no header Help duplicate.
 
 - The 26 October screenshots in docs/client-my-day-approved.md supersede the ranked My Day presentation and pin/priority defaults. Preserve private data boundaries. Do not treat the acceptance checklist as proof of implementation.
+
+- The 26 October Capture final specification in docs/client-capture-final-20261026.md supersedes earlier Capture layout, picker, statuses and Watch behavior. Provider-native search, read-only Capture consent, explicit source selection, scoped Watch opt-in and review before confirmation are required. Preserve approved My Day source-update consent and task workflows.
