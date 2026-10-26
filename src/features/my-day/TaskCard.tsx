@@ -9,7 +9,7 @@ import { sourceLabels, statuses, taskDate } from "./types";
 import type { Task } from "./types";
 const label = (value: string | null) =>
   value === "archived"
-    ? "Archived"
+    ? "Deleted"
     : (statuses.find(([v]) => v === value)?.[1] ?? "Created");
 export function TaskRecord({
   task,
@@ -55,7 +55,7 @@ export function TaskRecord({
         <h2>{task.title}</h2>
         <p>
           {taskDate(task, zone)} ·{" "}
-          {task.deleted_at ? "Archived" : label(task.status)}
+          {task.deleted_at ? "Deleted" : label(task.status)}
         </p>
         {task.details && <p className="record-text">{task.details}</p>}
         {task.context_added_at && task.completion_note && (
@@ -162,9 +162,10 @@ export function TaskCard({
       </div>
       <div className="md-task-meta">
         <span className="md-source">
-          {sourceLabels[task.source_kind ?? "manual"]}
+          From {sourceLabels[task.source_kind ?? "manual"]}
         </span>
         <span
+          hidden
           className={`md-priority md-priority-${task.priority ?? "normal"}`}
         >
           {task.priority === "high"
@@ -173,7 +174,7 @@ export function TaskCard({
               ? "Low"
               : "Normal"}
         </span>
-        {task.pinned_at && <span className="md-pin-badge">Pinned</span>}
+        {task.pinned_at && <span className="md-pin-badge">Starred</span>}
         {task.department_name && (
           <span className="md-for-chip">{task.department_name}</span>
         )}
@@ -203,17 +204,17 @@ export function TaskCard({
               {l}
             </option>
           ))}
-          <option value="archived">Archived</option>
+          <option value="archived">Deleted</option>
         </select>
         {!task.deleted_at && task.status !== "done" && (
           <button
             className="md-text-button"
             disabled={busy}
             aria-pressed={Boolean(task.pinned_at)}
-            aria-label={`${task.pinned_at ? "Unpin" : "Pin"} ${task.title}`}
+            aria-label={`${task.pinned_at ? "Unstar" : "Star"} ${task.title}`}
             onClick={() => act(task, "pin", { pinned: !task.pinned_at })}
           >
-            {task.pinned_at ? "Unpin" : "Pin"}
+            {task.pinned_at ? "Unstar" : "Star"}
           </button>
         )}
         {task.deleted_at && (
@@ -222,7 +223,7 @@ export function TaskCard({
             disabled={busy}
             onClick={() => act(task, "restore", {})}
           >
-            Restore task
+            Restore
           </Button>
         )}
       </div>
