@@ -5,6 +5,20 @@ vi.stubGlobal('Deno',{env:{get:(key:string)=>values[key]}})
 afterEach(()=>{vi.restoreAllMocks()})
 const result=(body:unknown)=>Promise.resolve(new Response(JSON.stringify(body),{headers:{'Content-Type':'application/json'}}))
 describe('private Capture provider adapters',()=>{
+ it('keeps Slack user scopes and the branded callback consistent through exchange',async()=>{
+  const redirect='https://vimbre.com/api/capture/callback'
+  const flow=await start('slack','csrf-state',redirect,'unused')
+  const consent=new URL(flow.url)
+  expect(consent.searchParams.get('redirect_uri')).toBe(redirect)
+  expect(consent.searchParams.get('user_scope')).toContain('channels:history')
+  expect(consent.searchParams.has('scope')).toBe(false)
+  const fetch=vi.spyOn(globalThis,'fetch').mockImplementation(()=>result({ok:true,authed_user:{access_token:'user'}}))
+  const tokens=await exchange('slack',new URLSearchParams({code:'grant'}),flow.secret,redirect)
+  expect(tokens.access_token).toBe('user')
+  const body=new URLSearchParams(String(fetch.mock.calls[0][1]?.body))
+  expect(body.get('redirect_uri')).toBe(redirect)
+  expect(body.has('code_verifier')).toBe(false)
+ })
  it.each(['outlook','teams'] as const)('uses the same branded redirect for %s consent and token exchange',async provider=>{
   const redirect='https://vimbre.com/api/capture/callback'
   const flow=await start(provider,'csrf-state',redirect,'verifier')
