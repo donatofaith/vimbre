@@ -5,6 +5,19 @@ vi.stubGlobal('Deno',{env:{get:(key:string)=>values[key]}})
 afterEach(()=>{vi.restoreAllMocks()})
 const result=(body:unknown)=>Promise.resolve(new Response(JSON.stringify(body),{headers:{'Content-Type':'application/json'}}))
 describe('private Capture provider adapters',()=>{
+ it('signs the branded Trello callback with state and binds exchange to its request token',async()=>{
+  const fetch=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response('oauth_token=request&oauth_token_secret=request-secret&oauth_callback_confirmed=true'))
+  const flow=await start('trello','csrf-state','https://vimbre.com/api/capture/callback','unused')
+  const authorization=String((fetch.mock.calls[0][1]?.headers as Record<string,string>).Authorization)
+  expect(decodeURIComponent(authorization)).toContain('oauth_callback="https://vimbre.com/api/capture/callback?state=csrf-state"')
+  expect(new URL(flow.url).searchParams.get('scope')).toBe('read')
+  await expect(exchange('trello',new URLSearchParams({oauth_token:'different',oauth_verifier:'verifier'}),flow.secret as Record<string,string>,'https://vimbre.com/api/capture/callback')).rejects.toThrow('connection_expired')
+  expect(fetch).toHaveBeenCalledTimes(1)
+  fetch.mockResolvedValue(new Response('oauth_token=access&oauth_token_secret=access-secret'))
+  const tokens=await exchange('trello',new URLSearchParams({oauth_token:'request',oauth_verifier:'verifier'}),flow.secret as Record<string,string>,'https://vimbre.com/api/capture/callback')
+  expect(tokens.access_token).toBe('access')
+  expect(tokens.token_secret).toBe('access-secret')
+ })
  it('keeps Slack user scopes and the branded callback consistent through exchange',async()=>{
   const redirect='https://vimbre.com/api/capture/callback'
   const flow=await start('slack','csrf-state',redirect,'unused')
