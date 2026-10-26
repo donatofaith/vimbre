@@ -15,6 +15,9 @@ export async function changeTask(
   return result.data;
 }
 export function taskError(reason: unknown) {
+  const message=(reason as {message?:string})?.message??'';
+  if(message.includes('matching item already exists'))return 'A matching item already exists. Review or dismiss this draft.';
+  if(message.includes('Undo expired'))return 'Undo has expired or this task changed. Refresh the task.';
   const code = (reason as { code?: string })?.code;
   return code === "42501"
     ? "This task is unavailable. Refresh the page and try again."

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-export type MyDaySummary = { pending_drafts: number; completed_sections: string[]; forwarding_address: string | null }
+export type MyDaySummary = { task_counts?: {today:number;overdue:number}; pending_drafts: number; completed_sections: string[]; forwarding_address: string | null }
 export function parseMyDaySummary(value: unknown): MyDaySummary | null {
   if (!value || typeof value !== 'object') return null
   const row = value as Partial<MyDaySummary>
@@ -24,8 +24,10 @@ export function useMyDaySummary(owner: string, revision: number, enabled: boolea
     const onReturn = () => { if (!document.hidden) void load() }
     window.addEventListener('focus', onReturn)
     document.addEventListener('visibilitychange', onReturn)
+    window.addEventListener('vimbre:work-changed',onReturn)
     const interval = setInterval(onReturn, 60000)
-    return () => { cancelled = true; clearInterval(interval); window.removeEventListener('focus', onReturn); document.removeEventListener('visibilitychange', onReturn) }
+    return () => { cancelled = true; clearInterval(interval); window.removeEventListener('focus', onReturn); document.removeEventListener('visibilitychange', onReturn); window.removeEventListener('vimbre:work-changed',onReturn) }
   }, [owner, revision, refresh, enabled])
   return { data: result?.owner === owner ? result.data : null, error: result?.owner === owner && result.error, retry: () => setRefresh(value => value + 1) }
 }
+

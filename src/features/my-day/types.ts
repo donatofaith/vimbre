@@ -25,7 +25,7 @@ export type Task = {
   created_at?: string;
   title: string;
   details: string;
-  due_date: string;
+  due_date: string | null;
   due_time: string | null;
   due_at: string;
   remind_at: string;
@@ -69,6 +69,7 @@ export type DayData = {
   tab_counts?: Record<string, number>;
   done_today?: Task[];
   upcoming?: Task[];
+  review_drafts?: {id:string;capture_id:string;kind:string;version:number;payload:Record<string,string|null>;duplicate:boolean}[];
   drafts_waiting?: number;
   decisions_waiting?: number;
   handovers_waiting?: { id: string; title: string }[];
@@ -116,6 +117,7 @@ export function addDays(date: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 export function taskDate(task: Task, zone: string) {
+  if(!task.due_date&&!task.due_at)return "No date";
   const date = new Date(
     `${task.due_time ? dateInZone(zone, new Date(task.due_at)) : task.due_date}T12:00:00Z`,
   );

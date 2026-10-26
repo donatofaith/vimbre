@@ -967,3 +967,4 @@
   .vw-shell .vw-content :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 16px; }
   .vw-shell .button, .vw-menu { min-height: 44px; }
 }
+.vw-task-count{margin-left:auto;background:#ffffff24;color:white;min-width:24px;padding:3px 7px;border-radius:8px;font-size:11px;text-align:center}

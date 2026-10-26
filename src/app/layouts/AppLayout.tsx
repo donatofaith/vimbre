@@ -1,3 +1,4 @@
+import {useMyDaySummary} from '../../features/workspace/useMyDaySummary'
 import { useEffect, useRef, useState } from 'react'
 import {
   Link,
@@ -37,6 +38,7 @@ export function AppLayout() {
 function WorkspaceLayout() {
   const { company, profile } = useAuth()
   const { pathname } = useLocation()
+  const daySummary=useMyDaySummary(profile?.id??'',0,Boolean(profile));
   const leader = profile?.role === 'hr_admin' || profile?.role === 'manager'
   const memberCount = useCompanyMemberCount(profile?.id ?? '', leader)
 
@@ -160,6 +162,7 @@ function WorkspaceLayout() {
                   ? 'My handovers'
                   : item.label}
               </span>
+              {item.path==='/app'&&daySummary.data?.task_counts&&daySummary.data.task_counts.today+daySummary.data.task_counts.overdue>0&&<span className="vw-task-count" aria-label="Today and overdue tasks">{daySummary.data.task_counts.today+daySummary.data.task_counts.overdue}</span>}
             </NavLink>
           ))}
           {leader && <div className="vw-manage-group"><span className="vw-nav-heading">Manage</span>{items.filter(item => 'leaders' in item).map(item => <NavLink key={item.path} to={item.path} onClick={() => setMenuOpen(false)}><WorkspaceIcon name={icons[item.path]} /><span>{item.label}</span></NavLink>)}</div>}

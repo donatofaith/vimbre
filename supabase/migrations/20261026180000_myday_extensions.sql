@@ -1,4 +1,7 @@
--- My Day extension: additive schema only; apply after reviewing app RPC compatibility.
+-- Approved undated tasks belong in Coming up; no artificial due date is assigned.
+alter table public.actions alter column due_date drop not null;
+alter table public.actions add constraint actions_time_needs_date check(due_date is not null or due_time is null);
+-- Approved 26 October My Day fields, readers and owner-checked operations.
 alter table public.actions
   add column if not exists repeat_rule jsonb,
   add column if not exists time_needed_minutes integer,
@@ -21,6 +24,7 @@ begin
  return new;
 end $$;
 revoke all on function private.guard_task_pin() from public,anon,authenticated;
+update public.actions set pinned_at=now() where priority='high' and pinned_at is null and deleted_at is null and status<>'done';
 create table private.myday_undo (
  owner_id uuid not null, task_id uuid primary key references public.actions(id) on delete cascade,
  status text not null, deleted_at timestamptz, pinned_at timestamptz, completed_at timestamptz,
@@ -40,7 +44,7 @@ begin
  if p_data is null or jsonb_typeof(p_data)<>'object' or octet_length(p_data::text)>22000 then raise exception 'Invalid task data' using errcode='22023';end if;
  if p_operation='create' then
   insert into public.actions(id,owner_id,company_id,title,details,due_date,due_time,status,source_url,completion_note,department_id,external_contact_id,source_kind,reminder_option,priority)
-  values(p_id,u,c,p_data->>'title',coalesce(p_data->>'details',''),(p_data->>'due_date')::date,nullif(p_data->>'due_time','')::time,'open',nullif(p_data->>'source_url',''),coalesce(p_data->>'completion_note',''),nullif(p_data->>'department_id','')::uuid,nullif(p_data->>'external_contact_id','')::uuid,coalesce(p_data->>'source_kind','manual'),coalesce(p_data->>'reminder_option','at_time'),coalesce(p_data->>'priority','normal')) on conflict(id) do nothing;
+  values(p_id,u,c,p_data->>'title',coalesce(p_data->>'details',''),nullif(p_data->>'due_date','')::date,nullif(p_data->>'due_time','')::time,'open',nullif(p_data->>'source_url',''),coalesce(p_data->>'completion_note',''),nullif(p_data->>'department_id','')::uuid,nullif(p_data->>'external_contact_id','')::uuid,coalesce(p_data->>'source_kind','manual'),coalesce(p_data->>'reminder_option','at_time'),coalesce(p_data->>'priority','normal')) on conflict(id) do nothing;
   if not exists(select 1 from public.actions where id=p_id and owner_id=u and company_id=c) then raise insufficient_privilege;end if;
   return p_id;
  end if;
@@ -48,7 +52,7 @@ begin
  if not found then raise insufficient_privilege;end if;
  if p_operation='edit' then
   if a.deleted_at is not null then raise exception 'Restore this task first' using errcode='22023';end if;
-  update public.actions set title=p_data->>'title',details=coalesce(p_data->>'details',''),due_date=(p_data->>'due_date')::date,due_time=nullif(p_data->>'due_time','')::time,
+  update public.actions set title=p_data->>'title',details=coalesce(p_data->>'details',''),due_date=nullif(p_data->>'due_date','')::date,due_time=nullif(p_data->>'due_time','')::time,
   source_url=nullif(p_data->>'source_url',''),completion_note=coalesce(p_data->>'completion_note',''),department_id=nullif(p_data->>'department_id','')::uuid,external_contact_id=nullif(p_data->>'external_contact_id','')::uuid,reminder_option=coalesce(p_data->>'reminder_option','at_time'),deleted_at=case when p_data->>'status'='archived' then now() else deleted_at end,status=case when p_data->>'status'='archived' then status else coalesce(p_data->>'status',status) end,priority=coalesce(p_data->>'priority',priority) where id=a.id;
  elsif p_operation='pin' then
   if a.deleted_at is not null or a.status='done' then raise exception 'Only unfinished tasks can be pinned.' using errcode='22023';end if;
@@ -61,8 +65,8 @@ begin
   if a.status='done' or a.deleted_at is not null then raise exception 'This task is no longer open' using errcode='22023';end if;
   select coalesce((select timezone from public.work_preferences where owner_id=u),'Europe/London') into tz;
   if p_operation='reschedule' then
-   if (((p_data->>'due_date')::date+coalesce(nullif(p_data->>'due_time','')::time,(select reminder_time from public.work_preferences where owner_id=u),time '09:00')) at time zone tz)<=now() then raise exception 'Choose a future date and time' using errcode='22023';end if;
-   update public.actions set due_date=(p_data->>'due_date')::date,due_time=nullif(p_data->>'due_time','')::time,status='open',reminder_cycle=reminder_cycle+1,reminder_sent_at=null,check_in_sent_at=null,overdue=false where id=a.id;
+   if ((nullif(p_data->>'due_date','')::date+coalesce(nullif(p_data->>'due_time','')::time,(select reminder_time from public.work_preferences where owner_id=u),time '09:00')) at time zone tz)<=now() then raise exception 'Choose a future date and time' using errcode='22023';end if;
+   update public.actions set due_date=nullif(p_data->>'due_date','')::date,due_time=nullif(p_data->>'due_time','')::time,status='open',reminder_cycle=reminder_cycle+1,reminder_sent_at=null,check_in_sent_at=null,overdue=false where id=a.id;
   else
    if nullif(p_data->>'until','') is null or (p_data->>'until')::timestamptz<=now() or (p_data->>'until')::timestamptz>now()+interval '32 days' then raise exception 'Choose a future reminder time' using errcode='22023';end if;
    update public.actions set remind_at=(p_data->>'until')::timestamptz,reminder_sent_at=null,check_in_sent_at=null,reminder_cycle=reminder_cycle+1,overdue=false where id=a.id;
@@ -95,10 +99,27 @@ revoke all on function private.myday_action_legacy(uuid,text,jsonb) from public,
 
 create or replace function private.myday_action(p_id uuid,p_operation text,p_data jsonb) returns uuid
 language plpgsql security definer set search_path='' as $$
-declare a public.actions; before_task public.actions; saved private.myday_undo; result uuid; tz text; target date;
+declare draft public.capture_items; origin public.captures; result_json jsonb;
+ a public.actions; before_task public.actions; saved private.myday_undo; result uuid; tz text; target date;
 begin
  if auth.uid() is null or private.current_company_id() is null then raise insufficient_privilege;end if;
  if p_data is null or jsonb_typeof(p_data)<>'object' or octet_length(p_data::text)>22000 then raise exception 'Invalid task data' using errcode='22023';end if;
+ if p_operation in ('review_accept','review_dismiss') then
+  select * into draft from public.capture_items where id=p_id and owner_id=auth.uid() and company_id=private.current_company_id() for update;
+  if not found then raise insufficient_privilege;end if;
+  select * into origin from public.captures where id=draft.capture_id and owner_id=auth.uid() and company_id=private.current_company_id() and deleted_at is null for update;
+  if not found then raise insufficient_privilege;end if;
+  if p_operation='review_accept' and draft.status='confirmed' then return draft.id;end if;
+  if p_operation='review_dismiss' and draft.status='discarded' then return draft.id;end if;
+  if draft.status<>'pending' or draft.version is distinct from (p_data->>'version')::integer then raise exception 'This draft changed. Reload it.' using errcode='40001';end if;
+  if p_operation='review_dismiss' then
+   perform private.capture_change('discard',draft.id,draft.capture_id,jsonb_build_object('version',draft.version));return draft.id;
+  end if;
+  if coalesce(nullif(draft.payload->>'owner_id','')::uuid,auth.uid())<>auth.uid() then raise exception 'Review the assigned owner in Capture first' using errcode='22023';end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text||lower(btrim(draft.payload->>'title')),326));
+  if draft.kind='action' and exists(select 1 from public.actions where owner_id=auth.uid() and company_id=private.current_company_id() and deleted_at is null and lower(btrim(title))=lower(btrim(draft.payload->>'title'))) or draft.kind='decision' and exists(select 1 from public.decisions where owner_id=auth.uid() and company_id=private.current_company_id() and deleted_at is null and lower(btrim(title))=lower(btrim(draft.payload->>'title'))) then raise exception 'A matching item already exists. Review or dismiss this draft.' using errcode='22023';end if;
+  result_json:=private.capture_pipeline('confirm',draft.capture_id,jsonb_build_object('items',jsonb_build_array(jsonb_build_object('id',draft.id,'version',draft.version))));return draft.id;
+ end if;
  if p_operation<>'create' then
   select * into a from public.actions where id=p_id and owner_id=auth.uid() and company_id=private.current_company_id() for update;
   if not found then raise insufficient_privilege;end if;
@@ -174,18 +195,19 @@ declare u uuid:=auth.uid();tz text;today date;result jsonb;begin
  and strpos(lower(a.title),lower(p_query))>0 and (p_for='' or 'department:'||a.department_id::text=p_for or 'contact:'||a.external_contact_id::text=p_for)
  and (p_source='' or a.source_kind=p_source) and (p_priority='' or a.priority=p_priority)
  ), filtered as materialized(select * from base where (deleted_at is not null)=(p_filter='archived')
- and (p_filter in ('all','archived') or p_filter='today' and in_today and due_at>=now() or p_filter='done' and status='done' or p_filter='week' and status<>'done' and due_day between today and today+6 or p_filter='overdue' and status<>'done' and due_at<now())),
+ and (p_filter in ('all','archived') or p_filter='today' and in_today and (due_at>=now() or due_at is null) or p_filter='done' and status='done' or p_filter='week' and status<>'done' and due_day between today and today+6 or p_filter='overdue' and status<>'done' and due_at<now())),
  ranked as(select *,row_number() over(order by (pinned_at is not null) desc,due_at,created_at,id) as rank from filtered),
  paged as(select * from ranked order by rank limit case when p_filter='today' then null else 60 end offset case when p_filter='today' then 0 else p_page*60 end)
  select jsonb_build_object('rows',coalesce((select jsonb_agg(to_jsonb(paged) order by rank) from paged),'[]'::jsonb),'count',(select count(*) from filtered),'today',today,'timezone',tz,
- 'tab_counts',(select jsonb_build_object('today',count(*) filter(where deleted_at is null and status<>'done' and due_at>=now() and (due_day=today or pinned_at is not null)),'week',count(*) filter(where deleted_at is null and status<>'done' and due_day between today and today+6),'overdue',count(*) filter(where deleted_at is null and status<>'done' and due_at<now()),'done',count(*) filter(where deleted_at is null and status='done'),'all',count(*) filter(where deleted_at is null),'archived',count(*) filter(where deleted_at is not null)) from base),
+ 'tab_counts',(select jsonb_build_object('today',count(*) filter(where deleted_at is null and status<>'done' and (due_at>=now() or due_at is null) and (due_day=today or pinned_at is not null)),'week',count(*) filter(where deleted_at is null and status<>'done' and due_day between today and today+6),'overdue',count(*) filter(where deleted_at is null and status<>'done' and due_at<now()),'done',count(*) filter(where deleted_at is null and status='done'),'all',count(*) filter(where deleted_at is null),'archived',count(*) filter(where deleted_at is not null)) from base),
  'overdue_rows',coalesce((select jsonb_agg(to_jsonb(q) order by (pinned_at is not null) desc,due_at,created_at,id) from base q where deleted_at is null and status<>'done' and due_at<now()),'[]'::jsonb),
- 'counts',(select jsonb_build_object('today',count(*) filter(where status<>'done' and due_at>=now() and (due_day=today or pinned_at is not null)),'todo',count(*) filter(where status='open' and in_today),'progress',count(*) filter(where status='in_progress' and in_today),'overdue',count(*) filter(where status<>'done' and due_at<now()),'done',count(*) filter(where status='done' and (completed_at at time zone tz)::date=today)) from base where deleted_at is null),
+ 'counts',(select jsonb_build_object('today',count(*) filter(where status<>'done' and (due_at>=now() or due_at is null) and (due_day=today or pinned_at is not null)),'todo',count(*) filter(where status='open' and in_today),'progress',count(*) filter(where status='in_progress' and in_today),'overdue',count(*) filter(where status<>'done' and due_at<now()),'done',count(*) filter(where status='done' and (completed_at at time zone tz)::date=today)) from base where deleted_at is null),
  'has_work',exists(select 1 from public.actions where owner_id=u) or exists(select 1 from public.role_items where owner_id=u),
  'context_waiting',coalesce((select jsonb_agg(to_jsonb(q)) from (select * from public.actions where owner_id=u and status='done' and deleted_at is null and context_added_at is null order by completed_at desc limit 10)q),'[]'::jsonb),
  'done_today',coalesce((select jsonb_agg(to_jsonb(q) order by completed_at desc,id) from base q where deleted_at is null and status='done' and (completed_at at time zone tz)::date=today),'[]'::jsonb),
- 'upcoming',coalesce((select jsonb_agg(to_jsonb(q) order by (pinned_at is not null) desc,due_at,created_at,id) from base q where deleted_at is null and status<>'done' and pinned_at is null and due_day between today+1 and today+7),'[]'::jsonb),
- 'drafts_waiting',(select count(*) from public.capture_items i join public.captures c on c.id=i.capture_id where i.owner_id=u and i.status='pending' and c.deleted_at is null),
+ 'upcoming',coalesce((select jsonb_agg(to_jsonb(q) order by (pinned_at is not null) desc,due_at,created_at,id) from base q where deleted_at is null and status<>'done' and pinned_at is null and (due_day between today+1 and today+7 or due_day is null)),'[]'::jsonb),
+ 'review_drafts',coalesce((select jsonb_agg(jsonb_build_object('id',i.id,'capture_id',i.capture_id,'kind',i.kind,'version',i.version,'payload',i.payload,'duplicate',i.kind='action' and exists(select 1 from public.actions a where a.owner_id=u and a.deleted_at is null and lower(btrim(a.title))=lower(btrim(i.payload->>'title')))) order by i.created_at,i.id) from public.capture_items i join public.captures c on c.id=i.capture_id where i.owner_id=u and i.status='pending' and c.deleted_at is null and strpos(lower(i.payload->>'title'),lower(p_query))>0),'[]'::jsonb),
+ 'drafts_waiting',(select count(*) from public.capture_items i join public.captures c on c.id=i.capture_id where i.owner_id=u and i.status='pending' and c.deleted_at is null and strpos(lower(i.payload->>'title'),lower(p_query))>0),
  'decisions_waiting',0,
  'handovers_waiting',coalesce((select jsonb_agg(jsonb_build_object('id',h.id,'title',h.title)) from public.work_handovers h where reviewer_id=u and status='pending'),'[]'::jsonb),
  'covering',coalesce((select jsonb_agg(jsonb_build_object('id',h.id,'owner_name',p.full_name,'owner_id',p.id)) from public.work_handovers h join public.profiles p on p.id=h.owner_id and p.active where h.cover_id=u and h.status='approved' and today between h.starts_on and h.ends_on),'[]'::jsonb),
@@ -193,5 +215,30 @@ declare u uuid:=auth.uid();tz text;today date;result jsonb;begin
  'checklist',jsonb_build_object('capture',exists(select 1 from public.captures where owner_id=u),'role',exists(select 1 from public.role_items where owner_id=u and deleted_at is null) or exists(select 1 from public.decisions where owner_id=u and deleted_at is null),'reminder',exists(select 1 from public.actions where owner_id=u and deleted_at is null and remind_at is not null),'cover',exists(select 1 from public.work_handovers where owner_id=u and status<>'cancelled'))
  ) into result;return result;
 end $function$
+
+;
+
+CREATE OR REPLACE FUNCTION public.my_day_summary()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE
+ SET search_path TO ''
+AS $function$
+declare day_data jsonb;
+begin
+ if auth.uid() is null or private.current_company_id() is null then
+  raise insufficient_privilege using message='Sign in to view My day';
+ end if;
+ day_data:=public.myday_tasks('today','','',0);
+ return jsonb_build_object('task_counts',day_data->'counts',
+  'pending_drafts',(select count(*) from public.capture_items i join public.captures c
+    on c.id=i.capture_id and c.owner_id=i.owner_id and c.company_id=i.company_id
+    where i.owner_id=(select auth.uid()) and i.status='pending' and c.deleted_at is null),
+  'completed_sections',coalesce((select jsonb_agg(kind order by kind) from (
+    select distinct kind from public.role_items where owner_id=(select auth.uid()) and deleted_at is null
+  )s),'[]'::jsonb),
+  'forwarding_address',(select address from public.capture_forwarding_addresses where owner_id=(select auth.uid()) and enabled and verified_at is not null)
+ );
+end; $function$
 
 ;

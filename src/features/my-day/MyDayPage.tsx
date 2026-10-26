@@ -28,8 +28,8 @@ import "./my-day.css";
 const filters = [
   ["today", "Today"],
   ["week", "This week"],
-  ["done", "Done"],
   ["all", "All"],
+  ["done", "Done"],
   ["archived", "Deleted"],
 ] as const;
 export function MyDayPage() {
@@ -222,12 +222,12 @@ function MyDayContent() {
         zone={zone}
         now={clock}
         rank={rank}
-        initialOpen={panelOnly || task.id === taskId}
+        initialOpen={panelOnly || task.id === taskId && !params.has("task_action")}
         busy={Boolean(busy)}
         act={(t, o, v) => void act(t, o, v)}
-        edit={(t) => setEditor({ task: t })}
-        remind={setReminder}
-        context={setContext}
+        edit={(t) => {setInspected(null);setEditor({ task: t })}}
+        remind={t=>{setInspected(null);setReminder(t)}}
+        context={t=>{setInspected(null);setContext(t)}}
         quickContext={(t, outcome) =>
           void act(t, "context", {
             kind: "note",
@@ -235,7 +235,7 @@ function MyDayContent() {
             details: outcome.trim() || t.completion_note || "Completed.",
           })
         }
-        record={setRecord}
+        record={t=>{setInspected(null);setRecord(t)}}
         drag={(id) => {
           dragging.current = id;
         }}
@@ -393,11 +393,8 @@ function MyDayContent() {
                 {(waiting > 0 || handovers.length > 0) && <section className="md-day-group" aria-label="To review">
                   <h3>To review</h3>
                   <div className="md-waiting-links">
-                    {waiting > 0 && (
-                      <Link to="/app/capture">
-                        {waiting} {waiting === 1 ? "draft" : "drafts"} to review
-                      </Link>
-                    )}
+                    {(data?.review_drafts??[]).map(d=><article className="md-review-draft" key={d.id}><span className="md-muted">Draft · {d.kind==='action'?'Task':d.kind==='decision'?'Decision':d.kind}</span><h4>{d.payload.title}</h4>{d.payload.details&&<p>{d.payload.details}</p>}{d.payload.due_date&&<p>Due: {d.payload.due_date}{d.payload.due_time?` · ${d.payload.due_time}`:''}</p>}<p>Owner: {d.payload.owner_id&&d.payload.owner_id!==profile!.id?'Review owner in Capture':'Me'} · Reminder: {(d.payload.reminder_option??'at_time').replaceAll('_',' ')}</p>{d.duplicate&&<p className="field-error">A matching item already exists. Review it before accepting.</p>}<div className="md-expanded-actions"><Button disabled={Boolean(busy)||d.duplicate} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_accept',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Accept</Button><Link to={`/app/capture?capture=${d.capture_id}`}>Edit</Link><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_dismiss',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Dismiss</button></div></article>)}
+                    {waiting>0&&!data?.review_drafts&&<Link to="/app/capture">{waiting} drafts to review</Link>}
                     {handovers.map((h) => (
                       <Link key={h.id} to="/app/handovers">
                         Review handover: {h.title}

@@ -23,7 +23,7 @@ export function TaskPanel({
   saved: () => void;
 }) {
   const [date, setDate] = useState(
-      task?.due_date ?? (draft ? draft.due_date || "" : today),
+      task ? task.due_date??"" : (draft ? draft.due_date || "" : today),
     ),
     [time, setTime] = useState(
       task?.due_time?.slice(0, 5) || draft?.due_time || "",
@@ -65,7 +65,7 @@ export function TaskPanel({
       await changeTask(id, task ? "edit" : "create", {
         title: get("title"),
         due_date: date,
-        due_time: time,
+        due_time: date?time:"",
         details: get("details"),
         status: get("status"),
         priority: "normal",
@@ -132,13 +132,13 @@ export function TaskPanel({
             <input
               id="md-date"
               type="date"
-              required
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
           <Input
             label="Time (optional)"
+            disabled={!date}
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
