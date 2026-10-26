@@ -38,8 +38,14 @@ do $$declare source uuid:=gen_random_uuid(); draft_id uuid:=gen_random_uuid(); d
  v:=public.myday_tasks('all','Accept review fixture','',0);if v->'rows'->0->>'source_name'<>'Gmail' or (v->'rows'->0->>'source_connected')::boolean is not false then raise exception 'Captured source metadata missing: %',v;end if;
  if(public.my_day_summary()->'task_counts'->>'today')::int<>(public.myday_tasks('today','','',0)->'counts'->>'today')::int then raise exception 'Sidebar count differs';end if;
 end $$;
+do $$begin
+ if not exists(select 1 from public.task_events where owner_id=auth.uid() and event='done') then raise exception 'Done event not logged';end if;
+ begin update public.task_events set event='updated' where owner_id=auth.uid();raise exception 'Audit editable';exception when insufficient_privilege then null;end;
+ begin delete from public.task_events where owner_id=auth.uid();raise exception 'Audit removable';exception when insufficient_privilege then null;end;
+end $$;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
 do $$begin
+ if exists(select 1 from public.task_events where owner_id<>auth.uid()) then raise exception 'Private events leaked';end if;
  if exists(select 1 from public.actions where owner_id<>auth.uid()) then raise exception 'Private tasks leaked';end if;
  begin perform public.myday_action(current_setting('test.task')::uuid,'archive','{}');raise exception 'Manager deleted employee task';exception when insufficient_privilege then null;end;
  begin perform public.myday_action(current_setting('test.task')::uuid,'undo','{}');raise exception 'Manager undid employee task';exception when insufficient_privilege then null;end;

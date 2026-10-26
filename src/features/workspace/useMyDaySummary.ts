@@ -7,6 +7,7 @@ export function parseMyDaySummary(value: unknown): MyDaySummary | null {
   if (!Number.isSafeInteger(row.pending_drafts) || row.pending_drafts! < 0 ||
     !Array.isArray(row.completed_sections) || !row.completed_sections.every(kind => typeof kind === 'string') ||
     !(row.forwarding_address === null || typeof row.forwarding_address === 'string' && /^[^\s@]+@[^\s@]+$/.test(row.forwarding_address))) return null
+  if(row.task_counts&&(!Number.isSafeInteger(row.task_counts.today)||row.task_counts.today<0||!Number.isSafeInteger(row.task_counts.overdue)||row.task_counts.overdue<0))return null
   return row as MyDaySummary
 }
 export function useMyDaySummary(owner: string, revision: number, enabled: boolean) {

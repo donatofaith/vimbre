@@ -242,3 +242,42 @@ begin
 end; $function$
 
 ;
+
+-- Append-only task events include edits, snooze and outcomes as well as status changes.
+create table public.task_events (
+ id bigint generated always as identity primary key,
+ task_id uuid not null,owner_id uuid not null,company_id uuid not null references public.companies(id) on delete cascade,
+ actor_id uuid,event text not null,previous_status text,status text not null,
+ created_at timestamptz not null default clock_timestamp(),metadata jsonb not null default '{"schema_version":1}'::jsonb,
+ foreign key(owner_id,company_id) references public.profiles(id,company_id)
+);
+create index task_events_owner_task_idx on public.task_events(owner_id,company_id,task_id,created_at);
+alter table public.task_events enable row level security;
+revoke all on public.task_events from public,anon,authenticated;
+grant select on public.task_events to authenticated;
+create policy task_events_owner_read on public.task_events for select to authenticated using(owner_id=(select auth.uid()) and company_id=(select private.current_company_id()));
+insert into public.task_events(task_id,owner_id,company_id,event,status) select id,owner_id,company_id,'baseline',case when deleted_at is not null then 'archived' else status end from public.actions;
+create function private.log_myday_event() returns trigger language plpgsql security definer set search_path='' as $$
+declare event_name text;previous text;begin
+ if tg_op='INSERT' then event_name:='created';
+ else
+  previous:=case when old.deleted_at is not null then 'archived' else old.status end;
+  event_name:=case when new.deleted_at is distinct from old.deleted_at then case when new.deleted_at is null then 'restored' else 'deleted' end
+   when new.status is distinct from old.status then case when new.status='done' then 'done' else 'status_changed' end
+   when new.context_added_at is distinct from old.context_added_at then 'outcome_saved'
+   when new.pinned_at is distinct from old.pinned_at then case when new.pinned_at is null then 'unstarred' else 'starred' end
+   when new.remind_at is distinct from old.remind_at or new.due_date is distinct from old.due_date then 'rescheduled'
+   else 'updated' end;
+ end if;
+ insert into public.task_events(task_id,owner_id,company_id,actor_id,event,previous_status,status) values(new.id,new.owner_id,new.company_id,auth.uid(),event_name,previous,case when new.deleted_at is not null then 'archived' else new.status end);
+ return new;
+end $$;
+revoke all on function private.log_myday_event() from public,anon,authenticated;
+create trigger myday_event_log after insert or update on public.actions for each row execute function private.log_myday_event();
+create or replace function public.myday_task_history(p_id uuid) returns jsonb language sql stable security invoker set search_path='' as $$
+ select coalesce(jsonb_agg(to_jsonb(q) order by created_at desc,id desc),'[]'::jsonb) from (
+ select id,previous_status,status,created_at,event from public.task_events where task_id=p_id and owner_id=auth.uid()
+ union all
+ select id,previous_status,status,created_at,null::text as event from public.task_status_history h where task_id=p_id and owner_id=auth.uid() and not exists(select 1 from public.task_events e where e.task_id=h.task_id and (e.event='created' or e.created_at<=h.created_at))
+ ) q
+$$;
