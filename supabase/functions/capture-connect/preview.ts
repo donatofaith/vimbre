@@ -20,7 +20,7 @@ export async function preview(p:Provider,t:Tokens,row:SearchRow){
  else if(p==='teams'&&row.container.startsWith('channel:')){
   const [,rawTeam,rawChannel]=row.container.split(':');const team=decodeURIComponent(rawTeam||''),channel=decodeURIComponent(rawChannel||'');if(!team||!channel)throw Error('invalid_source')
   const path=`teams/${enc(team)}/channels/${enc(channel)}/messages/${enc(row.id)}`,d=await api(p,t,path),replies=await api(p,t,path+'/replies?$top=30');text=[d,...(replies.value||[])].map((m:any)=>plain(m.body?.content)).join('\n\n')
- }else {const value=await read(p,t,row.id,row.container);text=value.text}
+ }else {const value=await read(p,t,row.id,row.container,false);text=value.text}
  if(!text.trim())throw Error('source_empty')
  if(new TextEncoder().encode(text).length>50000)throw Error('source_too_large')
  return {updated_at:row.date,title:row.title.slice(0,200),text:prepareCaptureText(text),date:row.date?.slice(0,10)||new Date().toISOString().slice(0,10),sender:row.sender,source_type:p==='gmail'||p==='outlook'?'email':'note',reference:row.reference,source,container:row.container,url:row.url,provider:p}
