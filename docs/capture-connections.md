@@ -15,7 +15,7 @@ Longer sources are rejected rather than silently truncated. Users can paste the 
 
 ## Provider registration required before live account consent
 
-Callback for Trello: `https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-connect/callback`. Register it exactly. Trello OAuth1 sends a per-attempt state query parameter on the callback. The callback returns only to the trusted Vimbre origin where the flow began. A short-lived authorization code travels in a URL fragment, is removed immediately, and is exchanged only after authenticated account and browser-nonce verification. Access/refresh tokens never reach the browser. The server never persists the callback code for another browser to retrieve. Real OAuth acceptance uses the production Vimbre domains; localhost is for intercepted tests.
+New consent callbacks for all six providers use `https://vimbre.com/api/capture/callback`. The original Supabase callback remains supported for earlier pending grants. Trello OAuth1 sends a per-attempt state query parameter on the callback. The callback returns only to the trusted Vimbre origin where the flow began. A short-lived authorization code travels in a URL fragment, is removed immediately, and is exchanged only after authenticated account and browser-nonce verification. Access/refresh tokens never reach the browser. The server never persists the callback code for another browser to retrieve. Real OAuth acceptance uses the production Vimbre domains; localhost is for intercepted tests.
 
 Set these **server-only Edge Function secrets** in the Vimbre Supabase project, never in VITE variables or Git:
 
@@ -50,7 +50,7 @@ Primary references: https://developers.google.com/identity/protocols/oauth2/web-
 
 ## Branded Google callback — 25 October 2026
 
-Google Gmail/Drive now start new consent requests with `https://vimbre.com/api/capture/callback`. Add this exact URI to the Google OAuth web client before reconnecting. Retain the old Supabase URI while earlier ten minute consent attempts finish. No Cloudflare DNS record, Supabase custom-domain add-on or new server credential is needed. Microsoft Outlook/Teams also use this branded callback as recorded below. Slack also uses the branded callback as recorded below. Trello retains its original callback.
+Google Gmail/Drive now start new consent requests with `https://vimbre.com/api/capture/callback`. Add this exact URI to the Google OAuth web client before reconnecting. Retain the old Supabase URI while earlier ten minute consent attempts finish. No Cloudflare DNS record, Supabase custom-domain add-on or new server credential is needed. Microsoft Outlook/Teams also use this branded callback as recorded below. Slack also uses the branded callback as recorded below. Trello also uses the branded callback as recorded below.
 
 The Vercel Node function forwards only bounded OAuth parameters to the fixed Supabase callback server-side, refuses automatic redirects, and accepts only the existing trusted Capture fragment destinations. It never exchanges provider tokens, stores secrets or logs query parameters. Invalid state, duplicate parameters, unexpected redirects and upstream failures return a generic failure without codes. The original browser nonce and authenticated, single-use user/company grant checks remain required. Each new grant stores its exact redirect URI encrypted alongside PKCE material, so exchange uses the URI that began consent and existing old grants still work.
 
@@ -65,3 +65,9 @@ Deployed capture-connect version 12. Callback/provider tests (20) and Edge TypeS
 ## Branded Slack callback — 26 October 2026
 
 Slack new consent uses `https://vimbre.com/api/capture/callback`. Add this exact Redirect URL under OAuth & Permissions and save it before connecting from Vimbre. Client ID and Client Secret stay in Supabase; the integration uses the consenting user's token, not a manually copied bot token. Keep the eight read/history user scopes documented above. Existing pending grants retain their original URI and single-use state/browser/account binding remain unchanged. capture-connect version 14 is deployed; 21 provider/relay tests and Edge type checks pass. Real workspace consent and selected conversation import still require operator testing. Cross-workspace availability requires Slack distribution setup and workspace-admin policy approval where applicable.
+
+## Branded Trello callback — 26 October 2026
+
+Trello new OAuth1 consent signs `https://vimbre.com/api/capture/callback?state=<per-attempt state>` as the callback. Add `https://vimbre.com` to the API key's Allowed origins. Use the Trello Auth API key and application secret in the existing server-only CAPTURE_TRELLO_CLIENT_ID and CAPTURE_TRELLO_CLIENT_SECRET settings; OAuth 2.0 client credentials are not interchangeable with these. The per-attempt request token/verifier check, signed provider requests, authenticated owner/company binding and single-use browser state are retained. Existing pending grants still accept their original callback.
+
+capture-connect version 16 deployed. All 22 provider/relay tests and Edge type checks pass, including signed branded callback/state and rejection of a mismatched request token. Real Trello consent and selected-board/card import must still be tested by the operator; credential presence is not proof of successful consent or public provider approval.
