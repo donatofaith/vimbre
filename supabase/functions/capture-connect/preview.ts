@@ -8,13 +8,13 @@ export async function preview(p:Provider,t:Tokens,row:SearchRow){
  let text='',source=row.id
  if(p==='gmail'){
   const d=await api(p,t,`threads/${enc(row.id)}?format=full`)
-  const messages=(d.messages||[]).slice(-30);source=messages.at(-1)?.id||row.id
+  if((d.messages||[]).length>30)throw Error('source_too_large');const messages=(d.messages||[]);source=messages.at(-1)?.id||row.id
   // Strip quoted copies per message, while retaining each selected thread participant's contribution.
   text=messages.map((m:any)=>prepareCaptureText(mailText(m.payload||{}))).filter(Boolean).join('\n\n')
  }else if(p==='outlook'){
   const filter="conversationId eq '"+row.reference.replaceAll("'","''")+"'"
   const d=await api(p,t,'me/messages?'+new URLSearchParams({'$filter':filter,'$select':'id,body,receivedDateTime','$top':'30'}))
-  const messages=(d.value||[]).sort((a:any,b:any)=>String(a.receivedDateTime).localeCompare(String(b.receivedDateTime)));source=messages.at(-1)?.id||row.id
+  if(d['@odata.nextLink'])throw Error('source_too_large');const messages=(d.value||[]).sort((a:any,b:any)=>String(a.receivedDateTime).localeCompare(String(b.receivedDateTime)));source=messages.at(-1)?.id||row.id
   text=messages.map((m:any)=>prepareCaptureText(m.body?.contentType==='html'?plain(m.body.content):String(m.body?.content||''))).filter(Boolean).join('\n\n')
  }else if(p==='drive'&&row.mime==='application/vnd.google-apps.spreadsheet')text=await api(p,t,`files/${enc(row.id)}/export?mimeType=text/csv`,true)
  else if(p==='teams'&&row.container.startsWith('channel:')){

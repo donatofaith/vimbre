@@ -38,3 +38,20 @@ export async function search(p:Provider,t:Tokens,f:Filters,cursor=''):Promise<Se
  }
  return {rows:f.likely?rows.filter(r=>r.kind==='container'||likelyAction(r.title+' '+r.preview)):rows,next}
 }
+
+/** Provider-owned place names and IDs; metadata only, independently paginated. */
+export async function places(p:Provider,t:Tokens,kind='',parent='',cursor=''):Promise<SearchPage>{
+ let rows:SearchRow[]=[],next:string|null=null
+ const row=(id:string,title:string,container=parent):SearchRow=>({id,reference:id,container,title,sender:'',preview:'',date:'',url:'',kind:'container'})
+ if(p==='gmail'){const d=await api(p,t,'labels');rows=(d.labels||[]).filter((r:any)=>r.type==='user'||['INBOX','SENT','STARRED','IMPORTANT'].includes(r.id)).map((r:any)=>row(r.name,r.name));const at=Number(cursor)||0;next=rows.length>at+20?String(at+20):null;rows=rows.slice(at,at+20)}
+ else if(p==='outlook'){
+  const path=parent?`me/mailFolders/${encodeURIComponent(parent)}/childFolders`:'me/mailFolders';if(cursor&&!cursor.startsWith(path+'?'))throw Error('invalid_source');const d=await api(p,t,cursor||path+'?$top=20&$select=id,displayName');next=nextGraph(d['@odata.nextLink']);rows=(d.value||[]).map((r:any)=>row(r.id,r.displayName))
+ }else if(p==='drive')return search(p,t,filters({mime:'folder',folder:parent,notCaptured:false}),cursor)
+ else if(p==='slack'){const d=await api(p,t,'conversations.list?'+new URLSearchParams({types:'public_channel,private_channel,im,mpim',exclude_archived:'true',limit:'20',...(cursor?{cursor}:{})}));next=d.response_metadata?.next_cursor||null;rows=(d.channels||[]).map((r:any)=>row(r.id,r.name?('#'+r.name):r.user?'Direct message · '+r.user:'Group conversation'))}
+ else if(p==='teams'){
+  const path=kind==='channels'?(parent?`teams/${encodeURIComponent(parent)}/channels`:'me/joinedTeams'):'me/chats';if(cursor&&!cursor.startsWith(path+'?'))throw Error('invalid_source');const d=await api(p,t,cursor||path+(kind==='channels'?'':'?$top=20'));next=nextGraph(d['@odata.nextLink']);rows=(d.value||[]).slice(0,20).map((r:any)=>row(kind==='channels'&&parent?'channel:'+encodeURIComponent(parent)+':'+encodeURIComponent(r.id):r.id,r.displayName||r.topic||(r.chatType==='oneOnOne'?'Direct message':'Group chat')))
+ }else{
+  const d=await api(p,t,parent?`boards/${encodeURIComponent(parent)}/lists?fields=name&filter=open`:'members/me/boards?fields=name&filter=open'),at=Number(cursor)||0;next=d.length>at+20?String(at+20):null;rows=d.slice(at,at+20).map((r:any)=>row(r.id,r.name))
+ }
+ return {rows,next}
+}

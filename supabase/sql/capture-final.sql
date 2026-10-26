@@ -124,7 +124,7 @@ begin
   update private.capture_selected_sources set source=source||jsonb_build_object('text',p_data->>'text','format','text') where id=(p_data->>'preview')::uuid and owner_id=p_user and company_id=c and connection_id=conn.id and expires_at>now() and source->>'format'='pdf' returning source into v;
   if not found then raise insufficient_privilege;end if;return jsonb_build_object('preview',p_data->>'preview','source',v);
  elsif p_action='captured' then
-  return coalesce((select jsonb_object_agg(source_reference,id) from(select distinct on(source_reference) source_reference,id from public.captures where owner_id=p_user and company_id=c and source_account=conn.id and deleted_at is null order by source_reference,created_at desc)x),'{}');
+  return coalesce((select jsonb_object_agg(source_reference,id) from(select distinct on(source_reference) source_reference,id from public.captures where owner_id=p_user and company_id=c and source_account=conn.id and source_reference in(select jsonb_array_elements_text(p_data->'references')) and deleted_at is null order by source_reference,created_at desc)x),'{}');
  else raise invalid_parameter_value;end if;
 end $$;
 create or replace function public.capture_search_service(p_user uuid,p_action text,p_data jsonb default '{}') returns jsonb language sql security invoker set search_path='' as $$select private.capture_search_service(p_user,p_action,p_data)$$;

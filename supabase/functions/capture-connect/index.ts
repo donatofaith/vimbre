@@ -1,4 +1,4 @@
-import {search,filters} from './search.ts'
+import {search,filters,places} from './search.ts'
 import {preview} from './preview.ts'
 import {prepareSource,updateSource} from './source-updates.ts'
 import type {Reference} from './source-updates.ts'
@@ -45,18 +45,24 @@ Deno.serve(async req=>{
     try{await updateSource(context,tokens,input.operation,input.body,payload.list_id,input.request_id);await sourceService('finish',{...payload,state:'sent'});return reply(200,{ok:true})}catch(e){await sourceService('finish',{...payload,state:e instanceof Error&&e.message==='uncertain'?'uncertain':'failed'});throw e}
    }finally{await service('unlock',user,{id:connection.id,secret:tokens,lease_token:stored.lease_token})}
   }
-  if(!['sources','import','disconnect','search','preview','preview_text'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
+  if(!['sources','import','disconnect','search','preview','preview_text','places'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false
   try{
    if(input.action==='disconnect'){await revoke(p,tokens);await service('remove',user,{id:input.id,lease_token:stored.lease_token});removed=true;return reply(200,{ok:true})}
    if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
    tokens=await refresh(p,tokens)
+   if(input.action==='places'){
+    const kind=typeof input.kind==='string'?input.kind:'',parent=typeof input.parent==='string'?input.parent:'',fingerprint=await digest(JSON.stringify(['places',kind,parent]));if(parent.length>1024)throw Error('invalid_source');
+    const base={connection:input.id,fingerprint},cursor=input.cursor?await searchService('cursor',{...base,token:input.cursor}):'';
+    const data=await searchService('page_get',{...base,cursor})||await searchService('page_put',{...base,cursor,page:await places(p,tokens,kind,parent,cursor)});
+    return reply(200,{ok:true,rows:data.rows,next:data.next?data.cache:null,cache:data.cache})
+   }
    if(input.action==='search'){
     const f=filters(input.filters),fingerprint=await digest(JSON.stringify(f)),base={connection:input.id,fingerprint};
     const cursor=input.cursor?await searchService('cursor',{...base,token:input.cursor}):'';
     if(input.cursor&&!cursor)throw Error('search_expired');
     const data=await searchService('page_get',{...base,cursor})||await searchService('page_put',{...base,cursor,page:await search(p,tokens,f,cursor)});
-    const captured=await searchService('captured',{connection:input.id});
+    const captured=await searchService('captured',{connection:input.id,references:data.rows.map((r:any)=>r.reference)});
     return reply(200,{ok:true,rows:data.rows.map((r:any)=>({...r,captured:captured[r.reference]||null})).filter((r:any)=>!f.notCaptured||!r.captured),next:data.next?data.cache:null,cache:data.cache})
    }
    if(input.action==='preview_text'){
