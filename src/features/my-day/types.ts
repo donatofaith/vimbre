@@ -103,7 +103,7 @@ export const sourceLabels = {
   email: "Email",
   notes: "Notes",
   ai: "Vimbre AI",
-  recurring_deadline: "My role",
+  recurring_deadline: "Recurring deadline",
   role: "My role",
   meeting: "Meeting notes",
   handover: "Handover",

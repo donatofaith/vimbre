@@ -200,3 +200,30 @@
 .vc-source-pages { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 16px; border-top: 1px solid var(--finish-edge); }
 .vc-source-pages > span { color: #52677e; font-size: 13px; font-variant-numeric: tabular-nums; }
 .rs-site { background-color: #fffdf9; }
+
+
+/* Workspace-wide control consistency: visual sizing only; preserve each control's placement. */
+.vw-shell.app-shell .vw-content .button {
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  line-height: 1.25;
+  gap: 8px;
+  white-space: normal;
+  text-align: center;
+}
+.vw-shell.app-shell .vw-content .button:focus-visible {
+  outline: 2px solid #6b9de8;
+  outline-offset: 3px;
+}
+.vw-shell.app-shell .vw-content .button:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+.vw-shell.app-shell .vw-content :is(.form-actions, .md-toolbar, .md-toolbar-approved, .vc-section-heading) {
+  row-gap: 10px;
+}
+@media (max-width: 640px) {
+  .vw-shell.app-shell .vw-content .button { min-height: 44px; padding: 10px 13px; }
+  .vw-shell.app-shell .vw-content :is(.form-actions, .md-toolbar, .md-toolbar-approved) { flex-wrap: wrap; }
+}

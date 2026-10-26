@@ -91,6 +91,7 @@ export function TaskPanel({
   return (
     <RoleDrawer
       context="My day"
+      className="md-task-drawer"
       title={task ? "Edit task" : "Add a task"}
       close={close}
     >
