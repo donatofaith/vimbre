@@ -5,6 +5,26 @@ vi.stubGlobal('Deno',{env:{get:(key:string)=>values[key]}})
 afterEach(()=>{vi.restoreAllMocks()})
 const result=(body:unknown)=>Promise.resolve(new Response(JSON.stringify(body),{headers:{'Content-Type':'application/json'}}))
 describe('private Capture provider adapters',()=>{
+ it('loads at most 50 Gmail headers in bounded batches and orders newest first',async()=>{
+  let active=0,maxActive=0
+  const fetch=vi.spyOn(globalThis,'fetch').mockImplementation(async input=>{
+   const u=new URL(String(input))
+   if(u.pathname.endsWith('/messages')){expect(u.searchParams.get('maxResults')).toBe('50');return new Response(JSON.stringify({messages:Array.from({length:55},(_,i)=>({id:String(i+1)}))}))}
+   active++;maxActive=Math.max(active,maxActive)
+   await new Promise(resolve=>setTimeout(resolve,1));active--
+   const i=Number(u.pathname.split('/').at(-1))
+   expect(u.searchParams.get('format')).toBe('metadata')
+   return new Response(JSON.stringify({internalDate:String(Date.UTC(2026,9,i)),payload:{headers:[{name:'Subject',value:`Email ${i}`},{name:'From',value:'Sender <sender@example.invalid>'}]}}))
+  })
+  const rows=await sources('gmail',{access_token:'fixture'})
+  expect(rows).toHaveLength(50);expect(rows[0].title).toBe('Email 50');expect(rows.at(-1)?.title).toBe('Email 1')
+  expect(rows[0].subtitle).toContain('Sender');expect(maxActive).toBeLessThanOrEqual(10);expect(fetch).toHaveBeenCalledTimes(51)
+ })
+ it('requests the latest 50 Outlook messages in newest-first order',async()=>{
+  const fetch=vi.spyOn(globalThis,'fetch').mockImplementation(()=>result({value:[]}))
+  await sources('outlook',{access_token:'fixture'})
+  const u=new URL(String(fetch.mock.calls[0][0]));expect(u.searchParams.get('$top')).toBe('50');expect(u.searchParams.get('$orderby')).toBe('receivedDateTime desc')
+ })
  it('signs the branded Trello callback with state and binds exchange to its request token',async()=>{
   const fetch=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response('oauth_token=request&oauth_token_secret=request-secret&oauth_callback_confirmed=true'))
   const flow=await start('trello','csrf-state','https://vimbre.com/api/capture/callback','unused')

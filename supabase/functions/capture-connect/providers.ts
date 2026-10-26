@@ -40,9 +40,21 @@ const decode=(s:string)=>new TextDecoder().decode(Uint8Array.from(atob(s.replace
 function mailText(part:any):string{if(part.mimeType==='text/plain'&&part.body?.data)return decode(part.body.data);const nested=(part.parts||[]).map(mailText).filter(Boolean).join('\n');if(nested)return nested;return part.mimeType==='text/html'&&part.body?.data?text(decode(part.body.data)):''}
 async function api(p:Provider,t:Tokens,path:string,raw=false){const base=p==='gmail'?'https://gmail.googleapis.com/gmail/v1/users/me/':p==='drive'?'https://www.googleapis.com/drive/v3/':p==='teams'||p==='outlook'?'https://graph.microsoft.com/v1.0/':p==='slack'?'https://slack.com/api/':'https://api.trello.com/1/';const url=base+path;const headers:Record<string,string>={Authorization:p==='trello'?await oauth1(url,'GET',t.access_token,t.token_secret):'Bearer '+t.access_token};if(p==='outlook')headers.Prefer='outlook.body-content-type="text"';return raw?bounded(await fetch(url,{headers,redirect:'error',signal:AbortSignal.timeout(15000)})):json(url,{headers})}
 export async function sources(p:Provider,t:Tokens,container=''):Promise<Source[]>{
- if(p==='gmail'){const d=await api(p,t,'messages?maxResults=20');const rows=await Promise.all((d.messages||[]).map(async(m:any)=>{const r=await api(p,t,`messages/${id(m.id)}?format=metadata&metadataHeaders=Subject`);return {id:m.id,title:r.payload?.headers?.find((h:any)=>h.name.toLowerCase()==='subject')?.value||'Email',kind:'item' as const}}));return rows}
+ if(p==='gmail'){
+  const d=await api(p,t,'messages?maxResults=50'),messages=(d.messages||[]).slice(0,50)
+  const rows:Array<Source&{received:number}>=[]
+  for(let offset=0;offset<messages.length;offset+=10){
+   const batch=await Promise.all(messages.slice(offset,offset+10).map(async(m:any)=>{
+    const r=await api(p,t,`messages/${id(m.id)}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&fields=id,internalDate,payload/headers`)
+    const header=(name:string)=>r.payload?.headers?.find((h:any)=>h.name.toLowerCase()===name)?.value||''
+    const received=Number(r.internalDate)||0,date=received?new Date(received).toISOString().slice(0,10):''
+    return {id:m.id,title:header('subject')||'Email',subtitle:[header('from'),date].filter(Boolean).join(' · '),kind:'item' as const,received}
+   }));rows.push(...batch)
+  }
+  return rows.sort((a,b)=>b.received-a.received).map(({received:_received,...row})=>row)
+ }
  if(p==='drive'){const d=await api(p,t,'files?'+new URLSearchParams({q:"trashed = false and (mimeType = 'application/vnd.google-apps.document' or mimeType = 'text/plain')",pageSize:'30',fields:'files(id,name,mimeType)',orderBy:'modifiedTime desc'}));return (d.files||[]).map((r:any)=>({id:r.id,title:r.name,kind:'item'}))}
- if(p==='outlook'){const d=await api(p,t,'me/messages?$top=30&$select=id,subject,receivedDateTime&$orderby=receivedDateTime%20desc');return(d.value||[]).map((r:any)=>({id:r.id,title:r.subject||'Email',subtitle:r.receivedDateTime,kind:'item'}))}
+ if(p==='outlook'){const d=await api(p,t,'me/messages?$top=50&$select=id,subject,receivedDateTime&$orderby=receivedDateTime%20desc');return(d.value||[]).map((r:any)=>({id:r.id,title:r.subject||'Email',subtitle:r.receivedDateTime,kind:'item'}))}
  if(p==='teams'){const d=await api(p,t,container?`me/chats/${id(container)}/messages?$top=30`:'me/chats?$top=30');return(d.value||[]).map((r:any)=>({id:r.id,title:container?text(r.body?.content).slice(0,120)||'Message':r.topic||'Teams chat',subtitle:container?r.createdDateTime:r.chatType,kind:container?'item':'container'}))}
  if(p==='slack'){const d=await api(p,t,container?'conversations.history?'+new URLSearchParams({channel:container,limit:'30'}):'conversations.list?types=public_channel,private_channel,im,mpim&exclude_archived=true&limit=30');return(container?d.messages||[]:d.channels||[]).map((r:any)=>({id:container?r.ts:r.id,title:container?text(r.text).slice(0,120)||'Message':r.name||r.user||'Conversation',kind:container?'item':'container'}))}
  const d=await api(p,t,container?`boards/${id(container)}/cards?fields=name,dateLastActivity`:'members/me/boards?filter=open&fields=name');return d.map((r:any)=>({id:r.id,title:r.name,kind:container?'item':'container'}))

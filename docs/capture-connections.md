@@ -4,14 +4,14 @@ Owner request supersedes the earlier no-direct-connections scope. Capture suppor
 
 ## What the adapters read
 
-- Gmail: 20 recent messages, then the selected message body.
+- Gmail: up to 50 recent messages, newest first (headers only until a source is selected), then the selected message body.
 - Google Drive: 30 recently modified Google Docs/plain text files, then the selected file.
-- Outlook: 30 recent messages, then the selected message body.
+- Outlook: up to 50 recent messages, newest first, then the selected message body.
 - Teams: 30 chats, then recent messages in the selected chat. These are delegated work/school chats, not organisation-wide channel ingestion.
 - Slack: 30 conversations, then recent messages; importing a thread includes up to 30 replies.
 - Trello: open boards, cards in the selected board and up to 30 comments on the chosen card.
 
-Longer sources are rejected rather than silently truncated. Users can paste the relevant excerpt. Other work tools remain available through manual paste; they are not advertised as direct integrations. Providers can require workspace-admin consent. The current picker shows recent results, not complete searchable historical archives.
+Longer sources are rejected rather than silently truncated. Users can paste the relevant excerpt. Other work tools remain available through manual paste; they are not advertised as direct integrations. Providers can require workspace-admin consent. The picker shows ten recent results per page with Previous/Next controls; it is not a complete searchable historical archive.
 
 ## Provider registration required before live account consent
 
@@ -71,3 +71,9 @@ Slack new consent uses `https://vimbre.com/api/capture/callback`. Add this exact
 Trello new OAuth1 consent signs `https://vimbre.com/api/capture/callback?state=<per-attempt state>` as the callback. Add `https://vimbre.com` to the API key's Allowed origins. Use the Trello Auth API key and application secret in the existing server-only CAPTURE_TRELLO_CLIENT_ID and CAPTURE_TRELLO_CLIENT_SECRET settings; OAuth 2.0 client credentials are not interchangeable with these. The per-attempt request token/verifier check, signed provider requests, authenticated owner/company binding and single-use browser state are retained. Existing pending grants still accept their original callback.
 
 capture-connect version 16 deployed. All 22 provider/relay tests and Edge type checks pass, including signed branded callback/state and rejection of a mismatched request token. Real Trello consent and selected-board/card import must still be tested by the operator; credential presence is not proof of successful consent or public provider approval.
+
+## Capture refinement — 26 October 2026
+
+Owner requested matching full-width connection/paste containers, a blue Connect a tool action, a subtle cream glass finish and replacement of the My day slide/underline with a brief glow on the greeting text only. Reduced motion disables the glow.
+
+Connection requests have a 45-second client deadline, completed consent navigation releases the busy state, and returning through browser history restores the controls and refreshes connection metadata. Gmail fetches at most 50 message headers in batches of ten, sorts by internal date newest first and displays sender/date. Outlook requests the latest 50 by received date. Every source picker uses ten-item pages without another provider fetch when switching pages. Selected-message body import, explicit AI review, confirmation, private storage, state and company/account binding are unchanged.
