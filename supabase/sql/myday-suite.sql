@@ -34,7 +34,7 @@ create function private.myday_notify(u uuid,c uuid,t uuid,a uuid,title text,body
 declare n uuid;begin
  if not exists(select 1 from public.profiles where id=u and company_id=c and active) then return;end if;
  insert into private.myday_notifications(owner_id,company_id,task_id,assignment_id,title,body) values(u,c,t,a,title,left(body,1000)) returning id into n;
- if private.myday_enabled(c,'push') and coalesce((select (settings->>'push')::boolean from private.myday_personal_options where owner_id=u),false) then insert into private.myday_delivery_jobs(owner_id,company_id,kind,day,notification_id,unique_key) values(u,c,'push',current_date,n,'push:'||n::text);end if;
+ if private.myday_enabled(c,'push') and coalesce((select (settings->>'push')::boolean from private.myday_personal_options where owner_id=u),false) then insert into private.myday_delivery_jobs(owner_id,company_id,kind,day,notification_id,unique_key) values(u,c,'push',(now() at time zone coalesce((select timezone from public.work_preferences where owner_id=u),'Europe/London'))::date,n,'push:'||n::text);end if;
 end$$;
 revoke all on function private.myday_notify(uuid,uuid,uuid,uuid,text,text) from public,anon,authenticated,service_role;
 create function private.myday_next_date(d date,f text,n integer,unit text,anchor date) returns date language plpgsql immutable set search_path='' as $$
@@ -238,8 +238,8 @@ declare u uuid:=auth.uid();c uuid:=private.current_company_id();me public.profil
  elsif p_operation='link_decision' then update public.actions set decision_id=nullif(p_data->>'decision_id','')::uuid where id=a.id;return '{}'::jsonb;
  elsif p_operation='repeat' then
   if a.recurring_id is not null or a.source_kind='recurring_deadline' then raise exception 'This task repeats from My role' using errcode='22023';end if;
-  if a.deleted_at is not null or a.missed_at is not null or a.status='done' or a.due_date is null then raise exception 'Set a due date on an open task first' using errcode='22023';end if;
   if coalesce((p_data->>'stop')::boolean,false) then update private.myday_repeats set active=false where owner_id=u and current_task=a.id;update public.actions set repeat_rule=null where id=a.id;return '{}'::jsonb;end if;
+  if a.deleted_at is not null or a.missed_at is not null or a.status='done' or a.due_date is null then raise exception 'Set a due date on an open task first' using errcode='22023';end if;
   update private.myday_repeats set active=false where owner_id=u and current_task=a.id;
   insert into private.myday_repeats(id,owner_id,company_id,task_id,current_task,frequency,every_n,unit,anchor,next_date,template) values(gen_random_uuid(),u,c,a.id,a.id,p_data->>'frequency',coalesce((p_data->>'every_n')::int,1),coalesce(p_data->>'unit','day'),a.due_date,private.myday_next_date(a.due_date,p_data->>'frequency',coalesce((p_data->>'every_n')::int,1),coalesce(p_data->>'unit','day'),a.due_date),to_jsonb(a));
   update public.actions set repeat_rule=jsonb_build_object('frequency',p_data->>'frequency','every_n',coalesce((p_data->>'every_n')::int,1),'unit',coalesce(p_data->>'unit','day')) where id=a.id;

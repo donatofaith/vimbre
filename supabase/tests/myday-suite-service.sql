@@ -35,3 +35,32 @@ do $$declare capture uuid:=gen_random_uuid();draft uuid:=gen_random_uuid();assig
  perform public.capture_change('confirm',draft,capture,'{"version":1}');
 end$$;
 reset role;
+do $$declare member uuid:=current_setting('test.manager')::uuid;company uuid;capture uuid;task uuid;request uuid:=gen_random_uuid();v jsonb;payload jsonb;begin
+ select company_id into company from public.profiles where id=member;
+ select id into capture from public.captures where owner_id=member and title='Private manager source';
+ perform public.myday_source_service(member,'remember','{"provider":"slack","source":"123.456","container":"C_PRIVATE","text":"PRIVATE source evidence"}');
+ insert into public.actions(owner_id,company_id,title,details,due_date,status,capture_id) values(member,company,'Source update fixture','PRIVATE details',current_date,'done',capture) returning id into task;
+ begin perform public.myday_source_service(member,'context',jsonb_build_object('task',task));raise exception 'Disabled provider write permitted';exception when raise_exception then if sqlerrm<>'write_disabled' then raise;end if;end;
+ insert into private.myday_company_options(company_id,flags) values(company,'{"write_slack":true}') on conflict(company_id) do update set flags=private.myday_company_options.flags||'{"write_slack":true}';
+ v:=public.myday_source_service(member,'context',jsonb_build_object('task',task));if v->>'container'<>'C_PRIVATE' then raise exception 'Source reference lost';end if;
+ begin perform public.myday_source_service(current_setting('test.employee')::uuid,'context',jsonb_build_object('task',task));raise exception 'Another user could write the source';exception when insufficient_privilege then null;end;
+ payload:=jsonb_build_object('task',task,'request_id',request,'body','Explicit update','operation','reply','list_id','');
+ v:=public.myday_source_service(member,'claim',payload);if v->>'state'<>'new' then raise exception 'First source claim rejected';end if;
+ v:=public.myday_source_service(member,'claim',payload);if v->>'state'<>'uncertain' then raise exception 'Repeated pending write could send twice';end if;
+ perform public.myday_source_service(member,'finish',payload||'{"state":"sent"}');v:=public.myday_source_service(member,'claim',payload);if v->>'state'<>'sent' then raise exception 'Completed write not reused';end if;
+ if(select count(*) from public.task_events where task_id=task and event like 'source_update_%')<>2 then raise exception 'Source update audit missing';end if;
+end$$;
+do $$declare owner uuid:=current_setting('test.employee')::uuid;company uuid;task uuid;cycle integer;alert uuid;job uuid;claimed jsonb;begin
+ select company_id into company from public.profiles where id=owner;
+ update private.myday_personal_options set settings=settings||'{"push":true,"quiet_start":"00:00","quiet_end":"23:59"}' where owner_id=owner;
+ insert into public.actions(owner_id,company_id,title,due_date) values(owner,company,'Push reminder fixture',current_date) returning id,reminder_cycle into task,cycle;
+ insert into public.task_alerts(task_id,owner_id,company_id,cycle,phase) values(task,owner,company,cycle,'due') returning id into alert;
+ select j.id into job from private.myday_delivery_jobs j join private.myday_notifications n on n.id=j.notification_id where n.source_alert_id=alert;
+ if job is null then raise exception 'Reminder push not queued';end if;
+ claimed:=public.myday_delivery('claim');if exists(select 1 from jsonb_array_elements(claimed) j where j->>'id'=job::text) then raise exception 'Push ignored quiet hours';end if;
+ update private.myday_personal_options set settings=settings||'{"quiet_start":"00:00","quiet_end":"00:00"}' where owner_id=owner;
+ claimed:=public.myday_delivery('claim');if not exists(select 1 from jsonb_array_elements(claimed) j where j->>'id'=job::text) then raise exception 'Ready push not claimed';end if;
+ if public.myday_delivery('source',job)->'notice'->>'owner_id'<>owner::text then raise exception 'Push owner binding lost';end if;
+ update public.actions set status='done' where id=task;
+ if public.myday_delivery('source',job) is not null then raise exception 'Completed task push still deliverable';end if;
+end$$;

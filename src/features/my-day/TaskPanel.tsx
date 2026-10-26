@@ -202,7 +202,7 @@ export function TaskPanel({
                 />
               </div>
               <Input label="Label" name="label" maxLength={80} defaultValue={task?.label??""}/>
-              <label className="field">Time needed<select name="time_needed_minutes" defaultValue={task?.time_needed_minutes??""}><option value="">Not set</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option></select><span className="field-hint">For planning. No time tracking.</span></label>
+              <label className="field">Time needed<select aria-label="Time needed" name="time_needed_minutes" defaultValue={task?.time_needed_minutes??""}><option value="">Not set</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option></select><span className="field-hint">For planning. No time tracking.</span></label>
               <label className="field">Steps<textarea name="steps" rows={4} maxLength={5000} defaultValue={(task?.steps??[]).join("\n")} placeholder="One step per line"/></label>
               <label className="field">Links<textarea name="links" rows={3} maxLength={5000} defaultValue={(task?.links??[]).join("\n")} placeholder="One https link per line"/></label>
               <Input

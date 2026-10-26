@@ -1,3 +1,4 @@
+alter table private.myday_notifications add column source_alert_id uuid;
 -- Narrow service operations for delivery, provider updates and revocable calendar capabilities.
 create table private.myday_vapid(singleton boolean primary key default true check(singleton),public_key text not null,secret_id uuid not null);
 alter table private.myday_vapid enable row level security;
@@ -47,7 +48,8 @@ declare j private.myday_delivery_jobs;p public.profiles;o private.myday_personal
  select * into o from private.myday_personal_options where owner_id=p.id;zone:=coalesce((select timezone from public.work_preferences where owner_id=p.id),'Europe/London');
  if p_action='source' then
   if j.kind='push' then
-   return jsonb_build_object('kind',j.kind,'owner_id',p.id,'notice',(select jsonb_build_object('id',n.id,'owner_id',p.id,'title',n.title,'body',n.body,'path',case when n.task_id is not null then '/app?comment_task='||n.task_id::text else '/app' end) from private.myday_notifications n where n.id=j.notification_id and n.owner_id=p.id),'subscriptions',coalesce((select jsonb_agg(subscription) from private.myday_push where owner_id=p.id and company_id=p.company_id),'[]'::jsonb));
+   if exists(select 1 from private.myday_notifications n join public.task_alerts alert on alert.id=n.source_alert_id join public.actions a on a.id=alert.task_id where n.id=j.notification_id and (a.status='done' or a.deleted_at is not null or a.purged_at is not null or a.missed_at is not null or a.reminder_cycle<>alert.cycle or alert.read_at is not null)) then return null;end if;
+   return jsonb_build_object('kind',j.kind,'owner_id',p.id,'notice',(select jsonb_build_object('id',n.id,'owner_id',p.id,'title',n.title,'body',n.body,'path',case when n.source_alert_id is not null then '/app?task='||n.task_id::text||'&task_action=remind' when n.task_id is not null then '/app?comment_task='||n.task_id::text else '/app' end) from private.myday_notifications n where n.id=j.notification_id and n.owner_id=p.id),'subscriptions',coalesce((select jsonb_agg(subscription) from private.myday_push where owner_id=p.id and company_id=p.company_id),'[]'::jsonb));
   end if;
   v:=jsonb_build_object('today',j.day,'timezone',zone,'working_hours',o.settings,'tasks',coalesce((select jsonb_agg(jsonb_build_object('id',id,'title',left(title,160),'status',status,'due_date',due_date,'due_time',due_time,'starred',pinned_at is not null,'time_needed_minutes',time_needed_minutes)) from(select * from public.actions where owner_id=p.id and company_id=p.company_id and deleted_at is null and purged_at is null and missed_at is null and (status<>'done' or (completed_at at time zone zone)::date=j.day) order by (pinned_at is not null) desc,due_at nulls last,created_at,id limit 40)q),'[]'::jsonb));
   return jsonb_build_object('kind',j.kind,'day',j.day,'owner_id',p.id,'company_id',p.company_id,'email',p.email,'name',p.full_name,'email_enabled',private.myday_enabled(p.company_id,'email') and coalesce((select email_enabled from public.work_preferences where owner_id=p.id),true),'source',v,'cached',(select output from private.myday_ai_cache where owner_id=p.id and kind='day_briefing' and fingerprint=encode(extensions.digest(v::text,'sha256'),'hex')),'fingerprint',encode(extensions.digest(v::text,'sha256'),'hex'));
@@ -70,3 +72,12 @@ create or replace function private.dispatch_task_mail() returns void language pl
   perform net.http_post(url:='https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/my-day-mail',headers:=jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='myday_dispatch_token')),body:='{}'::jsonb,timeout_milliseconds:=10000);
  end if;
 end$$;
+
+create function private.myday_alert_push() returns trigger language plpgsql security definer set search_path='' as $$declare notification uuid;begin
+ if private.myday_enabled(new.company_id,'push') and coalesce((select (settings->>'push')::boolean from private.myday_personal_options where owner_id=new.owner_id),false) then
+  insert into private.myday_notifications(owner_id,company_id,task_id,title,body,source_alert_id) select new.owner_id,new.company_id,new.task_id,case when new.phase='check_in' then 'Task still open' else 'Task reminder' end,title,new.id from public.actions where id=new.task_id returning id into notification;
+  insert into private.myday_delivery_jobs(owner_id,company_id,kind,day,notification_id,unique_key) values(new.owner_id,new.company_id,'push',(now() at time zone coalesce((select timezone from public.work_preferences where owner_id=new.owner_id),'Europe/London'))::date,notification,'push-alert:'||new.id::text) on conflict do nothing;
+ end if;return new;
+end$$;
+revoke all on function private.myday_alert_push() from public,anon,authenticated,service_role;
+create trigger myday_alert_push after insert on public.task_alerts for each row execute function private.myday_alert_push();
