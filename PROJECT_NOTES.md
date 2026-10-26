@@ -399,4 +399,4 @@ Donato explicitly approved the exact production migration and dependent frontend
 
 Authority: docs/client-capture-final-20261026.md. Add/Check/Saved, selected provider-native search and private review replace the prior recent-email picker. Connection controls and allowed-tool settings are in Settings. Bounded Watch and batch drafts use the shared AI gateway; no automatic confirmation. Capture worker is authenticated independently of reminder-email enablement. See docs/capture-final-completion-review.md for scope and provider/format limits.
 
-Installed backend migration: 20261026191631_capture_final_selected_sources_and_watch. Active functions: capture-connect v19 (own Auth.getUser check), capture-worker v1 (scheduler capability), ai-run v19 (JWT plus own identity checks). My Day behavior and separately approved provider writes remain intact.
+Installed backend migration: 20261026191631_capture_final_selected_sources_and_watch. Active functions: capture-connect v20 (own Auth.getUser check), capture-worker v2 (scheduler capability), ai-run v19 (JWT plus own identity checks). My Day behavior and separately approved provider writes remain intact.
