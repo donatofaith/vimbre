@@ -73,6 +73,7 @@ export type DayData = {
   tab_counts?: Record<string, number>;
   done_today?: Task[];
   upcoming?: Task[];
+  undated?: Task[];
   review_assignments?: import('./suite-api').Assignment[];
   review_drafts?: {id:string;capture_id:string;kind:string;version:number;payload:Record<string,string|null>;duplicate:boolean}[];
   drafts_waiting?: number;

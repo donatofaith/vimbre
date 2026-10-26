@@ -99,9 +99,11 @@ describe('deployed entrypoint authorization wiring',()=>{
   let handler:(r:Request)=>Promise<Response>;let verified=false;let active=true
   const source=readFileSync(new URL('../supabase/functions/ai-run/index.ts',import.meta.url),'utf8')
   const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2023}}).outputText
+  const runtimeSource=readFileSync(new URL('../supabase/functions/ai-run/runtime.ts',import.meta.url),'utf8'),runtimeCode=ts.transpileModule(runtimeSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2023}}).outputText,runtimeExports:Record<string,unknown>={}
   const client=()=>({auth:{getUser:vi.fn(async()=>({data:{user:verified?{id:'verified-user',email_confirmed_at:'date',user_metadata:{company_id:'forged-company'}}:null},error:null}))},from:()=>({select:()=>({eq:()=>({single:async()=>({data:{id:'verified-user',company_id:'protected-company',active},error:null})})})})})
   let captured:GatewayDependencies|undefined
-  vm.runInNewContext(code,{exports:{},Request,Response,AbortSignal,fetch,require:(name:string)=>name==='@supabase/supabase-js'?{createClient:client}:name==='./gateway.ts'?{createGateway:(deps:GatewayDependencies)=>{captured=deps;return async()=>new Response()}}:{providerAdapter},Deno:{env:{get:()=>''},serve:(h:typeof handler)=>{handler=h}}})
+  const context={Request,Response,AbortSignal,fetch,require:(name:string)=>name==='@supabase/supabase-js'?{createClient:client}:name==='./runtime.ts'?runtimeExports:name==='./gateway.ts'?{createGateway:(deps:GatewayDependencies)=>{captured=deps;return async()=>new Response()}}:{providerAdapter},Deno:{env:{get:()=>''},serve:(h:typeof handler)=>{handler=h}}}
+  vm.runInNewContext(runtimeCode,{...context,exports:runtimeExports});vm.runInNewContext(code,{...context,exports:{}})
   expect(await captured!.identify('invalid')).toBeNull();verified=true;expect(await captured!.identify('valid')).toEqual({userId:'verified-user',companyId:'protected-company'});active=false;expect(await captured!.identify('valid')).toBeNull()
  })
  it('leaves provider HTTP calls out of frontend and all other features',()=>{

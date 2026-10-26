@@ -1,0 +1,4 @@
+import {useEffect,useState} from 'react'
+import {Button} from '../../components/ui/Button'
+type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:string}>}
+export function InstallApp(){const [event,setEvent]=useState<InstallEvent|null>(null),[message,setMessage]=useState('');useEffect(()=>{const capture=(e:Event)=>{e.preventDefault();setEvent(e as InstallEvent)};window.addEventListener('beforeinstallprompt',capture);return()=>window.removeEventListener('beforeinstallprompt',capture)},[]);if(matchMedia('(display-mode: standalone)').matches)return null;return <><Button variant="secondary" onClick={async()=>{if(event){await event.prompt();const result=await event.userChoice;if(result.outcome==='accepted')setEvent(null)}else setMessage('Use your browser’s Install app or Add to Home Screen option.')}}>Install Vimbre</Button>{message&&<p role="status">{message}</p>}</>}

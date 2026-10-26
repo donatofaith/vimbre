@@ -34,6 +34,7 @@ declare u uuid:=auth.uid();tz text;today date;result jsonb;totals jsonb;begin
  paged as(select * from ranked order by rank limit case when p_filter='today' then null else 60 end offset case when p_filter='today' then 0 else p_page*60 end)
  select jsonb_build_object('rows',coalesce((select jsonb_agg(to_jsonb(paged) order by rank) from paged),'[]'::jsonb),'count',(select count(*) from filtered),'today',today,'timezone',tz,
  'tab_counts',totals->'tab_counts',
+ 'undated',coalesce((select jsonb_agg(to_jsonb(q) order by created_at,id) from base q where deleted_at is null and status<>'done' and due_date is null and missed_at is null),'[]'::jsonb),
  'overdue_rows',coalesce((select jsonb_agg(to_jsonb(q) order by (pinned_at is not null) desc,due_at,created_at,id) from base q where deleted_at is null and status<>'done' and due_at<now()),'[]'::jsonb),
  'counts',totals->'counts',
  'has_work',exists(select 1 from public.actions where owner_id=u) or exists(select 1 from public.role_items where owner_id=u),

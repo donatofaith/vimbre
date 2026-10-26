@@ -18,7 +18,11 @@ grant execute on function public.myday_calendar_feed(text) to anon,authenticated
 create function public.myday_delivery(p_action text,p_id uuid default null,p_data jsonb default '{}'::jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
 #variable_conflict use_column
 declare j private.myday_delivery_jobs;p public.profiles;o private.myday_personal_options;result jsonb:='[]';v jsonb;key_id uuid;zone text;begin
- if p_action='vapid_init' then
+ if p_action='files_cleanup' then
+  return coalesce((select jsonb_agg(f.path) from (select f.path from private.myday_files f join public.actions a on a.id=f.task_id and a.owner_id=f.owner_id and a.company_id=f.company_id where a.purged_at is not null order by f.created_at limit 100)f),'[]'::jsonb);
+ elsif p_action='files_cleaned' then
+  delete from private.myday_files f using public.actions a where a.id=f.task_id and a.owner_id=f.owner_id and a.company_id=f.company_id and a.purged_at is not null and f.path in(select jsonb_array_elements_text(p_data->'paths'));return '{}';
+ elsif p_action='vapid_init' then
   perform pg_advisory_xact_lock(727454132);
   if not exists(select 1 from private.myday_vapid) then
    if length(p_data->>'public_key') not between 80 and 100 or p_data->'private_jwk'->>'kty'<>'EC' or p_data->'private_jwk'->>'crv'<>'P-256' then raise invalid_parameter_value;end if;
@@ -33,7 +37,7 @@ declare j private.myday_delivery_jobs;p public.profiles;o private.myday_personal
  elsif p_action='claim' then
   update private.myday_delivery_jobs set state='uncertain' where state='claimed' and claimed_at<now()-interval '5 minutes';
   update private.myday_delivery_jobs j set state='cancelled' where j.state='pending' and not exists(select 1 from public.profiles p join private.myday_personal_options o on o.owner_id=p.id and o.company_id=p.company_id where p.id=j.owner_id and p.company_id=j.company_id and p.active and j.day=(now() at time zone coalesce((select timezone from public.work_preferences where owner_id=p.id),'Europe/London'))::date and (j.kind='briefing' and coalesce((o.settings->>'briefing')::boolean,false) and private.myday_enabled(p.company_id,'ai') or j.kind='digest' and coalesce((o.settings->>'digest')::boolean,false) and private.myday_enabled(p.company_id,'email') or j.kind='push' and coalesce((o.settings->>'push')::boolean,false) and private.myday_enabled(p.company_id,'push')));
-  for j in select q.* from private.myday_delivery_jobs q where q.state='pending' and not private.myday_quiet(q.owner_id,now()) order by q.created_at,q.id for update skip locked limit 20 loop
+  for j in select q.* from private.myday_delivery_jobs q where q.state='pending' and not private.myday_quiet(q.owner_id,now()) order by q.created_at,q.id for update skip locked limit 5 loop
    update private.myday_delivery_jobs set state='claimed',claimed_at=now() where id=j.id;
    result:=result||jsonb_build_array(jsonb_build_object('id',j.id,'kind',j.kind));
   end loop;return result;
@@ -60,3 +64,9 @@ declare j private.myday_delivery_jobs;p public.profiles;o private.myday_personal
 end$$;
 revoke all on function public.myday_delivery(text,uuid,jsonb) from public,anon,authenticated,service_role;
 grant execute on function public.myday_delivery(text,uuid,jsonb) to service_role;
+-- Reuse the existing scheduler credential; neither device registration nor clients receive it.
+create or replace function private.dispatch_task_mail() returns void language plpgsql security definer set search_path='' as $$begin
+ if exists(select 1 from private.task_delivery_config where enabled) and (exists(select 1 from private.task_mail_queue where state='pending') or exists(select 1 from private.myday_delivery_jobs where state='pending') or exists(select 1 from private.myday_files f join public.actions a on a.id=f.task_id where a.purged_at is not null)) then
+  perform net.http_post(url:='https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/my-day-mail',headers:=jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='myday_dispatch_token')),body:='{}'::jsonb,timeout_milliseconds:=10000);
+ end if;
+end$$;

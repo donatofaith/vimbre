@@ -168,11 +168,12 @@ declare u uuid:=auth.uid();c uuid:=private.current_company_id();me public.profil
   perform private.handover_event(p_id,'hand_back');insert into private.handover_notifications(handover_id,owner_id,message) values(p_id,target,'Cover handed back');return '{}'::jsonb;
  elsif p_operation='notification_read' then update private.myday_notifications set read_at=coalesce(read_at,now()) where id=p_id and owner_id=u and company_id=c;return '{}'::jsonb;
  elsif p_operation='batch' then
-  if p_data->>'operation' not in('done','tomorrow','delete','assign') or jsonb_typeof(p_data->'ids')<>'array' or jsonb_array_length(p_data->'ids') not between 1 and 100 then raise invalid_parameter_value;end if;
+  if p_data->>'operation' not in('done','tomorrow','delete','assign','undo') or jsonb_typeof(p_data->'ids')<>'array' or jsonb_array_length(p_data->'ids') not between 1 and 100 then raise invalid_parameter_value;end if;
   for v in select value from jsonb_array_elements(p_data->'ids') loop
    row_id:=(v#>>'{}')::uuid;
    if not exists(select 1 from public.actions where id=row_id and owner_id=u and company_id=c and purged_at is null and missed_at is null) then raise insufficient_privilege;end if;
-   if p_data->>'operation'='delete' then perform private.myday_suite('delete',row_id,p_data);
+   if p_data->>'operation'='undo' then perform private.myday_action(row_id,'undo','{}');
+   elsif p_data->>'operation'='delete' then perform private.myday_suite('delete',row_id,p_data);
    elsif p_data->>'operation'='assign' then select * into a from public.actions where id=row_id;perform private.myday_suite('assign',gen_random_uuid(),jsonb_build_object('recipient_id',p_data->>'recipient_id','source_task',a.id,'title',a.title,'due_date',a.due_date,'details',coalesce(p_data->>'details','')));
    else perform private.myday_action(row_id,case when p_data->>'operation'='done' then 'status' else 'tomorrow' end,case when p_data->>'operation'='done' then '{"status":"done"}'::jsonb else '{}'::jsonb end);end if;
   end loop;return '{}'::jsonb;
@@ -195,7 +196,8 @@ declare u uuid:=auth.uid();c uuid:=private.current_company_id();me public.profil
   token:=encode(extensions.gen_random_bytes(32),'hex');insert into private.myday_personal_options(owner_id,company_id,calendar_enabled,calendar_hash) values(u,c,true,encode(extensions.digest(token,'sha256'),'hex')) on conflict(owner_id) do update set calendar_enabled=true,calendar_hash=excluded.calendar_hash;return jsonb_build_object('token',token);
  elsif p_operation='push_unregister' then delete from private.myday_push where owner_id=u and company_id=c and endpoint=p_data->>'endpoint';return '{}'::jsonb;
  elsif p_operation='push_register' then
-  if not private.myday_enabled(c,'push') or p_data->>'endpoint'!~'^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-zA-Z0-9-]+\.notify\.windows\.com)/' or length(p_data::text)>6000 then raise invalid_parameter_value;end if;
+  if not private.myday_enabled(c,'push') or p_data->>'endpoint'!~'^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-zA-Z0-9-]+\.notify\.windows\.com)/' or length(p_data::text)>6000 or coalesce(p_data->'keys'->>'p256dh','')!~'^[A-Za-z0-9_-]{87}$' or coalesce(p_data->'keys'->>'auth','')!~'^[A-Za-z0-9_-]{22}$' then raise invalid_parameter_value;end if;
+  if not exists(select 1 from private.myday_push where endpoint=p_data->>'endpoint') and (select count(*) from private.myday_push where owner_id=u)>=10 then raise exception 'Remove an old registered device first' using errcode='22023';end if;
   insert into private.myday_push(owner_id,company_id,endpoint,subscription) values(u,c,p_data->>'endpoint',p_data) on conflict(endpoint) do update set owner_id=excluded.owner_id,company_id=excluded.company_id,subscription=excluded.subscription;return '{}'::jsonb;
  end if;
  -- The operations below require an explicitly selected task. Never return another owner's task body.
@@ -270,7 +272,7 @@ create function private.myday_apply_rules(event_name text,subject uuid,owner uui
 #variable_conflict use_column
 declare r private.myday_rules;e jsonb;manager uuid;target public.profiles;a public.actions;begin
  if not private.myday_enabled(company,'rules') then return;end if;
- for r in select * from private.myday_rules where company_id=company and enabled and trigger_event=event_name and (owner_id=owner or shared) and (source_type='' or source_type=source_kind) loop
+ for r in select * from private.myday_rules where company_id=company and enabled and trigger_event=event_name and (owner_id=owner or shared) and (source_type='' or source_type=source_kind or source_type='email' and source_kind in('gmail','outlook') or source_type='note' and source_kind in('slack','teams','trello','drive')) loop
   if event_name='overdue' and not exists(select 1 from public.actions where id=subject and due_date<=(now() at time zone coalesce((select timezone from public.work_preferences where owner_id=owner),'Europe/London'))::date-r.after_days) then continue;end if;
   insert into private.myday_rule_runs(rule_id,subject_id,cycle) values(r.id,subject,cycle_key) on conflict do nothing;if not found then continue;end if;
   for e in select value from jsonb_array_elements(r.effects) loop
@@ -301,7 +303,7 @@ revoke all on function private.myday_apply_rules(text,uuid,uuid,uuid,text,text) 
 create function private.myday_rule_trigger() returns trigger language plpgsql security definer set search_path='' as $$begin
  if pg_trigger_depth()>2 then return new;end if;
  if tg_table_name='capture_items' then
-  if new.status='pending' and tg_op='INSERT' then perform private.myday_apply_rules('capture_draft',new.id,new.owner_id,new.company_id,'created',(select source_type from public.captures where id=new.capture_id));end if;
+  if new.status='pending' and tg_op='INSERT' then perform private.myday_apply_rules('capture_draft',new.id,new.owner_id,new.company_id,'created',(select case split_part(title,':',1) when 'Gmail' then 'gmail' when 'Outlook' then 'outlook' when 'Slack' then 'slack' when 'Microsoft Teams' then 'teams' when 'Trello' then 'trello' when 'Google Drive' then 'drive' else source_type end from public.captures where id=new.capture_id));end if;
  elsif tg_op='UPDATE' and new.status='done' and old.status<>'done' then perform private.myday_apply_rules('done',new.id,new.owner_id,new.company_id,coalesce(new.completed_at::text,'done'),new.source_kind);
  end if;return new;
 end$$;
@@ -329,6 +331,8 @@ declare r private.myday_repeats;a public.actions;d date;last_due date;next_due d
  -- Expired drafts leave review; the original capture and confirmed record are retained.
  update public.capture_items set status='discarded',reviewed_at=p_now,version=version+1 where (p_owner is null or owner_id=p_owner) and status='pending' and created_at<p_now-interval '30 days';
  -- Purge task content only after the complete 30-day retention window; keep audit identifiers and source/decision records.
+ delete from private.myday_undo where expires_at<p_now;
+ delete from private.myday_comments where task_id in(select id from public.actions where (p_owner is null or owner_id=p_owner) and deleted_at<p_now-interval '30 days');
  update public.actions set purged_at=p_now,title='Deleted task',details='',completion_note='',source_url=null,source_excerpt=null,steps='[]',links='[]',label=null,metadata='{"schema_version":1}' where (p_owner is null or owner_id=p_owner) and deleted_at<p_now-interval '30 days' and purged_at is null;
  for p in select o.*,coalesce(w.timezone,'Europe/London') as zone from private.myday_personal_options o join public.profiles member on member.id=o.owner_id and member.company_id=o.company_id and member.active left join public.work_preferences w on w.owner_id=o.owner_id where p_owner is null or o.owner_id=p_owner loop
   local_time:=(p_now at time zone p.zone)::time;d:=(p_now at time zone p.zone)::date;

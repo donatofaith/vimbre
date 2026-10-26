@@ -81,7 +81,7 @@ function MyDayContent() {
     [context, setContext] = useState<Task | null>(null),
     [reminder, setReminder] = useState<Task | null>(null),
     [record, setRecord] = useState<Task | null>(null),
-    [templates,setTemplates]=useState(false),[rules,setRules]=useState(false),[planning,setPlanning]=useState(false),[calendar,setCalendar]=useState(false),[transfers,setTransfers]=useState(false),[assignment,setAssignment]=useState<{task?:Task}|null>(null),[comments,setComments]=useState<string|null>(params.get('comment_task')),[teamOpen,setTeamOpen]=useState(false),[selecting,setSelecting]=useState(false),[selectedIds,setSelectedIds]=useState<string[]>([]),
+    [templates,setTemplates]=useState(false),[rules,setRules]=useState(false),[planning,setPlanning]=useState(false),[calendar,setCalendar]=useState(false),[transfers,setTransfers]=useState(false),[assignment,setAssignment]=useState<{task?:Task;ids?:string[]}|null>(null),[comments,setComments]=useState<string|null>(params.get('comment_task')),[teamOpen,setTeamOpen]=useState(false),[selecting,setSelecting]=useState(false),[selectedIds,setSelectedIds]=useState<string[]>([]),
     [inspected,setInspected]=useState<Task|null>(null),
     [rolePicker, setRolePicker] = useState(false),
     [dismissed, setDismissed] = useState(false),
@@ -89,7 +89,7 @@ function MyDayContent() {
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [quick, setQuick] = useState(false), [quickText,setQuickText]=useState(""),
-    [undo, setUndo] = useState<{task: Task; until: number} | null>(null);
+    [undo, setUndo] = useState<{task: Task; ids?:string[]; until: number} | null>(null);
   const access = useRef<HTMLDialogElement>(null),
     dragging = useRef(""),
     pending = useRef(false);
@@ -110,10 +110,12 @@ function MyDayContent() {
   const zone =
       data?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     today = data?.today ?? dateInZone(zone);
+  async function undoLast(){if(!undo||Date.now()>=undo.until)return;if(!undo.ids)return act(undo.task,'undo',{});setBusy('bulk');try{await daySuite('batch',null,{ids:undo.ids,operation:'undo'});setUndo(null);setMessage('Changes undone.');refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}
   const refresh = () => {
     setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
+  useEffect(()=>{setSelectedIds([])},[filter,search,forValue,source,priority,page]);
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setMessage(""), 10000);
@@ -232,7 +234,7 @@ function MyDayContent() {
   useEffect(()=>{const key=(e:KeyboardEvent)=>{
     if(e.metaKey||e.ctrlKey||e.altKey||e.target instanceof HTMLElement&&e.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
     const k=e.key.toLowerCase(),buttons=Array.from(document.querySelectorAll<HTMLButtonElement>('.md-slim-row>.md-task-title')).filter(b=>b.getClientRects().length),at=buttons.indexOf(document.activeElement as HTMLButtonElement),id=(document.activeElement as HTMLElement)?.closest<HTMLElement>('[data-task-id]')?.dataset.taskId,task=allRows.find(t=>t.id===id);
-    if(k==='n'){e.preventDefault();setQuick(true)}else if(k==='/'){e.preventDefault();document.getElementById('md-search')?.focus()}else if(k==='c'){e.preventDefault();window.location.assign('/app/capture')}else if(k==='j'||k==='k'){e.preventDefault();buttons[Math.max(0,Math.min(buttons.length-1,at+(k==='j'?1:-1)))]?.focus()}else if(k==='z'&&undo&&Date.now()<undo.until){e.preventDefault();void act(undo.task,'undo',{})}else if(task&&!busy){
+    if(k==='n'){e.preventDefault();setQuick(true)}else if(k==='/'){e.preventDefault();document.getElementById('md-search')?.focus()}else if(k==='c'){e.preventDefault();window.location.assign('/app/capture')}else if(k==='j'||k==='k'){e.preventDefault();buttons[Math.max(0,Math.min(buttons.length-1,at+(k==='j'?1:-1)))]?.focus()}else if(k==='z'&&undo&&Date.now()<undo.until){e.preventDefault();void undoLast()}else if(task&&!busy){
       if(k==='e'){e.preventDefault();setInspected(task)}else if(k==='x'&&!task.deleted_at&&!task.missed_at){e.preventDefault();void act(task,'status',{status:task.status==='done'?'open':'done'})}else if(k==='s'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'pin',{pinned:!task.pinned_at})}else if(k==='t'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'tomorrow',{})}else if(k==='delete'&&!task.deleted_at){e.preventDefault();if(task.repeat_rule){setInspected(task);return}if(!(task.capture_id||task.decision_id)||window.confirm('This task is part of the record. Delete it anyway? The decision and source stay.'))void act(task,'archive',{})}
     }
   };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[allRows,undo,busy]);
@@ -323,7 +325,7 @@ function MyDayContent() {
   const format:TaskFormat={language:String(extras.data?.settings.language??"en-GB"),style:(extras.data?.settings.date_style??"medium") as TaskFormat["style"]};
   const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)) : rows;
   function list(items: Task[]) {return <div className="md-task-list">{items.map(t=>card(t))}</div>}
-  function weekView(items: Task[]) {return <div className="md-week">{Array.from({length:7},(_,i)=>{const date=addDays(today,i), group=items.filter(t=>(t.due_time?dateInZone(zone,new Date(t.due_at)):t.due_date)===date);return <section key={date}><h3>{new Intl.DateTimeFormat(undefined,{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"))}</h3>{group.length?list(group):<p className="md-muted">No tasks</p>}</section>})}</div>}
+  function weekView(items: Task[]) {return <>{Boolean(data?.undated?.length)&&<section className="md-undated-strip"><h3>No date</h3>{list(data!.undated!)}</section>}<div className="md-week">{Array.from({length:7},(_,i)=>{const date=addDays(today,i), group=items.filter(t=>(t.due_time?dateInZone(zone,new Date(t.due_at)):t.due_date)===date);return <section key={date}><h3>{new Intl.DateTimeFormat(undefined,{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"))}</h3>{group.length?list(group):<p className="md-muted">No tasks</p>}</section>})}</div></>}
   const empty = (
     <div className="md-empty">
       <WorkspaceIcon name="tick" />
@@ -365,7 +367,7 @@ function MyDayContent() {
       {extras.data?.away.map(h=><aside className="md-away-banner" key={h.id}>You’re away from {formatTaskDay(h.starts_on,format)}. Your handover isn’t submitted yet.</aside>)}
       {message && (
         <p className="notice" role="status">
-          {message} {undo && Date.now()<undo.until && <button className="md-text-button" onClick={()=>void act(undo.task,"undo",{})}>Undo</button>}
+          {message} {undo && Date.now()<undo.until && <button className="md-text-button" onClick={()=>void undoLast()}>Undo</button>}
         </p>
       )}
       {error && (
@@ -386,7 +388,7 @@ function MyDayContent() {
         {quick && <form className="md-quick-add" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy("quick");setError("");try{const task=parseQuickTask(quickText,today);if(!task.title)throw new Error();await changeTask(crypto.randomUUID(),"create",{...task,reminder_option:"at_time"});setQuickText("");setQuick(false);refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}><label>Quick add<input autoFocus value={quickText} onChange={e=>setQuickText(e.target.value)} maxLength={300} placeholder="Send quote Friday 3pm" required/></label><Button type="submit" disabled={Boolean(busy)}>Add task</Button></form>}
         <details className="md-filter-disclosure"><summary>More filters{search||forValue||source ? " · Active":""}</summary><div className="md-filter-row"><ForPicker filter value={forValue} onChange={v=>{setFor(v);setPage(0)}}/><label>From<select value={source} onChange={e=>{setSource(e.target.value);setPage(0)}}><option value="">All sources</option>{Object.entries(sourceLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{(query||forValue||source)&&<button className="md-text-button" onClick={()=>{setQuery("");setSearch("");setFor(null);setSource("");setPage(0)}}>Clear filters</button>}</div></details>
         {extras.data?.flags.ai&&<button className="md-text-button md-plan-action" onClick={()=>setPlanning(true)}>Plan my day</button>}
-        {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
+        {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={()=>setAssignment({ids:selectedIds})}>Assign</Button><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});if(op==='done'||op==='delete'){const first=allRows.find(t=>t.id===selectedIds[0]);if(first)setUndo({task:first,ids:[...selectedIds],until:Date.now()+10000})}setMessage(op==='done'?'Tasks marked done.':op==='delete'?'Tasks deleted.':'Tasks moved to tomorrow.');setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
         {(taskId || linked) && (
           <Link className="md-text-button" to="/app">
             All tasks
@@ -403,7 +405,7 @@ function MyDayContent() {
           <>
             {filter === "today" && overdueRows.length>0 && <section className="md-day-group" aria-label="Overdue"><h3>Overdue <span>{overdueRows.length}</span></h3><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{for(const task of overdueRows) await act(task,"tomorrow",{date:today})}}>Move all to today</button>{list(overdueRows)}</section>}
             {filter === "today" && <h3 className="md-group-title">Today <span>{todayRows.length}</span></h3>}
-            {todayRows.length ? (layout === "board" && filter !== "archived" ? board(todayRows) : layout === "week" ? weekView(todayRows) : list(todayRows)) : empty}
+            {layout==="week" ? weekView(todayRows) : todayRows.length ? (layout === "board" && filter !== "archived" ? board(todayRows) : list(todayRows)) : empty}
             {data && filter !== "today" && data.count > 60 && (
               <div className="pagination">
                 <Button
@@ -526,7 +528,7 @@ function MyDayContent() {
       )}
       {templates&&<TemplatePicker today={today} close={()=>setTemplates(false)} saved={()=>{setTemplates(false);setMessage('Task added from template.');refresh()}}/>}
       {rules&&<RulesPanel close={()=>setRules(false)}/>}{planning&&<PlanMyDay close={()=>setPlanning(false)}/>}{calendar&&<CalendarPanel close={()=>setCalendar(false)} enabled={extras.data?.calendar_enabled??false}/>}{transfers&&<ImportExportPanel close={()=>setTransfers(false)}/>}
-      {assignment&&<AssignmentPanel task={assignment.task} close={()=>setAssignment(null)} saved={()=>{setAssignment(null);setMessage('Task sent for acceptance.');refresh()}}/>}{comments&&<TaskComments id={comments} close={()=>setComments(null)}/>}
+      {assignment&&<AssignmentPanel ids={assignment.ids} task={assignment.task} close={()=>setAssignment(null)} saved={()=>{setAssignment(null);setSelectedIds([]);setMessage('Sent for acceptance.');refresh()}}/>}{comments&&<TaskComments id={comments} close={()=>setComments(null)}/>}
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}
