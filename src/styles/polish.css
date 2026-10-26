@@ -75,6 +75,7 @@
   animation: greeting-welcome 700ms cubic-bezier(.16, 1, .3, 1) both;
   transform-origin: left center;
 }
+.vw-shell.app-shell .support-page-heading h1 { color: #17243a; }
 .vw-shell.app-shell .md-page-heading h1::after {
   content: '';
   display: block;
