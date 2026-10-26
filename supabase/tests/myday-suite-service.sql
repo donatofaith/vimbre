@@ -75,3 +75,10 @@ do $$declare owner uuid:=current_setting('test.employee')::uuid;company uuid;tas
  if exists(select 1 from private.myday_comments where task_id=task) then raise exception 'Deleted private comment retained';end if;
  if exists(select 1 from private.myday_repeats where current_task=task and template<>'{}'::jsonb) then raise exception 'Stopped repeat retained deleted body';end if;
 end$$;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$begin
+ begin perform public.myday_suite('template_save',gen_random_uuid(),'{"title":"Malformed steps","data":{"steps":[{"body":"invalid"}]}}');raise exception 'Malformed template accepted';exception when invalid_parameter_value then null;end;
+ begin perform public.myday_suite('rule_save',gen_random_uuid(),'{"title":"Malformed rule","trigger_event":"done","effects":[null]}');raise exception 'Malformed shared rule accepted';exception when invalid_parameter_value then null;end;
+end$$;
+reset role;
