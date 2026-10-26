@@ -24,6 +24,6 @@ A private calendar feed URL grants access to its titles and dates. Creating a re
 
 ## Verification
 
-The local check currently passes 166 unit tests, frontend and Edge Function type checks, and the production build. Rollback-only database tests cover company isolation, assignment acceptance, private comments, source-write scope and duplicate suppression, calendar revocation, quiet hours, recurrence and deletion retention. Tests use temporary fixtures and do not send real email, provider messages or paid AI requests.
+The local check currently passes 168 unit tests, frontend and Edge Function type checks, and the production build. Rollback-only database tests cover company isolation, assignment acceptance, private comments, source-write scope and duplicate suppression, calendar revocation, quiet hours, recurrence and deletion retention. Tests use temporary fixtures and do not send real email, provider messages or paid AI requests.
 
 Browser verification includes the existing workflows, twelve widths for the add control and new panels, Safari WebKit, offline adding/sync, and an offline reload of the production build. Final release evidence is recorded after these checks finish.

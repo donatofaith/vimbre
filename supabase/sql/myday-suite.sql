@@ -283,7 +283,7 @@ declare r private.myday_rules;e jsonb;manager uuid;target public.profiles;a publ
     elsif e->>'kind'='remind' then update public.capture_items set payload=payload||jsonb_build_object('reminder_option',case when e->>'value' in('at_time','30_minutes','1_hour','day_before') then e->>'value' else 'at_time' end),version=version+1 where id=subject and owner_id=owner and status='pending';
     elsif e->>'kind'='owner' then
      select p.* into target from public.profiles p join public.profiles author on author.id=r.owner_id and author.active where p.id=nullif(e->>'value','')::uuid and p.company_id=company and p.active and (author.role='hr_admin' or author.role='manager' and private.myday_reports_to(p.id,author.id,company) or p.id=owner);
-     if found then update public.capture_items set payload=payload||jsonb_build_object('owner_id',target.id),version=version+1 where id=subject and owner_id=owner and status='pending';end if;
+     if found and exists(select 1 from public.profiles capturer where capturer.id=owner and capturer.company_id=company and capturer.active and (target.id=owner or capturer.role='hr_admin' or capturer.role='manager' and private.myday_reports_to(target.id,owner,company))) then update public.capture_items set payload=payload||jsonb_build_object('owner_id',target.id),version=version+1 where id=subject and owner_id=owner and status='pending';end if;
     end if;
    else
     select * into a from public.actions where id=subject and owner_id=owner and company_id=company and purged_at is null;

@@ -1,7 +1,7 @@
 // Browser-only stateful suite fixture. No live accounts or provider calls.
 const {randomUUID}=require('node:crypto');
 module.exports=(user,tasks)=>{
- const state={settings:{language:'en-GB',date_style:'medium',work_start:'09:00',work_end:'17:00',quiet_start:'22:00',quiet_end:'08:00'},flags:Object.fromEntries(['ai','email','push','team','rules','templates','calendar'].map(k=>[k,true])),templates:[],rules:[],comments:[],incoming:[],waiting:[],notifications:[],repeats:{},calendar:false};
+ const state={settings:{language:'en-GB',date_style:'medium',work_start:'09:00',work_end:'17:00',quiet_start:'22:00',quiet_end:'08:00'},flags:Object.fromEntries(['ai','email','push','team','rules','templates','calendar'].map(k=>[k,true])),templates:[],rules:[],comments:[],incoming:[],waiting:[],notifications:[],repeats:{},calendar:false,cache:{},lastPlan:null};
  function handle(a){const {p_operation:op,p_id:id,p_data:d={}}=a;const task=()=>{const t=tasks.find(t=>t.id===id);if(!t)throw Error('Unknown fixture task');return t};
  if(op==='overview')return {settings:state.settings,flags:state.flags,incoming:state.incoming,waiting:state.waiting,notifications:state.notifications,away:[],calendar_enabled:state.calendar};
  if(op==='notifications')return {rows:[],unread:0};
@@ -28,7 +28,9 @@ module.exports=(user,tasks)=>{
  if(op==='suggest_date'){state.incoming.find(a=>a.id===id).suggested_date=d.date;return {}}
  if(op==='assign'){state.waiting.push({id,...d,status:'pending',recipient_name:'Alex Example'});return id}
  if(op==='import'){for(const row of d.rows)tasks.push({...tasks[0],...row,id:randomUUID(),deleted_at:null,status:'open'});return {added:d.rows.length,duplicates:0}}
- if(op==='ai_cache_get')return null;
+ if(op==='ai_cache_get')return state.cache[d.kind+':'+d.fingerprint]||null;
+ if(op==='ai_cache_save'){state.cache[d.kind+':'+d.fingerprint]=d.output;return {}}
+ if(op==='plan_accept'){state.lastPlan=d.items;return {}}
  if(op==='ai_source')return {tasks:tasks.filter(t=>t.status!=='done'&&!t.deleted_at).map(({id,title})=>({id,title}))};
  return {};
  }

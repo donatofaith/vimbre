@@ -44,6 +44,7 @@ do $$declare member uuid:=current_setting('test.manager')::uuid;company uuid;cap
  insert into private.myday_company_options(company_id,flags) values(company,'{"write_slack":true}') on conflict(company_id) do update set flags=private.myday_company_options.flags||'{"write_slack":true}';
  v:=public.myday_source_service(member,'context',jsonb_build_object('task',task));if v->>'container'<>'C_PRIVATE' then raise exception 'Source reference lost';end if;
  begin perform public.myday_source_service(current_setting('test.employee')::uuid,'context',jsonb_build_object('task',task));raise exception 'Another user could write the source';exception when insufficient_privilege then null;end;
+ perform set_config('suite.foreign_task',task::text,true);
  payload:=jsonb_build_object('task',task,'request_id',request,'body','Explicit update','operation','reply','list_id','');
  v:=public.myday_source_service(member,'claim',payload);if v->>'state'<>'new' then raise exception 'First source claim rejected';end if;
  v:=public.myday_source_service(member,'claim',payload);if v->>'state'<>'uncertain' then raise exception 'Repeated pending write could send twice';end if;
@@ -80,5 +81,26 @@ select set_config('request.jwt.claim.sub',current_setting('test.employee'),true)
 do $$begin
  begin perform public.myday_suite('template_save',gen_random_uuid(),'{"title":"Malformed steps","data":{"steps":[{"body":"invalid"}]}}');raise exception 'Malformed template accepted';exception when invalid_parameter_value then null;end;
  begin perform public.myday_suite('rule_save',gen_random_uuid(),'{"title":"Malformed rule","trigger_event":"done","effects":[null]}');raise exception 'Malformed shared rule accepted';exception when invalid_parameter_value then null;end;
+end$$;
+reset role;
+do $$declare company uuid;begin
+ select company_id into company from public.profiles where id=current_setting('test.employee')::uuid;
+ insert into private.myday_rules(owner_id,company_id,shared,title,trigger_event,effects) values(current_setting('test.admin')::uuid,company,true,'Company owner suggestion','capture_draft',jsonb_build_array(jsonb_build_object('kind','owner','value',current_setting('test.manager'))));
+end$$;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$declare capture uuid:=gen_random_uuid();draft uuid:=gen_random_uuid();begin
+ perform public.capture_change('create',capture,null,'{"title":"Employee rule fixture","source_text":"Private note","source_type":"note"}');
+ perform public.capture_change('add',draft,capture,'{"kind":"action","title":"Employee-owned rule task"}');
+ if (select payload->>'owner_id' from public.capture_items where id=draft)<>auth.uid()::text then raise exception 'Company rule suggested an owner the employee cannot assign';end if;
+end$$;
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+do $$declare task uuid:=gen_random_uuid();begin
+ perform public.myday_action(task,'create','{"title":"Plan scope fixture"}');
+ perform public.myday_suite('plan_accept',null,jsonb_build_object('items',jsonb_build_array(jsonb_build_object('id',task,'reason','Due today'))));
+ if not exists(select 1 from public.actions where id=task and metadata->>'plan_order'='1') then raise exception 'Accepted plan order not saved';end if;
+ begin perform public.myday_suite('plan_accept',null,jsonb_build_object('items',jsonb_build_array(jsonb_build_object('id',current_setting('suite.foreign_task'),'reason','Forbidden'))));raise exception 'Plan changed another owner task';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
