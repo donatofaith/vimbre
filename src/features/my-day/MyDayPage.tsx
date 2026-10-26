@@ -28,9 +28,9 @@ import "./my-day.css";
 const filters = [
   ["today", "Today"],
   ["week", "This week"],
-  ["overdue", "Overdue"],
   ["all", "All"],
-  ["archived", "Archived"],
+  ["done", "Done"],
+  ["archived", "Deleted"],
 ] as const;
 export function MyDayPage() {
   const { profile } = useAuth();
@@ -54,7 +54,7 @@ function MyDayContent() {
   const [layout, setLayout] = useState<"list" | "board">(() => {
     try {
       const v = localStorage.getItem("vimbre:myday-view");
-      if (v === "list" || v === "board") return v;
+      if (v === "list") return v;
     } catch {}
     return "list";
   });
@@ -290,7 +290,7 @@ function MyDayContent() {
           : filter === "overdue"
             ? "No overdue tasks."
             : filter === "archived"
-              ? "No archived tasks."
+              ? "No deleted tasks."
               : "No tasks match these filters."}
       </p>
       {filter === "today" && !search && !forValue && !source && !priority && (
@@ -319,7 +319,7 @@ function MyDayContent() {
           </h1>
           <p className="md-live-line">
             {data
-              ? `${data.counts.todo + data.counts.progress} to do, ${decisions + handovers.length} ${decisions + handovers.length === 1 ? "decision" : "decisions"} waiting, ${data.counts.done ?? done.length} done`
+              ? `${data.counts.todo + data.counts.progress} tasks, ${decisions + waiting + handovers.length} to review`
               : "Loading your tasks…"}
           </p>
         </div>
@@ -343,11 +343,12 @@ function MyDayContent() {
           <h2 id="md-tasks-heading">Your tasks</h2>
           <div className="md-heading-tools">
             <button
+              hidden
               className="md-visibility"
               onClick={() => access.current?.showModal()}
             >
               <WorkspaceIcon name="eye" />
-              What my manager can see
+              Who sees my tasks
             </button>
             <Button variant="secondary" onClick={() => setEditor({})}>
               Add a task
@@ -361,7 +362,7 @@ function MyDayContent() {
           </div>
         </div>
         <div className="md-toolbar">
-          <nav className="md-filters" aria-label="Task views">
+          <div className="md-filters" aria-label="Task filters"><label htmlFor="md-primary-filter">Filter </label><select id="md-primary-filter" value={filter} onChange={e => {setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l]) => <option key={v} value={v}>{l} ({data?.tab_counts?.[v] ?? 0})</option>)}</select></div><div hidden><nav className="md-filters" aria-label="Legacy task views">
             {filters.map(([v, l]) => (
               <button
                 key={v}
@@ -378,7 +379,7 @@ function MyDayContent() {
                 </span>
               </button>
             ))}
-          </nav>
+          </nav></div>
           <div className="md-view-toggle" aria-label="Task layout">
             {(["list", "board"] as const).map((v) => (
               <button
@@ -398,7 +399,7 @@ function MyDayContent() {
         </div>
         <details className="md-filter-disclosure">
           <summary>
-            Search and filter
+            More filters
             {search || forValue || source || priority ? " · Active" : ""}
           </summary>
           <div className="md-filter-row">
@@ -486,7 +487,7 @@ function MyDayContent() {
           </div>
         ) : (
           <>
-            {filter === "today" && <h3 className="md-group-title">Do first</h3>}
+            {filter === "today" && <h3 className="md-group-title">Today</h3>}
             {rows.length ? (
               layout === "board" && filter !== "archived" ? (
                 board(rows)
@@ -519,7 +520,7 @@ function MyDayContent() {
             )}
             {filter === "today" && (
               <>
-                <section className="md-day-group" aria-label="Waiting on you">
+                <section className="md-day-group" aria-label="To review">
                   <h3>Waiting on you</h3>
                   <div className="md-waiting-links">
                     {decisions > 0 && (
