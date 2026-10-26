@@ -1,0 +1,9 @@
+import {createClient} from '@supabase/supabase-js'
+import {captureAutomation} from '../capture-connect/automation.ts'
+import {createGateway} from '../ai-run/gateway.ts'
+import {gatewayDependencies} from '../ai-run/runtime.ts'
+import {captureWorker} from './handler.ts'
+declare const EdgeRuntime:{waitUntil(work:Promise<void>):void}
+const service=createClient(Deno.env.get('SUPABASE_URL')??'',Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')??'',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(i,o)=>fetch(i,{...o,signal:AbortSignal.timeout(10000)})}})
+async function rpc(action:string,id:string|null=null,data:Record<string,unknown>={}){const r=await service.rpc('capture_automation',{p_action:action,p_id:id,p_data:data});if(r.error)throw Error('Capture queue unavailable');return r.data}
+Deno.serve(captureWorker({async authorize(hash){return await rpc('authorize',null,{token_hash:hash})===true},background:work=>EdgeRuntime.waitUntil(work),run:()=>captureAutomation({rpc,async connection(action,user,data={}){const r=await service.rpc('capture_connection_service',{p_action:action,p_user:user,p_data:data});if(r.error)throw Error('Capture connection unavailable');return r.data},async remember(user,data){const r=await service.rpc('myday_source_service',{p_user:user,p_action:'remember',p_data:data});if(r.error)throw Error('Capture source unavailable')},async draft(source,id){const gateway=createGateway({...gatewayDependencies(),identify:async()=>({userId:source.owner_id,companyId:source.company_id})},20000);const response=await gateway(new Request('https://vimbre.com/internal/capture',{method:'POST',headers:{authorization:'Bearer internal-claimed-capture','Content-Type':'application/json','Idempotency-Key':id},body:JSON.stringify({task:'capture_extract',text:'Selected capture',capture_id:source.capture_id,redraft:false})}));return await response.json()}})}))

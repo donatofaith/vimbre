@@ -6,6 +6,8 @@ begin
  id:=(public.capture_workspace('create',id,jsonb_build_object('source_text','Please send the revised quote by Friday.','title','Quote','label','Client'))#>>'{}')::uuid;
  again:=(public.capture_workspace('create',gen_random_uuid(),jsonb_build_object('source_text','Please send the revised quote by Friday.','title','Repeated quote'))#>>'{}')::uuid;
  if id<>again then raise exception 'Paste duplicate was not reused';end if;
+ again:=(public.capture_workspace('create',gen_random_uuid(),jsonb_build_object('source_text',E'Please send the revised quote by Friday.\n--\nSignature'))#>>'{}')::uuid;
+ if id<>again then raise exception 'Cleaned source fingerprint did not reuse the capture';end if;
  result:=public.capture_workspace('list',null,'{"filter":"needs_review"}');
  if (result->>'count')::int<>1 or result->'rows'->0->>'title'<>'Quote' then raise exception 'History metadata incorrect';end if;
  perform public.capture_workspace('queue',null,jsonb_build_object('captures',jsonb_build_array(id)));

@@ -91,6 +91,7 @@ const { chromium } = require('playwright');
     const pause = storyPage.getByRole('button', { name: 'Pause hero story' });
     await pause.waitFor(); await pause.click();
     await storyPage.getByRole('button', { name: 'Play hero story' }).waitFor();
+    await storyPage.locator('.rs-story-stage').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(a => a.ready)); });
     const before = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(a => a.currentTime));
     await storyPage.waitForTimeout(250);
     const after = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(a => a.currentTime));

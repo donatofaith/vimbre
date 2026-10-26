@@ -28,7 +28,7 @@ create table if not exists private.capture_tool_policy(company_id uuid primary k
 create table if not exists private.capture_search_pages(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,fingerprint text not null,cursor text not null default '',page jsonb not null,expires_at timestamptz not null default now()+interval '5 minutes',unique(owner_id,connection_id,fingerprint,cursor));
 create table if not exists private.capture_selected_sources(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,source jsonb not null,expires_at timestamptz not null default now()+interval '10 minutes');
 create table if not exists private.capture_watches(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,place text not null check(char_length(place) between 1 and 1024),filters jsonb not null default '{}',frequency int not null default 60 check(frequency in (15,30,60,240,1440)),daily_cap int not null default 5 check(daily_cap between 1 and 100),enabled boolean not null default true,state text not null default 'active' check(state in ('active','paused','allowance','reconnect','error')),error text,next_check timestamptz not null default now(),lease_until timestamptz,created_at timestamptz not null default now());
-create table if not exists private.capture_queue(id uuid primary key default gen_random_uuid(),capture_id uuid not null references public.captures(id) on delete cascade,owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,watch_id uuid references private.capture_watches(id) on delete set null,state text not null default 'pending' check(state in ('pending','claimed','success','failed','paused')),error text,created_at timestamptz not null default now(),finished_at timestamptz);
+create table if not exists private.capture_queue(id uuid primary key default gen_random_uuid(),capture_id uuid not null references public.captures(id) on delete cascade,owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,watch_id uuid references private.capture_watches(id) on delete set null,state text not null default 'pending' check(state in ('pending','claimed','success','failed','paused')),error text,claimed_at timestamptz,created_at timestamptz not null default now(),finished_at timestamptz);
 create unique index if not exists capture_queue_active_idx on private.capture_queue(capture_id) where state in ('pending','claimed');
 create index if not exists capture_queue_pending_idx on private.capture_queue(created_at) where state='pending';
 create index if not exists capture_watches_due_idx on private.capture_watches(next_check) where enabled;
@@ -56,6 +56,9 @@ begin
   select coalesce(array_agg(value),'{}') into allowed from jsonb_array_elements_text(p_data->'allowed');
   insert into private.capture_tool_policy(company_id,allowed) values(c,allowed) on conflict(company_id) do update set allowed=excluded.allowed;
   insert into public.activity_log(company_id,actor_id,record_type,record_id,action) values(c,u,'capture_tools',c,'updated');return jsonb_build_object('allowed',allowed);
+ elsif p_action='detail' then
+  select * into s from public.captures where id=p_id and owner_id=u and company_id=c;if not found then return null;end if;
+  return public.capture_detail(s.id)||jsonb_build_object('job',(select jsonb_build_object('state',q.state,'error',q.error) from private.capture_queue q where q.capture_id=s.id and q.owner_id=u and q.company_id=c order by q.created_at desc limit 1));
  elsif p_action='list' then
   n:=greatest(0,least(coalesce((p_data->>'page')::int,0),10000));
   select jsonb_build_object('count',count(*),'rows',coalesce(jsonb_agg(to_jsonb(x)-'total'),'[]')) into r from (
@@ -193,13 +196,16 @@ create or replace function private.capture_automation(p_action text,p_id uuid de
 declare q private.capture_queue;w private.capture_watches;conn private.capture_connections;v jsonb;u uuid;c uuid;new_id uuid;budget jsonb;remaining int;
 begin
  if auth.jwt()->>'role' is distinct from 'service_role' then raise insufficient_privilege;end if;
- if p_action='claim' then
+ if p_action='authorize' then return exists(select 1 from private.task_delivery_config where singleton and token_hash=p_data->>'token_hash');
+ elsif p_action='claim' then
+  delete from private.capture_search_pages where expires_at<=now();
+  delete from private.capture_selected_sources where expires_at<=now();
   -- Only future, verified inbound receipts enter the new automatic draft flow.
   insert into private.capture_queue(capture_id,owner_id,company_id)
    select ca.id,ca.owner_id,ca.company_id from public.captures ca join private.capture_inbound_receipts ir on ir.capture_id=ca.id join public.capture_forwarding_addresses a on a.id=ir.address_id and a.owner_id=ca.owner_id join public.capture_channel_settings cs on cs.company_id=ca.company_id and cs.forwarding_enabled join public.profiles p on p.id=ca.owner_id and p.active
    where ca.created_at>=(select enabled_from from private.capture_automation_config where singleton) and a.enabled and a.verified_at is not null and ca.deleted_at is null and ca.draft_attempts=0 and not exists(select 1 from private.capture_queue j where j.capture_id=ca.id) limit 20 on conflict do nothing;
-  update private.capture_queue set state='failed',error='Drafting was interrupted. Open the capture to retry.',finished_at=now() where state='claimed' and created_at<now()-interval '10 minutes';
-  with due as(select j.id from private.capture_queue j join public.profiles p on p.id=j.owner_id and p.company_id=j.company_id and p.active join public.captures ca on ca.id=j.capture_id and ca.deleted_at is null where j.state='pending' order by j.created_at for update of j skip locked limit 3),claimed as(update private.capture_queue j set state='claimed' from due where due.id=j.id returning j.*) select coalesce(jsonb_agg(to_jsonb(claimed)),'[]'::jsonb) into v from claimed;return v;
+  update private.capture_queue set state='failed',error='Drafting was interrupted. Open the capture to retry.',finished_at=now() where state='claimed' and claimed_at<now()-interval '10 minutes';
+  with due as(select j.id from private.capture_queue j join public.profiles p on p.id=j.owner_id and p.company_id=j.company_id and p.active join public.captures ca on ca.id=j.capture_id and ca.deleted_at is null where j.state='pending' order by j.created_at for update of j skip locked limit 3),claimed as(update private.capture_queue j set state='claimed',claimed_at=now() from due where due.id=j.id returning j.*) select coalesce(jsonb_agg(to_jsonb(claimed)),'[]'::jsonb) into v from claimed;return v;
  elsif p_action='source' then
   select * into q from private.capture_queue where id=p_id and state='claimed' for update;if not found then raise insufficient_privilege;end if;
   if not exists(select 1 from public.profiles where id=q.owner_id and company_id=q.company_id and active) then raise insufficient_privilege;end if;
@@ -208,6 +214,7 @@ begin
   select * into q from private.capture_queue where id=p_id and state='claimed' for update;if not found then return '{}';end if;
   if p_data->>'state' not in ('success','failed','paused') then raise invalid_parameter_value;end if;
   update private.capture_queue set state=p_data->>'state',error=left(p_data->>'error',300),finished_at=now() where id=q.id;
+  if p_data->>'state'='failed' then update public.captures set status='failed',result_state='could_not_read',error=left(coalesce(p_data->>'error','Drafting could not finish. Retry this capture.'),300) where id=q.capture_id and status<>'saved' and not exists(select 1 from public.capture_items where capture_id=q.capture_id and status='confirmed');end if;
   if p_data->>'state'='paused' and q.watch_id is not null then update private.capture_watches set enabled=false,state='allowance',error='AI allowance used up. Resume when allowance is available.' where id=q.watch_id;end if;
   return '{}';
  elsif p_action='watch_claim' then
@@ -215,10 +222,12 @@ begin
  elsif p_action in ('watch_context','watch_source','watch_finish') then
   select * into w from private.capture_watches where id=p_id and enabled and lease_until>now() for update;if not found then raise insufficient_privilege;end if;
   select * into conn from private.capture_connections where id=w.connection_id and user_id=w.owner_id and company_id=w.company_id;if not found then raise insufficient_privilege;end if;
-  if not exists(select 1 from public.profiles where id=w.owner_id and company_id=w.company_id and active) or exists(select 1 from private.capture_tool_policy where company_id=w.company_id and not(conn.provider=any(allowed))) then raise insufficient_privilege;end if;
+  if not exists(select 1 from public.profiles where id=w.owner_id and company_id=w.company_id and active) then raise insufficient_privilege;end if;
+  if exists(select 1 from private.capture_tool_policy where company_id=w.company_id and not(conn.provider=any(allowed))) then update private.capture_watches set enabled=false,state='paused',error='This tool is disabled by your company.',lease_until=null where id=w.id;return null;end if;
   if p_action='watch_finish' then
    update private.capture_watches set lease_until=null,state=case when p_data->>'state' in('allowance','reconnect','error') then p_data->>'state' else 'active' end,enabled=case when p_data->>'state' in('allowance','reconnect') then false else true end,error=left(p_data->>'error',300) where id=w.id;return '{}';
   end if;
+  if not public.myday_ai_enabled(w.owner_id) then update private.capture_watches set enabled=false,state='paused',error='AI is disabled for your company.',lease_until=null where id=w.id;return null;end if;
   budget:=private.ai_allowance_status(w.company_id);
   remaining:=case when coalesce((budget->>'enabled')::boolean,false) and not coalesce((budget->>'blocked')::boolean,false) then greatest(0,least((budget->>'daily_request_limit')::int-(budget->>'daily_requests')::int,(budget->>'monthly_request_limit')::int-(budget->>'monthly_requests')::int)) else 0 end;
   if remaining<1 then update private.capture_watches set enabled=false,state='allowance',error='AI allowance used up. Resume when allowance is available.',lease_until=null where id=w.id;return null;end if;
@@ -236,8 +245,16 @@ end $$;
 create or replace function public.capture_automation(p_action text,p_id uuid default null,p_data jsonb default '{}') returns jsonb language sql security invoker set search_path='' as $$select private.capture_automation(p_action,p_id,p_data)$$;
 revoke all on function private.capture_automation(text,uuid,jsonb),public.capture_automation(text,uuid,jsonb) from public,anon,authenticated;
 grant execute on function private.capture_automation(text,uuid,jsonb),public.capture_automation(text,uuid,jsonb) to service_role;
+-- Capture uses the verified scheduler capability independently of email delivery's enable switch.
+create or replace function private.dispatch_capture() returns void language plpgsql security definer set search_path='' as $$begin
+ if exists(select 1 from vault.secrets where name='myday_dispatch_token') and (exists(select 1 from private.capture_queue where state='pending') or exists(select 1 from private.capture_watches where enabled and next_check<=now()) or exists(select 1 from public.captures ca join private.capture_inbound_receipts ir on ir.capture_id=ca.id where ca.created_at>=(select enabled_from from private.capture_automation_config where singleton) and ca.draft_attempts=0 and ca.deleted_at is null and not exists(select 1 from private.capture_queue j where j.capture_id=ca.id))) then
+ perform net.http_post(url:='https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/capture-worker',headers:=jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='myday_dispatch_token')),body:='{}'::jsonb,timeout_milliseconds:=10000);
+ end if;
+end $$;
+revoke all on function private.dispatch_capture() from public,anon,authenticated;
 create or replace function private.dispatch_task_mail() returns void language plpgsql security definer set search_path='' as $$begin
- if exists(select 1 from private.task_delivery_config where enabled) and (exists(select 1 from private.task_mail_queue where state='pending') or exists(select 1 from private.myday_delivery_jobs where state='pending') or exists(select 1 from private.myday_files f join public.actions a on a.id=f.task_id where a.purged_at is not null) or exists(select 1 from private.capture_queue where state='pending') or exists(select 1 from private.capture_watches where enabled and next_check<=now()) or exists(select 1 from public.captures ca join private.capture_inbound_receipts ir on ir.capture_id=ca.id where ca.created_at>=(select enabled_from from private.capture_automation_config where singleton) and ca.draft_attempts=0 and ca.deleted_at is null and not exists(select 1 from private.capture_queue j where j.capture_id=ca.id))) then
+ perform private.dispatch_capture();
+ if exists(select 1 from private.task_delivery_config where enabled) and (exists(select 1 from private.task_mail_queue where state='pending') or exists(select 1 from private.myday_delivery_jobs where state='pending') or exists(select 1 from private.myday_files f join public.actions a on a.id=f.task_id where a.purged_at is not null)) then
  perform net.http_post(url:='https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/my-day-mail',headers:=jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='myday_dispatch_token')),body:='{}'::jsonb,timeout_milliseconds:=10000);
  end if;
 end $$;
@@ -246,4 +263,5 @@ create or replace function private.capture_fingerprint_trigger() returns trigger
  new.source_fingerprint:=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(new.source_text),''),new.source_text),'sha256'),'hex');return new;
 end $$;
 revoke all on function private.capture_fingerprint_trigger() from public,anon,authenticated;
+drop trigger if exists capture_fingerprint_before_write on public.captures;
 create trigger capture_fingerprint_before_write before insert or update of source_text on public.captures for each row execute function private.capture_fingerprint_trigger();

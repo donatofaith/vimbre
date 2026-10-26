@@ -17,7 +17,7 @@ exports.start=async function(kind='chromium'){
  }
  else if(url.pathname.endsWith('/capture_workspace')){
   const data=args.p_data||{};
-  if(args.p_action==='config')body={allowed:['gmail','drive','outlook','teams','slack','trello'],admin:true};
+  if(args.p_action==='detail')body=detail(args.p_id);else if(args.p_action==='config')body={allowed:['gmail','drive','outlook','teams','slack','trello'],admin:true};
   else if(args.p_action==='list'){const rows=state.sources.filter(s=>data.filter==='archived'?s.deleted_at:!s.deleted_at&&(data.filter==='all'||s.status===data.filter||data.filter==='needs_review'&&s.status==='drafts_ready')).map(s=>({...s,result_state:s.deleted_at?'archived':s.status==='drafts_ready'?'needs_review':s.status,tasks:state.items.filter(i=>i.capture_id===s.id&&i.kind==='action'&&i.status!=='discarded').length,decisions:state.items.filter(i=>i.capture_id===s.id&&i.kind==='decision'&&i.status!=='discarded').length}));body={rows,count:rows.length}}
   else if(args.p_action==='create'){state.sources.push({id:args.p_id,...(data.preview?{source_text:'Please send the revised quote by Friday.',title:'Supplier quote',source_date:'2026-10-26',source_provider:'gmail'}:data),status:'needs_review',draft_attempts:0,deleted_at:null});body=args.p_id}
   else if(args.p_action==='queue'){for(const id of data.captures){generate(id);state.jobs.push({id:randomUUID(),capture_id:id,state:'success'})}body={}}

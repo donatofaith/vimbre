@@ -14,6 +14,8 @@ await page.route('https://*.supabase.co/**',async route=>{
  const req=route.request(), url=new URL(req.url());let data=null;try{data=req.postDataJSON()}catch{};calls.push({path:url.pathname,method:req.method(),data});
  let body={};let status=200;
  if(url.pathname.endsWith('/token')) body={access_token:'browser-test-access',refresh_token:'browser-test-refresh',token_type:'bearer',expires_in:3600,user};
+ else if(url.pathname.endsWith('/capture_workspace'))body=data?.p_action==='config'?{allowed:[],admin:true}:{rows:[],count:0};
+ else if(url.pathname.endsWith('/capture-connect'))body={ok:true,allowed:[],providers:[]};
  else if(url.pathname.endsWith('/capture_list'))body={rows:[],count:0};
  else if(url.pathname.endsWith('/company_active_member_count'))body=2;
  else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};
