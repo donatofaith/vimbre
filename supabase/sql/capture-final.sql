@@ -1,3 +1,21 @@
+create or replace function private.capture_clean_text(raw text) returns text language plpgsql immutable set search_path='' as $$
+declare line text;kept text[]:='{}';has_text boolean:=false;result text;
+begin
+ foreach line in array string_to_array(replace(replace(raw,E'\r\n',E'\n'),E'\r',E'\n'),E'\n') loop
+  if line~*'^\s*From:\s' then if has_text then exit;else continue;end if;end if;
+  if not has_text and line~*'^\s*(To|Subject|Sent|Date|Cc):' then continue;end if;
+  if line~*'^\s*(On .{3,200} wrote:|Sent from my\M|_{4,}|-{2,}\s*Original Message|CONFIDENTIAL(ITY)?( NOTICE)?\M|Disclaimer:|--\s*$)' then exit;end if;
+  if line~'^\s*>' then continue;end if;
+  kept:=array_append(kept,line);has_text:=has_text or btrim(line)<>'';
+ end loop;
+ result:=btrim(array_to_string(kept,E'\n'),E' \t\n\r');result:=left(result,16000);
+ while octet_length(result)>16000 loop result:=left(result,char_length(result)-1);end loop;
+ return result;
+end $$;
+revoke all on function private.capture_clean_text(text) from public,anon,authenticated;
+alter table public.captures add column if not exists source_fingerprint text;
+create index if not exists captures_source_fingerprint_idx on public.captures(owner_id,company_id,source_fingerprint) where deleted_at is null;
+
 -- Capture: selected-source search, private previews, queue and opt-in Watch. No provider tokens in this schema.
 alter table public.captures add column if not exists source_provider text;
 alter table public.captures add column if not exists source_account uuid;
@@ -56,17 +74,18 @@ begin
    select * into conn from private.capture_connections where id=selected.connection_id and user_id=u and company_id=c;if not found or not(conn.provider=any(allowed)) then raise insufficient_privilege;end if;
    v:=selected.source;if v->>'format'='pdf' then raise invalid_parameter_value;end if;
    perform pg_advisory_xact_lock(hashtextextended(u::text||conn.id::text||(v->>'reference'),0));
-   select id into new_id from public.captures where owner_id=u and company_id=c and source_account=conn.id and source_reference=v->>'reference' and source_text=v->>'text' and deleted_at is null order by created_at desc limit 1;
+   select id into new_id from public.captures where owner_id=u and company_id=c and source_account=conn.id and source_reference=v->>'reference' and coalesce(source_fingerprint,encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex'))=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(v->>'text'),''),v->>'text'),'sha256'),'hex') and deleted_at is null order by created_at desc limit 1;
    if new_id is not null then return to_jsonb(new_id);end if;
    new_id:=private.capture_change('create',p_id,null,jsonb_build_object('source_text',v->>'text','title',v->>'title','source_date',v->>'date','source_type',v->>'source_type','channel','paste'));
    update public.captures set source_provider=conn.provider,source_account=conn.id,source_reference=v->>'reference',source_url=v->>'url',sender=v->>'sender' where id=new_id;
   else
    perform pg_advisory_xact_lock(hashtextextended(u::text||coalesce(p_data->>'source_text',''),0));
-   select id into new_id from public.captures where owner_id=u and company_id=c and source_account is null and source_text=p_data->>'source_text' and deleted_at is null order by created_at desc limit 1;
+   select id into new_id from public.captures where owner_id=u and company_id=c and source_account is null and coalesce(source_fingerprint,encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex'))=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(p_data->>'source_text'),''),p_data->>'source_text'),'sha256'),'hex') and deleted_at is null order by created_at desc limit 1;
    if new_id is not null then return to_jsonb(new_id);end if;
    new_id:=private.capture_change('create',p_id,null,p_data);
    update public.captures set label=coalesce(p_data->>'label','') where id=new_id;
   end if;
+  update public.captures set source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex') where id=new_id;
   return to_jsonb(new_id);
  elsif p_action='queue' then
   if jsonb_typeof(p_data->'captures')<>'array' or jsonb_array_length(p_data->'captures') not between 1 and 10 then raise invalid_parameter_value;end if;
@@ -207,8 +226,9 @@ begin
   if p_action='watch_context' then return jsonb_build_object('provider',conn.provider,'remaining',least(remaining,w.daily_cap-(select count(*) from private.capture_queue where watch_id=w.id and created_at>=date_trunc('day',now()))));end if;
   v:=p_data->'source';if char_length(v->>'text') not between 1 and 16000 or nullif(v->>'reference','') is null then raise invalid_parameter_value;end if;
   perform pg_advisory_xact_lock(hashtextextended(w.owner_id::text||conn.id::text||(v->>'reference'),0));
-  if exists(select 1 from public.captures where owner_id=w.owner_id and company_id=w.company_id and source_account=conn.id and source_reference=v->>'reference') then return null;end if;
+  if exists(select 1 from public.captures where owner_id=w.owner_id and company_id=w.company_id and source_account=conn.id and source_reference=v->>'reference' and source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(v->>'text'),''),v->>'text'),'sha256'),'hex')) then return null;end if;
   insert into public.captures(owner_id,company_id,title,source_text,source_type,source_date,channel,source_provider,source_account,source_reference,source_url,sender) values(w.owner_id,w.company_id,left(v->>'title',200),v->>'text',v->>'source_type',coalesce(nullif(v->>'date','')::date,current_date),'paste',conn.provider,conn.id,v->>'reference',v->>'url',v->>'sender') returning id into new_id;
+  update public.captures set source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex') where id=new_id;
   insert into private.capture_queue(capture_id,owner_id,company_id,watch_id) values(new_id,w.owner_id,w.company_id,w.id);
   insert into public.activity_log(company_id,actor_id,record_type,record_id,action) values(w.company_id,w.owner_id,'capture_watch',w.id,'matched');return to_jsonb(new_id);
  else raise invalid_parameter_value;end if;
@@ -221,3 +241,9 @@ create or replace function private.dispatch_task_mail() returns void language pl
  perform net.http_post(url:='https://ijyjrooarwoafkykvzjp.supabase.co/functions/v1/my-day-mail',headers:=jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='myday_dispatch_token')),body:='{}'::jsonb,timeout_milliseconds:=10000);
  end if;
 end $$;
+
+create or replace function private.capture_fingerprint_trigger() returns trigger language plpgsql security definer set search_path='' as $$begin
+ new.source_fingerprint:=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(new.source_text),''),new.source_text),'sha256'),'hex');return new;
+end $$;
+revoke all on function private.capture_fingerprint_trigger() from public,anon,authenticated;
+create trigger capture_fingerprint_before_write before insert or update of source_text on public.captures for each row execute function private.capture_fingerprint_trigger();
