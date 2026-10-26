@@ -18,6 +18,7 @@ create index if not exists captures_source_fingerprint_idx on public.captures(ow
 
 -- Capture: selected-source search, private previews, queue and opt-in Watch. No provider tokens in this schema.
 alter table public.captures add column if not exists source_provider text;
+alter table public.captures add column if not exists source_updated_at timestamptz;
 alter table public.captures add column if not exists source_account uuid;
 alter table public.captures add column if not exists source_reference text;
 alter table public.captures add column if not exists source_url text;
@@ -28,6 +29,11 @@ create table if not exists private.capture_tool_policy(company_id uuid primary k
 create table if not exists private.capture_search_pages(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,fingerprint text not null,cursor text not null default '',page jsonb not null,expires_at timestamptz not null default now()+interval '5 minutes',unique(owner_id,connection_id,fingerprint,cursor));
 create table if not exists private.capture_selected_sources(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,source jsonb not null,expires_at timestamptz not null default now()+interval '10 minutes');
 create table if not exists private.capture_watches(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,connection_id uuid not null references private.capture_connections(id) on delete cascade,place text not null check(char_length(place) between 1 and 1024),filters jsonb not null default '{}',frequency int not null default 60 check(frequency in (15,30,60,240,1440)),daily_cap int not null default 5 check(daily_cap between 1 and 100),enabled boolean not null default true,state text not null default 'active' check(state in ('active','paused','allowance','reconnect','error')),error text,next_check timestamptz not null default now(),lease_until timestamptz,created_at timestamptz not null default now());
+create table if not exists private.capture_watch_seen(watch_id uuid not null references private.capture_watches(id) on delete cascade,reference text not null,version text not null,seen_at timestamptz not null default now(),primary key(watch_id,reference));
+alter table private.capture_watch_seen enable row level security;
+revoke all on private.capture_watch_seen from public,anon,authenticated;
+alter table private.capture_watches add column if not exists search_cursor text not null default '';
+alter table private.capture_watches add column if not exists search_key text not null default '';
 create table if not exists private.capture_queue(id uuid primary key default gen_random_uuid(),capture_id uuid not null references public.captures(id) on delete cascade,owner_id uuid not null references public.profiles(id) on delete cascade,company_id uuid not null references public.companies(id) on delete cascade,watch_id uuid references private.capture_watches(id) on delete set null,state text not null default 'pending' check(state in ('pending','claimed','success','failed','paused')),error text,claimed_at timestamptz,created_at timestamptz not null default now(),finished_at timestamptz);
 create unique index if not exists capture_queue_active_idx on private.capture_queue(capture_id) where state in ('pending','claimed');
 create index if not exists capture_queue_pending_idx on private.capture_queue(created_at) where state='pending';
@@ -80,7 +86,7 @@ begin
    select id into new_id from public.captures where owner_id=u and company_id=c and source_account=conn.id and source_reference=v->>'reference' and coalesce(source_fingerprint,encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex'))=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(v->>'text'),''),v->>'text'),'sha256'),'hex') and deleted_at is null order by created_at desc limit 1;
    if new_id is not null then return to_jsonb(new_id);end if;
    new_id:=private.capture_change('create',p_id,null,jsonb_build_object('source_text',v->>'text','title',v->>'title','source_date',v->>'date','source_type',v->>'source_type','channel','paste'));
-   update public.captures set source_provider=conn.provider,source_account=conn.id,source_reference=v->>'reference',source_url=v->>'url',sender=v->>'sender' where id=new_id;
+   update public.captures set source_provider=conn.provider,source_account=conn.id,source_reference=v->>'reference',source_url=v->>'url',sender=v->>'sender',source_updated_at=nullif(v->>'updated_at','')::timestamptz where id=new_id;
   else
    perform pg_advisory_xact_lock(hashtextextended(u::text||coalesce(p_data->>'source_text',''),0));
    select id into new_id from public.captures where owner_id=u and company_id=c and source_account is null and coalesce(source_fingerprint,encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex'))=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(p_data->>'source_text'),''),p_data->>'source_text'),'sha256'),'hex') and deleted_at is null order by created_at desc limit 1;
@@ -97,7 +103,7 @@ begin
    if s.draft_attempts=0 then insert into private.capture_queue(capture_id,owner_id,company_id) values(s.id,u,c) on conflict do nothing;end if;
   end loop;return '{}'::jsonb;
  elsif p_action='jobs' then return coalesce((select jsonb_agg(jsonb_build_object('id',id,'capture_id',capture_id,'state',state,'error',error)) from (select * from private.capture_queue where owner_id=u and company_id=c order by created_at desc limit 20) x),'[]');
- elsif p_action='watches' then return coalesce((select jsonb_agg(to_jsonb(w)-'lease_until') from private.capture_watches w where owner_id=u and company_id=c),'[]');
+ elsif p_action='watches' then return coalesce((select jsonb_agg(to_jsonb(w)-'lease_until'-'search_cursor'-'search_key') from private.capture_watches w where owner_id=u and company_id=c),'[]');
  elsif p_action='watch_save' then
   select * into conn from private.capture_connections where id=(p_data->>'connection')::uuid and user_id=u and company_id=c;if not found or not(conn.provider=any(allowed)) then raise insufficient_privilege;end if;
   if (select count(*) from private.capture_watches where owner_id=u)>=20 then raise exception 'You can keep up to 20 Watch rules.' using errcode='22023';end if;
@@ -219,13 +225,21 @@ begin
   return '{}';
  elsif p_action='watch_claim' then
   with due as(select x.id from private.capture_watches x join public.profiles p on p.id=x.owner_id and p.company_id=x.company_id and p.active where x.enabled and x.next_check<=now() and (x.lease_until is null or x.lease_until<now()) order by x.next_check for update of x skip locked limit 2),claimed as(update private.capture_watches x set lease_until=now()+interval '3 minutes',next_check=now()+make_interval(mins=>x.frequency) from due where due.id=x.id returning x.*) select coalesce(jsonb_agg(to_jsonb(claimed)),'[]'::jsonb) into v from claimed;return v;
- elsif p_action in ('watch_context','watch_source','watch_finish') then
+ elsif p_action in ('watch_context','watch_source','watch_finish','watch_known','watch_seen') then
   select * into w from private.capture_watches where id=p_id and enabled and lease_until>now() for update;if not found then raise insufficient_privilege;end if;
   select * into conn from private.capture_connections where id=w.connection_id and user_id=w.owner_id and company_id=w.company_id;if not found then raise insufficient_privilege;end if;
   if not exists(select 1 from public.profiles where id=w.owner_id and company_id=w.company_id and active) then raise insufficient_privilege;end if;
   if exists(select 1 from private.capture_tool_policy where company_id=w.company_id and not(conn.provider=any(allowed))) then update private.capture_watches set enabled=false,state='paused',error='This tool is disabled by your company.',lease_until=null where id=w.id;return null;end if;
+  if p_action='watch_seen' then
+   if char_length(p_data->>'reference') not between 1 and 2048 or char_length(p_data->>'version')>100 then raise invalid_parameter_value;end if;
+   insert into private.capture_watch_seen(watch_id,reference,version) values(w.id,p_data->>'reference',coalesce(p_data->>'version','')) on conflict(watch_id,reference) do update set version=excluded.version,seen_at=now();return '{}';
+  end if;
+  if p_action='watch_known' then return coalesce((select jsonb_object_agg(reference,version) from(select distinct on(reference) reference,version from(
+   select source_reference as reference,source_updated_at::text as version from public.captures where owner_id=w.owner_id and company_id=w.company_id and source_account=conn.id
+   union all select reference,version from private.capture_watch_seen where watch_id=w.id
+  ) combined where reference in(select jsonb_array_elements_text(p_data->'references')) order by reference,version desc nulls last)x),'{}');end if;
   if p_action='watch_finish' then
-   update private.capture_watches set lease_until=null,state=case when p_data->>'state' in('allowance','reconnect','error') then p_data->>'state' else 'active' end,enabled=case when p_data->>'state' in('allowance','reconnect') then false else true end,error=left(p_data->>'error',300) where id=w.id;return '{}';
+   update private.capture_watches set search_cursor=coalesce(p_data->>'cursor',search_cursor),search_key=coalesce(p_data->>'search_key',search_key),lease_until=null,state=case when p_data->>'state' in('allowance','reconnect','error') then p_data->>'state' else 'active' end,enabled=case when p_data->>'state' in('allowance','reconnect') then false else true end,error=left(p_data->>'error',300) where id=w.id;return '{}';
   end if;
   if not public.myday_ai_enabled(w.owner_id) then update private.capture_watches set enabled=false,state='paused',error='AI is disabled for your company.',lease_until=null where id=w.id;return null;end if;
   budget:=private.ai_allowance_status(w.company_id);
@@ -235,8 +249,8 @@ begin
   if p_action='watch_context' then return jsonb_build_object('provider',conn.provider,'remaining',least(remaining,w.daily_cap-(select count(*) from private.capture_queue where watch_id=w.id and created_at>=date_trunc('day',now()))));end if;
   v:=p_data->'source';if char_length(v->>'text') not between 1 and 16000 or nullif(v->>'reference','') is null then raise invalid_parameter_value;end if;
   perform pg_advisory_xact_lock(hashtextextended(w.owner_id::text||conn.id::text||(v->>'reference'),0));
-  if exists(select 1 from public.captures where owner_id=w.owner_id and company_id=w.company_id and source_account=conn.id and source_reference=v->>'reference' and source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(v->>'text'),''),v->>'text'),'sha256'),'hex')) then return null;end if;
-  insert into public.captures(owner_id,company_id,title,source_text,source_type,source_date,channel,source_provider,source_account,source_reference,source_url,sender) values(w.owner_id,w.company_id,left(v->>'title',200),v->>'text',v->>'source_type',coalesce(nullif(v->>'date','')::date,current_date),'paste',conn.provider,conn.id,v->>'reference',v->>'url',v->>'sender') returning id into new_id;
+  if exists(select 1 from public.captures where owner_id=w.owner_id and company_id=w.company_id and source_account=conn.id and source_reference=v->>'reference' and source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(v->>'text'),''),v->>'text'),'sha256'),'hex')) then update public.captures set source_updated_at=nullif(v->>'updated_at','')::timestamptz where owner_id=w.owner_id and source_account=conn.id and source_reference=v->>'reference';return null;end if;
+  insert into public.captures(owner_id,company_id,title,source_text,source_type,source_date,channel,source_provider,source_account,source_reference,source_url,sender,source_updated_at) values(w.owner_id,w.company_id,left(v->>'title',200),v->>'text',v->>'source_type',coalesce(nullif(v->>'date','')::date,current_date),'paste',conn.provider,conn.id,v->>'reference',v->>'url',v->>'sender',nullif(v->>'updated_at','')::timestamptz) returning id into new_id;
   update public.captures set source_fingerprint=encode(extensions.digest(coalesce(nullif(private.capture_clean_text(source_text),''),source_text),'sha256'),'hex') where id=new_id;
   insert into private.capture_queue(capture_id,owner_id,company_id,watch_id) values(new_id,w.owner_id,w.company_id,w.id);
   insert into public.activity_log(company_id,actor_id,record_type,record_id,action) values(w.company_id,w.owner_id,'capture_watch',w.id,'matched');return to_jsonb(new_id);

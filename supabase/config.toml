@@ -24,3 +24,9 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/my-day-mail/index.ts"
 import_map = "./functions/my-day-mail/deno.json"
+
+[functions.capture-worker]
+# The handler verifies the existing scheduler capability before claiming any owner-scoped work.
+verify_jwt = false
+entrypoint = "./functions/capture-worker/index.ts"
+import_map = "./functions/capture-worker/deno.json"

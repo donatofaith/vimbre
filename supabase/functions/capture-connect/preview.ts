@@ -23,5 +23,5 @@ export async function preview(p:Provider,t:Tokens,row:SearchRow){
  }else {const value=await read(p,t,row.id,row.container);text=value.text}
  if(!text.trim())throw Error('source_empty')
  if(new TextEncoder().encode(text).length>50000)throw Error('source_too_large')
- return {title:row.title.slice(0,200),text:prepareCaptureText(text),date:row.date?.slice(0,10)||new Date().toISOString().slice(0,10),sender:row.sender,source_type:p==='gmail'||p==='outlook'?'email':'note',reference:row.reference,source,container:row.container,url:row.url,provider:p}
+ return {updated_at:row.date,title:row.title.slice(0,200),text:prepareCaptureText(text),date:row.date?.slice(0,10)||new Date().toISOString().slice(0,10),sender:row.sender,source_type:p==='gmail'||p==='outlook'?'email':'note',reference:row.reference,source,container:row.container,url:row.url,provider:p}
 }

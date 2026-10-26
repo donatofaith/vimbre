@@ -15,8 +15,8 @@ begin
  r2:=public.capture_change('confirm',d,s,'{"version":1}');
  if r<>r2 or (select count(*) from public.decisions where owner_id=auth.uid())<>1 then raise exception 'Confirm duplicate'; end if;
  begin perform public.capture_change('discard',d,s,'{"version":2}'); raise exception 'Confirmed draft discarded'; exception when serialization_failure then null; end;
- perform public.capture_change('add',a,s,'{"kind":"action","title":"Send report"}');
- begin perform public.capture_change('confirm',a,s,'{"version":1}'); raise exception 'Invalid action confirmed'; exception when not_null_violation then null; end;
+ perform public.capture_change('add',a,s,'{"kind":"action","title":"Send report","due_date":"not-a-date"}');
+ begin perform public.capture_change('confirm',a,s,'{"version":1}'); raise exception 'Invalid action confirmed'; exception when invalid_datetime_format then null; end;
  if not exists(select 1 from public.capture_items where id=a and status='pending') or exists(select 1 from public.actions where owner_id=auth.uid()) then raise exception 'Failed confirmation partially saved'; end if;
  perform public.capture_change('edit',a,s,jsonb_build_object('kind','action','title','Send report','due_date',current_date,'version',1));
  perform public.capture_change('confirm',a,s,'{"version":2}');
@@ -69,3 +69,4 @@ end; $$;
 reset role;
 select 'Capture lifecycle, atomic confirmation, retries, private-source isolation and inactive/anonymous protections passed' as result;
 rollback;
+
