@@ -7,6 +7,8 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
  if(url.pathname.endsWith('/token'))body={access_token:'capture-fixture',refresh_token:'fixture-refresh',token_type:'bearer',expires_in:3600,user};else if(url.pathname.endsWith('/user'))body=user;else if(url.pathname.endsWith('/profiles'))body=profile;else if(url.pathname.endsWith('/companies'))body=company;else if(url.pathname.endsWith('/my_invitation'))body=[];
  else if(url.pathname.endsWith('/myday_preferences'))body={timezone:'Africa/Lagos',reminder_time:'09:00',email_enabled:false,email_delivery_ready:false};else if(url.pathname.endsWith('/myday_notes'))body={rows:[],count:0};else if(url.pathname.endsWith('/myday_tasks'))body={rows:[],count:0,today:'2026-10-23',timezone:'Africa/Lagos',tab_counts:{today:0,week:0,overdue:0,all:0,archived:0},done_today:[],upcoming:[],handovers_waiting:[],covering:[],cover_tasks:[],has_work:true,checklist:{capture:true,role:true,reminder:true,cover:true}};else if(url.pathname.endsWith('/work_notification_inbox'))body={unread:0,count:0,items:[]};else if(url.pathname.endsWith('/myday_alerts'))body=[];else if(url.pathname.endsWith('/actions'))body=[];
  else if(url.pathname.endsWith('/departments')||url.pathname.endsWith('/role_items'))body=[];else if(url.pathname.endsWith('/capture_list')){const rows=sources.filter(s=>Boolean(s.deleted_at)===args.p_archived).map(s=>({...s,items_created:items.filter(d=>d.capture_id===s.id&&d.status==='confirmed').length}));body={rows,count:rows.length}}
+ else if(url.pathname.endsWith('/capture_workspace')){if(args.p_action==='create'){sources.push({id:args.p_id,...args.p_data,status:'needs_review',draft_attempts:0,deleted_at:null});body=args.p_id}else if(args.p_action==='list')body={rows:[],count:0};else if(args.p_action==='config')body={allowed:[],admin:true};else body=[]}
+ else if(url.pathname.endsWith('/capture-connect'))body={ok:true,allowed:[],providers:[]};
  else if(url.pathname.endsWith('/capture_detail'))body=detail(args.p_id);
  else if(url.pathname.endsWith('/capture_pipeline')){
   if(args.p_operation==='options')body={today:'2026-10-23',remaining:8,ai_enabled:true,forwarding:false,upload:false,address:null,records:[],departments:[],contacts:[]};else if(args.p_operation==='duplicates')body=[];
@@ -35,7 +37,7 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
  }
  for(const [name,width,height] of matrix){
   await page.setViewportSize({width,height});
-  const source=page.getByLabel('Email or notes',{exact:true});await source.waitFor();await source.fill('Confirm the supplier review on Friday.');
+  const source=page.getByLabel('Paste the conversation.',{exact:true});await source.waitFor();await source.fill('Confirm the supplier review on Friday.');
   await page.locator('.vc-details').evaluate(el=>el.open=true);
   await page.getByLabel('Source date',{exact:true}).fill('2026-10-24');
   await fits('Capture '+name);
@@ -44,7 +46,7 @@ const {webkit}=require('playwright');const assert=require('node:assert/strict');
   if(['ipad','ipad-air','ipad-pro-large','ipad-landscape'].includes(name))await page.screenshot({path:`/tmp/vimbre-landing-responsive-capture-${name}.png`,fullPage:true});
  }
  await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();await page.setViewportSize({width:820,height:1180});assert(await page.getByRole('button',{name:'Menu',exact:true}).isVisible(),'Desktop collapsed preference must not hide tablet menu');
- await page.getByRole('button',{name:'Add draft manually',exact:true}).click();await page.getByLabel('Title',{exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Capture draft '+name)}
+ await page.getByRole('button',{name:'Add manually',exact:true}).click();await page.getByLabel('Title',{exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Capture draft '+name)}
  await page.goto('http://127.0.0.1:5173/app/settings');await page.getByRole('heading',{name:'Company settings',exact:true}).waitFor();for(const [name,width,height] of matrix){await page.setViewportSize({width,height});await fits('Settings '+name)}
  assert.equal(calls.filter(c=>c.path.endsWith('/ai-run')).length,0);assert.deepEqual(errors,[]);console.log('WebKit touch layout, date fields, tablet menus, collapsed preference, Capture draft and Settings passed across '+matrix.length+' device sizes');
  }finally{await browser.close();await server.close()}})().catch(e=>{console.error(e);process.exit(1)});
