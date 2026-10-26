@@ -1,5 +1,7 @@
 export type Task = {
   id: string;
+  decision_id?: string | null;
+  decision_title?: string;
   priority?: "high" | "normal" | "low";
   pinned_at?: string | null;
   rank?: number;
@@ -52,7 +54,8 @@ export type DayData = {
   count: number;
   today: string;
   timezone: string;
-  counts: { todo: number; progress: number; overdue: number; done?: number };
+  overdue_rows?: Task[];
+  counts: { today?: number; todo: number; progress: number; overdue: number; done?: number };
   tab_counts?: Record<string, number>;
   done_today?: Task[];
   upcoming?: Task[];

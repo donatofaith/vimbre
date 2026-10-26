@@ -28,3 +28,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 24 October device review in docs/responsive-review.md requires full-width tablet content and a collapsible workspace Menu through 1024px. Preserve desktop collapse preferences without hiding the tablet menu. Safari native controls must fit their fields; never mask clipped controls with document overflow rules.
 
 - The 24 October owner request in docs/capture-connections.md adds user-selected external sources through the existing Capture review/confirm pipeline. My day stays unchanged. Never claim provider connection availability without registered OAuth apps, server secrets and verified consent. Tokens remain owner-private in Vault; no Console access. Keep Support's headset icon and contact emails on that page, with no header Help duplicate.
+
+- The 26 October screenshots in docs/client-my-day-approved.md supersede the ranked My Day presentation and pin/priority defaults. Preserve private data boundaries. Do not treat the acceptance checklist as proof of implementation.

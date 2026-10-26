@@ -68,7 +68,7 @@ export function TaskPanel({
         due_time: time,
         details: get("details"),
         status: get("status"),
-        priority: get("priority"),
+        priority: "normal",
         reminder_option: get("reminder_option"),
         completion_note: get("completion_note"),
         source_url: url,
@@ -139,18 +139,6 @@ export function TaskPanel({
             value={time}
             onChange={(e) => setTime(e.target.value)}
           />
-          <div className="field">
-            <label htmlFor="md-priority">Priority</label>
-            <select
-              id="md-priority"
-              name="priority"
-              defaultValue={task?.priority ?? "normal"}
-            >
-              <option value="high">High</option>
-              <option value="normal">Normal</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
           <ForPicker
             suggestion={draft?.department_name || draft?.external_contact_name}
             value={forValue}
@@ -180,7 +168,7 @@ export function TaskPanel({
                   <option value="open">To do</option>
                   <option value="in_progress">In progress</option>
                   <option value="done">Done</option>
-                  {task && <option value="archived">Archived</option>}
+                  {task && <option value="archived">Deleted</option>}
                 </select>
               </div>
               <div className="field">

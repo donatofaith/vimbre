@@ -1,7 +1,6 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { WorkspaceIcon } from "../../components/ui/WorkspaceIcon";
 import { supabase } from "../../lib/supabase";
 import { RoleDrawer } from "../records/RoleDrawer";
 import { safeRecordUrl } from "../records/record-utils";
@@ -99,222 +98,31 @@ export function TaskRecord({
     </RoleDrawer>
   );
 }
-export function TaskCard({
-  task,
-  zone,
-  busy,
-  rank,
-  initialOpen = false,
-  now,
-  act,
-  edit,
-  remind,
-  context,
-  quickContext,
-  record,
-  drag,
-}: {
-  task: Task;
-  zone: string;
-  busy: boolean;
-  rank?: number;
-  initialOpen?: boolean;
-  now: Date;
-  act: (task: Task, op: string, values: Record<string, unknown>) => void;
-  edit: (task: Task) => void;
-  remind: (task: Task) => void;
-  context: (task: Task) => void;
-  quickContext: (task: Task, outcome: string) => void;
-  record: (task: Task) => void;
-  drag: (id: string) => void;
+export function TaskCard({task,zone,busy,initialOpen=false,act,edit,remind,context,quickContext,record,drag,inspect,onClose,panelOnly=false}: {
+ inspect?:(task:Task)=>void;onClose?:()=>void;panelOnly?:boolean;
+ task: Task;zone:string;busy:boolean;rank?:number;initialOpen?:boolean;now:Date;
+ act:(task:Task,op:string,values:Record<string,unknown>)=>void;
+ edit:(task:Task)=>void;remind:(task:Task)=>void;context:(task:Task)=>void;
+ quickContext:(task:Task,outcome:string)=>void;record:(task:Task)=>void;drag:(id:string)=>void;
 }) {
-  const [outcome, setOutcome] = useState(task.completion_note ?? ""),
-    [open, setOpen] = useState(initialOpen),
-    id = useId(),
-    source = task.source_role_id ?? task.stable_role_item_id ?? task.recurring_id;
-  const overdue =
-    task.status !== "done" && !task.deleted_at && new Date(task.due_at) < now;
-  return (
-    <article
-      className={`md-task-card md-compact-card${open ? " is-expanded" : ""}`}
-      draggable={!task.deleted_at && !busy}
-      onDragStart={(e) => {
-        drag(task.id);
-        e.dataTransfer.setData("text/plain", task.id);
-      }}
-      onDragEnd={() => drag("")}
-    >
-      <div className="md-task-summary">
-        {rank !== undefined && (
-          <span className="md-rank" aria-label={`Rank ${rank}`}>
-            {rank}
-          </span>
-        )}
-        <button
-          className="md-task-title"
-          aria-expanded={open}
-          aria-controls={id}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {task.title}
-          <span aria-hidden="true">{open ? "⌃" : "⌄"}</span>
-        </button>
-      </div>
-      <div className="md-task-meta">
-        <span className="md-source">
-          From {sourceLabels[task.source_kind ?? "manual"]}
-        </span>
-        <span
-          hidden
-          className={`md-priority md-priority-${task.priority ?? "normal"}`}
-        >
-          {task.priority === "high"
-            ? "High"
-            : task.priority === "low"
-              ? "Low"
-              : "Normal"}
-        </span>
-        {task.pinned_at && <span className="md-pin-badge">Starred</span>}
-        {task.department_name && (
-          <span className="md-for-chip">{task.department_name}</span>
-        )}
-        {task.external_contact_name && (
-          <span className="md-for-chip">{task.external_contact_name}</span>
-        )}
-        <time dateTime={task.due_at}>{taskDate(task, zone)}</time>
-        {overdue && <span className="md-overdue">Overdue</span>}
-      </div>
-      <div className="md-card-controls">
-        <label className="sr-only" htmlFor={`${id}-status`}>
-          Status for {task.title}
-        </label>
-        <select
-          id={`${id}-status`}
-          aria-label={`Status for ${task.title}`}
-          value={task.deleted_at ? "archived" : task.status}
-          disabled={busy || Boolean(task.deleted_at)}
-          onChange={(e) =>
-            act(task, e.target.value === "archived" ? "archive" : "status", {
-              status: e.target.value,
-            })
-          }
-        >
-          {statuses.map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-          <option value="archived">Deleted</option>
-        </select>
-        {!task.deleted_at && task.status !== "done" && (
-          <button
-            className="md-text-button"
-            disabled={busy}
-            aria-pressed={Boolean(task.pinned_at)}
-            aria-label={`${task.pinned_at ? "Unstar" : "Star"} ${task.title}`}
-            onClick={() => act(task, "pin", { pinned: !task.pinned_at })}
-          >
-            {task.pinned_at ? "Unstar" : "Star"}
-          </button>
-        )}
-        {task.deleted_at && (
-          <Button
-            variant="secondary"
-            disabled={busy}
-            onClick={() => act(task, "restore", {})}
-          >
-            Restore
-          </Button>
-        )}
-      </div>
-      {open && (
-        <div className="md-task-expanded" id={id}>
-          {task.details && <p className="record-text">{task.details}</p>}
-          {source && (
-            <Link
-              to={`/app/role-record?section=${task.source_role_kind ?? "recurring_deadline"}&record=${source}${task.source_role_profile_id ? `&role=${task.source_role_profile_id}` : ""}`}
-            >
-              My role record
-            </Link>
-          )}
-          {safeRecordUrl(task.source_url) && (
-            <a
-              href={safeRecordUrl(task.source_url)!}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open source
-            </a>
-          )}
-          <div className="md-expanded-actions">
-            {!(task.status === "done" && task.context_added_at) && (
-              <button className="md-text-button" onClick={() => record(task)}>
-                Record
-              </button>
-            )}
-            {!task.deleted_at && (
-              <>
-                <button className="md-text-button" onClick={() => edit(task)}>
-                  Edit task
-                </button>
-                {task.status !== "done" && (
-                  <button
-                    className="md-remind-button"
-                    onClick={() => remind(task)}
-                  >
-                    <WorkspaceIcon name="bell" />
-                    Remind me
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-      {!task.deleted_at && task.status === "done" && (
-        <div className="md-card-bottom">
-          {task.context_added_at ? (
-            <>
-              <span className="md-context-added">
-                <WorkspaceIcon name="tick" />
-                Added to context
-              </span>
-              <button className="md-text-button" onClick={() => record(task)}>
-                Record
-              </button>
-            </>
-          ) : (
-            <div className="md-quick-context">
-              <label>
-                What happened? (optional)
-                <input
-                  maxLength={5000}
-                  value={outcome}
-                  onChange={(e) => setOutcome(e.target.value)}
-                />
-              </label>
-              <span className="field-hint">
-                Save to My notes, private to you.
-              </span>
-              <button
-                className="md-text-button"
-                disabled={busy}
-                onClick={() => quickContext(task, outcome)}
-              >
-                Add to context
-              </button>
-              {open && (
-                <button
-                  className="md-text-button md-muted"
-                  onClick={() => context(task)}
-                >
-                  Choose where to save
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </article>
-  );
+ const [open,setOpen]=useState(initialOpen),[outcome,setOutcome]=useState(task.completion_note??""),[confirmDelete,setConfirmDelete]=useState(false);
+ const source=task.source_role_id??task.stable_role_item_id??task.recurring_id;
+ const sourceUrl=safeRecordUrl(task.source_url);
+ return <>{!panelOnly&&<article className="md-task-card md-slim-row" draggable={!task.deleted_at&&!busy} onDragStart={e=>{drag(task.id);e.dataTransfer.setData("text/plain",task.id)}} onDragEnd={()=>drag("")}>
+   <input type="checkbox" aria-label={`Done: ${task.title}`} checked={task.status==="done"} disabled={busy||Boolean(task.deleted_at)} onChange={e=>act(task,"status",{status:e.target.checked?"done":"open"})}/>
+   <button className="md-task-title" onClick={()=>inspect?inspect(task):setOpen(true)}>{task.title}{task.pinned_at&&<span className="md-star-mark" aria-label="Starred">★</span>}{task.status==="in_progress"&&<small className="md-progress-chip">In progress</small>}</button>
+   <time dateTime={task.due_at}>{taskDate(task,zone)}</time>
+   </article>}{open&&<RoleDrawer context="My day" title={task.title} close={()=>{setOpen(false);onClose?.()}}><div className="md-task-panel">
+    <h2>{task.title}</h2><p>{taskDate(task,zone)}</p>
+    {task.details&&<p className="record-text">{task.details}</p>}
+    <div className="md-source-detail"><strong>From </strong>{sourceLabels[task.source_kind??"manual"]}{sourceUrl&&<a href={sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>}{source&&<Link to={`/app/role-record?section=${task.source_role_kind??"recurring_deadline"}&record=${source}${task.source_role_profile_id?`&role=${task.source_role_profile_id}`:""}`}>Open role record</Link>}{task.capture_id&&<Link to={`/app/capture?capture=${task.capture_id}`}>View captured source</Link>}</div>
+    {task.decision_id?<Link to={`/app/decisions?decision=${task.decision_id}`}>Part of: {task.decision_title??"Decision"}</Link>:null}
+    <div className="md-expanded-actions"><button className="md-text-button" onClick={()=>record(task)}>Record</button>{!task.deleted_at&&<button className="md-text-button" onClick={()=>edit(task)}>Edit task</button>}</div>
+    {!task.deleted_at&&<><label className="field">Status<select aria-label={`Status for ${task.title}`} value={task.status} disabled={busy} onChange={e=>act(task,"status",{status:e.target.value})}>{statuses.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+    {task.status!=="done"&&<div className="md-expanded-actions"><button className="md-text-button" disabled={busy} aria-pressed={Boolean(task.pinned_at)} onClick={()=>act(task,"pin",{pinned:!task.pinned_at})}>{task.pinned_at?"Unstar":"Star"}</button><button className="md-text-button" onClick={()=>remind(task)}>Remind me / Snooze</button><button className="md-text-button" disabled={busy} onClick={()=>act(task,"tomorrow",{})}>Tomorrow</button></div>}
+    {task.status==="done"&&(task.context_added_at?<span className="md-context-added">Added to the Record</span>:<div className="md-quick-context"><label>Add the outcome to the record? (optional)<textarea maxLength={5000} value={outcome} onChange={e=>setOutcome(e.target.value)}/></label><span className="field-hint">My notes · Private</span><button className="md-text-button" disabled={busy||!outcome.trim()} onClick={()=>quickContext(task,outcome)}>Save outcome</button><button className="md-text-button" onClick={()=>context(task)}>Choose where to save</button></div>)}
+    <button className="md-text-button md-delete" disabled={busy} onClick={()=>{if(task.capture_id||task.decision_id)setConfirmDelete(true);else act(task,"archive",{})}}>Delete</button>{confirmDelete&&<div role="alert"><p>This task is part of the record. Delete it anyway?</p><p>The decision and source stay.</p><Button disabled={busy} onClick={()=>{act(task,"archive",{});setConfirmDelete(false)}}>Delete task</Button><Button variant="secondary" onClick={()=>setConfirmDelete(false)}>Keep task</Button></div>}</>}
+    {task.deleted_at&&<><p>Deleted tasks can be restored for 30 days.</p><Button disabled={busy} onClick={()=>act(task,"restore",{})}>Restore</Button></>}
+   </div></RoleDrawer>}
+ </>;
 }
