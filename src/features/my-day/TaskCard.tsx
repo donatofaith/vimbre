@@ -107,7 +107,7 @@ export function TaskCard({task,zone,busy,initialOpen=false,act,edit,remind,conte
 }) {
  const [open,setOpen]=useState(initialOpen),[outcome,setOutcome]=useState(task.completion_note??""),[confirmDelete,setConfirmDelete]=useState(false);
  const source=task.source_role_id??task.stable_role_item_id??task.recurring_id;
- const sourceUrl=safeRecordUrl(task.source_url);
+ const sourceUrl=safeRecordUrl(task.source_origin_url??task.source_url);
  return <>{!panelOnly&&<article className="md-task-card md-slim-row" draggable={!task.deleted_at&&!busy} onDragStart={e=>{drag(task.id);e.dataTransfer.setData("text/plain",task.id)}} onDragEnd={()=>drag("")}>
    <input type="checkbox" aria-label={`Done: ${task.title}`} checked={task.status==="done"} disabled={busy||Boolean(task.deleted_at)} onChange={e=>act(task,"status",{status:e.target.checked?"done":"open"})}/>
    <button className="md-task-title" onClick={()=>inspect?inspect(task):setOpen(true)}>{task.title}{task.pinned_at&&<span className="md-star-mark" aria-label="Starred">★</span>}{task.status==="in_progress"&&<small className="md-progress-chip">In progress</small>}</button>
@@ -115,7 +115,11 @@ export function TaskCard({task,zone,busy,initialOpen=false,act,edit,remind,conte
    </article>}{open&&<RoleDrawer context="My day" title={task.title} close={()=>{setOpen(false);onClose?.()}}><div className="md-task-panel">
     <h2>{task.title}</h2><p>{taskDate(task,zone)}</p>
     {task.details&&<p className="record-text">{task.details}</p>}
-    <div className="md-source-detail"><strong>From </strong>{sourceLabels[task.source_kind??"manual"]}{sourceUrl&&<a href={sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>}{source&&<Link to={`/app/role-record?section=${task.source_role_kind??"recurring_deadline"}&record=${source}${task.source_role_profile_id?`&role=${task.source_role_profile_id}`:""}`}>Open role record</Link>}{task.capture_id&&<Link to={`/app/capture?capture=${task.capture_id}`}>View captured source</Link>}</div>
+    <div className="md-source-detail"><strong>From </strong>{task.source_name??sourceLabels[task.source_kind??"manual"]}{task.source_date&&<span>{task.source_date}</span>}{task.source_connected===false&&<span>Source disconnected</span>}{sourceUrl&&<a href={sourceUrl} target="_blank" rel="noopener noreferrer">Open in {task.source_name??"app"}</a>}{source&&<Link to={`/app/role-record?section=${task.source_role_kind??"recurring_deadline"}&record=${source}${task.source_role_profile_id?`&role=${task.source_role_profile_id}`:""}`}>Open role record</Link>}{task.capture_id&&<Link to={`/app/capture?capture=${task.capture_id}`}>View captured source</Link>}</div>
+    {(task.source_excerpt||task.capture_excerpt)&&<details><summary>Source excerpt</summary><p className="record-text">{task.source_excerpt||task.capture_excerpt}</p></details>}
+    {task.label&&<p>Label: {task.label}</p>}{task.time_needed_minutes&&<p>Time needed: {task.time_needed_minutes} minutes</p>}
+    {Boolean(task.steps?.length)&&<section><h3>Steps</h3><ol>{task.steps!.map((step,i)=><li key={i}>{step}</li>)}</ol></section>}
+    {Boolean(task.links?.length)&&<section><h3>Links</h3><ul>{task.links!.map((link,i)=>safeRecordUrl(link)&&<li key={i}><a href={safeRecordUrl(link)!} target="_blank" rel="noopener noreferrer">{link}</a></li>)}</ul></section>}
     {task.decision_id?<Link to={`/app/decisions?decision=${task.decision_id}`}>Part of: {task.decision_title??"Decision"}</Link>:null}
     <div className="md-expanded-actions"><button className="md-text-button" onClick={()=>record(task)}>Record</button>{!task.deleted_at&&<button className="md-text-button" onClick={()=>edit(task)}>Edit task</button>}</div>
     {!task.deleted_at&&<><label className="field">Status<select aria-label={`Status for ${task.title}`} value={task.status} disabled={busy} onChange={e=>act(task,"status",{status:e.target.value})}>{statuses.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>

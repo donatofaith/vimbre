@@ -202,7 +202,7 @@ function MyDayContent() {
     }
   }
   const rows = data?.rows ?? [],
-    allRows = [...rows, ...(data?.done_today ?? []), ...(data?.upcoming ?? [])],
+    allRows = [...rows, ...(data?.overdue_rows ?? []), ...(data?.done_today ?? []), ...(data?.upcoming ?? [])],
     selected = rows.find((t) => t.id === taskId),
     requested =
       !dismissed &&

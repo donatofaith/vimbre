@@ -11,7 +11,7 @@ alter table public.actions
   add column if not exists source_disconnected boolean not null default false,
   add column if not exists metadata jsonb not null default '{"schema_version":1}'::jsonb;
 alter table public.actions
-  add constraint actions_time_needed_positive check (time_needed_minutes is null or time_needed_minutes between 1 and 1440);
+  add constraint actions_time_needed_positive check (time_needed_minutes is null or time_needed_minutes in (15,30,60,120));
 
 -- Stars replace priority and the old three-pin limit. No stored task data is removed.
 CREATE OR REPLACE FUNCTION private.guard_task_pin() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
@@ -116,7 +116,17 @@ begin
   if target<(now() at time zone tz)::date then raise exception 'Choose today or later' using errcode='22023';end if;
   update public.actions set due_date=target,reminder_sent_at=null,check_in_sent_at=null,reminder_cycle=reminder_cycle+1,overdue=false where id=p_id;return p_id;
  end if;
+ if p_operation in ('create','edit') then
+  if p_data ? 'steps' and (jsonb_typeof(p_data->'steps')<>'array' or jsonb_array_length(p_data->'steps')>100 or exists(select 1 from jsonb_array_elements(p_data->'steps') x where jsonb_typeof(x)<>'string' or length(x#>>'{}')>1000)) then raise exception 'Invalid steps' using errcode='22023';end if;
+  if p_data ? 'links' and (jsonb_typeof(p_data->'links')<>'array' or jsonb_array_length(p_data->'links')>30 or exists(select 1 from jsonb_array_elements(p_data->'links') x where jsonb_typeof(x)<>'string' or (x#>>'{}')!~'^https?://' or length(x#>>'{}')>2048)) then raise exception 'Invalid links' using errcode='22023';end if;
+  if length(coalesce(p_data->>'label',''))>80 then raise exception 'Invalid label' using errcode='22023';end if;
+ end if;
  result:=private.myday_action_legacy(p_id,p_operation,p_data);
+ if p_operation in ('create','edit') then
+  update public.actions set time_needed_minutes=case when p_data ? 'time_needed_minutes' then (p_data->>'time_needed_minutes')::integer else time_needed_minutes end,
+  label=case when p_data ? 'label' then nullif(btrim(p_data->>'label'),'') else label end,
+  steps=coalesce(p_data->'steps',steps),links=coalesce(p_data->'links',links) where id=p_id;
+ end if;
  if p_operation='create' and nullif(p_data->>'reminder_date','') is not null then
   tz:=coalesce((select timezone from public.work_preferences where owner_id=auth.uid()),'Europe/London');
   update public.actions set remind_at=((p_data->>'reminder_date')::date+time '09:00') at time zone tz where id=p_id;
@@ -135,6 +145,16 @@ begin
 end $$;
 revoke all on function private.myday_action(uuid,text,jsonb) from public,anon,authenticated;
 grant execute on function private.myday_action(uuid,text,jsonb) to authenticated;
+-- Only disclose whether this signed-in owner's corresponding source connection exists.
+create function private.myday_source_connected(p_title text) returns boolean language plpgsql stable security definer set search_path='' as $$
+declare provider_name text;begin
+ if auth.uid() is null or private.current_company_id() is null then raise insufficient_privilege;end if;
+ provider_name:=case split_part(p_title,':',1) when 'Gmail' then 'gmail' when 'Google Drive' then 'drive' when 'Outlook' then 'outlook' when 'Microsoft Teams' then 'teams' when 'Slack' then 'slack' when 'Trello' then 'trello' else null end;
+ if provider_name is null then return null;end if;
+ return exists(select 1 from private.capture_connections where user_id=auth.uid() and company_id=private.current_company_id() and provider=provider_name);
+end $$;
+revoke all on function private.myday_source_connected(text) from public,anon,authenticated;
+grant execute on function private.myday_source_connected(text) to authenticated;
 CREATE OR REPLACE FUNCTION public.myday_tasks(p_filter text, p_query text, p_for text, p_page integer, p_task uuid DEFAULT NULL::uuid, p_decision uuid DEFAULT NULL::uuid, p_source text DEFAULT ''::text, p_priority text DEFAULT ''::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -145,10 +165,10 @@ declare u uuid:=auth.uid();tz text;today date;result jsonb;begin
  if p_filter is null or p_filter not in ('today','week','overdue','all','archived','done') or p_page is null or p_page<0 or p_page>100000 or p_query is null or char_length(p_query)>100 or p_for is null or char_length(p_for)>80 or p_source is null or p_source not in ('','manual','email','notes','ai','recurring_deadline','role','meeting','handover','cover') or p_priority is null or p_priority not in ('','high','normal','low') then raise exception 'Invalid task filter' using errcode='22023';end if;
  tz:=coalesce((select timezone from public.work_preferences where owner_id=u),'Europe/London');today:=(now() at time zone tz)::date;
  with base as materialized(
- select a.*,d.name as department_name,r.title as external_contact_name,ri.kind as source_role_kind,ri.role_id as source_role_profile_id,
+ select a.*,private.myday_source_connected(cp.title) as source_connected,case when split_part(cp.title,':',1) in ('Gmail','Google Drive','Outlook','Microsoft Teams','Slack','Trello') then split_part(cp.title,':',1) else null end as source_name,cp.source_date,substring(cp.source_text from 'Source: (https?://[^[:space:]]+)') as source_origin_url,left(cp.source_text,500) as capture_excerpt,d.name as department_name,r.title as external_contact_name,ri.kind as source_role_kind,ri.role_id as source_role_profile_id,
  (a.due_at at time zone tz)::date as due_day,
  a.status<>'done' and (a.due_at<now() or (a.due_at at time zone tz)::date=today or a.pinned_at is not null) as in_today
- from public.actions a left join public.departments d on d.id=a.department_id left join public.role_items r on r.id=a.external_contact_id
+ from public.actions a left join public.captures cp on cp.id=a.capture_id and cp.owner_id=u left join public.departments d on d.id=a.department_id left join public.role_items r on r.id=a.external_contact_id
  left join public.role_items ri on ri.id=coalesce(a.source_role_id,a.stable_role_item_id,a.recurring_id)
  where a.owner_id=u and (p_task is null or a.id=p_task) and (p_decision is null or a.decision_id=p_decision)
  and strpos(lower(a.title),lower(p_query))>0 and (p_for='' or 'department:'||a.department_id::text=p_for or 'contact:'||a.external_contact_id::text=p_for)

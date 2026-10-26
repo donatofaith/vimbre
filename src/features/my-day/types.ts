@@ -1,5 +1,15 @@
 export type Task = {
   id: string;
+  time_needed_minutes?: number | null;
+  label?: string | null;
+  steps?: string[];
+  links?: string[];
+  source_name?: string | null;
+  source_connected?: boolean | null;
+  source_date?: string | null;
+  source_origin_url?: string | null;
+  source_excerpt?: string | null;
+  capture_excerpt?: string | null;
   decision_id?: string | null;
   decision_title?: string;
   priority?: "high" | "normal" | "low";
