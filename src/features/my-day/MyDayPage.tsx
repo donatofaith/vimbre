@@ -351,7 +351,7 @@ function MyDayContent() {
               Who sees my tasks
             </button>
             <Button variant="secondary" onClick={() => setEditor({})}>
-              Add a task
+              Add task
             </Button>
             <button
               className="md-text-button"
@@ -362,24 +362,7 @@ function MyDayContent() {
           </div>
         </div>
         <div className="md-toolbar">
-          <div className="md-filters" aria-label="Task filters"><label htmlFor="md-primary-filter">Filter </label><select id="md-primary-filter" value={filter} onChange={e => {setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l]) => <option key={v} value={v}>{l} ({data?.tab_counts?.[v] ?? 0})</option>)}</select></div><div hidden><nav className="md-filters" aria-label="Legacy task views">
-            {filters.map(([v, l]) => (
-              <button
-                key={v}
-                aria-label={l}
-                aria-pressed={filter === v}
-                onClick={() => {
-                  setFilter(v);
-                  setPage(0);
-                }}
-              >
-                {l}
-                <span className="md-tab-count">
-                  {data?.tab_counts?.[v] ?? 0}
-                </span>
-              </button>
-            ))}
-          </nav></div>
+          <div className="md-filters" aria-label="Task filters"><label htmlFor="md-primary-filter">Filter </label><select id="md-primary-filter" value={filter} onChange={e => {setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l]) => <option key={v} value={v}>{l} ({data?.tab_counts?.[v] ?? 0})</option>)}</select></div>
           <div className="md-view-toggle" aria-label="Task layout">
             {(["list", "board"] as const).map((v) => (
               <button
@@ -521,7 +504,7 @@ function MyDayContent() {
             {filter === "today" && (
               <>
                 {(waiting > 0 || handovers.length > 0 || decisions > 0) && <section className="md-day-group" aria-label="To review">
-                  <h3>Waiting on you</h3>
+                  <h3>To review</h3>
                   <div className="md-waiting-links">
                     {decisions > 0 && (
                       <Link to="/app/capture">
