@@ -334,6 +334,7 @@ declare r private.myday_repeats;a public.actions;d date;last_due date;next_due d
  delete from private.myday_undo where expires_at<p_now;
  delete from private.myday_comments where task_id in(select id from public.actions where (p_owner is null or owner_id=p_owner) and deleted_at<p_now-interval '30 days');
  update public.actions set purged_at=p_now,title='Deleted task',details='',completion_note='',source_url=null,source_excerpt=null,steps='[]',links='[]',label=null,metadata='{"schema_version":1}' where (p_owner is null or owner_id=p_owner) and deleted_at<p_now-interval '30 days' and purged_at is null;
+ update private.myday_repeats r set template='{}' where not active and template<>'{}'::jsonb and exists(select 1 from public.actions a where a.id=r.current_task and a.purged_at is not null) and (p_owner is null or r.owner_id=p_owner);
  for p in select o.*,coalesce(w.timezone,'Europe/London') as zone from private.myday_personal_options o join public.profiles member on member.id=o.owner_id and member.company_id=o.company_id and member.active left join public.work_preferences w on w.owner_id=o.owner_id where p_owner is null or o.owner_id=p_owner loop
   local_time:=(p_now at time zone p.zone)::time;d:=(p_now at time zone p.zone)::date;
   q_start:=coalesce(nullif(p.settings->>'quiet_start','')::time,time '22:00');q_end:=coalesce(nullif(p.settings->>'quiet_end','')::time,time '08:00');quiet:=case when q_start=q_end then false when q_start<q_end then local_time>=q_start and local_time<q_end else local_time>=q_start or local_time<q_end end;
