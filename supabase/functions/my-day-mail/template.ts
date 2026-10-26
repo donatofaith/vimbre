@@ -2,7 +2,7 @@ export type MailItem={task_id:string;title:string;phase:'due'|'check_in';due_at:
 export type Batch={batch:string;email:string;name:string;items:MailItem[]}
 const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!))
 export function reminderMail(batch:Batch){
- const label=(i:MailItem)=>i.phase==='due'?`Due now: ${i.title}`:`Is this done? ${i.title} was due an hour ago.`
+ const label=(i:MailItem)=>i.phase==='due'?`Due now: ${i.title}`:`Is this done? ${i.title} is still open.`
  const subject=batch.items.length===1?label(batch.items[0]):`${batch.items.length} task reminders from Vimbre`
  const link=(id:string,action:string)=>`https://vimbre.com/app?task=${encodeURIComponent(id)}&task_action=${action}`
  const text=`Hello ${batch.name.split(/\s+/)[0]},\n\n${batch.items.map(i=>`${label(i)}\nReview task: ${link(i.task_id,'review')}`).join('\n\n')}\n\nManage task reminders in Settings: https://vimbre.com/app/settings\nVimbre\nFor help: support@vimbre.com`

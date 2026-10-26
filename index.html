@@ -34,7 +34,7 @@
       @keyframes boot-progress { 0% { transform:scaleX(.1); } 70%,100% { transform:scaleX(1); } }
       @media(prefers-reduced-motion:reduce) { #vimbre-boot { transition:none; }.boot-track i { animation:none; } }
     </style>
-  </head>
+  <link rel="manifest" href="/manifest.webmanifest"/><meta name="theme-color" content="#102a43"/></head>
   <body>
     <div id="vimbre-boot" role="status" aria-live="polite"><div class="boot-brand"><img class="boot-logo" src="/vimbre-lockup-compact-colour.svg" width="153" height="48" alt="Vimbre" fetchpriority="high" /></div><span class="boot-track" aria-hidden="true"><i></i></span><span class="boot-label">Loading Vimbre</span></div>
     <script>

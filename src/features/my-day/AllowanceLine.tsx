@@ -1,0 +1,3 @@
+import {useEffect,useState} from 'react'
+import {supabase} from '../../lib/supabase'
+export function AllowanceLine(){const [remaining,setRemaining]=useState<number|null>(null);useEffect(()=>{let live=true;async function refresh(){const r=await supabase.rpc('capture_pipeline',{p_operation:'options'});if(live&&!r.error&&r.data&&typeof r.data==='object'&&'remaining' in r.data&&typeof r.data.remaining==='number')setRemaining(r.data.remaining)}void refresh();window.addEventListener('vimbre:ai-usage',refresh);return()=>{live=false;window.removeEventListener('vimbre:ai-usage',refresh)}},[]);return remaining===null?null:<p className="md-muted">{remaining} AI requests remaining</p>}

@@ -13,8 +13,23 @@
       "destination": "/api/capture/callback"
     },
     {
+      "source": "/api/calendar",
+      "destination": "/api/calendar"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/microsoft-identity-association.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -39,17 +54,6 @@
       ],
       "destination": "https://vimbre.com/:path*",
       "statusCode": 301
-    }
-  ],
-  "headers": [
-    {
-      "source": "/.well-known/microsoft-identity-association.json",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json; charset=utf-8"
-        }
-      ]
     }
   ]
 }

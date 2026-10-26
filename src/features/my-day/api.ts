@@ -1,3 +1,4 @@
+import {queueTask} from './offline'
 import { supabase } from "../../lib/supabase";
 import type { Json } from "../../lib/database.types";
 export async function changeTask(
@@ -5,6 +6,7 @@ export async function changeTask(
   operation: string,
   data: Record<string, unknown> = {},
 ) {
+  if(!navigator.onLine)return queueTask(id,operation,data);
   const result = await supabase.rpc("myday_action", {
     p_id: id,
     p_operation: operation,

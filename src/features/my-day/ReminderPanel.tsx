@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { RoleDrawer } from "../records/RoleDrawer";
 import { addDays,dateInZone } from "./types";
-import { morningTomorrow } from "./reminder-time";
+import { localReminder, morningTomorrow } from "./reminder-time";
 import { changeTask, taskError } from "./api";
 export function ReminderPanel({
   id,
@@ -25,6 +25,7 @@ export function ReminderPanel({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [reschedule, setReschedule] = useState(initialReschedule),
+    [pickingSnooze,setPickingSnooze] = useState(false),
     [date, setDate] = useState(()=>addDays(dateInZone(zone),1)),
     [time, setTime] = useState("09:00");
   async function apply(operation: string, data: Record<string, unknown>) {
@@ -58,7 +59,7 @@ export function ReminderPanel({
         <div className="md-snooze-options">
           {[
             [15, "15 minutes"],
-            [60, "1 hour"],
+            [180, "Later today"],
           ].map(([minutes, label]) => (
             <Button
               key={label}
@@ -84,10 +85,12 @@ export function ReminderPanel({
           >
             Tomorrow morning
           </Button>
+          <Button variant="secondary" disabled={busy} onClick={()=>void apply("snooze", {until:localReminder(addDays(dateInZone(zone),7),"09:00",zone)})}>Next week</Button>
+          <Button variant="secondary" disabled={busy} onClick={()=>{setPickingSnooze(true);setReschedule(true)}}>Choose a date</Button>
         </div>
         <Button
           variant="secondary"
-          onClick={() => setReschedule((v) => !v)}
+          onClick={() => {setPickingSnooze(false);setReschedule((v) => !v)}}
           disabled={busy}
         >
           Not yet
@@ -97,25 +100,25 @@ export function ReminderPanel({
             className="auth-form"
             onSubmit={(e) => {
               e.preventDefault();
-              void apply("reschedule", { due_date: date, due_time: time });
+              if(pickingSnooze){const until=localReminder(date,time,zone);if(Date.parse(until)<=Date.now()){setError("Choose a future reminder time.");return}void apply("snooze",{until})}else void apply("reschedule", { due_date: date, due_time: time });
             }}
           >
             <Input
-              label="New due date"
+              label={pickingSnooze?"Reminder date":"New due date"}
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
             />
             <Input
-              label="New due time"
+              label={pickingSnooze?"Reminder time":"New due time"}
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               required
             />
             <Button type="submit" disabled={busy}>
-              Save new date and time
+              {pickingSnooze?"Save reminder":"Save new date and time"}
             </Button>
           </form>
         )}

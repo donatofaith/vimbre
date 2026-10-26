@@ -1,0 +1,16 @@
+export type Subscription={endpoint:string;keys:{p256dh:string;auth:string}}
+export const encode=(a:Uint8Array)=>btoa(String.fromCharCode(...a)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'')
+export const decode=(s:string)=>Uint8Array.from(atob(s.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0))
+const bytes=(s:string)=>new TextEncoder().encode(s)
+const join=(...a:Uint8Array[])=>{const out=new Uint8Array(a.reduce((n,v)=>n+v.length,0));let offset=0;for(const v of a){out.set(v,offset);offset+=v.length}return out}
+async function hmac(key:Uint8Array,data:Uint8Array){const k=await crypto.subtle.importKey('raw',key as BufferSource,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',k,data as BufferSource))}
+export function pushEndpoint(endpoint:string){const u=new URL(endpoint);if(u.protocol!=='https:'||u.port||u.username||u.password||u.hash||!(/^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/.test(u.hostname)))throw Error('Invalid push endpoint');return u}
+export async function pushRequest(subscription:Subscription,payload:unknown,key:{public_key:string;private_jwk:JsonWebKey},now=Date.now()){
+ const endpoint=pushEndpoint(subscription.endpoint),ua=decode(subscription.keys.p256dh),auth=decode(subscription.keys.auth);if(ua.length!==65||ua[0]!==4||auth.length!==16)throw Error('Invalid push keys')
+ const plaintext=bytes(JSON.stringify(payload));if(plaintext.length>3000)throw Error('Push payload too large')
+ const ephemeral=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']),as=new Uint8Array(await crypto.subtle.exportKey('raw',ephemeral.publicKey)),publicKey=await crypto.subtle.importKey('raw',ua as BufferSource,{name:'ECDH',namedCurve:'P-256'},false,[]),shared=new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:publicKey},ephemeral.privateKey,256)),salt=crypto.getRandomValues(new Uint8Array(16))
+ const ikm=await hmac(await hmac(auth,shared),join(bytes('WebPush: info\0'),ua,as,new Uint8Array([1]))),prk=await hmac(salt,ikm),cek=(await hmac(prk,bytes('Content-Encoding: aes128gcm\0\x01'))).slice(0,16),nonce=(await hmac(prk,bytes('Content-Encoding: nonce\0\x01'))).slice(0,12),aes=await crypto.subtle.importKey('raw',cek,{name:'AES-GCM'},false,['encrypt']),cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:nonce},aes,join(plaintext,new Uint8Array([2])) as BufferSource))
+ const header=new Uint8Array(21);header.set(salt);new DataView(header.buffer).setUint32(16,4096);header[20]=65
+ const signingKey=await crypto.subtle.importKey('jwk',key.private_jwk,{name:'ECDSA',namedCurve:'P-256'},false,['sign']),jwt=encode(bytes(JSON.stringify({typ:'JWT',alg:'ES256'})))+'.'+encode(bytes(JSON.stringify({aud:endpoint.origin,exp:Math.floor(now/1000)+43200,sub:'mailto:support@vimbre.com'}))),sig=new Uint8Array(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},signingKey,bytes(jwt)))
+ return {url:endpoint.href,headers:{Authorization:`vapid t=${jwt}.${encode(sig)}, k=${key.public_key}`,'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream',TTL:'3600',Urgency:'normal'},body:join(header,as,cipher)}
+}

@@ -1,0 +1,14 @@
+import {it,expect} from 'vitest'
+import {encode,decode,pushEndpoint,pushRequest} from '../supabase/functions/my-day-mail/web-push'
+const text=(s:string)=>new TextEncoder().encode(s)
+const concat=(...arrays:Uint8Array[])=>{const out=new Uint8Array(arrays.reduce((n,a)=>n+a.length,0));let i=0;for(const a of arrays){out.set(a,i);i+=a.length}return out}
+async function mac(key:Uint8Array,data:Uint8Array){return new Uint8Array(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',key as BufferSource,{name:'HMAC',hash:'SHA-256'},false,['sign']),data as BufferSource))}
+it('rejects arbitrary servers and redirect-like endpoint credentials',()=>{for(const s of ['http://fcm.googleapis.com/a','https://localhost/a','https://fcm.googleapis.com.evil.test/a','https://user@fcm.googleapis.com/a','https://fcm.googleapis.com:444/a'])expect(()=>pushEndpoint(s)).toThrow()})
+it('encrypts a push that only the browser private key can decrypt and signs VAPID',async()=>{
+ const browser=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']),ua=new Uint8Array(await crypto.subtle.exportKey('raw',browser.publicKey)),auth=crypto.getRandomValues(new Uint8Array(16)),signer=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']),public_key=encode(new Uint8Array(await crypto.subtle.exportKey('raw',signer.publicKey))),private_jwk=await crypto.subtle.exportKey('jwk',signer.privateKey),payload={owner_id:'owner',title:'Private task reminder'},now=Date.parse('2026-10-26T09:00:00Z')
+ const r=await pushRequest({endpoint:'https://fcm.googleapis.com/push/123',keys:{p256dh:encode(ua),auth:encode(auth)}},payload,{public_key,private_jwk},now)
+ expect(new TextDecoder().decode(r.body)).not.toContain(payload.title)
+ const salt=r.body.slice(0,16),as=r.body.slice(21,86),serverKey=await crypto.subtle.importKey('raw',as,{name:'ECDH',namedCurve:'P-256'},false,[]),shared=new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:serverKey},browser.privateKey,256)),ikm=await mac(await mac(auth,shared),concat(text('WebPush: info\0'),ua,as,new Uint8Array([1]))),prk=await mac(salt,ikm),cek=(await mac(prk,text('Content-Encoding: aes128gcm\0\x01'))).slice(0,16),iv=(await mac(prk,text('Content-Encoding: nonce\0\x01'))).slice(0,12),clear=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv},await crypto.subtle.importKey('raw',cek,'AES-GCM',false,['decrypt']),r.body.slice(86)))
+ expect(clear.at(-1)).toBe(2);expect(JSON.parse(new TextDecoder().decode(clear.slice(0,-1)))).toEqual(payload)
+ const jwt=r.headers.Authorization.match(/t=(.*), k=/)![1],parts=jwt.split('.'),claims=JSON.parse(new TextDecoder().decode(decode(parts[1])));expect(claims.aud).toBe('https://fcm.googleapis.com');expect(claims.exp).toBe(now/1000+43200);expect(await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},signer.publicKey,decode(parts[2]) as BufferSource,text(parts[0]+'.'+parts[1]))).toBe(true)
+})

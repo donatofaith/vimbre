@@ -4,6 +4,7 @@ import type { Adapter, Attempt, Reservation, Usage, AIDocument } from './types.t
 import { ProviderError, zeroUsage } from './types.ts'
 export type Identity = { userId: string; companyId: string }
 export type GatewayDependencies = {
+  authorizeAI?: (identity:Identity)=>Promise<boolean>
   handoverSource?: (user:string,id:string,kind:string)=>Promise<string>
   handoverClaim?: (user:string,id:string,request:string,kind:string,fingerprint:string,redraft:boolean)=>Promise<{cached?:string|null;blocked?:string}>
   handoverComplete?: (user:string,request:string,output:string|null,cancel:boolean)=>Promise<void>
@@ -62,6 +63,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
     try {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
+      if(deps.authorizeAI&&!await deps.authorizeAI(identity))return fail(403,'Vimbre AI is switched off for this company. You can continue by hand.');
       let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean}
       try {
         const data=await boundedBody(request)

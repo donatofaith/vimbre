@@ -1,7 +1,9 @@
 import { addDays, dateInZone } from "./types";
 export function morningTomorrow(zone: string, now = new Date()) {
-  const date = addDays(dateInZone(zone, now), 1),
-    target = Date.parse(`${date}T09:00:00Z`);
+  return localReminder(addDays(dateInZone(zone, now), 1), "09:00", zone);
+}
+export function localReminder(date: string, time: string, zone: string) {
+  const target = Date.parse(`${date}T${time}:00Z`);
   let guess = target;
   for (let i = 0; i < 4; i++) {
     const parts = new Intl.DateTimeFormat("en-CA", {

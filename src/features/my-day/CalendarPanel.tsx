@@ -1,0 +1,8 @@
+import {useState} from 'react'
+import {RoleDrawer} from '../records/RoleDrawer'
+import {Button} from '../../components/ui/Button'
+import {daySuite,suiteError} from './suite-api'
+export function CalendarPanel({close,enabled}:{close:()=>void;enabled:boolean}){
+ const [url,setUrl]=useState(''),[busy,setBusy]=useState(false),[active,setActive]=useState(enabled),[message,setMessage]=useState(''),[error,setError]=useState('')
+ return <RoleDrawer context="My day" title="Calendar feed" close={close}><div className="md-task-panel"><h2>Calendar feed</h2><p>The private feed includes task titles and due dates. Anyone with the link can read it until you revoke it.</p><Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const r=await daySuite<{token:string}>('calendar');setUrl('https://vimbre.com/api/calendar?token='+r.token);setActive(true);setMessage('Calendar feed created. Any previous feed link is revoked.')}catch(e){setError(suiteError(e))}finally{setBusy(false)}}}>{active?'Create a new feed link':'Create feed link'}</Button>{url&&<><label className="field">Private calendar URL<input readOnly value={url}/></label><Button variant="secondary" onClick={()=>void navigator.clipboard.writeText(url).then(()=>setMessage('Feed link copied.')).catch(()=>setError('Select the URL and copy it manually.'))}>Copy feed link</Button></>}{active&&<Button variant="secondary" disabled={busy} onClick={async()=>{setBusy(true);try{await daySuite('calendar',null,{revoke:true});setUrl('');setActive(false);setMessage('Calendar feed revoked.')}catch(e){setError(suiteError(e))}finally{setBusy(false)}}}>Revoke feed</Button>}{message&&<p role="status">{message}</p>}{error&&<p className="field-error" role="alert">{error}</p>}</div></RoleDrawer>
+}

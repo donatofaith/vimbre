@@ -1,5 +1,9 @@
 export type Task = {
   id: string;
+  updated_at?: string;
+  repeat_rule?: {frequency:string;every_n?:number;unit?:string}|null;
+  missed_at?: string | null;
+  purged_at?: string | null;
   time_needed_minutes?: number | null;
   label?: string | null;
   steps?: string[];
@@ -69,6 +73,7 @@ export type DayData = {
   tab_counts?: Record<string, number>;
   done_today?: Task[];
   upcoming?: Task[];
+  review_assignments?: import('./suite-api').Assignment[];
   review_drafts?: {id:string;capture_id:string;kind:string;version:number;payload:Record<string,string|null>;duplicate:boolean}[];
   drafts_waiting?: number;
   decisions_waiting?: number;
@@ -116,19 +121,17 @@ export function addDays(date: string, days: number) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-export function taskDate(task: Task, zone: string) {
+export function taskDate(task: Task, zone: string,language="en-GB",style:"short"|"medium"|"long"="medium") {
   if(!task.due_date&&!task.due_at)return "No date";
   const date = new Date(
     `${task.due_time ? dateInZone(zone, new Date(task.due_at)) : task.due_date}T12:00:00Z`,
   );
-  const label = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  const label = new Intl.DateTimeFormat(language, {
+    dateStyle:style,
     timeZone: "UTC",
   }).format(date);
   return task.due_time
-    ? `${label}, ${new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", timeZone: zone }).format(new Date(task.due_at))}`
+    ? `${label}, ${new Intl.DateTimeFormat(language, { hour: "numeric", minute: "2-digit", timeZone: zone }).format(new Date(task.due_at))}`
     : label;
 }
 export function greetingInZone(zone: string) {

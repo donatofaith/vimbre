@@ -13,3 +13,4 @@ export class ProviderError extends Error {
   constructor(kind: 'failed' | 'timeout', usage: Usage | null = null) { super('AI provider unavailable');this.kind=kind;this.usage=usage }
 }
 export const zeroUsage = { inputTokens: 0, outputTokens: 0 }
+

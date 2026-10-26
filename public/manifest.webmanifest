@@ -1,0 +1,1 @@
+{"name":"Vimbre","short_name":"Vimbre","start_url":"/app","scope":"/","display":"standalone","background_color":"#f7f6f2","theme_color":"#102a43","icons":[{"src":"/favicon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"/vimbre-mark-colour.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

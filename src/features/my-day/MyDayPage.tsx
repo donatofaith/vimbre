@@ -1,3 +1,17 @@
+import {TaskFormatContext,formatTaskDay} from './task-format'
+import type {TaskFormat} from './task-format'
+import {OfflineStatus} from './OfflineStatus'
+import {cacheDay,cachedDay} from './offline'
+import {useDaySuite} from './useDaySuite'
+import {daySuite,suiteError} from './suite-api'
+import {TemplatePicker} from './TemplatePicker'
+import {RulesPanel} from './RulesPanel'
+import {AssignmentPanel} from './AssignmentPanel'
+import {PlanMyDay} from './TaskAI'
+import {TaskTools,TaskComments} from './TaskTools'
+import {CalendarPanel} from './CalendarPanel'
+import {ImportExportPanel} from './ImportExportPanel'
+import {TeamDayPanel} from './TeamDayPanel'
 import {parseQuickTask} from "./quick-add";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -67,6 +81,7 @@ function MyDayContent() {
     [context, setContext] = useState<Task | null>(null),
     [reminder, setReminder] = useState<Task | null>(null),
     [record, setRecord] = useState<Task | null>(null),
+    [templates,setTemplates]=useState(false),[rules,setRules]=useState(false),[planning,setPlanning]=useState(false),[calendar,setCalendar]=useState(false),[transfers,setTransfers]=useState(false),[assignment,setAssignment]=useState<{task?:Task}|null>(null),[comments,setComments]=useState<string|null>(params.get('comment_task')),[teamOpen,setTeamOpen]=useState(false),[selecting,setSelecting]=useState(false),[selectedIds,setSelectedIds]=useState<string[]>([]),
     [inspected,setInspected]=useState<Task|null>(null),
     [rolePicker, setRolePicker] = useState(false),
     [dismissed, setDismissed] = useState(false),
@@ -78,6 +93,7 @@ function MyDayContent() {
   const access = useRef<HTMLDialogElement>(null),
     dragging = useRef(""),
     pending = useRef(false);
+  const extras=useDaySuite(profile!.id,revision);
   const summary = useMyDaySummary(profile!.id, revision, true);
   const key = JSON.stringify([
       filter,
@@ -116,6 +132,7 @@ function MyDayContent() {
     const load = async () => {
       const request = ++version;
       try {
+        if(!navigator.onLine){const saved=cachedDay(profile!.id,filter);if(!saved)throw Error();if(live&&request===version)setResult({key,data:saved,error:false});return}
         const { data, error } = await supabase.rpc("myday_tasks", {
           p_filter: filter,
           p_query: search,
@@ -126,6 +143,7 @@ function MyDayContent() {
           p_task: taskId || null,
           p_decision: linked || null,
         });
+        if(!error&&parseDay(data)&&!search&&!forValue&&!source&&!page)cacheDay(profile!.id,filter,parseDay(data)!);
         if (live && request === version)
           setResult({
             key,
@@ -167,7 +185,7 @@ function MyDayContent() {
     linked,
     revision,
   ]);
-  useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.metaKey||e.ctrlKey||e.altKey||e.target instanceof HTMLElement&&e.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;if(e.key.toLowerCase()==="n"){e.preventDefault();setQuick(true)}if(e.key==="/"){e.preventDefault();document.getElementById("md-search")?.focus()}if(e.key.toLowerCase()==="c")window.location.assign("/app/capture")};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[]);
+
   useEffect(() => {
     if (params.get("visibility") === "manager") access.current?.showModal();
   }, [params]);
@@ -177,8 +195,8 @@ function MyDayContent() {
     setBusy(task.id);
     setError("");
     try {
-      await changeTask(task.id, op, values);
-      if (op === "archive" || op === "status" && values.status === "done") setUndo({task,until:Date.now()+10000});
+      if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
+      if (op === "archive" || op === "delete_series" || op === "status" && values.status === "done") setUndo({task,until:Date.now()+10000});
       if(op === "undo") setUndo(null);
       setMessage(
         op === "pin"
@@ -211,11 +229,22 @@ function MyDayContent() {
       !selected?.deleted_at
         ? selected
         : null;
+  useEffect(()=>{const key=(e:KeyboardEvent)=>{
+    if(e.metaKey||e.ctrlKey||e.altKey||e.target instanceof HTMLElement&&e.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
+    const k=e.key.toLowerCase(),buttons=Array.from(document.querySelectorAll<HTMLButtonElement>('.md-slim-row>.md-task-title')).filter(b=>b.getClientRects().length),at=buttons.indexOf(document.activeElement as HTMLButtonElement),id=(document.activeElement as HTMLElement)?.closest<HTMLElement>('[data-task-id]')?.dataset.taskId,task=allRows.find(t=>t.id===id);
+    if(k==='n'){e.preventDefault();setQuick(true)}else if(k==='/'){e.preventDefault();document.getElementById('md-search')?.focus()}else if(k==='c'){e.preventDefault();window.location.assign('/app/capture')}else if(k==='j'||k==='k'){e.preventDefault();buttons[Math.max(0,Math.min(buttons.length-1,at+(k==='j'?1:-1)))]?.focus()}else if(k==='z'&&undo&&Date.now()<undo.until){e.preventDefault();void act(undo.task,'undo',{})}else if(task&&!busy){
+      if(k==='e'){e.preventDefault();setInspected(task)}else if(k==='x'&&!task.deleted_at&&!task.missed_at){e.preventDefault();void act(task,'status',{status:task.status==='done'?'open':'done'})}else if(k==='s'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'pin',{pinned:!task.pinned_at})}else if(k==='t'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'tomorrow',{})}else if(k==='delete'&&!task.deleted_at){e.preventDefault();if(task.repeat_rule){setInspected(task);return}if(!(task.capture_id||task.decision_id)||window.confirm('This task is part of the record. Delete it anyway? The decision and source stay.'))void act(task,'archive',{})}
+    }
+  };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[allRows,undo,busy]);
   function card(task: Task, rank?: number, panelOnly=false) {
     return (
       <TaskCard
         key={task.id}
         task={task}
+        selecting={selecting&&!panelOnly}
+        selected={selectedIds.includes(task.id)}
+        select={()=>setSelectedIds(v=>v.includes(task.id)?v.filter(id=>id!==task.id):[...v,task.id])}
+        tools={panelOnly||task.id===taskId?<TaskTools task={task} zone={zone} flags={extras.data?.flags??{}} assign={profile!.role!=='employee'?()=>{setInspected(null);setAssignment({task})}:undefined}/>:undefined}
         inspect={panelOnly?undefined:setInspected}
         panelOnly={panelOnly}
         onClose={()=>setInspected(null)}
@@ -290,6 +319,8 @@ function MyDayContent() {
     waiting = data?.drafts_waiting ?? summary.data?.pending_drafts ?? 0,
     handovers = data?.handovers_waiting ?? [];
   const overdueRows = data?.overdue_rows ?? [];
+  const incoming=data?.review_assignments??extras.data?.incoming??[];
+  const format:TaskFormat={language:String(extras.data?.settings.language??"en-GB"),style:(extras.data?.settings.date_style??"medium") as TaskFormat["style"]};
   const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)) : rows;
   function list(items: Task[]) {return <div className="md-task-list">{items.map(t=>card(t))}</div>}
   function weekView(items: Task[]) {return <div className="md-week">{Array.from({length:7},(_,i)=>{const date=addDays(today,i), group=items.filter(t=>(t.due_time?dateInZone(zone,new Date(t.due_at)):t.due_date)===date);return <section key={date}><h3>{new Intl.DateTimeFormat(undefined,{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"))}</h3>{group.length?list(group):<p className="md-muted">No tasks</p>}</section>})}</div>}
@@ -316,7 +347,7 @@ function MyDayContent() {
     ] as const,
     completed = setup.filter(([k]) => data?.checklist?.[k]).length;
   return (
-    <div className="md-page">
+    <TaskFormatContext.Provider value={format}><div className="md-page"><OfflineStatus/>
       <header className="md-page-heading">
         <div>
           <h1 tabIndex={-1}>
@@ -324,12 +355,14 @@ function MyDayContent() {
           </h1>
           <p className="md-live-line">
             {data
-              ? `${data.counts.today ?? data.counts.todo + data.counts.progress} today, ${data.counts.overdue} overdue, ${waiting + handovers.length} to review`
+              ? `${data.counts.today ?? data.counts.todo + data.counts.progress} today, ${data.counts.overdue} overdue, ${waiting + handovers.length+incoming.length} to review`
               : "Loading your tasks…"}
           </p>
         </div>
 
       </header>
+      {extras.data?.settings.briefing===true&&extras.data?.flags.ai&&extras.data.briefing&&<aside className="md-briefing"><h2>Daily briefing</h2><p className="record-text">{extras.data.briefing.body}</p></aside>}
+      {extras.data?.away.map(h=><aside className="md-away-banner" key={h.id}>You’re away from {formatTaskDay(h.starts_on,format)}. Your handover isn’t submitted yet.</aside>)}
       {message && (
         <p className="notice" role="status">
           {message} {undo && Date.now()<undo.until && <button className="md-text-button" onClick={()=>void act(undo.task,"undo",{})}>Undo</button>}
@@ -348,10 +381,12 @@ function MyDayContent() {
           <label className="md-search"><span className="sr-only">Search tasks</span><input id="md-search" type="search" placeholder="Search tasks" maxLength={100} value={query} onChange={e=>setQuery(e.target.value)}/></label>
           <label className="md-menu-label">Filter<select aria-label="Task filter" value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l])=><option key={v} value={v}>{l} ({data?.tab_counts?.[v]??0})</option>)}</select></label>
           <label className="md-menu-label">View<select aria-label="Task view" value={layout} onChange={e=>{const value=e.target.value as "list"|"board"|"week";setLayout(value);if(value==="week")setFilter("week");try{localStorage.setItem("vimbre:myday-view",value)}catch{}}}><option value="list">List</option><option value="board">Board</option><option value="week">Week</option></select></label>
-          <details className="md-add-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="Add">＋</summary><div><button onClick={()=>setEditor({})}>Add task</button><Link to="/app/capture">Capture</Link><button onClick={()=>setRolePicker(true)}>Add from My role</button></div></details>
+          <details className="md-add-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="Add" aria-describedby="myday-add-hint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg><span id="myday-add-hint" className="md-add-hint" role="tooltip">Add a task or capture a conversation</span></summary><div><button onClick={()=>setEditor({})}>Add task</button><Link to="/app/capture">Capture</Link>{extras.data?.flags.templates&&<button onClick={()=>setTemplates(true)}>Add from template</button>}<button onClick={()=>setRolePicker(true)}>Add from My role</button>{profile!.role!=='employee'&&<button onClick={()=>setAssignment({})}>Assign task</button>}<button onClick={()=>{setSelecting(v=>!v);setSelectedIds([])}}>{selecting?"Finish selecting":"Select several"}</button></div></details>
         </div>
         {quick && <form className="md-quick-add" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy("quick");setError("");try{const task=parseQuickTask(quickText,today);if(!task.title)throw new Error();await changeTask(crypto.randomUUID(),"create",{...task,reminder_option:"at_time"});setQuickText("");setQuick(false);refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}><label>Quick add<input autoFocus value={quickText} onChange={e=>setQuickText(e.target.value)} maxLength={300} placeholder="Send quote Friday 3pm" required/></label><Button type="submit" disabled={Boolean(busy)}>Add task</Button></form>}
         <details className="md-filter-disclosure"><summary>More filters{search||forValue||source ? " · Active":""}</summary><div className="md-filter-row"><ForPicker filter value={forValue} onChange={v=>{setFor(v);setPage(0)}}/><label>From<select value={source} onChange={e=>{setSource(e.target.value);setPage(0)}}><option value="">All sources</option>{Object.entries(sourceLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{(query||forValue||source)&&<button className="md-text-button" onClick={()=>{setQuery("");setSearch("");setFor(null);setSource("");setPage(0)}}>Clear filters</button>}</div></details>
+        {extras.data?.flags.ai&&<button className="md-text-button md-plan-action" onClick={()=>setPlanning(true)}>Plan my day</button>}
+        {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
         {(taskId || linked) && (
           <Link className="md-text-button" to="/app">
             All tasks
@@ -390,11 +425,12 @@ function MyDayContent() {
             )}
             {filter === "today" && (
               <>
-                {(waiting > 0 || handovers.length > 0) && <section className="md-day-group" aria-label="To review">
+                {(waiting > 0 || handovers.length > 0 || incoming.length>0) && <section className="md-day-group" aria-label="To review">
                   <h3>To review</h3>
                   <div className="md-waiting-links">
-                    {(data?.review_drafts??[]).map(d=><article className="md-review-draft" key={d.id}><span className="md-muted">Draft · {d.kind==='action'?'Task':d.kind==='decision'?'Decision':d.kind}</span><h4>{d.payload.title}</h4>{d.payload.details&&<p>{d.payload.details}</p>}{d.payload.due_date&&<p>Due: {d.payload.due_date}{d.payload.due_time?` · ${d.payload.due_time}`:''}</p>}<p>Owner: {d.payload.owner_id&&d.payload.owner_id!==profile!.id?'Review owner in Capture':'Me'} · Reminder: {(d.payload.reminder_option??'at_time').replaceAll('_',' ')}</p>{d.duplicate&&<p className="field-error">A matching item already exists. Review it before accepting.</p>}<div className="md-expanded-actions"><Button disabled={Boolean(busy)||d.duplicate} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_accept',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Accept</Button><Link to={`/app/capture?capture=${d.capture_id}`}>Edit</Link><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_dismiss',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Dismiss</button></div></article>)}
+                    {(data?.review_drafts??[]).map(d=><article className="md-review-draft" key={d.id}><span className="md-muted">Draft · {d.kind==='action'?'Task':d.kind==='decision'?'Decision':d.kind}</span><h4>{d.payload.title}</h4>{d.payload.details&&<p>{d.payload.details}</p>}{d.payload.due_date&&<p>Due: {formatTaskDay(d.payload.due_date,format)}{d.payload.due_time?` · ${d.payload.due_time}`:''}</p>}<p>Owner: {d.payload.owner_id&&d.payload.owner_id!==profile!.id?'Review owner in Capture':'Me'} · Reminder: {(d.payload.reminder_option??'at_time').replaceAll('_',' ')}</p>{d.duplicate&&<p className="field-error">A matching item already exists. Review it before accepting.</p>}<div className="md-expanded-actions"><Button disabled={Boolean(busy)||d.duplicate} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_accept',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Accept</Button><Link to={`/app/capture?capture=${d.capture_id}`}>Edit</Link><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_dismiss',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Dismiss</button></div></article>)}
                     {waiting>0&&!data?.review_drafts&&<Link to="/app/capture">{waiting} drafts to review</Link>}
+                    {incoming.map(a=><article className="md-review-draft" key={a.id}><span className="md-muted">Assigned by {a.creator_name}</span><h4>{a.title}</h4>{a.details&&<p>{a.details}</p>}<p>Due: {formatTaskDay(a.suggested_date??a.due_date,format)}</p><div className="md-expanded-actions">{['accept','decline'].map(op=><Button key={op} variant={op==='accept'?'primary':'secondary'} disabled={Boolean(busy)} onClick={async()=>{setBusy(a.id);setError('');try{await daySuite(op,a.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='accept'?'Accept':'Decline'}</Button>)}</div><form className="md-suggest-date" onSubmit={async e=>{e.preventDefault();const date=String(new FormData(e.currentTarget).get('date')??'');setBusy(a.id);try{await daySuite('suggest_date',a.id,{date});refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}><label className="field">Suggest a new date<input type="date" name="date" min={today} required/></label><Button type="submit" variant="secondary" disabled={Boolean(busy)}>Suggest date</Button></form></article>)}
                     {handovers.map((h) => (
                       <Link key={h.id} to="/app/handovers">
                         Review handover: {h.title}
@@ -413,6 +449,7 @@ function MyDayContent() {
                     <p>No upcoming tasks in the next seven days.</p>
                   )}
                 </section>}
+                {Boolean(extras.data?.waiting.length)&&<section className="md-day-group" aria-label="Waiting on others"><h3>Waiting on others</h3><ul className="md-waiting-list">{extras.data!.waiting.map(a=><li key={a.id}><div><strong>{a.title}</strong><span>{a.recipient_name} · {a.status==='accepted'?'Accepted':'To review'}{a.suggested_date?` · Suggested ${a.suggested_date}`:''}</span></div><Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{setBusy(a.id);try{await daySuite('nudge',a.id);setMessage('Nudge sent.')}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Nudge</Button><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{if(!window.confirm('Withdraw this assignment?'))return;setBusy(a.id);try{await daySuite('cancel_assignment',a.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Withdraw</button></li>)}</ul></section>}
                 {(data?.covering ?? []).map((h) => (
                   <section
                     key={h.id}
@@ -420,7 +457,7 @@ function MyDayContent() {
                     aria-label={`Covering for ${h.owner_name}`}
                   >
                     <h3>Covering for {h.owner_name}</h3>
-                    <Link to="/app/my-cover-duties">View cover</Link>
+                    <Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{if(!window.confirm('Hand this cover back to the owner?'))return;setBusy(h.id);try{await daySuite('cover_hand_back',h.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Hand back</Button>
                     <ul className="md-cover-tasks">
                       {(data?.cover_tasks ?? [])
                         .filter((t) => t.owner_id === h.owner_id)
@@ -460,6 +497,9 @@ function MyDayContent() {
           </>
         )}
       </section>
+      {extras.error&&<p className="field-error" role="alert">Task tools could not be loaded. <button className="md-text-button" onClick={extras.retry}>Retry task tools</button></p>}
+      <div className="md-feature-tools">{extras.data?.flags.rules&&<button className="md-text-button" onClick={()=>setRules(true)}>Rules</button>}{extras.data?.flags.calendar&&<button className="md-text-button" onClick={()=>setCalendar(true)}>Calendar feed</button>}<button className="md-text-button" onClick={()=>setTransfers(true)}>Import and export</button>{profile!.role!=='employee'&&extras.data?.flags.team&&<button className="md-text-button" aria-expanded={teamOpen} onClick={()=>setTeamOpen(v=>!v)}>Team</button>}</div>
+      {teamOpen&&<TeamDayPanel/>}
       <footer className="md-footer"><button className="md-visibility" onClick={()=>access.current?.showModal()}>Who sees my tasks</button></footer>
       <CaptureSummary
         data={summary.data ? { ...summary.data, pending_drafts: 0 } : null}
@@ -484,6 +524,9 @@ function MyDayContent() {
           </ul>
         </details>
       )}
+      {templates&&<TemplatePicker today={today} close={()=>setTemplates(false)} saved={()=>{setTemplates(false);setMessage('Task added from template.');refresh()}}/>}
+      {rules&&<RulesPanel close={()=>setRules(false)}/>}{planning&&<PlanMyDay close={()=>setPlanning(false)}/>}{calendar&&<CalendarPanel close={()=>setCalendar(false)} enabled={extras.data?.calendar_enabled??false}/>}{transfers&&<ImportExportPanel close={()=>setTransfers(false)}/>}
+      {assignment&&<AssignmentPanel task={assignment.task} close={()=>setAssignment(null)} saved={()=>{setAssignment(null);setMessage('Task sent for acceptance.');refresh()}}/>}{comments&&<TaskComments id={comments} close={()=>setComments(null)}/>}
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}
@@ -548,7 +591,7 @@ function MyDayContent() {
         <WorkVisibilityDetails />
         <Button onClick={() => access.current?.close()}>Close</Button>
       </dialog>
-    </div>
+    </div></TaskFormatContext.Provider>
   );
 }
 

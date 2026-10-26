@@ -1,3 +1,5 @@
+import {clearDevicePush} from '../my-day/device-push'
+import {setOfflineOwner,clearOfflineAccount,offlineOwner} from '../my-day/offline'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
@@ -21,7 +23,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, value) => {
       setSession(value); setInitializing(false)
       if (event === 'PASSWORD_RECOVERY') setRecovery(true)
-      if (event === 'SIGNED_OUT') { setRecovery(false); setResult(null) }
+      if(value?.user.id)setOfflineOwner(value.user.id)
+      if (event === 'SIGNED_OUT') { void clearDevicePush(); clearOfflineAccount(offlineOwner()); setRecovery(false); setResult(null) }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -30,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!session) return
     async function load() {
       try {
+        if(!navigator.onLine){const cached=JSON.parse(localStorage.getItem('vimbre:offline:identity:'+session!.user.id)??'null');if(cached?.profile?.id===session!.user.id&&cached.profile.active&&cached.company?.id===cached.profile.company_id&&Date.now()-cached.at<72*3600000){if(!cancelled)setResult({profile:cached.profile,company:cached.company,invitation:null,error:'',userId:session!.user.id,revision});return}throw Error('Open your workspace while connected before using it offline.')}
         const { data: user, error: userError } = await supabase.auth.getUser()
         if (userError || !user.user?.email_confirmed_at || user.user.id !== session!.user.id) throw new Error('Please confirm your email and sign in again.')
         const { data: invites, error: invitationError } = await supabase.rpc('my_invitation')
@@ -42,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (memberError || !member?.active) throw new Error('Your workspace could not be loaded. Please retry or contact your company administrator.')
         const { data: workspace, error: companyError } = await supabase.from('companies').select('*').eq('id', member.company_id).single()
         if (companyError || !workspace) throw new Error('Your company could not be loaded. Please retry.')
+        try{localStorage.setItem('vimbre:offline:identity:'+session!.user.id,JSON.stringify({profile:member,company:workspace,at:Date.now()}))}catch{}
         if (!cancelled) setResult({ profile: member, company: workspace, invitation: null, error: '', userId: session!.user.id, revision })
       } catch (reason) { if (!cancelled) setResult({ profile: null, company: null, invitation: null, error: reason instanceof Error ? reason.message : 'Could not load your workspace.', userId: session!.user.id, revision }) }
     }
@@ -62,6 +67,7 @@ export function RequireAuth() {
   const location = useLocation()
   if (account.loading) return <main className="standalone" role="status">Loading your workspace…</main>
   if (!account.session) return <Navigate to="/login" replace state={{myDayTask:location.pathname==='/app'?location.search:undefined}} />
+  if(!navigator.onLine&&location.pathname!=='/app')return <Navigate to="/app" replace/>
   if (account.invitation) return <Navigate to="/join" replace />
   if (account.recovery) return <Navigate to="/reset-password" replace />
   if (account.error || !account.profile) return <main className="standalone"><h1 tabIndex={-1}>Workspace unavailable</h1><p role="alert">{account.error}</p><Button onClick={account.refresh}>Retry</Button> <Button variant="secondary" onClick={() => { void supabase.auth.signOut() }}>Sign out</Button></main>

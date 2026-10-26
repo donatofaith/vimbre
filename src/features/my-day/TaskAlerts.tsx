@@ -47,7 +47,7 @@ export function TaskAlerts({
               <strong>
                 {a.phase === "due"
                   ? `Due now: ${a.title}`
-                  : `Is this done? ${a.title} was due an hour ago.`}
+                  : `Is this done? ${a.title} is still open.`}
               </strong>
             </Link>
             <div className="md-alert-actions">

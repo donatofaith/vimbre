@@ -64,6 +64,7 @@ export function TaskPanel({
     try {
       await changeTask(id, task ? "edit" : "create", {
         title: get("title"),
+        base_updated_at: task?.updated_at,
         due_date: date,
         due_time: date?time:"",
         details: get("details"),

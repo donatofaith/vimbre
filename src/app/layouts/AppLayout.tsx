@@ -1,3 +1,4 @@
+import {offlineQueue} from '../../features/my-day/offline'
 import {useMyDaySummary} from '../../features/workspace/useMyDaySummary'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -98,6 +99,7 @@ function WorkspaceLayout() {
 
   async function logout() {
     if (loggingOut) return
+    if(offlineQueue().length&&!window.confirm("Offline changes have not synced. Sign out and remove them from this device?"))return
 
     setLoggingOut(true)
     setLogoutError('')

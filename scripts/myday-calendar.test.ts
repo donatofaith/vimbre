@@ -1,0 +1,11 @@
+import {describe,it,expect} from 'vitest'
+import {calendar,foldLine,createCalendarHandler} from '../supabase/functions/myday-calendar/handler'
+const task={id:'11111111-1111-4111-8111-111111111111',title:'Review, plan;\nBEGIN:VEVENT',due_date:'2026-10-27',due_time:null,due_at:null,time_needed_minutes:30,updated_at:'2026-10-26T09:00:00Z'}
+describe('private calendar',()=>{
+ it('escapes titles without adding properties or events',()=>{const output=calendar([task]);expect(output).toContain('SUMMARY:Review\\, plan\\;\\nBEGIN:VEVENT');expect(output.split('\r\nBEGIN:VEVENT\r\n')).toHaveLength(2);expect(output).toContain('DTSTART;VALUE=DATE:20261027')})
+ it('folds multibyte titles at 75 octets without splitting code points',()=>{const original='SUMMARY:'+ '🙂é'.repeat(70),folded=foldLine(original);expect(folded.replaceAll('\r\n ','')).toBe(original);for(const line of folded.split('\r\n'))expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75)})
+ it('does not expose source text or task details',()=>{expect(calendar([{...task,details:'private evidence'}] as never)).not.toContain('private evidence')})
+ it('rejects malformed and duplicate capabilities before reading',async()=>{let reads=0;const handle=createCalendarHandler(async()=>{reads++;return {tasks:[task]}});for(const suffix of ['?token=bad','?token='+ 'a'.repeat(64)+'&token='+ 'b'.repeat(64)])expect((await handle(new Request('https://vimbre.com/'+suffix))).status).toBe(404);expect(reads).toBe(0)})
+ it('revocation returns no task data and responses are never cached',async()=>{let enabled=true;const handle=createCalendarHandler(async()=>enabled?{tasks:[task]}:null),url='https://vimbre.com/?token='+ 'a'.repeat(64);const valid=await handle(new Request(url));expect(valid.status).toBe(200);expect(valid.headers.get('Cache-Control')).toContain('no-store');enabled=false;const revoked=await handle(new Request(url));expect(revoked.status).toBe(404);expect(await revoked.text()).toBe('')})
+ it('HEAD contains no body and write methods are rejected',async()=>{const handle=createCalendarHandler(async()=>({tasks:[task]})),url='https://vimbre.com/?token='+ 'a'.repeat(64);expect(await (await handle(new Request(url,{method:'HEAD'}))).text()).toBe('');expect((await handle(new Request(url,{method:'POST'}))).status).toBe(405)})
+})
