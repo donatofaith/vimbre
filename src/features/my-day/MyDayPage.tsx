@@ -28,8 +28,8 @@ import "./my-day.css";
 const filters = [
   ["today", "Today"],
   ["week", "This week"],
+  ["overdue", "Overdue"],
   ["all", "All"],
-  ["done", "Done"],
   ["archived", "Deleted"],
 ] as const;
 export function MyDayPage() {
