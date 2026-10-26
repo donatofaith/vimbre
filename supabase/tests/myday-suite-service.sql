@@ -57,10 +57,21 @@ do $$declare owner uuid:=current_setting('test.employee')::uuid;company uuid;tas
  insert into public.task_alerts(task_id,owner_id,company_id,cycle,phase) values(task,owner,company,cycle,'due') returning id into alert;
  select j.id into job from private.myday_delivery_jobs j join private.myday_notifications n on n.id=j.notification_id where n.source_alert_id=alert;
  if job is null then raise exception 'Reminder push not queued';end if;
+ update private.myday_delivery_jobs set day=current_date-1 where id=job;
  claimed:=public.myday_delivery('claim');if exists(select 1 from jsonb_array_elements(claimed) j where j->>'id'=job::text) then raise exception 'Push ignored quiet hours';end if;
  update private.myday_personal_options set settings=settings||'{"quiet_start":"00:00","quiet_end":"00:00"}' where owner_id=owner;
  claimed:=public.myday_delivery('claim');if not exists(select 1 from jsonb_array_elements(claimed) j where j->>'id'=job::text) then raise exception 'Ready push not claimed';end if;
  if public.myday_delivery('source',job)->'notice'->>'owner_id'<>owner::text then raise exception 'Push owner binding lost';end if;
  update public.actions set status='done' where id=task;
  if public.myday_delivery('source',job) is not null then raise exception 'Completed task push still deliverable';end if;
+end$$;
+do $$declare owner uuid:=current_setting('test.employee')::uuid;company uuid;task uuid:=gen_random_uuid();v jsonb;begin
+ select company_id into company from public.profiles where id=owner;
+ insert into public.actions(id,owner_id,company_id,title,details,due_date,deleted_at) values(task,owner,company,'Expired deleted task','PRIVATE deleted body',current_date,now()-interval '31 days');
+ insert into private.myday_comments(id,task_id,company_id,author_id,body,private_note) values(gen_random_uuid(),task,company,owner,'PRIVATE old comment',true);
+ insert into private.myday_repeats(id,owner_id,company_id,task_id,current_task,frequency,anchor,next_date,active,template) values(gen_random_uuid(),owner,company,task,task,'monthly',current_date,current_date+1,false,'{"title":"PRIVATE deleted template"}');
+ perform private.myday_tick(now(),owner);
+ if exists(select 1 from public.actions where id=task and (purged_at is null or details<>'' or title<>'Deleted task')) then raise exception 'Deleted body retained after retention';end if;
+ if exists(select 1 from private.myday_comments where task_id=task) then raise exception 'Deleted private comment retained';end if;
+ if exists(select 1 from private.myday_repeats where current_task=task and template<>'{}'::jsonb) then raise exception 'Stopped repeat retained deleted body';end if;
 end$$;

@@ -7,7 +7,7 @@ export type SuiteOverview={briefing?:{body:string;created_at:string}|null;settin
 const reads=new Set(['overview','notifications','mention_people','templates','rules','people','comments','task_extra','team','ai_source','ai_cache_get'])
 export async function daySuite<T=unknown>(operation:string,id:string|null=null,data:Record<string,unknown>={}):Promise<T>{
  if(!navigator.onLine)throw Error('This action needs a connection.');
- const result=await supabase.rpc('myday_suite',{p_operation:operation,p_id:id,p_data:data as Json});if(result.error)throw result.error;
+ const result=await supabase.rpc('myday_suite',{p_operation:operation,p_id:id,p_data:data as Json}).abortSignal(AbortSignal.timeout(operation==='import'?30000:15000));if(result.error)throw result.error;
  if(!reads.has(operation))window.dispatchEvent(new Event('vimbre:work-changed'));
  return result.data as unknown as T
 }
