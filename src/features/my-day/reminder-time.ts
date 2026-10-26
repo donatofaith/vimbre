@@ -24,5 +24,7 @@ export function localReminder(date: string, time: string, zone: string) {
     if (next === guess) break;
     guess = next;
   }
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(guess));const value=(key:string)=>parts.find(p=>p.type===key)!.value;
+  if(`${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}`!==`${date}T${time}`)throw Error('This local time is unavailable because the clocks change. Choose another time.');
   return new Date(guess).toISOString();
 }

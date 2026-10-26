@@ -100,7 +100,7 @@ export function ReminderPanel({
             className="auth-form"
             onSubmit={(e) => {
               e.preventDefault();
-              if(pickingSnooze){const until=localReminder(date,time,zone);if(Date.parse(until)<=Date.now()){setError("Choose a future reminder time.");return}void apply("snooze",{until})}else void apply("reschedule", { due_date: date, due_time: time });
+              if(pickingSnooze){try{const until=localReminder(date,time,zone);if(Date.parse(until)<=Date.now()){setError("Choose a future reminder time.");return}void apply("snooze",{until})}catch(e){setError((e as Error).message)}}else void apply("reschedule", { due_date: date, due_time: time });
             }}
           >
             <Input
