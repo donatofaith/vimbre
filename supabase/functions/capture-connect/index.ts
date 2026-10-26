@@ -3,7 +3,7 @@ import {preview} from './preview.ts'
 import {prepareSource,updateSource} from './source-updates.ts'
 import type {Reference} from './source-updates.ts'
 import {createClient} from '@supabase/supabase-js'
-import {providers,names,configured,start,exchange,refresh,sources,read,revoke,random,digest} from './providers.ts'
+import {providers,names,configured,start,exchange,refresh,sources,read,drivePdf,revoke,random,digest} from './providers.ts'
 import type {Provider,Tokens} from './providers.ts'
 const url=Deno.env.get('SUPABASE_URL')!,key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,anon=Deno.env.get('SUPABASE_ANON_KEY')!
 const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})
@@ -24,7 +24,7 @@ Deno.serve(async req=>{
  try{
   const bearer=req.headers.get('authorization')||'';if(!bearer.startsWith('Bearer '))return reply(401,{ok:false,code:'sign_in'})
   const auth=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});const {data,error}=await auth.auth.getUser(bearer.slice(7));if(error||!data.user?.email_confirmed_at)return reply(401,{ok:false,code:'sign_in'})
-  const user=data.user.id,raw=await req.text();if(raw.length>6000)return reply(413,{ok:false,code:'invalid_input'});const input=JSON.parse(raw);if(!input||typeof input!=='object'||Array.isArray(input))return reply(400,{ok:false,code:'invalid_input'})
+  const user=data.user.id,raw=await req.text();if(raw.length>70000)return reply(413,{ok:false,code:'invalid_input'});const input=JSON.parse(raw);if(!input||typeof input!=='object'||Array.isArray(input))return reply(400,{ok:false,code:'invalid_input'})
   const connections=await service('list',user)
   async function sourceService(action:string,payload:Record<string,unknown>){const {data,error}=await db.rpc('myday_source_service',{p_user:user,p_action:action,p_data:payload});if(error)throw Error(['write_disabled','invalid_source'].includes(error.message)?error.message:'access_denied');return data}
   async function searchService(action:string,payload:Record<string,unknown>={}){const r=await db.rpc('capture_search_service',{p_user:user,p_action:action,p_data:payload});if(r.error)throw Error(r.error.message.includes('search_expired')?'search_expired':'access_denied');return r.data}
@@ -45,7 +45,7 @@ Deno.serve(async req=>{
     try{await updateSource(context,tokens,input.operation,input.body,payload.list_id,input.request_id);await sourceService('finish',{...payload,state:'sent'});return reply(200,{ok:true})}catch(e){await sourceService('finish',{...payload,state:e instanceof Error&&e.message==='uncertain'?'uncertain':'failed'});throw e}
    }finally{await service('unlock',user,{id:connection.id,secret:tokens,lease_token:stored.lease_token})}
   }
-  if(!['sources','import','disconnect','search','preview'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
+  if(!['sources','import','disconnect','search','preview','preview_text'].includes(input.action)||typeof input.id!=='string'||!connections.some((c:any)=>c.id===input.id))return reply(403,{ok:false,code:'access_denied'})
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false
   try{
    if(input.action==='disconnect'){await revoke(p,tokens);await service('remove',user,{id:input.id,lease_token:stored.lease_token});removed=true;return reply(200,{ok:true})}
@@ -59,8 +59,14 @@ Deno.serve(async req=>{
     const captured=await searchService('captured',{connection:input.id});
     return reply(200,{ok:true,rows:data.rows.map((r:any)=>({...r,captured:captured[r.reference]||null})).filter((r:any)=>!f.notCaptured||!r.captured),next:data.next?data.cache:null,cache:data.cache})
    }
+   if(input.action==='preview_text'){
+    if(typeof input.text!=='string'||input.text.length>16000)throw Error('invalid_source');
+    return reply(200,{ok:true,...await searchService('preview_finish',{connection:input.id,preview:input.preview,text:input.text})})
+   }
    if(input.action==='preview'){
-    const row=await searchService('selected_row',{connection:input.id,cache:input.cache,reference:input.reference}),source=await preview(p,tokens,row);
+    const row=await searchService('selected_row',{connection:input.id,cache:input.cache,reference:input.reference});
+    if(p==='drive'&&row.mime==='application/pdf'){const document=await drivePdf(tokens,row.id),result=await searchService('preview_put',{connection:input.id,source:{title:row.title,text:'PDF extraction pending',date:row.date?.slice(0,10)||new Date().toISOString().slice(0,10),sender:row.sender,source_type:'note',reference:row.reference,source:row.id,container:row.container,url:row.url,provider:p,format:'pdf'}});return reply(200,{ok:true,...result,document,title:row.title})}
+    const source=await preview(p,tokens,row);
     await sourceService('remember',{provider:p,source:source.source,container:source.container,text:source.text});
     const result=await searchService('preview_put',{connection:input.id,source});return reply(200,{ok:true,...result,source})
    }

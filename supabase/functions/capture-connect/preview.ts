@@ -18,7 +18,7 @@ export async function preview(p:Provider,t:Tokens,row:SearchRow){
   text=messages.map((m:any)=>prepareCaptureText(m.body?.contentType==='html'?plain(m.body.content):String(m.body?.content||''))).filter(Boolean).join('\n\n')
  }else if(p==='drive'&&row.mime==='application/vnd.google-apps.spreadsheet')text=await api(p,t,`files/${enc(row.id)}/export?mimeType=text/csv`,true)
  else if(p==='teams'&&row.container.startsWith('channel:')){
-  const [,team,channel]=row.container.split(':');if(!team||!channel)throw Error('invalid_source')
+  const [,rawTeam,rawChannel]=row.container.split(':');const team=decodeURIComponent(rawTeam||''),channel=decodeURIComponent(rawChannel||'');if(!team||!channel)throw Error('invalid_source')
   const path=`teams/${enc(team)}/channels/${enc(channel)}/messages/${enc(row.id)}`,d=await api(p,t,path),replies=await api(p,t,path+'/replies?$top=30');text=[d,...(replies.value||[])].map((m:any)=>plain(m.body?.content)).join('\n\n')
  }else {const value=await read(p,t,row.id,row.container);text=value.text}
  if(!text.trim())throw Error('source_empty')

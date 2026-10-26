@@ -54,7 +54,7 @@ begin
   if nullif(p_data->>'preview','') is not null then
    select * into selected from private.capture_selected_sources where id=(p_data->>'preview')::uuid and owner_id=u and company_id=c and expires_at>now();if not found then raise exception 'Preview expired. Select the conversation again.' using errcode='22023';end if;
    select * into conn from private.capture_connections where id=selected.connection_id and user_id=u and company_id=c;if not found or not(conn.provider=any(allowed)) then raise insufficient_privilege;end if;
-   v:=selected.source;
+   v:=selected.source;if v->>'format'='pdf' then raise invalid_parameter_value;end if;
    perform pg_advisory_xact_lock(hashtextextended(u::text||conn.id::text||(v->>'reference'),0));
    select id into new_id from public.captures where owner_id=u and company_id=c and source_account=conn.id and source_reference=v->>'reference' and source_text=v->>'text' and deleted_at is null order by created_at desc limit 1;
    if new_id is not null then return to_jsonb(new_id);end if;
@@ -119,6 +119,10 @@ begin
   delete from private.capture_selected_sources where owner_id=p_user and expires_at<=now();
   if(select count(*) from private.capture_selected_sources where owner_id=p_user)>100 then raise exception 'rate_limited';end if;
   insert into private.capture_selected_sources(owner_id,company_id,connection_id,source) values(p_user,c,conn.id,v) returning id into new_id;return jsonb_build_object('preview',new_id);
+ elsif p_action='preview_finish' then
+  if char_length(btrim(p_data->>'text')) not between 1 and 16000 then raise invalid_parameter_value;end if;
+  update private.capture_selected_sources set source=source||jsonb_build_object('text',p_data->>'text','format','text') where id=(p_data->>'preview')::uuid and owner_id=p_user and company_id=c and connection_id=conn.id and expires_at>now() and source->>'format'='pdf' returning source into v;
+  if not found then raise insufficient_privilege;end if;return jsonb_build_object('preview',p_data->>'preview','source',v);
  elsif p_action='captured' then
   return coalesce((select jsonb_object_agg(source_reference,id) from(select distinct on(source_reference) source_reference,id from public.captures where owner_id=p_user and company_id=c and source_account=conn.id and deleted_at is null order by source_reference,created_at desc)x),'{}');
  else raise invalid_parameter_value;end if;
