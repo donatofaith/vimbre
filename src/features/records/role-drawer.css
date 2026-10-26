@@ -1,11 +1,25 @@
-.vr-drawer { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(540px,100%); height: 100dvh; max-height: 100dvh; max-width: 100%; border: 0; border-left: 1px solid #e2e8f0; padding: 24px 28px 40px; background: white; color: #102a43; overflow-y: auto; }
-.vr-drawer::backdrop { background: #102a4370; }
-.vr-drawer .vr-drawer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
-.vr-drawer h2, .vr-drawer .record-editor h2 { font: 650 24px/1.4 var(--heading-font); letter-spacing: 0; margin: 0 0 24px; }
-.vr-drawer .record-editor { border: 0; padding: 0; background: none; box-shadow: none; }
-.vr-drawer .auth-form { display: grid; gap: 20px; }
-.vr-drawer .field { min-width: 0; }
-.vr-drawer input[type="file"] { max-width: 100%; white-space: normal; }
-@media(max-width:760px) { .vr-drawer { padding: 20px 16px 32px; } }
-.vr-drawer { font-size: 14px; }
-.vr-drawer .field-hint { font-size: 13px; }
+.vr-drawer {
+  position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%);
+  margin: 0; width: min(680px, calc(100vw - 32px)); height: min(88dvh, 900px);
+  max-height: 88dvh; max-width: calc(100vw - 32px); border: 1px solid #e2e8f0;
+  border-radius: 18px; padding: 24px 28px 32px; background: white; color: #102a43;
+  overflow-y: auto; box-shadow: 0 24px 80px rgb(16 42 67 / 22%);
+}
+.vr-drawer::backdrop { background: rgb(16 42 67 / 48%); }
+.vr-drawer .vr-drawer-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; }
+.vr-drawer h2, .vr-drawer .record-editor h2 { font:650 24px/1.4 var(--heading-font); letter-spacing:0; margin:0 0 24px; }
+.vr-drawer .record-editor { border:0; padding:0; background:none; box-shadow:none; }
+.vr-drawer .auth-form { display:grid; gap:20px; }
+.vr-drawer .field { min-width:0; }
+.vr-drawer input[type="file"] { max-width:100%; white-space:normal; }
+.vr-drawer .button { min-height:44px; padding:11px 16px; border-radius:10px; }
+.vr-drawer :is(input,select,textarea) { max-width:100%; min-width:0; }
+.vr-drawer { font-size:14px; }
+.vr-drawer .field-hint { font-size:13px; }
+@media(max-width:640px) {
+ .vr-drawer { width:calc(100vw - 20px); max-width:calc(100vw - 20px); height:min(90dvh,900px); max-height:90dvh; padding:18px 16px 24px; border-radius:16px; }
+ .vr-drawer .vr-drawer-bar { align-items:flex-start; }
+ .vr-drawer h2,.vr-drawer .record-editor h2 { font-size:21px; }
+ .vr-drawer .md-panel-actions { position:sticky; bottom:-24px; flex-wrap:wrap; }
+ .vr-drawer .md-panel-actions .button { flex:1 1 120px; }
+}
