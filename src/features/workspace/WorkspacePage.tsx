@@ -467,8 +467,8 @@ function ActionWorkspace({
 
                           <p>
                             Due{' '}
-                            <time dateTime={action.due_date}>
-                              {action.due_date}
+                            <time dateTime={action.due_date || undefined}>
+                              {action.due_date || "No date"}
                             </time>
                           </p>
 

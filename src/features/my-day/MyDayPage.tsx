@@ -433,10 +433,10 @@ function MyDayContent() {
                                 "To do"}
                             </span>
                             <time>
-                              {new Intl.DateTimeFormat("en-GB", {
+                              {t.due_at ? new Intl.DateTimeFormat("en-GB", {
                                 dateStyle: "medium",
                                 timeZone: zone,
-                              }).format(new Date(t.due_at))}
+                              }).format(new Date(t.due_at)) : "No date"}
                             </time>
                           </li>
                         ))}

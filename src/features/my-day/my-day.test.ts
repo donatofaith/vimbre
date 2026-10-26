@@ -47,3 +47,5 @@ it("keeps a date-only deadline on its calendar day", () => {
  const task={due_date:"2026-10-22",due_time:null,due_at:"2026-10-22T09:00:00Z"} as Task;
  expect(taskDate(task,"Pacific/Kiritimati")).toBe("22 Oct 2026");
 });
+
+it("does not invent a date for undated tasks",()=>{expect(taskDate({due_date:null,due_time:null,due_at:null} as unknown as Task,"Africa/Lagos")).toBe("No date")});
