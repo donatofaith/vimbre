@@ -43,6 +43,14 @@ do $$begin
  begin update public.task_events set event='updated' where owner_id=auth.uid();raise exception 'Audit editable';exception when insufficient_privilege then null;end;
  begin delete from public.task_events where owner_id=auth.uid();raise exception 'Audit removable';exception when insufficient_privilege then null;end;
 end $$;
+-- Advance only this rollback fixture's undo expiry; do not wait or touch real tasks.
+select public.myday_action(current_setting('test.task')::uuid,'archive','{}');
+reset role;
+update private.myday_undo set expires_at=clock_timestamp()-interval '1 second' where task_id=current_setting('test.task')::uuid;
+set local role authenticated;
+do $$begin
+ begin perform public.myday_action(current_setting('test.task')::uuid,'undo','{}');raise exception 'Expired Undo accepted';exception when invalid_parameter_value then null;end;
+end $$;
 select set_config('request.jwt.claim.sub',current_setting('test.manager'),true);
 do $$begin
  if exists(select 1 from public.task_events where owner_id<>auth.uid()) then raise exception 'Private events leaked';end if;
