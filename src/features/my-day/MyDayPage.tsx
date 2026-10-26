@@ -520,7 +520,7 @@ function MyDayContent() {
             )}
             {filter === "today" && (
               <>
-                <section className="md-day-group" aria-label="To review">
+                {(waiting > 0 || handovers.length > 0 || decisions > 0) && <section className="md-day-group" aria-label="To review">
                   <h3>Waiting on you</h3>
                   <div className="md-waiting-links">
                     {decisions > 0 && (
@@ -539,12 +539,10 @@ function MyDayContent() {
                         Review handover: {h.title}
                       </Link>
                     ))}
-                    {!waiting && !handovers.length && !decisions && (
-                      <p>Nothing waiting for your review.</p>
-                    )}
+
                   </div>
-                </section>
-                <section className="md-day-group" aria-label="Coming up">
+                </section>}
+                {(upcoming.length > 0) && <section className="md-day-group" aria-label="Coming up">
                   <h3>Coming up</h3><RoleUpcoming/>
                   {upcoming.length ? (
                     <div className="md-task-list">
@@ -553,7 +551,7 @@ function MyDayContent() {
                   ) : (
                     <p>No upcoming tasks in the next seven days.</p>
                   )}
-                </section>
+                </section>}
                 {(data?.covering ?? []).map((h) => (
                   <section
                     key={h.id}
@@ -584,7 +582,7 @@ function MyDayContent() {
                     </ul>
                   </section>
                 ))}
-                <details className="md-day-group md-done-group">
+                {done.length > 0 && <details className="md-day-group md-done-group">
                   <summary>
                     Done today <span>{data?.counts.done ?? done.length}</span>
                   </summary>
@@ -595,7 +593,7 @@ function MyDayContent() {
                   ) : (
                     <p>No tasks completed today.</p>
                   )}
-                </details>
+                </details>}
               </>
             )}
           </>
