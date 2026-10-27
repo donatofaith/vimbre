@@ -4,20 +4,6 @@
   max-width: 1440px;
   margin: 0 auto;
 }
-.md-page-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 32px;
-  padding: 12px 0 8px;
-}
-.md-page-heading h1 {
-  font-family: var(--heading-font);
-  font-size: clamp(28px, 2.6vw, 38px);
-  line-height: 1.22;
-  letter-spacing: -0.01em;
-  margin: 10px 0 12px;
-}
 .md-date-label {
   font-size: 12px;
   font-weight: 600;
@@ -610,10 +596,6 @@
   }
 }
 @media (max-width: 1279px) {
-  .md-page-heading {
-    flex-direction: column;
-    gap: 16px;
-  }
   .md-main-actions {
     justify-content: flex-start;
     max-width: none;
@@ -635,9 +617,6 @@
 @media (max-width: 767px) {
   .md-page {
     gap: 26px;
-  }
-  .md-page-heading {
-    padding-top: 0;
   }
   .md-main-actions {
     display: grid;
@@ -853,64 +832,10 @@
 .md-page {
   gap: 24px;
 }
-.md-page-heading {
-  position: relative;
-  isolation: isolate;
-  padding: 30px;
-  border-radius: 22px;
-  background: var(--navy);
-  border: 1px solid rgb(255 255 255 / 8%);
-  color: #fff;
-  box-shadow: 0 8px 24px rgb(16 42 67 / 8%);
-}
-.md-page-heading::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse at 95% 0,
-    rgb(47 128 237 / 22%),
-    transparent 65%
-  );
-}
-.md-page-heading h1 {
-  color: #fff;
-  font-size: clamp(26px, 2.4vw, 36px);
-  margin-block: 10px;
-}
-.md-page-heading .md-date-label {
-  color: #bed0e0;
-}
-.md-page-heading .md-live-line {
-  color: #d7e3ec;
-}
 .md-main-actions {
   max-width: 310px;
   padding-top: 0;
   gap: 8px;
-}
-.md-page-heading .md-main-actions .button {
-  flex-grow: 1;
-  justify-content: center;
-  font-size: 12px;
-  padding: 11px 12px;
-}
-.md-page-heading .md-main-actions > .button:first-child {
-  flex-basis: 100%;
-}
-.md-page-heading .button-secondary {
-  border-color: rgb(255 255 255 / 18%);
-  background: rgb(255 255 255 / 8%);
-  color: #fff;
-}
-.md-page-heading .button-secondary:hover {
-  background: rgb(255 255 255 / 14%);
-}
-.md-page-heading :is(a, button):focus-visible {
-  outline-color: #fff;
 }
 .md-work-section {
   padding: 26px;
@@ -1102,20 +1027,10 @@
   }
 }
 @media (max-width: 1279px) {
-  .md-page-heading {
-    flex-direction: column;
-    gap: 22px;
-  }
   .md-main-actions {
     max-width: none;
     width: 100%;
     justify-content: flex-start;
-  }
-  .md-page-heading .md-main-actions > .button {
-    flex-grow: 0;
-  }
-  .md-page-heading .md-main-actions > .button:first-child {
-    flex-basis: auto;
   }
   .md-board {
     gap: 10px;
@@ -1152,20 +1067,8 @@
   }
 }
 @media (max-width: 767px) {
-  .md-page-heading {
-    padding: 24px 20px;
-    border-radius: 18px;
-    gap: 24px;
-  }
-  .md-page-heading h1 {
-    font-size: 27px;
-  }
   .md-main-actions {
     display: flex;
-  }
-  .md-page-heading .md-main-actions > .button {
-    flex: 1 1 100%;
-    min-height: 46px;
   }
   .md-work-section {
     padding: 20px 14px;
@@ -1203,22 +1106,6 @@
   .md-page > .vw-role-guide li a {
     min-height: 48px;
   }
-}
-/* Client review: compact daily order, expandable records and quiet section hierarchy. */
-.md-page-heading {
-  padding: 22px 26px;
-  min-height: 120px;
-  align-items: center;
-  flex-direction: row;
-  gap: 20px;
-}
-.md-page-heading h1 {
-  margin: 0 0 10px;
-  font-size: 28px;
-}
-.md-page-heading > .button {
-  flex: none;
-  min-height: 46px;
 }
 .md-live-line {
   font-size: 13px;
@@ -1589,20 +1476,6 @@
   color: #52677e;
 }
 @media (max-width: 767px) {
-  .md-page-heading {
-    padding: 18px;
-    gap: 14px;
-    min-height: 120px;
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .md-page-heading h1 {
-    font-size: 23px;
-  }
-  .md-page-heading > .button {
-    align-self: flex-start;
-    min-height: 44px;
-  }
   .md-heading-tools {
     gap: 10px;
   }
@@ -1680,13 +1553,13 @@
 .md-toolbar-approved .md-add-menu { margin-left: auto; }
 .md-toolbar-approved .md-menu-label select { border-radius: 11px; padding: 10px 34px 10px 12px; }
 .md-add-menu > div { box-shadow: 0 8px 20px rgb(16 42 67 / 10%); }
-.vr-drawer.md-task-drawer { inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(680px, calc(100vw - 32px)); height: min(88dvh, 900px); max-height: 88dvh; border: 1px solid #dce5f0; border-radius: 20px; padding: 28px; box-shadow: 0 24px 80px rgb(16 42 67 / 22%); }
-.vr-drawer.md-task-drawer::backdrop { background: rgb(16 42 67 / 48%); }
+
+
 .vr-drawer.md-task-drawer .md-task-panel { max-width: 560px; margin-inline: auto; }
 .vr-drawer.md-task-drawer .md-task-panel > h2 { margin-bottom: 18px; }
 .vr-drawer.md-task-drawer .auth-form { gap: 18px; }
 @media (max-width: 640px) {
- .vr-drawer.md-task-drawer { width: calc(100vw - 20px); height: calc(100dvh - 20px); max-height: calc(100dvh - 20px); padding: 18px 16px 24px; border-radius: 16px; }
+ 
  .md-toolbar-approved { align-items: stretch; gap: 10px; }
  .md-toolbar-approved .md-search { flex-basis: 100%; }
  .md-toolbar-approved .md-menu-label { flex: 1 1 calc(50% - 6px); min-width: 0; }
@@ -1694,10 +1567,6 @@
 }
 /* 27 October shared UI brief supersedes the earlier spacious card layout. */
 .vw-shell .md-page { gap: 24px; }
-.vw-shell .md-page .md-page-heading { min-height: 0; padding: 10px 16px; border-radius: 12px; gap: 12px; box-shadow: none; }
-.vw-shell .md-page .md-page-heading > div { min-width: 0; }
-.vw-shell .md-page .md-page-heading h1 { font-size: 24px; line-height: 28px; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vw-shell .md-page .md-page-heading .md-live-line { font-size: 13px; line-height: 18px; margin: 0; }
 .vw-shell .md-page .md-work-section { padding: 16px; border-radius: 12px; box-shadow: none; gap: 12px; }
 .vw-shell .md-page .md-section-heading h2 { font-size: 18px; margin: 0; }
 .vw-shell .md-page .md-plan-action { width: fit-content; justify-self: start; min-height: 36px; margin: 0; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; }
@@ -1707,40 +1576,25 @@
 .vw-shell .md-page .md-slim-row .md-task-title { font-size: 15px; }
 .md-add-menu > summary:hover .md-add-hint { transition: opacity 150ms 400ms,visibility 0s 400ms; }
 @media (pointer: coarse) { .vw-shell .md-page .md-plan-action { min-height: 44px; } }
-.vw-shell .md-page .md-page-heading > .button { width: auto; min-height: 36px; padding: 0 14px; flex: none; font-size: 14px; }
-.vw-shell .md-page .md-page-heading { flex-direction: row; }
 .vw-shell .md-page .md-toolbar-approved .md-add-menu > summary { background: var(--surface); color: var(--blue-hover); border: 1px solid var(--blue); }
-@media (pointer: coarse) { .vw-shell .md-page .md-page-heading > .button { min-height: 44px; } }
-.vw-shell .md-page .md-page-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px; row-gap: 0; padding: 6px 16px; }
-.vw-shell .md-page .md-page-heading > div { display: contents; }
-.vw-shell .md-page .md-page-heading h1 { grid-column: 1; grid-row: 1; align-self: center; min-width: 0; margin: 0; }
-.vw-shell .md-page .md-page-heading .md-live-line { grid-column: 1 / -1; grid-row: 2; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vw-shell .md-page .md-page-heading > .button { grid-column: 2; grid-row: 1; }
+
 .md-check-target { display: grid; place-items: center; flex: none; width: 36px; height: 36px; margin-block: -2px; cursor: pointer; }
 .md-check-target input { width: 18px; height: 18px; accent-color: var(--blue); }
 .vw-shell .md-page .md-slim-row .md-task-title { display: block; min-height: 36px; margin-block: -2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vw-shell .md-page .md-slim-row > time { display: flex; align-items: center; justify-content: end; gap: 8px; line-height: 16px; font-size: 13px; }
 .md-earlier-tag { flex: none; margin-inline-start: 0; }
 @media(pointer:coarse) { .md-check-target { width: 44px; height: 44px; margin-block: -6px; }.vw-shell .md-page .md-slim-row .md-task-title { min-height: 44px; margin-block: -6px; } }
-.vw-shell.app-shell .md-page .md-page-heading { padding-block: 5px; }
-.vw-shell.app-shell .md-page .md-page-heading h1 { text-wrap: nowrap; white-space: nowrap; }
-.vw-shell.app-shell .md-page .md-page-heading .md-live-line { display: flex; flex-wrap: wrap; column-gap: 4px; row-gap: 0; }
 .md-live-line > span { white-space: nowrap; }
 .vw-shell .md-page .md-slim-row > time { flex-direction: column; align-items: end; gap: 0; }
 .md-due-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vw-shell .md-page .md-slim-row > time:has(.md-earlier-tag) { margin-block: -4px; }
 .md-focus-timer { font-variant-numeric: tabular-nums; font-size: 24px; color: var(--navy); }
-@media(max-width:640px) {
- .vw-shell.app-shell .md-page .md-page-heading { padding: 3px 12px; grid-template-rows: 20px 44px; column-gap: 8px; }
- .vw-shell.app-shell .md-page .md-page-heading h1 { grid-column: 1 / -1; grid-row: 1; font-size: 18px; line-height: 20px; }
- .vw-shell.app-shell .md-page .md-page-heading .md-live-line { grid-column: 1; grid-row: 2; align-content: center; font-size: 12px; line-height: 16px; white-space: normal; }
- .vw-shell.app-shell .md-page .md-page-heading > .button { grid-column: 2; grid-row: 2; }
-}
+
 
 .md-skip-review{padding-block:16px;border-bottom:1px solid #dce3eb}.md-skip-review ul{list-style:none;padding:0;margin:12px 0 0}.md-skip-review li{padding:12px 0;border-top:1px solid #e1e7ee}.md-skip-review .form-actions{margin-top:12px}
 
 /* Header action spans both greeting rows; utility actions stay beside Add. */
-@media(min-width:641px){.vw-shell.app-shell .md-page .md-page-heading > .button{grid-row:1 / 3;align-self:center}.vw-shell.app-shell .md-page .md-page-heading .md-live-line{grid-column:1}}
+
 .md-tools-menu{position:relative;flex:none;align-self:end}
 .md-tools-menu>summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;min-height:36px;padding:0 12px;border:1px solid #dce3eb;border-radius:8px;background:#fffefa;color:#102a43;font-size:14px;font-weight:500;cursor:pointer}
 .md-tools-menu>summary::-webkit-details-marker{display:none}
@@ -1754,3 +1608,11 @@
 .md-toolbar-actions .md-tools-menu>summary{width:36px;padding:0}
 @media(pointer:coarse){.md-toolbar-actions .md-tools-menu>summary{width:44px}}
 @media(max-width:640px){.md-toolbar-approved>.segmented-control button{padding-inline:10px}}
+
+/* Approved correction: generous greeting header, shared centred forms. */
+.vw-shell.app-shell .md-page .md-page-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:144px;padding:28px 32px;border-radius:24px;box-sizing:border-box}
+.vw-shell.app-shell .md-page .md-page-heading>div{display:block;flex:1;min-width:0}
+.vw-shell.app-shell .md-page .md-page-heading h1{font-size:clamp(26px,2.6vw,36px);line-height:1.2;margin:0 0 10px;white-space:normal;text-wrap:wrap;overflow-wrap:anywhere}
+.vw-shell.app-shell .md-page .md-page-heading .md-live-line{display:flex;flex-wrap:wrap;gap:0 4px;font-size:15px;line-height:22px;margin:0;white-space:normal}
+.vw-shell.app-shell .md-page .md-page-heading>.button{flex:none;align-self:center;width:auto;margin:0;min-height:44px;padding:0 18px}
+@media(max-width:640px){.vw-shell.app-shell .md-page .md-page-heading{display:grid;grid-template-columns:minmax(0,1fr);min-height:0;padding:20px;border-radius:20px;gap:16px}.vw-shell.app-shell .md-page .md-page-heading h1{font-size:26px}.vw-shell.app-shell .md-page .md-page-heading>.button{justify-self:start}}

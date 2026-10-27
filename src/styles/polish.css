@@ -267,8 +267,8 @@
 .md-stars-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
 .md-stars-panel { display: grid; gap: 12px; padding-block: 24px; }
 .md-stars-panel p,.md-stars-panel h2,.md-stars-panel h3 { margin: 0; }
-.vr-drawer { inset: 0 0 0 auto; transform: none; width: min(420px,100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 24px; }
-@media(max-width:640px) { .vr-drawer { inset: auto 0 0; width: 100vw; max-width: 100vw; height: min(90dvh,900px); max-height: 90dvh; border-radius: 12px 12px 0 0; padding: 16px; } }
+
+
 .md-next-plan { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-block: 12px; }
 .md-next-plan h2 { font-size: 15px; margin: 0 0 12px; }
 .md-next-plan p { margin: 0 0 12px; }
