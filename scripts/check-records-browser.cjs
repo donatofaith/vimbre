@@ -79,7 +79,7 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('.rs-source').count(), 4); assert.equal(await page.locator('.rs-plan').count(), 4); assert.equal(await page.title(), 'Vimbre | Work Intelligence and Handover Context'); await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
     assert.equal(await page.getByText('Coming soon', { exact: true }).count(), 0);
     assert.equal(await page.locator('.rs-pricing').getByText('Coming soon', { exact: true }).count(), 0);
-    assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 7);
+    assert.equal(await page.getByRole('contentinfo').getByRole('link').count(), 8); assert.equal(await page.getByRole('contentinfo').getByRole('link',{name:'Terms',exact:true}).getAttribute('href'),'/terms');
     assert.equal(await page.locator('.rs-site').getAttribute('data-theme'), 'light');
     assert.equal(await page.getByRole('button', { name: /Switch to .* theme/ }).count(), 0);
     for (const feature of ['Decision records', 'Tasks and dates', 'Role records', 'Team chat']) assert(await page.locator('.rs-pricing').getByText(feature, { exact: true }).first().isVisible());
