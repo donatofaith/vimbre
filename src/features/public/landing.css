@@ -234,3 +234,14 @@
 .rs-story-shell[data-story-complete] .rs-demo-scene[data-scene=email]{opacity:0!important}
 .rs-story-shell[data-story-complete] .rs-demo-scene[data-scene=cover]{opacity:1!important}
 .rf-calculator :is(input,select){font-size:16px}
+
+/* Hero extraction: three concrete owner-and-date actions. */
+.rs-demo-action-list{list-style:none!important;margin:8px 0 18px!important;padding:0!important;display:grid;gap:0}
+.rs-demo-action-row{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:10px;padding:12px 0;border-bottom:1px solid #edf1f7}
+.rs-demo-action-row:last-child{border-bottom:0}
+.rs-demo-action-check{display:grid;place-items:center;width:19px;height:19px;border-radius:6px;background:var(--blue-soft);color:var(--blue-hover);font-size:12px;font-weight:800}
+.rs-demo-action-row strong{display:block;font-size:13px;line-height:1.4}
+.rs-demo-action-row p{font-size:11px;line-height:1.4;margin-top:5px;color:#64748b}
+.rs-demo-quoted{padding:10px 12px;background:#f6f8fb;border-left:2px solid #d5deea;border-radius:0 6px 6px 0;font-size:12px!important;color:#64748b}
+.rs-plan{transition:transform 500ms var(--rs-ease)}
+.rs-plan:hover{transform:translateY(-2px)}
