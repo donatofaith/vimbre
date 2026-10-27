@@ -30,7 +30,7 @@ export const plans = [
   { name: 'Business', price: '£249', amount: 249, seats: 250, size: 'Up to 250 people', positioning: 'Manage shared work across a larger organisation.', items: ['Everything in Growth', 'Company AI allowance controls', 'Connected-source permissions', 'Role change history'] },
   { name: 'Enterprise', price: 'Custom', amount: null, seats: null, size: '250+ people', positioning: 'Plan a rollout around your organisation.', items: ['Custom team size and rollout', 'Security and access review', 'Discuss advanced identity and audit needs', 'SSO and audit export are not available yet'] },
 ]
-export const pricingDisclosure = 'These are proposed monthly bundles, not active subscriptions. Checkout, plan-specific feature limits and per-plan connection caps are not enabled yet. Paste is available now; external tool connections require provider setup and consent. AI drafting uses each workspace allowance; monthly per-plan caps will be published after costs are verified.'
+export const pricingDisclosure = 'These are proposed monthly bundles, not active subscriptions. Checkout, plan-specific feature limits and per-plan connection caps are not enabled yet. Paste is available now; external tool connections require provider setup and consent. AI drafting uses each workspace allowance; monthly per-plan caps will be published after costs are verified. Single sign-on and audit export are not available on any plan yet.'
 export const schema = {
   '@context': 'https://schema.org',
   '@graph': [
