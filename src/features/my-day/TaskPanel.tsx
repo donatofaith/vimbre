@@ -16,11 +16,13 @@ import { changeTask, taskError } from "./api";
 export function TaskPanel({
   task,
   draft,
+  stepsFirst=false,
   today,
   close,
   saved,
 }: {
   task?: Task;
+  stepsFirst?: boolean;
   draft?: StructuredDraft;
   today: string;
   close: () => void;
@@ -157,7 +159,7 @@ export function TaskPanel({
           <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
           <div className="field"><span>Priority</span><SegmentedControl label="Priority" value={priority} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'}]} onChange={setPriority}/></div>
           <div className="field"><label htmlFor={`md-notes-${id}`}>Notes</label><textarea id={`md-notes-${id}`} name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></div>
-          <details className="md-more">
+          <details className="md-more" open={stepsFirst||undefined}>
             <summary>More options</summary>
             <div className="auth-form">
           <Input

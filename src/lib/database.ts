@@ -22,6 +22,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
     > & {
       myday_competition_settings: {Args:{p_mode?:string|null;p_visible?:boolean|null};Returns:Json}
       myday_streak_settings: {Args:{p_days?:number[]|null;p_from?:string|null;p_until?:string|null};Returns:Json}
+      myday_skip_review: {Args:{p_operation?:string;p_task?:string|null;p_date?:string|null};Returns:Json}
       myday_social: {Args:{p_operation?:string;p_recipient?:string|null;p_body?:string};Returns:Json}
       myday_stars: {Args:Record<PropertyKey,never>;Returns:Json}
       myday_plan: {Args:{p_operation:string;p_data?:Json};Returns:Json}

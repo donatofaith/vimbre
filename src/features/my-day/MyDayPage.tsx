@@ -1,3 +1,4 @@
+import {SkipReview} from './SkipReview'
 import {NextPlannedTask} from './NextPlannedTask'
 import {StarsPanel} from './StarsPanel'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -80,7 +81,7 @@ function MyDayContent() {
       data: DayData | null;
       error: boolean;
     } | null>(null),
-    [editor, setEditor] = useState<{ task?: Task } | null>(null),
+    [editor, setEditor] = useState<{ task?: Task; stepsFirst?:boolean } | null>(null),
     [context, setContext] = useState<Task | null>(null),
     [reminder, setReminder] = useState<Task | null>(null),
     [record, setRecord] = useState<Task | null>(null),
@@ -402,7 +403,7 @@ function MyDayContent() {
         </div>
         {quick && <form className="md-quick-add" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy("quick");setError("");try{const task=parseQuickTask(quickText,today);if(!task.title)throw new Error();await changeTask(crypto.randomUUID(),"create",{...task,reminder_option:"at_time"});setQuickText("");setQuick(false);refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}><label>Quick add<input autoFocus value={quickText} onChange={e=>setQuickText(e.target.value)} maxLength={300} placeholder="Send quote Friday 3pm" required/></label><Button type="submit" disabled={Boolean(busy)}>Add task</Button></form>}
         <details className="md-filter-disclosure"><summary>More filters{search||forValue||source ? " · Active":""}</summary><div className="md-filter-row"><ForPicker filter value={forValue} onChange={v=>{setFor(v);setPage(0)}}/><label>From<select value={source} onChange={e=>{setSource(e.target.value);setPage(0)}}><option value="">All sources</option>{Object.entries(sourceLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{(query||forValue||source)&&<button className="md-text-button" onClick={()=>{setQuery("");setSearch("");setFor(null);setSource("");setPage(0)}}>Clear filters</button>}</div></details>
-        <NextPlannedTask onPlan={setHasPlan} replan={()=>setPlanning(true)}/><StarsPanel compact/>
+        <SkipReview breakDown={task=>setEditor({task,stepsFirst:true})}/><NextPlannedTask onPlan={setHasPlan} replan={()=>setPlanning(true)}/><StarsPanel compact/>
         {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={()=>setAssignment({ids:selectedIds})}>Assign</Button><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});if(op==='done'||op==='delete'){const first=allRows.find(t=>t.id===selectedIds[0]);if(first)setUndo({task:first,ids:[...selectedIds],until:Date.now()+10000})}setMessage(op==='done'?'Tasks marked done.':op==='delete'?'Tasks deleted.':'Tasks moved to tomorrow.');setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
         {(taskId || linked) && (
           <Link className="md-text-button" to="/app">
@@ -535,7 +536,7 @@ function MyDayContent() {
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}
-          task={editor.task}
+          task={editor.task} stepsFirst={editor.stepsFirst}
           today={today}
           close={() => setEditor(null)}
           saved={() => {

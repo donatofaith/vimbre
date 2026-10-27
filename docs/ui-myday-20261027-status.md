@@ -1,7 +1,7 @@
 # UI and My Day acceptance — 27 October 2026
 
 ## Release state
-Frontend remains on the review branch `fix/ui-myday-20261027`. Do not describe it as deployed or fully accepted until the complete browser regression and production checks pass. Local check currently passes 194 tests in 37 files, lint, Edge Function typecheck and production build. Existing lint warnings remain.
+Verified UI/planner release is live on vimbre.com: production commit `328c8a565a483d67fe99831b4ab390343d88dd11`, Vercel deployment `dpl_ExZ65hNkxeSyeg7vJRan5GDaMtZf` READY. Its source tree matches tested commit `0f38f861a96dec80c175ae52b46ec5cd506fa0af`. This is the previous release; the approved Stars/skip-review follow-up below is awaiting browser acceptance. Local check currently passes 194 tests in 37 files, lint, Edge Function typecheck and production build. Existing lint warnings remain.
 
 ## Implemented
 - Shared 1120px workspace, 24px/16px insets, 36px desktop/44px touch buttons, compact flat cards, segmented controls, shared menu lifecycle and authenticated component gallery.
@@ -23,21 +23,30 @@ Frontend remains on the review branch `fix/ui-myday-20261027`. Do not describe i
 
 Rollback fixture checks cover local dates/counts, owner/company isolation, confirmation/retry boundaries, completed plans, notice deduplication, award/cap/Undo rules, consent visibility, absence streaks and stale autosave rejection. No real email or paid model call was made by these checks.
 
-## Latest edits awaiting browser acceptance
+## Latest accepted edits
 - Mobile greeting/count layout, intact compact due-time text, Capture header and sticky action spacing.
 - Due-time ordering within the same due date, explicit overflow move-to-tomorrow action.
 - Editable plan start times, explicit suggested due-date acceptance and client validation of hours/gaps before saving.
 
 ## Acceptance evidence
-The focused My Day/Capture suite passed 14 widths (320 through 1920) and touch checks at 360/768/1440. It reported no document overflow, no undersized controls in the checked gallery and zero AI calls. It exercises failed autosave retention/retry, completion delay/Undo and Capture acceptance/confirmation. Broader Records/Handovers/Support/Team regression remains in progress; do not treat the focused checks as whole-site acceptance. The previous Records test still expected seven footer links after the requested Terms link made eight; both assertions are now corrected.
+The focused My Day/Capture suite passed 14 widths (320 through 1920) and touch checks at 360/768/1440. It reported no document overflow, no undersized controls in the checked gallery and zero AI calls. It exercises failed autosave retention/retry, completion delay/Undo and Capture acceptance/confirmation. Records, Handovers, Support and Team regression also passed in run 40538831571. This covers mocked frontend flows and responsive layouts; no signed-in production user mutation was performed. Screenshots at 360/768/1440 were inspected. A duration-change bug that reset an edited start time was caught by browser acceptance and corrected. Both footer assertions now include the Terms link.
 
-## Remaining brief gaps
-- Calendar busy-time ingestion (the Basic planner has tested busy-slot support but no connected meeting source yet).
-- Three-consecutive-day skipped-task prompt and morning digest plan link.
-- Full website/Console component parity and final visual inspection at 360/768/1440.
+## Approved follow-up — database installed, browser acceptance pending
+The user explicitly approved production kudos/shared challenges and capped star awards. Installed migrations:
+- 20261027162234_myday_approved_kudos_and_shared_challenges
+- 20261027162808_myday_split_safe_credit_foundation
+- 20261027162831_myday_split_safe_completion_awards
+- 20261027163318_myday_three_day_skip_review
 
-## Production blockers
-1. Automatic approval review rejected production kudos/challenge tables and star-award behavior twice. It requires trusted user-authored text explicitly authorizing those side effects; assistant transcription of the screenshot was not accepted. Do not retry through another execution path. `TeamStars.tsx` and the SQL proposal remain prepared but unimported/uninstalled.
-2. The integer credit-unit scoring migration returned `Invalid or expired requestState` through long SQL and migration calls. Read-only checks found no credit_units column or migration history row. Split-safe arithmetic was checked separately, but installed migration tests have not passed. `starsScoringReady=false` keeps competition enable disabled. No company was opted in by this work.
+The full scoring call continued to expire, but guarded two-stage migrations succeeded while all company modes were Off. Installed-schema rollback checks pass for split-equivalent credit, Undo rebalance, cap, plan/handover bonuses, kudos deduplication/day limits/privacy and challenge progress/consent. Private tables have RLS and no direct client grants. No company was enabled by these tests. The scoring readiness gate is now true and TeamStars is connected; company and personal opt-in remain required.
 
-Never claim the entire client brief is complete while these gaps remain.
+Explicit Not today choices are recorded once per task/user-local day. Three consecutive days prompt Keep, Break into steps or Delete. Keep dismisses the current review without changing the due date; steps use the existing task editor/autosave; Delete retains the existing confirmation and source protections. Rollback checks cover duplicate clicks, valid dates and owner isolation.
+
+my-day-mail v14 is ACTIVE. Its only bundle change adds a fixed Vimbre My Day link to the existing briefing/digest text. Auth, job claims, recipient resolution, AI allowance/cache, retries and email opt-ins are unchanged. Unit checks use mocked sends; no paid generation or real email is sent.
+
+194 local tests and the build pass. Expanded browser acceptance now covers enabling company competition, individual appearance, kudos sending, skip review and editing steps. Do not claim this follow-up is live until that browser run and production deployment pass.
+
+## Known limits
+- Connected calendar busy-time ingestion is not provided by the current read-only Capture consent. Planning uses configured work hours as the fallback; the pure planner has tested busy-slot support.
+- Physical-device acceptance is separate from automated browser viewport/touch checks.
+- The separate Console repository was not changed by this customer-workspace release.

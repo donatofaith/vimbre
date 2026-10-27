@@ -1,5 +1,5 @@
-// Kept off until the integer-credit migration is installed and verified.
-export const starsScoringReady = false
+// Integer-credit migrations and installed-schema acceptance checks passed.
+export const starsScoringReady = true
 /** Preview only. Awards must be validated and deduplicated on the server. */
 export type StarInput={createdAt:number;completedAt:number;hasDueDate:boolean;deleted:boolean;splitFromTask:boolean;priority:'high'|'normal'|'low';plannedMinutes:number;covering:boolean;firstPriority:boolean;early:boolean;decisionReason:boolean;alreadyEarned:number}
 export function previewTaskStars(input:StarInput){
