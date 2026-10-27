@@ -651,3 +651,12 @@
 .vc-check-target { display: grid; place-items: center; width: 36px; height: 36px; margin-block: -2px; cursor: pointer; }
 .vc-check-target input { width: 18px; height: 18px; accent-color: var(--blue); }
 @media(pointer:coarse) { .vc-draft-row { grid-template-columns: 44px minmax(0,1fr) 44px; }.vc-check-target { width: 44px; height: 44px; margin-block: -6px; } }
+.vc-page .vc-card { padding: 16px; border-radius: 12px; box-shadow: none; }
+.vc-page .vc-review-grid { gap: 24px; }
+.vc-page .vw-page-heading { display: flex; flex-direction: row; align-items: center; gap: 12px; margin-bottom: 24px; }
+.vc-page .vw-page-heading > div { min-width: 0; flex: 1; }
+.vc-page .vw-page-heading h1 { font-size: 24px; line-height: 28px; margin: 0; max-width: none; }
+.vc-page .vw-page-heading > .button { flex: none; }
+.vc-page .vw-page-heading > div > p { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.vc-page .vc-confirm { padding: 8px 0; gap: 8px; }
+.vc-page .vc-confirm .button { width: auto; flex: 0 0 auto; }

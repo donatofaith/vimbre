@@ -1724,3 +1724,15 @@
 @media(pointer:coarse) { .md-check-target { width: 44px; height: 44px; margin-block: -6px; }.vw-shell .md-page .md-slim-row .md-task-title { min-height: 44px; margin-block: -6px; } }
 .vw-shell.app-shell .md-page .md-page-heading { padding-block: 5px; }
 .vw-shell.app-shell .md-page .md-page-heading h1 { text-wrap: nowrap; white-space: nowrap; }
+.vw-shell.app-shell .md-page .md-page-heading .md-live-line { display: flex; flex-wrap: wrap; column-gap: 4px; row-gap: 0; }
+.md-live-line > span { white-space: nowrap; }
+.vw-shell .md-page .md-slim-row > time { flex-direction: column; align-items: end; gap: 0; }
+.md-due-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vw-shell .md-page .md-slim-row > time:has(.md-earlier-tag) { margin-block: -4px; }
+.md-focus-timer { font-variant-numeric: tabular-nums; font-size: 24px; color: var(--navy); }
+@media(max-width:640px) {
+ .vw-shell.app-shell .md-page .md-page-heading { padding: 3px 12px; grid-template-rows: 20px 44px; column-gap: 8px; }
+ .vw-shell.app-shell .md-page .md-page-heading h1 { grid-column: 1 / -1; grid-row: 1; font-size: 18px; line-height: 20px; }
+ .vw-shell.app-shell .md-page .md-page-heading .md-live-line { grid-column: 1; grid-row: 2; align-content: center; font-size: 12px; line-height: 16px; white-space: normal; }
+ .vw-shell.app-shell .md-page .md-page-heading > .button { grid-column: 2; grid-row: 2; }
+}

@@ -13,3 +13,5 @@ it('prioritises overdue and due tasks, caps six and excludes done or deleted',()
 })
 it('does not change source tasks or force work outside hours',()=>{const tasks=[task('a',{time_needed_minutes:60})];const before=JSON.stringify(tasks);expect(basicPlan(tasks,{start:0,end:30*60000,today:'2026-10-27'}).slots).toEqual([]);expect(JSON.stringify(tasks)).toBe(before)})
 it('does not schedule invalid working hours or non-finite durations',()=>{expect(basicPlan([task('a')],{start:NaN,end:Infinity,today:'2026-10-27'}).slots).toEqual([])})
+
+it('orders timed deadlines before later deadlines on the same day',()=>{const plan=basicPlan([task('late',{due_time:'15:00'}),task('early',{due_time:'09:00'}),task('undated-time')],{start:0,end:300*60000,today:'2026-10-27'});expect(plan.slots.map(row=>row.id)).toEqual(['early','late','undated-time'])})

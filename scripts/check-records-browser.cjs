@@ -96,7 +96,7 @@ const assert = require('node:assert/strict');
     await page.waitForFunction(()=>{const top=document.querySelector('#contact').getBoundingClientRect().top;return top>=0&&top<innerHeight});
     assert(await page.locator('#contact').evaluate(el=>el.getBoundingClientRect().top>=0&&el.getBoundingClientRect().top<innerHeight));
     for(const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]){await page.setViewportSize({width,height:900});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth), `Contact overflow at ${width}`);}
-    assert.equal(await page.getByRole('contentinfo').getByRole('link').count(),7);
+    assert.equal(await page.getByRole('contentinfo').getByRole('link').count(),8);
     await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Open website menu',exact:true}).click();await page.getByRole('navigation',{name:'Public',exact:true}).getByRole('link',{name:'FAQ',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Open website menu',exact:true}).getAttribute('aria-expanded'),'false');
     await page.goto('http://127.0.0.1:5173/contact');await page.getByRole('heading',{name:'How can we help?',exact:true}).waitFor();assert.equal(new URL(page.url()).pathname,'/');assert.equal(new URL(page.url()).hash,'#contact');
     await page.waitForFunction(()=>{const top=document.querySelector('#contact').getBoundingClientRect().top;return top>=0&&top<innerHeight});

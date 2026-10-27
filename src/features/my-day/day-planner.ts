@@ -8,7 +8,7 @@ export function basicPlan(tasks:Task[],{start,end,busy=[],today,order=[]}:{start
   if(order.length){const ai=order.indexOf(a.id),bi=order.indexOf(b.id);const delta=(ai<0?999:ai)-(bi<0?999:bi);if(delta)return delta}
   const due=(t:Task)=>t.due_date??'9999-12-31'
   const overdue=(t:Task)=>due(t)<today?0:due(t)===today?1:2
-  return overdue(a)-overdue(b)||due(a).localeCompare(due(b))||({high:0,normal:1,low:2}[a.priority??'normal']-({high:0,normal:1,low:2}[b.priority??'normal']))||(a.created_at??'').localeCompare(b.created_at??'')||a.id.localeCompare(b.id)
+  return overdue(a)-overdue(b)||due(a).localeCompare(due(b))||(a.due_time??'23:59:59').localeCompare(b.due_time??'23:59:59')||({high:0,normal:1,low:2}[a.priority??'normal']-({high:0,normal:1,low:2}[b.priority??'normal']))||(a.created_at??'').localeCompare(b.created_at??'')||a.id.localeCompare(b.id)
  })
  const slots:ScheduledTask[]=[];const skipped:Task[]=[];let cursor=start
  for(const task of sorted){
