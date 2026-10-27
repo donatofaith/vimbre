@@ -17,7 +17,7 @@ export type GatewayDependencies = {
   finish: (usageId: string, attempts: Attempt[]) => Promise<void>
   adapter: (provider: string) => Adapter
 }
-const origins = new Set(['https://vimbre.com', 'https://www.vimbre.com', 'https://vimbre.vercel.app', 'http://localhost:5173', 'http://127.0.0.1:5173'])
+const origins = new Set(['https://vimbre.com', 'https://www.vimbre.com', 'https://vimbre.vercel.app', 'https://vimbre.co.uk', 'https://www.vimbre.co.uk', 'http://localhost:5173', 'http://127.0.0.1:5173'])
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 export function allowanceMessage(period?: string, resetAt?: string) {
   if (period === 'day') return 'AI drafts are paused until tomorrow (00:00 UTC). You can continue by hand.'

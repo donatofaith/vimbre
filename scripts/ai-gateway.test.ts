@@ -34,6 +34,8 @@ describe('AI gateway boundary and routing',()=>{
  it('rejects unapproved origins and supports explicit preflight',async()=>{
   const app=fixture();expect((await app.call(undefined,{origin:'https://untrusted.invalid'})).status).toBe(403)
   expect((await app.handle(new Request('https://example.invalid',{method:'OPTIONS',headers:{origin:'https://vimbre.com'}}))).status).toBe(204)
+  for(const origin of ['https://vimbre.co.uk','https://www.vimbre.co.uk']){const r=await app.handle(new Request('https://example.invalid',{method:'OPTIONS',headers:{origin}}));expect(r.status).toBe(204);expect(r.headers.get('Access-Control-Allow-Origin')).toBe(origin)}
+  expect((await app.call(undefined,{origin:'https://vimbre.co.uk.evil.invalid'})).status).toBe(403)
   expect((await app.handle(new Request('https://example.invalid'))).status).toBe(405)
  })
  it('takes identity from the verified profile and settings from the service route',async()=>{
