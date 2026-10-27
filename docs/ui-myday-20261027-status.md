@@ -1,7 +1,7 @@
 # UI and My Day acceptance — 27 October 2026
 
 ## Release state
-Frontend remains on the review branch `fix/ui-myday-20261027`. Do not describe it as deployed or fully accepted until the complete browser regression and production checks pass. Local check currently passes 194 tests in 37 files, lint, Edge Function typecheck and production build. Existing lint warnings remain.
+Verified UI/planner release is live on vimbre.com: production commit `328c8a565a483d67fe99831b4ab390343d88dd11`, Vercel deployment `dpl_ExZ65hNkxeSyeg7vJRan5GDaMtZf` READY. Its source tree matches tested commit `0f38f861a96dec80c175ae52b46ec5cd506fa0af`. The full client brief is not complete; remaining gaps and production blockers are below. Local check currently passes 194 tests in 37 files, lint, Edge Function typecheck and production build. Existing lint warnings remain.
 
 ## Implemented
 - Shared 1120px workspace, 24px/16px insets, 36px desktop/44px touch buttons, compact flat cards, segmented controls, shared menu lifecycle and authenticated component gallery.
@@ -23,13 +23,13 @@ Frontend remains on the review branch `fix/ui-myday-20261027`. Do not describe i
 
 Rollback fixture checks cover local dates/counts, owner/company isolation, confirmation/retry boundaries, completed plans, notice deduplication, award/cap/Undo rules, consent visibility, absence streaks and stale autosave rejection. No real email or paid model call was made by these checks.
 
-## Latest edits awaiting browser acceptance
+## Latest accepted edits
 - Mobile greeting/count layout, intact compact due-time text, Capture header and sticky action spacing.
 - Due-time ordering within the same due date, explicit overflow move-to-tomorrow action.
 - Editable plan start times, explicit suggested due-date acceptance and client validation of hours/gaps before saving.
 
 ## Acceptance evidence
-The focused My Day/Capture suite passed 14 widths (320 through 1920) and touch checks at 360/768/1440. It reported no document overflow, no undersized controls in the checked gallery and zero AI calls. It exercises failed autosave retention/retry, completion delay/Undo and Capture acceptance/confirmation. Broader Records/Handovers/Support/Team regression remains in progress; do not treat the focused checks as whole-site acceptance. The previous Records test still expected seven footer links after the requested Terms link made eight; both assertions are now corrected.
+The focused My Day/Capture suite passed 14 widths (320 through 1920) and touch checks at 360/768/1440. It reported no document overflow, no undersized controls in the checked gallery and zero AI calls. It exercises failed autosave retention/retry, completion delay/Undo and Capture acceptance/confirmation. Records, Handovers, Support and Team regression also passed in run 40538831571. This covers mocked frontend flows and responsive layouts; no signed-in production user mutation was performed. Screenshots at 360/768/1440 were inspected. A duration-change bug that reset an edited start time was caught by browser acceptance and corrected. Both footer assertions now include the Terms link.
 
 ## Remaining brief gaps
 - Calendar busy-time ingestion (the Basic planner has tested busy-slot support but no connected meeting source yet).
