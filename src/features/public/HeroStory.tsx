@@ -43,8 +43,8 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
                       <span className="rs-demo-overline"><WorkspaceIcon name="email" />RE: Monthly supplier reviews · 6 replies</span>
                       <h3>Re: Changing supplier review cadence</h3>
                       <p><strong>Alex:</strong> Could we move supplier reviews to monthly?</p>
-                      <p><strong>Sam:</strong> That should reduce meeting load. We still need the notes and agenda.</p>
-                      <p className="rs-demo-quoted">Earlier message: Alex to share the review notes by 12 Nov.</p>
+                      <p><strong>Sam:</strong> Yes. I will schedule the first monthly review for 16 Nov.</p>
+                      <p><strong>Alex:</strong> I will share the notes by 12 Nov and update the agenda by 20 Nov.</p>
                     </Card>
                     <Button className="rs-demo-capture-button" tabIndex={-1}>Bring in an email or notes<WorkspaceIcon name="arrow" /></Button>
                   </div>
@@ -54,8 +54,9 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
                       <span className="rs-demo-overline">Supplier review conversation · 9 Nov 2026</span>
                       <p>Move supplier reviews to <mark><span>monthly</span><i data-phrase /></mark>.</p>
                       <p>To <mark><span>reduce meeting load</span><i data-phrase /></mark> and focus on key updates.</p>
-                      <p>Owner: <mark><span>Alex</span><i data-phrase /></mark></p>
-                      <p>Next step: <mark><span>share the notes by 12 Nov 2026</span><i data-phrase /></mark>.</p>
+                      <p>Owner: <mark><span>Alex</span><i data-phrase /></mark> · Due: <mark><span>12 Nov 2026</span><i data-phrase /></mark></p>
+                      <p>Sam: <mark><span>schedule first monthly review by 16 Nov 2026</span><i data-phrase /></mark>.</p>
+                      <p>Alex: <mark><span>update the agenda by 20 Nov 2026</span><i data-phrase /></mark>.</p>
                     </Card>
                     <Button className="rs-demo-review rs-demo-next" tabIndex={-1}>Draft with Vimbre AI<WorkspaceIcon name="arrow" /></Button>
                   </div>
@@ -82,12 +83,12 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
                     <Card className="rs-demo-away"><span className="rs-avatar">S</span><strong>Sam</strong><span>Away 9 to 16 November 2026</span><span className="button button-primary rs-demo-cover-button">View cover<WorkspaceIcon name="arrow" /></span></Card>
                   </div>
                   <div className="rs-demo-scene rs-demo-cover" data-scene="cover">
-                    <div className="rs-demo-cover-header"><span className="rs-avatar rs-avatar-blue">A</span><p className="rs-demo-page-label">Alex, covering for Sam</p></div>
+                    <div className="rs-demo-cover-header"><span className="rs-avatar rs-avatar-blue">A</span><div><p className="rs-demo-page-label">Alex, covering for Sam</p><h3 className="rs-demo-cover-title">What comes first</h3></div></div>
                     <div className="rs-demo-cover-grid">
-                      <Card data-cover-row><h3>Open work</h3><p>Share the review notes · 12 Nov 2026</p></Card>
-                      <Card data-cover-row className="rs-demo-recent"><h3>What comes first</h3><p>Move supplier reviews to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
-                      <Card data-cover-row><h3>People to know</h3><p>Alex, Operations</p></Card>
-                      <Card data-cover-row><h3>Coming deadlines</h3><p>Supplier review · 12 Nov 2026</p></Card>
+                      <Card data-cover-row><h3>12 Nov · First</h3><p>Share the review notes</p><small>Owner: Alex</small></Card>
+                      <Card data-cover-row><h3>16 Nov 2026</h3><p>Schedule the monthly supplier review</p><small>Owner: Sam</small></Card>
+                      <Card data-cover-row><h3>20 Nov 2026</h3><p>Update the supplier review agenda</p><small>Owner: Alex</small></Card>
+                      <Card data-cover-row><h3>Decision and reason</h3><p>Supplier reviews move to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
                     </div>
                   </div>
                 </div>
