@@ -48,7 +48,7 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
                     <div className="rs-demo-cover-header"><span className="rs-avatar rs-avatar-blue">A</span><p className="rs-demo-page-label">Alex, covering for Sam</p></div>
                     <div className="rs-demo-cover-grid">
                       <Card data-cover-row><h3>Open work</h3><p>Share the review notes · 12 Nov 2026</p></Card>
-                      <Card data-cover-row className="rs-demo-recent"><h3>What comes first <small>Example</small></h3><p>Move supplier reviews to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
+                      <Card data-cover-row className="rs-demo-recent"><h3>What comes first</h3><p>Move supplier reviews to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
                       <Card data-cover-row><h3>People to know</h3><p>Alex, Operations</p></Card>
                       <Card data-cover-row><h3>Coming deadlines</h3><p>Supplier review · 12 Nov 2026</p></Card>
                     </div>
