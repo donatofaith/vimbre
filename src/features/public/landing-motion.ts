@@ -101,7 +101,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   splitHeadings()
   void document.fonts.ready.then(() => { if (!disposed) splitHeadings() })
   let layoutFrame = 0
-  const resize = () => { cancelAnimationFrame(layoutFrame); layoutFrame = requestAnimationFrame(() => { splitHeadings(); setupProblem() }) }
+  const resize = () => { cancelAnimationFrame(layoutFrame); layoutFrame = requestAnimationFrame(() => { splitHeadings() }) }
   window.addEventListener('resize', resize, { passive: true })
   disposers.push(() => { window.removeEventListener('resize', resize); cancelAnimationFrame(layoutFrame); originals.forEach((text, heading) => { heading.textContent = text }) })
   const reveal = new IntersectionObserver(entries => entries.forEach(entry => {
