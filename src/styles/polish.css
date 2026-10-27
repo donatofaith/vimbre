@@ -289,3 +289,4 @@
 .button svg { width: 16px; height: 16px; }
 .checkbox-line,.md-check { min-height: 36px; }
 @media(pointer:coarse) { .button,.checkbox-line,.md-check { min-height: 44px; }.vw-shell :is(button,.vw-menu,.vw-collapse-sidebar) { min-height: 44px; } }
+:root { --focus-width: 2px; }

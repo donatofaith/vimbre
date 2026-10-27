@@ -590,3 +590,8 @@
 .notification-pages { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .chat-notifications .field-error { color: var(--error); }
 .chat-notifications li strong, .chat-notifications li span { overflow-wrap: anywhere; min-width: 0; }
+
+/* Shared icon control sizes from the 27 October client UI brief. */
+.vw-shell .chat-launcher,.chat-bell { width: 36px; height: 36px; }
+.vw-shell .chat-launcher svg,.chat-bell svg { width: 16px; height: 16px; }
+@media(pointer:coarse) { .vw-shell .chat-launcher,.chat-bell { width: 44px; height: 44px; min-width: 44px; min-height: 44px; } }
