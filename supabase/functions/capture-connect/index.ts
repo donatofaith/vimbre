@@ -49,6 +49,7 @@ Deno.serve(async req=>{
   const stored=await service('get',user,{id:input.id}),p=stored.provider as Provider;let tokens=stored.secret as Tokens,removed=false
   try{
    if(input.action==='disconnect'){await revoke(p,tokens);await service('remove',user,{id:input.id,lease_token:stored.lease_token});removed=true;return reply(200,{ok:true})}
+   const policy=await searchService('policy');if(!policy.allowed.includes(p))throw Error('access_denied');
    if(!configured(p))return reply(409,{ok:false,code:'setup_required'})
    tokens=await refresh(p,tokens)
    if(input.action==='places'){
