@@ -76,3 +76,15 @@ describe('private Capture provider adapters',()=>{
  it('imports an actionable Trello card title even when its description and comments are empty',async()=>{vi.spyOn(globalThis,'fetch').mockImplementation(input=>String(input).includes('/actions?')?result([]):result({name:'Send supplier review',desc:'',url:'https://trello.com/c/example',dateLastActivity:'2026-10-24T09:00:00Z'}));const r=await read('trello',{access_token:'token',token_secret:'secret'},'card');expect(r.text).toContain('Send supplier review')})
  it('signs Trello requests server side without putting the consumer secret in the header',async()=>{const header=await oauth1('https://api.trello.com/1/members/me/boards?filter=open','GET','user-token','user-secret');expect(header).toContain('oauth_signature=');expect(header).toContain('oauth_token="user-token"');expect(header).not.toContain('trello-secret');expect(header).not.toContain('user-secret')})
 })
+it('adds calendar scopes only after a separate calendar request',async()=>{
+ const base=new URL((await start('gmail','state','https://vimbre.com/api/capture/callback','verifier')).url)
+ expect(base.searchParams.get('scope')).not.toContain('calendar')
+ const google=new URL((await start('gmail','state','https://vimbre.com/api/capture/callback','verifier',false,true)).url)
+ expect(google.searchParams.get('scope')).toContain('calendar.events.freebusy');expect(google.searchParams.get('scope')).not.toContain('gmail.compose')
+ const microsoft=new URL((await start('outlook','state','https://vimbre.com/api/capture/callback','verifier',false,true)).url)
+ expect(microsoft.searchParams.get('scope')).toContain('Calendars.ReadBasic');expect(microsoft.searchParams.get('scope')).not.toContain('Mail.ReadWrite')
+})
+it('rejects an OAuth response that did not grant the requested calendar permission',async()=>{
+ vi.spyOn(globalThis,'fetch').mockImplementation(()=>result({access_token:'fixture',scope:'https://www.googleapis.com/auth/gmail.readonly'}))
+ await expect(exchange('gmail',new URLSearchParams({code:'fixture'}),{verifier:'fixture',calendar:'true'},'https://vimbre.com/api/capture/callback')).rejects.toThrow('calendar_permission')
+})

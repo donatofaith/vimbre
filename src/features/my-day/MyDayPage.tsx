@@ -1,3 +1,5 @@
+import {DecisionReasonPrompt} from './DecisionReasonPrompt'
+import {planTaskAction} from './plan-api'
 import {SkipReview} from './SkipReview'
 import {NextPlannedTask} from './NextPlannedTask'
 import {StarsPanel} from './StarsPanel'
@@ -96,7 +98,9 @@ function MyDayContent() {
     [undo, setUndo] = useState<{task: Task; ids?:string[]; until: number} | null>(null);
   const [visibleRows,setVisibleRows]=useState<Record<string,number>>({});
   const [hasPlan,setHasPlan]=useState(false);
-  const [finishing,setFinishing] = useState<(Task & {finishPosition:number})[]>([]);
+  const [decisionFinish,setDecisionFinish]=useState<Task|null>(null);
+  const [finishing,setFinishing] = useState<(Task & {finishPosition:number;finishFilter:string;finishStatus:string})[]>([]);
+  const [finishBatch,setFinishBatch]=useState(0);
   const finishTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   useEffect(()=>()=>{if(finishTimer.current)clearTimeout(finishTimer.current)},[]);
   const access = useRef<HTMLDialogElement>(null),
@@ -202,14 +206,16 @@ function MyDayContent() {
   }, [params]);
   async function act(task: Task, op: string, values: Record<string, unknown>) {
     if (pending.current) return;
+    if(op==="status"&&values.status==="done"&&task.decision_id&&!values.reason_reviewed){setDecisionFinish(task);return;}
     pending.current = true;
     setBusy(task.id);
     setError("");
     try {
-      if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
+      if(op==="status"&&values.status==="done"&&typeof values.decision_reason==="string"&&values.decision_reason.trim())await planTaskAction(task.id,"done",values.decision_reason);else if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
       if (op === "archive" || op === "delete_series" || op === "status" && values.status === "done") setUndo({task,until:Date.now()+10000});
       if(op === "status" && values.status === "done") {
-        setFinishing(previous=>[...previous.filter(t=>t.id!==task.id),{...task,status:"done",finishPosition:Math.max(0,(data?.rows??[]).findIndex(t=>t.id===task.id))}]);
+        setFinishing(previous=>[...previous.filter(t=>t.id!==task.id),{...task,status:"done",finishFilter:filter,finishStatus:task.status,finishPosition:Math.max(0,(data?.rows??[]).findIndex(t=>t.id===task.id))}]);
+        setFinishBatch(Date.now());
         if(finishTimer.current)clearTimeout(finishTimer.current);
         finishTimer.current=setTimeout(()=>setFinishing([]),5000);
       }
@@ -224,12 +230,14 @@ function MyDayContent() {
             : "Task updated.",
       );
       refresh();
+      return true;
     } catch (e) {
       setError(
         op === "pin" && (e as { code?: string }).code === "22023"
           ? "This task could not be starred. Refresh and try again."
           : taskError(e),
       );
+      return false;
     } finally {
       setBusy("");
       pending.current = false;
@@ -255,7 +263,7 @@ function MyDayContent() {
   function card(task: Task, rank?: number, panelOnly=false) {
     return (
       <TaskCard
-        key={task.id}
+        key={task.id+(finishing.some(t=>t.id===task.id)?`:${finishBatch}`:"")}
         task={task}
         selecting={selecting&&!panelOnly}
         selected={selectedIds.includes(task.id)}
@@ -269,6 +277,7 @@ function MyDayContent() {
         rank={rank}
         initialOpen={panelOnly || task.id === taskId && !params.has("task_action")}
         busy={Boolean(busy)}
+        undo={finishing.some(t=>t.id===task.id)?()=>void act(task,"undo",{}):undefined}
         act={(t, o, v) => void act(t, o, v)}
         edit={(t) => {setInspected(null);setEditor({ task: t })}}
         remind={t=>{setInspected(null);setReminder(t)}}
@@ -291,7 +300,7 @@ function MyDayContent() {
     return (
       <div className="md-board">
         {statuses.map(([status, label]) => {
-          const tasks = items.filter((t) => t.status === status);
+          const tasks = items.filter((t) => (finishing.find(f=>f.id===t.id)?.finishStatus??t.status) === status);
           return (
             <details
               className={`md-board-column md-column-${status}`}
@@ -337,8 +346,8 @@ function MyDayContent() {
   const overdueRows = data?.overdue_rows ?? [];
   const incoming=data?.review_assignments??extras.data?.incoming??[];
   const format:TaskFormat={language:String(extras.data?.settings.language??"en-GB"),style:(extras.data?.settings.date_style??"medium") as TaskFormat["style"]};
-  const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)&&!finishing.some(f=>f.id===t.id)) : [...rows];
-  if(filter === "today")for(const task of [...finishing].sort((a,b)=>a.finishPosition-b.finishPosition))todayRows.splice(Math.min(task.finishPosition,todayRows.length),0,task);
+  const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)&&!finishing.some(f=>f.id===t.id)) : rows.filter(t=>!finishing.some(f=>f.id===t.id));
+  for(const task of finishing.filter(t=>t.finishFilter===filter).sort((a,b)=>a.finishPosition-b.finishPosition))todayRows.splice(Math.min(task.finishPosition,todayRows.length),0,task);
   function list(items: Task[]) {const key=items[0]?.id??"empty",shown=visibleRows[key]??5;return <><div className="md-task-list">{items.slice(0,shown).map(t=>card(t))}</div>{items.length>shown&&<Button variant="secondary" onClick={()=>setVisibleRows(previous=>({...previous,[key]:shown+5}))}>Show 5 more</Button>}</>}
   function weekView(items: Task[]) {return <>{Boolean(data?.undated?.length)&&<section className="md-undated-strip"><h3>No date</h3>{list(data!.undated!)}</section>}<div className="md-week">{Array.from({length:7},(_,i)=>{const date=addDays(today,i), group=items.filter(t=>(t.due_time?dateInZone(zone,new Date(t.due_at)):t.due_date)===date);return <section key={date}><h3>{new Intl.DateTimeFormat(format.language,{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"))}</h3>{group.length?list(group):<p className="md-muted">No tasks</p>}</section>})}</div></>}
   const empty = (
@@ -534,6 +543,7 @@ function MyDayContent() {
       {templates&&<TemplatePicker today={today} close={()=>setTemplates(false)} saved={()=>{setTemplates(false);setMessage('Task added from template.');refresh()}}/>}
       {rules&&<RulesPanel close={()=>setRules(false)}/>}{planning&&<PlanMyDay aiEnabled={extras.data?.flags.ai??false} close={()=>setPlanning(false)}/>}{calendar&&<CalendarPanel close={()=>setCalendar(false)} enabled={extras.data?.calendar_enabled??false}/>}{transfers&&<ImportExportPanel close={()=>setTransfers(false)}/>}
       {assignment&&<AssignmentPanel ids={assignment.ids} task={assignment.task} close={()=>setAssignment(null)} saved={()=>{setAssignment(null);setSelectedIds([]);setMessage('Sent for acceptance.');refresh()}}/>}{comments&&<TaskComments id={comments} close={()=>setComments(null)}/>}
+      {decisionFinish&&<DecisionReasonPrompt title={decisionFinish.title} close={()=>setDecisionFinish(null)} confirm={async reason=>{if(!await act(decisionFinish,"status",{status:"done",reason_reviewed:true,decision_reason:reason}))throw Error("Completion failed")}}/>}
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}

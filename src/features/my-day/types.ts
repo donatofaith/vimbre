@@ -19,6 +19,7 @@ export type Task = {
   priority?: "high" | "normal" | "low";
   pinned_at?: string | null;
   rank?: number;
+  metadata?: {plan_day?:string;plan_order?:number;plan_reason?:string};
   capture_id?: string | null;
   capture_record_id?: string | null;
   stable_role_item_id?: string | null;

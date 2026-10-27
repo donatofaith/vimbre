@@ -25,6 +25,8 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       myday_skip_review: {Args:{p_operation?:string;p_task?:string|null;p_date?:string|null};Returns:Json}
       myday_social: {Args:{p_operation?:string;p_recipient?:string|null;p_body?:string};Returns:Json}
       myday_stars: {Args:Record<PropertyKey,never>;Returns:Json}
+      myday_defer_plan_task: {Args:{p_task:string;p_date:string};Returns:undefined}
+      myday_plan_action: {Args:{p_task:string;p_operation:string;p_reason?:string|null};Returns:undefined}
       myday_plan: {Args:{p_operation:string;p_data?:Json};Returns:Json}
       myday_edit: {Args:{p_id:string;p_data:Json};Returns:Json}
       myday_suite: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}

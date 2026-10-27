@@ -23,6 +23,7 @@ select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 set local role authenticated;
 do $$declare t uuid:=gen_random_uuid();slots jsonb;source jsonb;begin
 insert into public.actions(id,company_id,owner_id,title,due_date) values(t,current_setting('test.company')::uuid,auth.uid(),'Retry plan task',current_date);
+perform public.myday_suite('preferences',null,'{"work_start":"00:00","work_end":"23:59"}');
 source:=public.myday_plan('get');
 slots:=jsonb_build_array(jsonb_build_object('id',t,'start',(source->>'start')::timestamptz+interval '1 minute','minutes',30,'reason','First task.'));
 perform public.myday_plan('accept',jsonb_build_object('items',slots));

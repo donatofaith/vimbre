@@ -6,7 +6,7 @@ import { AIDraftPanel } from "../ai/AIDraftPanel";
 import { loadOwnRecords } from "../ai/load-records";
 export function WeeklySummaryPage() {
   const { profile, company } = useAuth();
-  const [tab,setTab]=useState("summary");
+  const [tab,setTab]=useState(new URLSearchParams(window.location.search).get("tab")==="stars"?"stars":"summary");
   return (
     <section className="md-work-section">
       <h1 tabIndex={-1}>Weekly summary</h1>

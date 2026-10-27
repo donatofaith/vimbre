@@ -15,3 +15,4 @@ it('does not change source tasks or force work outside hours',()=>{const tasks=[
 it('does not schedule invalid working hours or non-finite durations',()=>{expect(basicPlan([task('a')],{start:NaN,end:Infinity,today:'2026-10-27'}).slots).toEqual([])})
 
 it('orders timed deadlines before later deadlines on the same day',()=>{const plan=basicPlan([task('late',{due_time:'15:00'}),task('early',{due_time:'09:00'}),task('undated-time')],{start:0,end:300*60000,today:'2026-10-27'});expect(plan.slots.map(row=>row.id)).toEqual(['early','late','undated-time'])})
+it('keeps a gap after meetings during reordering and reports work-hour overflow',async()=>{const {fitPlan}=await import('./day-planner');const rows=[{id:'a',start:0,minutes:30,reason:'Due today.'},{id:'b',start:0,minutes:30,reason:'Due today.'}];const fitted=fitPlan(rows,0,100*60000,[{start:20*60000,end:60*60000}]);expect(fitted.rows.map(r=>r.start/60000)).toEqual([70,110]);expect(fitted.overflows).toBe(true)})

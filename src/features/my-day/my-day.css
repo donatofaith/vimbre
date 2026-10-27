@@ -1616,3 +1616,14 @@
 .vw-shell.app-shell .md-page .md-page-heading .md-live-line{color:#d9e7f4;display:flex;flex-wrap:wrap;gap:0 4px;font-size:15px;line-height:22px;margin:0;white-space:normal}
 .vw-shell.app-shell .md-page .md-page-heading>.button{flex:none;align-self:center;width:auto;margin:0;min-height:44px;padding:0 18px}
 @media(max-width:640px){.vw-shell.app-shell .md-page .md-page-heading{display:grid;grid-template-columns:minmax(0,1fr);min-height:0;padding:20px;border-radius:20px;gap:16px}.vw-shell.app-shell .md-page .md-page-heading h1{font-size:26px}.vw-shell.app-shell .md-page .md-page-heading>.button{justify-self:start}}
+
+/* Reviewed plan and completion states share the existing workspace controls. */
+.md-accepted-plan{list-style:none;margin:16px 0;padding:0;display:grid;gap:12px}
+.md-accepted-plan>li{display:flex;align-items:start;justify-content:space-between;gap:16px;padding:16px;border:1px solid #dbe4ef;border-radius:12px;min-width:0}
+.md-accepted-plan>li>div{min-width:0}.md-accepted-plan strong,.md-accepted-plan p{overflow-wrap:anywhere}.md-accepted-plan p{margin:6px 0;font-size:13px}.md-accepted-plan details{margin-top:8px}.md-plan-done{text-decoration:line-through;color:#61768d}
+.md-plan-order{font-size:12px;font-weight:600;color:#2457ac}.md-stars-strip{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;text-decoration:none;color:#17334e;padding:12px 16px;border:1px solid #dbe4ef;border-radius:12px;background:#fffdf8}.md-stars-strip:focus-visible{outline:2px solid #2869dd;outline-offset:3px}.md-plan-progress{display:flex;align-items:center;gap:8px}.md-plan-progress svg{width:36px;height:36px;flex:none;transform:rotate(-90deg)}.md-plan-progress circle{fill:none;stroke:#dbe4ef;stroke-width:4}.md-plan-progress circle+circle{stroke:#2869dd;stroke-linecap:round}
+.md-row-undo{grid-column:2/-1;justify-self:start;border:0;background:transparent;color:#174a9b;text-decoration:underline;cursor:pointer;min-height:36px;padding:0 8px;font:inherit}.md-completion-pending{animation:md-finish-slide 200ms ease 4800ms forwards}.md-plan-postpone{display:flex;flex-wrap:wrap;gap:12px;align-items:end}.md-plan-postpone input{max-width:100%;box-sizing:border-box}.md-plan-list>li{border-bottom:1px solid #dbe4ef;display:grid;gap:12px;min-width:0}.md-plan-list details textarea{width:100%;box-sizing:border-box}
+@keyframes md-finish-slide{to{opacity:0;transform:translateY(8px)}}
+@media(max-width:760px){.md-accepted-plan>li{flex-direction:column}.md-accepted-plan .form-actions{width:100%;flex-wrap:wrap}.md-stars-strip{gap:12px}.md-plan-postpone{align-items:stretch}.md-plan-postpone .field{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.md-completion-pending{animation:none}}
+.md-work-section:has(.md-plan-focus)>:not(.md-plan-focus){display:none}

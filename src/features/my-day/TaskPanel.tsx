@@ -195,7 +195,7 @@ export function TaskPanel({
                 />
               </div>
               <Input label="Label" name="label" maxLength={80} defaultValue={task?.label??""}/>
-              <div className="field"><span>Time needed</span><input type="hidden" name="time_needed_minutes" value={duration}/><SegmentedControl label="Time needed" value={duration} onChange={setDuration} options={[{value:'15',label:'15 minutes'},{value:'30',label:'30 minutes'},{value:'60',label:'1 hour'},{value:'120',label:'2 hours'}]}/>{duration&&<Button variant="secondary" onClick={()=>setDuration('')}>Clear estimate</Button>}<span className="field-hint">For planning. No time tracking.</span></div>
+              <div className="field"><span>Time needed</span><input type="hidden" name="time_needed_minutes" value={duration}/><SegmentedControl label="Time needed" value={duration} onChange={setDuration} options={[{value:'15',label:'15 minutes'},{value:'30',label:'30 minutes'},{value:'60',label:'1 hour'},{value:'120',label:'2 hours'}]}/>{duration&&<Button variant="secondary" onClick={()=>setDuration('')}>Clear estimate</Button>}<span className="field-hint">Your estimate takes priority over your usual task duration.</span></div>
               <label className="field">Steps<textarea name="steps" rows={4} maxLength={5000} defaultValue={(task?.steps??[]).join("\n")} placeholder="One step per line"/></label>
               <label className="field">Links<textarea name="links" rows={3} maxLength={5000} defaultValue={(task?.links??[]).join("\n")} placeholder="One https link per line"/></label>
               <Input

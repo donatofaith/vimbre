@@ -1,3 +1,4 @@
+import {PlanningCalendarSettings} from '../my-day/PlanningCalendarSettings'
 import {CompetitionSettings} from '../my-day/CompetitionSettings'
 import {ConnectionSettings} from '../capture/ConnectionSettings'
 import {SuitePreferences} from '../my-day/SuitePreferences'
@@ -39,6 +40,6 @@ export function CompanySettings() {
     <p className="settings-plan-link">To change your team structure, <Link to="/#pricing">view plans and subscribe</Link>.</p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your company administrator to change company settings.</p>}</section><WorkPreferences/><SuitePreferences/><CompetitionSettings/><ConnectionSettings/></div>
+  </form> : <p>Contact your company administrator to change company settings.</p>}</section><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/></div>
 }
 
