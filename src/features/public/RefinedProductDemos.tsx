@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const scrollSteps = [
   { title: 'Bring it in', intro: 'Paste a conversation or choose a connected source.', screen: 'Source received', headline: 'Supplier review thread', body: '“Let’s move supplier reviews to monthly. We need fewer meetings, and Alex can share the notes next week.”', foot: 'Pasted conversation · 9 Nov 2026' },
@@ -9,7 +9,6 @@ const scrollSteps = [
 export function ConnectedTimeline() {
   const storyRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
-  const id = useId()
   useEffect(() => {
     const root = storyRef.current
     if (!root || typeof IntersectionObserver === 'undefined') return
