@@ -18,7 +18,8 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   }
   const scene = (name: string, start: number, end: number) => {
     const length = end - start
-    frame(`[data-scene="${name}"]`, { opacity: [0, 1, 1, 0], transform: ['translateX(12px)', 'translateX(0)', 'translateX(0)', 'translateX(0)'] }, start, length, [0, transition / length, 1 - transition / length, 1])
+    const opacity = name === 'email' ? [1, 1, 1, 0] : [0, 1, 1, 0]
+    frame(`[data-scene="${name}"]`, { opacity, transform: ['translateX(12px)', 'translateX(0)', 'translateX(0)', 'translateX(0)'] }, start, length, [0, transition / length, 1 - transition / length, 1])
   }
   scene('email', 0, capture + transition)
   scene('capture', capture, draft + transition)
@@ -33,7 +34,8 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   elements('[data-cover-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, { at: cover + i * heroStoryTiming.coverStagger, duration: .5, ease }]))
   frame('[data-cover-highlight]', { opacity: [0, 1] }, cover + .8, .5)
   frame('[data-story-resolution]', { opacity: [0, 1] }, resolve, .4)
-  frame('.rs-story-stage', { opacity: [1, 0] }, reset, duration - reset)
+  frame('[data-scene="cover"]', { opacity: [1, 0], transform: ['translateX(0)', 'translateX(-12px)'] }, reset, duration - reset)
+  frame('[data-scene="email"]', { opacity: [0, 1], transform: ['translateX(12px)', 'translateX(0)'] }, reset, duration - reset)
   // Measure real controls on both layouts. A decorative pointer never dispatches DOM clicks.
   const layout = shell.querySelector<HTMLElement>('.rs-demo-layout')!
   const bounds = layout.getBoundingClientRect()
