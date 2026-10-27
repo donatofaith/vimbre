@@ -88,3 +88,15 @@
 @media(max-height:740px){.support-workspace{min-height:360px;height:calc(100dvh - 225px)}}
 
 .support-approval summary{min-height:44px;cursor:pointer;padding:10px 0}.support-approval summary h3{display:inline;font-size:14px}.support-approval{padding-top:4px;padding-bottom:4px}
+
+/* Keep error recovery readable when shared workspace controls wrap their labels. */
+.vw-shell.app-shell .vw-content .support-error > .button {
+  min-width: 72px;
+  min-height: 44px;
+  height: 44px;
+  max-height: 44px;
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
