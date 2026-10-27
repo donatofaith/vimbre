@@ -38,6 +38,8 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
     assert.equal(await page.locator('.rs-demo-window').count(), 1);
     assert.equal(await page.locator('[data-demo-click]').count(), 6);
+    assert.equal(await page.locator('[data-draft-row]').count(), 3, 'Hero draft shows three extracted actions');
+    assert(await page.getByText('Check before saving', { exact: true }).count() >= 1);
     assert.equal(await page.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1', 'Reduced-motion hero shows the source message');
     assert.equal(await page.locator('.rf-scroll-step').count(), 4);
     assert.deepEqual(await page.locator('.rf-scroll-step h3').allInnerTexts(), ['Bring it in', 'Vimbre AI drafts', 'You check', 'Handover']);
@@ -49,13 +51,13 @@ const { chromium } = require('playwright');
     assert.equal(await page.getByText('Setup required', { exact: true }).count(), 6);
     assert.equal(await page.locator('.rs-plan').count(), 4);
     assert.equal(await page.locator('.rf-popular-label').count(), 1);
-    assert.deepEqual(await page.locator('.rf-per-person').allInnerTexts(), [
+    assert.deepEqual((await page.locator('.rf-per-person').allInnerTexts()).map(text => text.replace(/\\s+/g, ' ').trim()), [
       '£2.90 per person / month at full team size',
       '£1.98 per person / month at full team size',
       '£1.00 per person / month at full team size',
     ]);
     assert.equal(await page.locator('.rs-pricing .rs-plan li').filter({ hasText: /Team chat/ }).count(), 0);
-    assert(await page.getByText(/monthly per-plan caps will be published only after costs are verified/i).isVisible());
+    assert(await page.getByText(/monthly per-plan caps will be published after costs are verified/i).isVisible());
 
     const accordion = page.getByRole('button', { name: 'What happens when I hit my AI limit?' });
     await accordion.focus();
