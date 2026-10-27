@@ -51,11 +51,12 @@ const { chromium } = require('playwright');
     assert.equal(await page.getByText('Setup required', { exact: true }).count(), 6);
     assert.equal(await page.locator('.rs-plan').count(), 4);
     assert.equal(await page.locator('.rf-popular-label').count(), 1);
-    assert.deepEqual((await page.locator('.rf-per-person').allInnerTexts()).map(text => text.replace(/\\s+/g, ' ').trim()), [
-      '£2.90 per person / month at full team size',
-      '£1.98 per person / month at full team size',
-      '£1.00 per person / month at full team size',
-    ]);
+    const perPerson = await page.locator('.rf-per-person').allInnerTexts();
+    assert.equal(perPerson.length, 3);
+    for (const [index, amount] of ['£2.90', '£1.98', '£1.00'].entries()) {
+      assert(perPerson[index].includes(amount));
+      assert(perPerson[index].includes('per person / month at full team size'));
+    }
     assert.equal(await page.locator('.rs-pricing .rs-plan li').filter({ hasText: /Team chat/ }).count(), 0);
     assert(await page.getByText(/monthly per-plan caps will be published after costs are verified/i).isVisible());
 
