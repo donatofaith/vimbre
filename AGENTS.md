@@ -32,3 +32,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 26 October screenshots in docs/client-my-day-approved.md supersede the ranked My Day presentation and pin/priority defaults. Preserve private data boundaries. Do not treat the acceptance checklist as proof of implementation.
 
 - The 26 October Capture final specification in docs/client-capture-final-20261026.md supersedes earlier Capture layout, picker, statuses and Watch behavior. Provider-native search, read-only Capture consent, explicit source selection, scoped Watch opt-in and review before confirmation are required. Preserve approved My Day source-update consent and task workflows.
+
+- The 27 October My role screenshots in docs/client-role-20261027.md supersede all previous role layout/phase wording: counted collapsible sections, real readiness, inclusion/private boundaries, autosaved individual notes, rule suggestions, explicit reviewed five-line AI summary, manager review, role guides/templates/successor drafts. Core repeating tasks and freshness no longer require the earlier phase-two flags. Preserve My Day task operations and Capture consent.

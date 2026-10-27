@@ -1,3 +1,4 @@
+const RoleGuidePage = lazy(() => import('../features/records/RoleGuide').then(module => ({default:module.RoleGuidePage})))
 import { lazy, Suspense, useEffect } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
@@ -131,6 +132,7 @@ export function App() {
         }
       >
         <Routes>
+      <Route path="/role-guide" element={<RoleGuidePage/>}/>
       <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
           <Route path="/privacy" element={<LegalPage page="privacy" />} />

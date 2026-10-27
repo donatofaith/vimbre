@@ -1,0 +1,9 @@
+import type {RoleRow,RoleKind} from './role-final-model'
+export type ClientRow=RoleRow&{include_in_handover?:boolean;is_private?:boolean;version?:number;do_not_change?:boolean;linked_decision?:string;updated_at?:string;link_status?:string}
+export type Readiness={steps:string[];left:number;done:number;total:number;overdue:number;review_days:number}
+export type RoleExport={title:string;holder:string;department:string;summary:string;items:{kind:RoleKind;title:string;fields:Record<string,string>;reviewed_at:string;do_not_change?:boolean}[];decisions:RoleExport['items'];notes:{body:string}[]}
+export function isCurrent(row:ClientRow){return !row.deleted_at&&row.status!=='replaced'&&row.status!=='reversed'}
+export function checkDue(row:ClientRow,days=90,now=Date.now()){return !row.reviewed_at||Date.parse(row.reviewed_at)<now-days*86400000}
+export function howOften(row:ClientRow){return row.recurrence||row.role_fields?.recurrence||(row.kind==='decision'?'When the decision changes':'As needed')}
+export function obviousSecret(value:string){return /sk-[\w-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY|password\s*[:=]\s*\S+|\b\d{4}[ -]\d{4}[ -]\d{4}[ -]\d{4}\b|\b\d{16}\b/i.test(value)}
+export function readinessFor(role:{title:string;cover_id:string|null;manager_id:string|null},department:string|null,items:ClientRow[],decisions:ClientRow[],days=90):Readiness{const steps:string[]=[];if(!role.title.trim())steps.push('Add your role title');if(!department)steps.push('Add your department in Team');if(!role.manager_id)steps.push('Add your line manager in Team');if(!role.cover_id)steps.push('Add a cover person');if(!items.some(r=>isCurrent(r)&&['responsibility','workstream'].includes(r.kind||'')))steps.push('Add work');const stale=[...items,...decisions].filter(r=>isCurrent(r)&&checkDue(r,days)).length;if(stale)steps.push(`Check ${stale} item${stale===1?'':'s'}`);return {steps,left:steps.length,done:6-steps.length,total:6,overdue:stale,review_days:days}}

@@ -2,7 +2,7 @@ import {supabase} from '../../lib/supabase'
 import type {Json} from '../../lib/database.types'
 export type DayPerson={id:string;name:string;role:string}
 export type Assignment={id:string;title:string;details?:string;due_date:string|null;suggested_date:string|null;status:string;creator_name?:string;recipient_name?:string;recipient_task?:string;task_status?:string}
-export type DayNotice={id:string;title:string;body:string;task_id:string|null;assignment_id:string|null;created_at:string}
+export type DayNotice={task_status?:string;id:string;title:string;body:string;task_id:string|null;assignment_id:string|null;created_at:string}
 export type SuiteOverview={briefing?:{body:string;created_at:string}|null;settings:Record<string,string|boolean>;flags:Record<string,boolean>;incoming:Assignment[];waiting:Assignment[];notifications:DayNotice[];away:{id:string;starts_on:string;status:string}[];calendar_enabled:boolean}
 const reads=new Set(['overview','notifications','mention_people','templates','rules','people','comments','task_extra','team','ai_source','ai_cache_get'])
 export async function daySuite<T=unknown>(operation:string,id:string|null=null,data:Record<string,unknown>={}):Promise<T>{

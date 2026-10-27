@@ -1,0 +1,26 @@
+name: My role client acceptance
+on:
+  push:
+    branches: ['fix/my-role-20261027']
+permissions:
+  contents: read
+jobs:
+  role-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/check-records-browser.cjs
+      - run: node scripts/check-ai-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: my-role-client-layouts
+          path: /tmp/vimbre-landing-role-client-*.png
+          retention-days: 3
