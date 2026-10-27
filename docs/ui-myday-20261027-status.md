@@ -42,3 +42,32 @@ Company default Off; each person separately opts in to appearing. Plain disclosu
 
 ## Backend acceptance results
 Rollback-only plan tests passed: accepted plan persists, duplicate task IDs rejected, unknown task IDs rejected, fourth replan rejected. No rows persisted. Full local npm run check exited 0; see work/ui-myday-check.log.
+
+## Installed backend / review branch
+- Applied migration 20261027113603_myday_local_dates_plans_and_opt_in_stars. Exact SQL saved under supabase/migrations.
+- Installed award/Undo/recompletion tests passed. Daily cap/opt-out/anonymous checks passed before install in combined rollback test.
+- Review branch fix/ui-myday-20261027 starts at 57896d0e4e628c254fc9c87ff3a7058766537a8c; second commit adds browser startup diagnostics.
+- Focused CI 40497684545: unit/check/build pass; browser could not reach greeting after fixture login. Investigating with diagnostics; no live frontend promotion yet.
+- Additional proposed plan-notices SQL NOT applied; must scope test to fixture rather than process real jobs.
+- Live frontend still previous release. Backend competition defaults Off and no companies are enabled by this work.
+
+## Remaining client acceptance gaps (do not claim full completion)
+- Full website/Console component parity, row truncation/show-five, native picker replacements, edit autosave and Capture draft row redesign still require work beyond shared baseline.
+- Calendar busy-time source ingestion; scheduled plan drag/time edits; due-date suggestions; Not today date picker; three-day skip prompts; preserved completed plan slots; morning digest plan link.
+- Plan slot/reason reminders: SQL proposal exists but not yet tested/applied.
+- Stars: task awards/private ranking installed; full-plan/handover bonuses, streak/absence model, team-average competition/challenges/kudos and own-rank projection remain.
+- No live frontend release until browser acceptance succeeds.
+
+## Additional installed changes
+- 20261027114608 plan retries are idempotent, completed slots preserved, six-slot cap includes completed work. Rollback and installed retry tests pass.
+- 20261027114726 plan start/reason notices deduplicated through existing private scheduler; scoped rollback test passes; no real email sent in testing.
+- 20261027115315 complete-plan +3 and prepared-submitted-handover +5 awards, within daily cap. Undo voids plan bonus. Rollback fixture checks pass.
+- Opted-in team-average/own-rank projection installed (timestamp to record). No task content exposed.
+- Focused CI 40498507330 passed across 14 widths but initial screenshots showed fixture read errors and excessive spacing; corrected fixture and tightened layout.
+- Expanded CI 40499289538 passed earlier/completion transition checks, then failed on synchronous Playwright checkbox uncheck timing. Changed to click and await the async saved state; rerun still needed.
+
+## Production blockers and safe release boundary
+- Automatic approval review rejected production kudos/challenge schema twice. Second rejection states trusted user-authored text explicitly authorizing these production side effects is required; assistant transcription of the attachment was not accepted. Do not attempt other execution paths. Client source is recorded in docs/client-ui-myday-20261027.md. SQL and TeamStars are prepared but not installed/imported.
+- Integer credit-unit migration myday-star-weighting.sql is NOT applied: long SQL requests and migration call return Invalid or expired requestState. Read-only checks confirm no credit_units column, no migration row, zero enabled companies and zero awards. Pure arithmetic query confirms six ten-minute tasks and one sixty-minute task each total two stars under proposed units.
+- Stars company enable control is gated by starsScoringReady=false until that migration and its installed tests pass. Personal appearance and absence controls remain independently available; no company has been opted in by this work.
+- Frontend currently includes compact Capture draft groups, five-row reveal, checkboxes, side-panel editing, sticky save/discard; My Day existing-task autosave with atomic owner/version guard; public action sizing. Expanded mock browser acceptance covers failed-save text retention, priority preservation, earlier label, five-second done transition, draft review/confirm and touch controls.

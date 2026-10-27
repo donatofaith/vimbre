@@ -4,9 +4,9 @@ import {Button} from '../../components/ui/Button'
 import {changeTask,taskError} from './api'
 import type {Task} from './types'
 type Plan={timezone:string;tasks:Task[];plan:{items:{id:string;start:string;minutes:number;reason:string}[]}|null}
-export function NextPlannedTask({replan}:{replan:()=>void}){
+export function NextPlannedTask({replan,onPlan}:{replan:()=>void;onPlan:(exists:boolean)=>void}){
  const [data,setData]=useState<Plan|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[focus,setFocus]=useState(false)
- useEffect(()=>{let live=true;async function load(){const r=await supabase.rpc('myday_plan',{p_operation:'get'});if(live&&!r.error&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)&&Array.isArray(r.data.tasks)&&typeof r.data.timezone==='string')setData(r.data as unknown as Plan)}void load();window.addEventListener('vimbre:work-changed',load);return()=>{live=false;window.removeEventListener('vimbre:work-changed',load)}},[])
+ useEffect(()=>{let live=true;async function load(){const r=await supabase.rpc('myday_plan',{p_operation:'get'});if(live&&!r.error&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)&&Array.isArray(r.data.tasks)&&typeof r.data.timezone==='string'){setData(r.data as unknown as Plan);onPlan(Boolean(r.data.plan))}}void load();window.addEventListener('vimbre:work-changed',load);return()=>{live=false;window.removeEventListener('vimbre:work-changed',load)}},[onPlan])
  const next=data?.plan?.items?.find(item=>data.tasks.some(task=>task.id===item.id));const task=data?.tasks?.find(t=>t.id===next?.id)
  if(!next||!task||!data)return null
  async function act(status:string){if(!task)return;setBusy(true);setError('');try{await changeTask(task.id,'status',{status})}catch(e){setError(taskError(e))}finally{setBusy(false)}}

@@ -21,6 +21,7 @@ export function taskError(reason: unknown) {
   if(message.includes('matching item already exists'))return 'A matching item already exists. Review or dismiss this draft.';
   if(message.includes('Undo expired'))return 'Undo has expired or this task changed. Refresh the task.';
   const code = (reason as { code?: string })?.code;
+  if(code === "40001")return "This task changed in another session. Close it and reload before saving.";
   return code === "42501"
     ? "This task is unavailable. Refresh the page and try again."
     : code === "22023" ||

@@ -22,9 +22,14 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node scripts/check-ui-myday-oct27.cjs
+      - run: VIMBRE_TOUCH=1 node scripts/check-ui-myday-oct27.cjs
+      - run: node scripts/check-records-browser.cjs
+      - run: node scripts/check-handover-browser.cjs
+      - run: node scripts/check-support-browser.cjs
+      - run: node scripts/check-team-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ui-myday-oct27
-          path: /tmp/vimbre-landing-oct27-*.png
+          path: /tmp/vimbre-landing-*.png
           retention-days: 3

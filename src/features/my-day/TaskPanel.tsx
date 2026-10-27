@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {supabase} from '../../lib/supabase'
+import type {Json} from '../../lib/database.types'
+import {useAuth} from '../auth/AuthProvider'
+import {SegmentedControl} from '../../components/ui/SegmentedControl'
+import { useState,useEffect,useRef } from "react";
 import type { FormEvent } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -22,6 +26,11 @@ export function TaskPanel({
   close: () => void;
   saved: () => void;
 }) {
+  const {profile}=useAuth();
+  const formRef=useRef<HTMLFormElement>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0),closing=useRef(false);
+  const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal');
+  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+  function schedule(){if(!task)return;changes.current++;setSaveState('Unsaved changes');if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>{if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setSaveState('Complete the required fields to save.');},800)}
   const [date, setDate] = useState(
       task ? task.due_date??"" : (draft ? draft.due_date || "" : today),
     ),
@@ -53,6 +62,7 @@ export function TaskPanel({
     if (busy) return;
     setBusy(true);
     setError("");
+    const savingRevision=changes.current;
     const fd = new FormData(event.currentTarget),
       get = (k: string) => String(fd.get(k) ?? "").trim();
     const url = get("source_url"), links=get("links").split("\n").map(s=>s.trim()).filter(Boolean);
@@ -62,14 +72,14 @@ export function TaskPanel({
       return;
     }
     try {
-      await changeTask(id, task ? "edit" : "create", {
+      const payload={
         title: get("title"),
-        base_updated_at: task?.updated_at,
+        base_updated_at: version.current,
         due_date: date,
         due_time: date?time:"",
         details: get("details"),
         status: get("status"),
-        priority: "normal",
+        priority,
         time_needed_minutes: get("time_needed_minutes")?Number(get("time_needed_minutes")):null,
         label: get("label"),
         steps: get("steps").split("\n").map(s=>s.trim()).filter(Boolean),
@@ -80,20 +90,26 @@ export function TaskPanel({
         department_id: forValue?.kind === "department" ? forValue.id : null,
         external_contact_id: forValue?.kind === "contact" ? forValue.id : null,
         source_kind: task?.source_kind ?? (draft ? "ai" : "manual"),
-      });
-      saved();
+      };
+      if(task&&!navigator.onLine){await changeTask(id,'edit',payload);savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(closing.current)saved();}
+      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(closing.current&&changes.current===savingRevision)saved();}
+      else {await changeTask(id,'create',payload);saved();}
     } catch (reason) {
-      setError(taskError(reason));
+      setError(taskError(reason));setSaveState('Changes not saved');closing.current=false;
     } finally {
       setBusy(false);
+      if(task&&changes.current!==savingRevision){if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>formRef.current?.requestSubmit(),800)}
     }
   }
+  function finish(){if(task&&changes.current!==savedChanges.current){closing.current=true;if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setError('Complete the required fields before closing.');}else close()}
+  const controlled=JSON.stringify([date,time,forValue,priority]),lastControlled=useRef(controlled);
+  useEffect(()=>{if(lastControlled.current!==controlled){lastControlled.current=controlled;schedule()}},[controlled]);
   return (
     <RoleDrawer
       context="My day"
       className="md-task-drawer"
       title={task ? "Edit task" : "Add a task"}
-      close={close}
+      close={finish}
     >
       <section className="md-task-panel">
         <h2>{task ? "Edit task" : "Add a task"}</h2>
@@ -102,7 +118,7 @@ export function TaskPanel({
             Draft from Vimbre AI. Check before saving.
           </p>
         )}
-        <form className="auth-form" onSubmit={save}>
+        <form ref={formRef} className="auth-form" onSubmit={save} onInput={schedule} onChange={schedule}>
           <Input
             autoFocus
             data-autofocus=""
@@ -138,6 +154,12 @@ export function TaskPanel({
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
+          <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
+          <div className="field"><span>Priority</span><SegmentedControl label="Priority" value={priority} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'}]} onChange={setPriority}/></div>
+          <label className="field">Notes<textarea name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></label>
+          <details className="md-more">
+            <summary>More options</summary>
+            <div className="auth-form">
           <Input
             label="Time (optional)"
             disabled={!date}
@@ -150,19 +172,6 @@ export function TaskPanel({
             value={forValue}
             onChange={setFor}
           />
-          <details className="md-more" open={task ? true : undefined}>
-            <summary>More options</summary>
-            <div className="auth-form">
-              <div className="field">
-                <label htmlFor="md-details">Details</label>
-                <textarea
-                  id="md-details"
-                  name="details"
-                  rows={4}
-                  maxLength={5000}
-                  defaultValue={task?.details ?? draft?.details}
-                />
-              </div>
               <div className="field">
                 <label htmlFor="md-status">Status</label>
                 <select
@@ -174,7 +183,7 @@ export function TaskPanel({
                   <option value="open">To do</option>
                   <option value="in_progress">In progress</option>
                   <option value="done">Done</option>
-                  {task && <option value="archived">Deleted</option>}
+
                 </select>
               </div>
               <div className="field">
@@ -221,12 +230,7 @@ export function TaskPanel({
             </p>
           )}
           <div className="md-panel-actions">
-            <Button type="submit" disabled={busy}>
-              {busy ? "Saving…" : "Save task"}
-            </Button>
-            <Button variant="secondary" onClick={close} disabled={busy}>
-              Cancel edit
-            </Button>
+            {task?<><span role="status">{busy?'Saving…':saveState||'Saved'}</span>{error&&<><Button variant="secondary" type="submit" disabled={busy}>Retry save</Button><Button variant="secondary" onClick={()=>{if(window.confirm('Discard your unsaved changes?'))close()}}>Discard unsaved changes</Button></>}</>:<><Button type="submit" disabled={busy}>{busy?'Saving…':'Save task'}</Button><Button variant="secondary" onClick={close} disabled={busy}>Cancel</Button></>}
           </div>
         </form>
       </section>

@@ -1707,3 +1707,18 @@
 .vw-shell .md-page .md-slim-row .md-task-title { font-size: 15px; }
 .md-add-menu > summary:hover .md-add-hint { transition: opacity 150ms 400ms,visibility 0s 400ms; }
 @media (pointer: coarse) { .vw-shell .md-page .md-plan-action { min-height: 44px; } }
+.vw-shell .md-page .md-page-heading > .button { width: auto; min-height: 36px; padding: 0 14px; flex: none; font-size: 14px; }
+.vw-shell .md-page .md-page-heading { flex-direction: row; }
+.vw-shell .md-page .md-toolbar-approved .md-add-menu > summary { background: var(--surface); color: var(--blue-hover); border: 1px solid var(--blue); }
+@media (pointer: coarse) { .vw-shell .md-page .md-page-heading > .button { min-height: 44px; } }
+.vw-shell .md-page .md-page-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px; row-gap: 0; padding: 6px 16px; }
+.vw-shell .md-page .md-page-heading > div { display: contents; }
+.vw-shell .md-page .md-page-heading h1 { grid-column: 1; grid-row: 1; align-self: center; min-width: 0; margin: 0; }
+.vw-shell .md-page .md-page-heading .md-live-line { grid-column: 1 / -1; grid-row: 2; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vw-shell .md-page .md-page-heading > .button { grid-column: 2; grid-row: 1; }
+.md-check-target { display: grid; place-items: center; flex: none; width: 36px; height: 36px; margin-block: -2px; cursor: pointer; }
+.md-check-target input { width: 18px; height: 18px; accent-color: var(--blue); }
+.vw-shell .md-page .md-slim-row .md-task-title { display: block; min-height: 36px; margin-block: -2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vw-shell .md-page .md-slim-row > time { display: flex; align-items: center; justify-content: end; gap: 8px; line-height: 16px; font-size: 13px; }
+.md-earlier-tag { flex: none; margin-inline-start: 0; }
+@media(pointer:coarse) { .md-check-target { width: 44px; height: 44px; margin-block: -6px; }.vw-shell .md-page .md-slim-row .md-task-title { min-height: 44px; margin-block: -6px; } }

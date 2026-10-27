@@ -1,3 +1,4 @@
+import {RoleDrawer} from '../records/RoleDrawer'
 import {useEffect,useState} from 'react'
 import type {FormEvent} from 'react'
 import {supabase} from '../../lib/supabase'
@@ -9,21 +10,20 @@ import {draftLabels} from './capture-types'
 export function ChoiceField({label,name,rows,value='',onChange}:{label:string;name:string;rows:Choice[];value?:string;onChange?:(v:string)=>void}) {
  return <label className="field vc-choice"><span>{label}</span><select aria-label={label} name={name} defaultValue={value} onChange={e=>onChange?.(e.target.value)}><option value="">None</option>{rows.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label>
 }
-export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,accept,discard,cancel,sourceText='',sender='',sourceDate=''}:{draft?:CaptureDraft;options:CaptureOptions;people:Choice[];busy:boolean;accepted:boolean;duplicate:boolean;accept:(data:Record<string,string>)=>Promise<void>;discard:()=>void;cancel?:()=>void;sourceText?:string;sender?:string;sourceDate?:string}) {
+export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,accept,discard,unaccept,cancel,sourceText='',sender='',sourceDate=''}:{draft?:CaptureDraft;options:CaptureOptions;people:Choice[];busy:boolean;accepted:boolean;duplicate:boolean;accept:(data:Record<string,string>)=>Promise<void>;discard:()=>void;unaccept?:()=>void;cancel?:()=>void;sourceText?:string;sender?:string;sourceDate?:string}) {
  const {profile}=useAuth()
- const [kind,setKind]=useState(draft?.kind??'action'),[editing,setEditing]=useState(!draft),[error,setError]=useState('')
+ const [kind,setKind]=useState(draft?.kind??'action'),[editing,setEditing]=useState(!draft),[expanded,setExpanded]=useState(!draft),[error,setError]=useState('')
  const p=draft?.payload??{},v=(key:string)=>p[key]??''
  const [owner,setOwner]=useState(v('owner_id')||profile!.id),[choices,setChoices]=useState(options),[choiceError,setChoiceError]=useState(false)
  useEffect(()=>{if(owner===profile!.id)return;let alive=true;void supabase.rpc('capture_pipeline',{p_operation:'options',p_data:{owner_id:owner}}).then(({data,error})=>{if(alive){setChoiceError(Boolean(error));if(!error&&data&&typeof data==='object'&&'today' in data)setChoices(data as unknown as CaptureOptions)}});return()=>{alive=false}},[owner,profile])
  const activeChoices=owner===profile!.id?options:choices
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string,string>;try{await accept({...data,kind,owner_reviewed:'true'});setEditing(false)}catch{setError('This draft could not be updated. Your changes are still here.')}}
- return <li className="vc-review-card" data-accepted={accepted}>
-  <form onSubmit={e=>void submit(e)}><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
+ const form=(<form onSubmit={e=>void submit(e)}><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
   {!v('source_owner')&&draft?.origin==='ai'&&v('owner_reviewed')!=='true'&&!accepted&&<span className="vc-missing">No owner</span>}
   {v('source_excerpt')&&sourceText.includes(v('source_excerpt'))&&<blockquote className="vc-source-quote"><mark>{v('source_excerpt')}</mark><footer>{[sender,sourceDate].filter(Boolean).join(' · ')}</footer></blockquote>}
   {kind==='action'&&!v('due_date')&&<span className="vc-missing">No date</span>}
   {duplicate&&<p className="vc-warning" role="status">A similar item already exists. Check it before confirming.</p>}
-  {!editing?<><h3>{v('title')}</h3><p className="vc-note">Owner: {v('owner_id')===profile!.id?'Me':people.find(person=>person.id===v('owner_id'))?.title||'Choose owner'}{v('source_owner')&&v('source_owner')!==profile!.full_name?` · Mentioned: ${v('source_owner')}`:''}{kind==='action'?` · ${v('due_date')||'No date'} · ${({'at_time':'Reminder at due time','30_minutes':'Reminder 30 minutes before','1_hour':'Reminder 1 hour before','day_before':'Reminder the day before'} as Record<string,string>)[v('reminder_option')||'at_time']}`:''}</p><p className="vc-prewrap">{v(kind==='decision'?'reason':'details')}</p><div className="form-actions">{!accepted&&<Button variant="secondary" disabled={busy} onClick={()=>void accept({...Object.fromEntries(Object.entries(p).map(([k,value])=>[k,value||''])),kind,owner_reviewed:'true'}).catch(()=>setError('This draft could not be accepted. Try again.'))}>Accept</Button>}<Button variant="secondary" disabled={busy} onClick={()=>setEditing(true)}>Edit</Button><Button variant="secondary" disabled={busy} onClick={discard}>Dismiss</Button></div></>:<>
+  {!editing?<><h3>{v('title')}</h3><p className="vc-note">Owner: {v('owner_id')===profile!.id?'Me':people.find(person=>person.id===v('owner_id'))?.title||'Choose owner'}{v('source_owner')&&v('source_owner')!==profile!.full_name?` · Mentioned: ${v('source_owner')}`:''}{kind==='action'?` · ${v('due_date')||'No date'} · ${({'at_time':'Reminder at due time','30_minutes':'Reminder 30 minutes before','1_hour':'Reminder 1 hour before','day_before':'Reminder the day before'} as Record<string,string>)[v('reminder_option')||'at_time']}`:''}</p><p className="vc-prewrap">{v(kind==='decision'?'reason':'details')}</p><div className="form-actions">{!accepted&&<Button variant="secondary" disabled={busy} onClick={()=>void accept({...Object.fromEntries(Object.entries(p).map(([k,value])=>[k,value||''])),kind,owner_reviewed:'true'}).catch(()=>setError('This draft could not be accepted. Try again.'))}>Accept</Button>}<Button variant="secondary" disabled={busy} onClick={()=>{setEditing(true);setExpanded(true)}}>Edit</Button><Button variant="secondary" disabled={busy} onClick={discard}>Dismiss</Button></div></>:<>
   <fieldset disabled={busy} className="vc-fields"><input type="hidden" name="source_excerpt" value={v('source_excerpt')}/><input type="hidden" name="source_owner" value={v('source_owner')}/>
    <label className="field"><span>Type</span><select aria-label="Type" name="type" value={kind} onChange={e=>setKind(e.target.value)}><option value="decision">Decision</option><option value="action">Task</option>{kind==='summary'&&<option value="summary">Conversation summary</option>}{kind==='contact'&&<option value="contact">External contact</option>}</select></label>
    <Input label="Title" name="title" defaultValue={v('title')} placeholder="e.g. Share the supplier review notes" maxLength={200} required/>
@@ -36,7 +36,11 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
    {choiceError&&<p className="field-error" role="alert">This owner’s Records and contacts could not be loaded. Choose the owner again.</p>}{error&&<p className="field-error" role="alert">{error}</p>}
    <div className="form-actions"><Button type="submit" variant="secondary">Accept</Button><Button variant="secondary" onClick={discard}>Dismiss</Button>{cancel&&<Button variant="secondary" onClick={cancel}>Cancel</Button>}</div>
   </fieldset></>}
-  </form>
+  </form>);
+ return <li className="vc-review-card" data-accepted={accepted}>
+  {draft&&<div className="vc-draft-row"><label className="vc-check-target"><input type="checkbox" checked={accepted} disabled={busy} aria-label={`Accept draft: ${v('title')}`} onChange={e=>{if(!e.target.checked){unaccept?.();return}void accept({...Object.fromEntries(Object.entries(p).map(([key,value])=>[key,value||''])),kind,owner_reviewed:'true'}).catch(()=>setError('This draft could not be accepted. Try again.'))}}/></label><button type="button" className="vc-draft-title" onClick={()=>setExpanded(!expanded)} aria-expanded={expanded}><strong>{v('title')}</strong><span>{v('owner_id')===profile!.id?'Me':people.find(person=>person.id===v('owner_id'))?.title||'Choose owner'} · {v('due_date')||'No date'}{kind==='action'&&<> · <span className="vc-priority-chip">{v('priority')||'normal'}</span></>}</span></button><button type="button" className="vc-draft-expand" aria-label={`${expanded?'Collapse':'Expand'} ${v('title')}`} aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'⌃':'⌄'}</button></div>}
+
+ {editing?<RoleDrawer context="Capture" title={draft?'Edit draft':'Add draft'} close={()=>{if(draft)setEditing(false);else cancel?.()}}>{form}</RoleDrawer>:<div hidden={!expanded}>{form}</div>}
+ {!expanded&&!editing&&error&&<p role="alert" className="field-error">{error}</p>}
  </li>
 }
-
