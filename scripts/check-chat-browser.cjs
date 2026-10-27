@@ -6,7 +6,7 @@ const assert = require('node:assert/strict')
     server: { host: '127.0.0.1', port: 5173, strictPort: true },
   })
   await server.listen()
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}) })
   try {
     const page = await browser.newPage({
       viewport: { width: 1440, height: 1000 },
