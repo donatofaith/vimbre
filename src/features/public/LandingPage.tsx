@@ -56,7 +56,7 @@ function ToolAvailability() {
 function AITrustBlock() {
   return <section className="rs-section rf-ai-trust" aria-labelledby="ai-trust-title">
     <div className="rs-container rf-ai-trust-layout">
-      <Reveal><span className="rs-eyebrow">You stay in control</span><h2 id="ai-trust-title">Vimbre AI drafts. You decide what gets saved.</h2><p>For normal drafts, Vimbre AI runs only when you tap to request it. Read the source, check names and dates, edit what needs changing, and confirm only what is correct. Nothing becomes a shared action or decision until you confirm it. Your source and pending draft remain private.</p></Reveal>
+      <Reveal><span className="rs-eyebrow">You stay in control</span><h2 id="ai-trust-title">Vimbre AI drafts. You decide what gets saved.</h2><p>For normal drafts, Vimbre AI runs only when you tap to request it. Read the source, check names and dates, edit what needs changing, and confirm only what is correct. Nothing becomes a shared action or decision until you confirm it. Your source and pending draft remain private. If you enable a Watch rule separately, it can prepare private drafts under that rule; it never confirms actions for you.</p></Reveal>
       <div className="rf-ai-trust-points">
         <article><span className="rf-ai-point-number">01</span><div><h3>It drafts</h3><p>It suggests actions and context from text or a selected source.</p></div></article>
         <article><span className="rf-ai-point-number">02</span><div><h3>You check</h3><p>Review the wording, owners and dates before anything becomes a record.</p></div></article>
