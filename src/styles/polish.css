@@ -273,3 +273,7 @@
 .md-next-plan h2 { font-size: 15px; margin: 0 0 12px; }
 .md-next-plan p { margin: 0 0 12px; }
 .md-page:has(.md-plan-focus) :is(.md-task-list,.md-week,.md-board,.md-day-group) { display: none; }
+.vw-shell.app-shell .settings-layout { gap: 24px; }
+.vw-shell.app-shell .settings-layout .page-heading { margin-bottom: 0; }
+.vw-shell.app-shell .settings-layout .page-heading h1 { margin-top: 0; font-size: 24px; }
+.vw-shell.app-shell .settings-layout fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
