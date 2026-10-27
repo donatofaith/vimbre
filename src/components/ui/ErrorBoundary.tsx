@@ -6,9 +6,11 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
   componentDidCatch(_error: Error, _info: ErrorInfo) {
     // Do not log user content or credentials. Add redacted diagnostics with the backend.
     console.error('The application could not render.')
+    if (import.meta.env.DEV) console.error(_error.name, _error.stack?.replaceAll(/https?:\/\/[^\s)]+/g, '[source]'), _info.componentStack)
   }
   render() {
     if (this.state.failed) return <main className="standalone"><h1>We could not open this page</h1><p>Please reload and try again.</p><button className="button button-secondary" onClick={() => window.location.reload()}>Reload page</button></main>
     return this.props.children
   }
 }
+
