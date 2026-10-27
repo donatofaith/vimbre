@@ -4,7 +4,7 @@ import {supabase} from '../../lib/supabase'
 type Stars={mode:string;visible:boolean;today:number;week:number;history:{points:number;reason:string;created_at:string}[];ranking:{id:string;full_name:string;stars:number}[]}
 export function StarsPanel({compact=false}:{compact?:boolean}){
  const [data,setData]=useState<Stars|null>(null),[error,setError]=useState(false)
- useEffect(()=>{let live=true;async function load(){const r=await supabase.rpc('myday_stars',{});if(live){if(r.error)setError(true);else{setError(false);setData(r.data as unknown as Stars)}}}void load();window.addEventListener('vimbre:work-changed',load);return()=>{live=false;window.removeEventListener('vimbre:work-changed',load)}},[])
+ useEffect(()=>{let live=true;async function load(){const r=await supabase.rpc('myday_stars',{});if(live){if(r.error||!r.data||typeof r.data!=="object"||Array.isArray(r.data)||!Array.isArray(r.data.history)||!Array.isArray(r.data.ranking))setError(true);else{setError(false);setData(r.data as unknown as Stars)}}}void load();window.addEventListener('vimbre:work-changed',load);return()=>{live=false;window.removeEventListener('vimbre:work-changed',load)}},[])
  if(error)return compact?null:<p role="alert">Stars could not be loaded.</p>
  if(!data)return compact?null:<p role="status">Loading stars…</p>
  if(compact)return data.mode==='off'?null:<div className="md-stars-strip" aria-label="Stars today"><strong>{data.today} stars today</strong><span>{data.week} this week</span></div>
