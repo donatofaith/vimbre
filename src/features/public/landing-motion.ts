@@ -1,4 +1,4 @@
-import { animate, scroll } from 'motion'
+import { animate } from 'motion'
 import type { AnimationSequence } from 'motion'
 import { heroStoryTiming } from './hero-story-timing'
 const ease: [number, number, number, number] = [.22, 1, .36, 1]
@@ -28,8 +28,8 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   scene('away', away, cover + transition)
   frame('[data-scene="cover"]', { opacity: [0, 1], transform: ['translateX(12px)', 'translateX(0)'] }, cover)
   frame('[data-capture-dot]', { opacity: [0, 1, 1, 0] }, capture, saved - capture)
-  elements('[data-phrase]', shell).forEach((el, i) => timeline.push([el, { transform: ['scaleX(0)', 'scaleX(1)'] }, { at: capture + .4 + i * .12, duration: .35, ease }]))
-  elements('[data-draft-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: draft + .1 + i * heroStoryTiming.rowStagger, duration: .4, ease }]))
+  elements('[data-phrase]', shell).forEach((el, i) => timeline.push([el, { transform: ['scaleX(0)', 'scaleX(1)'] }, { at: capture + .4 + i * .12, duration: .5, ease }]))
+  elements('[data-draft-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0)'] }, { at: draft + .1 + i * heroStoryTiming.rowStagger, duration: .5, ease }]))
   elements('[data-cover-row]', shell).forEach((el, i) => timeline.push([el, { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] }, { at: cover + i * heroStoryTiming.coverStagger, duration: .5, ease }]))
   frame('[data-cover-highlight]', { opacity: [0, 1] }, cover + .8, .5)
   frame('[data-story-resolution]', { opacity: [0, 1] }, resolve, .4)
@@ -49,9 +49,9 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
     const y = target.top + target.height * .5 - bounds.top
     const ring = shell.querySelector<HTMLElement>(`[data-demo-click="${name}"]`)!
     ring.style.left = `${x - 12}px`; ring.style.top = `${y - 12}px`
-    frame('[data-demo-cursor]', { opacity: [0, 1, 1, 0], transform: [`translate(${previousX}px,${previousY}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`] }, time - .8, 1, [0, .65, .85, 1])
-    frame(`[data-demo-click="${name}"]`, { opacity: [0, .85, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.5)'] }, time - .1, .4)
-    frame(selector, { transform: ['scale(1)', 'scale(.97)', 'scale(1)'] }, time - .1, .25)
+    frame('[data-demo-cursor]', { opacity: [0, 1, 1, 0], transform: [`translate(${previousX}px,${previousY}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`, `translate(${x}px,${y}px)`] }, time - .5, .5, [0, .65, .85, 1])
+    frame(`[data-demo-click="${name}"]`, { opacity: [0, .85, 0], transform: ['scale(.6)', 'scale(1)', 'scale(1.5)'] }, time - .1, .5)
+    frame(selector, { transform: ['scale(1)', 'scale(.97)', 'scale(1)'] }, time - .1, .5)
     previousX = x; previousY = y
   }
   const hero = animate(timeline, { repeat: heroStoryTiming.plays - 1 })
@@ -130,42 +130,7 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   }
   revealRows('.rs-why-visual', '[data-record-row]', 'Y')
 
-  let cleanupProblem = () => {}
-  const setupProblem = () => {
-    cleanupProblem()
-    const problem = root.querySelector<HTMLElement>('[data-problem]')
-    if (!problem || mobile.matches) return
-    const cards = elements('[data-problem-source]')
-    const target = root.querySelector<HTMLElement>('[data-problem-record]')!
-    const b = target.getBoundingClientRect()
-    const moves = cards.map((el, i) => { const a = el.getBoundingClientRect(); return { el, x: b.left + b.width / 2 - a.left - a.width / 2, y: b.top + b.height / 2 - a.top - a.height / 2, angle: [-4, 5, 3, -3][i] } })
-    const detach = scroll((progress: number) => {
-      if (document.hidden) return
-      moves.forEach(({ el, x, y, angle }) => { el.style.transform = `translate(${x * progress}px,${y * progress}px) rotate(${angle * (1 - progress)}deg)`; el.style.opacity = String(1 - progress) })
-      target.style.opacity = String(Math.min(1, progress * 1.5))
-      target.style.transform = `translateY(${16 * (1 - progress)}px)`
-    }, { target: problem, offset: ['start 80%', 'start 20%'] })
-    cleanupProblem = () => { detach(); [...cards, target].forEach(el => { el.style.removeProperty('transform'); el.style.removeProperty('opacity') }) }
-  }
-  setupProblem()
-  mobile.addEventListener('change', setupProblem)
-  disposers.push(() => { mobile.removeEventListener('change', setupProblem); cleanupProblem() })
-  const motif = root.querySelector<HTMLElement>('.rs-hero-motif')
-  if (motif) {
-    const detach = scroll((progress: number) => { if (!document.hidden) motif.style.transform = `translateY(${progress * -24}px) rotate(-20deg)` }, { target: shell, offset: ['start start', 'end start'] })
-    disposers.push(() => { detach(); motif.style.removeProperty('transform') })
-  }
-  const final = root.querySelector<HTMLElement>('[data-final-section]')
-  let finalVisible = false
-  const driftTarget = final?.querySelector<HTMLElement>('.rs-stream-motif')
-  const drift = driftTarget ? animate(driftTarget, { transform: ['translateY(0) rotate(-20deg)', 'translateY(24px) rotate(-20deg)'] }, { duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut', autoplay: false }) : null
-  if (drift) all.add(drift)
-  if (final && drift) {
-    const observer = new IntersectionObserver(entries => { finalVisible = entries[0].isIntersecting; if (finalVisible && !document.hidden) drift.play(); else drift.pause() })
-    observer.observe(final)
-    disposers.push(() => observer.disconnect())
-  }
-  const visibility = () => { sync(); if (document.hidden) all.forEach(a => a.pause()); else { if (finalVisible) drift?.play(); all.forEach(a => { if (a !== hero && a !== drift) a.play() }) } }
+  const visibility = () => { sync(); if (document.hidden) all.forEach(a => a.pause()); else all.forEach(a => { if (a !== hero) a.play() }) }
   document.addEventListener('visibilitychange', visibility)
   disposers.push(() => document.removeEventListener('visibilitychange', visibility))
   return {
