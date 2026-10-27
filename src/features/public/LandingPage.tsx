@@ -56,7 +56,7 @@ function ToolAvailability() {
 function AITrustBlock() {
   return <section className="rs-section rf-ai-trust" aria-labelledby="ai-trust-title">
     <div className="rs-container rf-ai-trust-layout">
-      <Reveal><span className="rs-eyebrow">You stay in control</span><h2 id="ai-trust-title">Vimbre AI drafts. You decide what gets saved.</h2><p>Start a normal draft when you ask for it. Read the source, check names and dates, edit what needs changing, and confirm only what is correct. Nothing from a normal draft is saved until you confirm it.</p></Reveal>
+      <Reveal><span className="rs-eyebrow">You stay in control</span><h2 id="ai-trust-title">Vimbre AI drafts. You decide what gets saved.</h2><p>For normal drafts, Vimbre AI runs only when you tap to request it. Read the source, check names and dates, edit what needs changing, and confirm only what is correct. Nothing becomes a shared action or decision until you confirm it. Your source and pending draft remain private.</p></Reveal>
       <div className="rf-ai-trust-points">
         <article><span className="rf-ai-point-number">01</span><div><h3>It drafts</h3><p>It suggests actions and context from text or a selected source.</p></div></article>
         <article><span className="rf-ai-point-number">02</span><div><h3>You check</h3><p>Review the wording, owners and dates before anything becomes a record.</p></div></article>
@@ -138,7 +138,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section id="tools" className="rs-section rs-tinted" aria-labelledby="tools-title"><div className="rs-container"><Reveal><ToolAvailability /></Reveal></div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">More context, for less than the cost of a seat.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Growth is the most popular starting point.</p><p className="rf-pricing-start-note">Get started by creating a workspace. There is no checkout or card step on signup.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">See the price per person, not just per plan.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Growth is the most popular starting point.</p><p className="rf-pricing-start-note">Get started by creating a workspace. There is no checkout or card step on signup.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
             {i === 1 && <span className="rf-popular-label">Most popular</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
