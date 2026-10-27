@@ -21,4 +21,7 @@ Application checks pass: 186 unit tests, application/Edge TypeScript checks and 
 
 The exact SQL proposal in supabase/proposals/my_role_client_final.sql passes hosted rollback tests, including real handover population, tenant isolation, raw RLS denial, stale-version rejection, repeating tasks, manager review, successor acceptance, guide revocation and revocation on consent withdrawal. No fixture remains and no provider request or email was sent.
 
-Deployment is pending: Supabase apply_migration returned “Invalid or expired requestState” twice. Read-only catalog checks confirmed the proposed tables were absent and migration history unchanged. Do not publish the dependent frontend or replace either Edge Function until the migration succeeds. After applying, mirror its server-generated version, deploy ai-run and my-day-mail, and publish with a development-head lease. Cross-origin document sites that disallow HEAD checks require the user to open the link to verify access; the interface reports this limitation rather than declaring a working link broken.
+The hosted migration is applied and the installed-schema checks pass. The AI and reminder handlers are active. Cross-origin document sites that disallow HEAD checks require the user to open the link to verify access; the interface reports this limitation rather than declaring a working link broken.
+
+
+Deployment resumed: hosted migration 20261027040043_my_role_client_final applied successfully after reconnection. The rollback acceptance suite passes against the installed schema. ai-run version 24 and my-day-mail version 13 are active; the latter retains scheduler-token authentication. Frontend publication and live-asset verification follow.
