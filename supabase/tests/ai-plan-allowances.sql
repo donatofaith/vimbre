@@ -32,13 +32,13 @@ do $$ declare s jsonb; r jsonb; uid uuid; primary_id uuid; begin
  update public.ai_limits set daily_cost_limit=100,monthly_cost_limit=0.01 where plan='trial';
  r:=public.ai_gateway_begin(current_setting('test.employee')::uuid,gen_random_uuid(),'tidy_text',repeat('c',64));if r->>'period'<>'month' then raise exception 'Monthly spend';end if;
  update public.ai_limits set daily_cost_limit=100,monthly_cost_limit=100 where plan='trial';
- -- Admin sees only their company; employees/managers have no summary access.
+ -- Admin sees only their company; members receive request counts without pricing or spend.
  perform set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
  if (public.ai_allowance_summary()->>'daily_requests')::int<>5 then raise exception 'Admin company summary';end if;
  perform set_config('request.jwt.claim.sub',current_setting('test.other_admin'),true);
  if (public.ai_allowance_summary()->>'daily_requests')::int<>0 then raise exception 'Cross-company summary';end if;
- perform set_config('request.jwt.claim.sub',current_setting('test.employee'),true);if public.ai_allowance_summary() is not null then raise exception 'Employee summary';end if;
- perform set_config('request.jwt.claim.sub',current_setting('test.manager'),true);if public.ai_allowance_summary() is not null then raise exception 'Manager summary';end if;
+ perform set_config('request.jwt.claim.sub',current_setting('test.employee'),true);if public.ai_allowance_summary()->>'enabled'<>'true' or public.ai_allowance_summary() ? 'daily_cost' or public.ai_allowance_summary() ? 'plan' then raise exception 'Employee projection';end if;
+ perform set_config('request.jwt.claim.sub',current_setting('test.manager'),true);if public.ai_allowance_summary()->>'enabled'<>'true' or public.ai_allowance_summary() ? 'monthly_cost' then raise exception 'Manager projection';end if;
  -- Disabled/custom Enterprise defaults fail closed; operators must set contract caps.
  update public.ai_company_limits set plan='enterprise' where company_id=current_setting('test.company')::uuid;
  r:=public.ai_gateway_begin(current_setting('test.employee')::uuid,gen_random_uuid(),'tidy_text',repeat('c',64));if r->>'code'<>'limit_reached' then raise exception 'Enterprise default unlimited';end if;

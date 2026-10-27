@@ -25,3 +25,5 @@ The hosted migration is applied and the installed-schema checks pass. The AI and
 
 
 Deployment resumed: hosted migration 20261027040043_my_role_client_final applied successfully after reconnection. The rollback acceptance suite passes against the installed schema. ai-run version 24 and my-day-mail version 13 are active; the latter retains scheduler-token authentication. Frontend publication and live-asset verification follow.
+
+Member allowance display corrected in migration 20261027041234_member_ai_allowance_projection. Active members receive request counts and limits only; pricing, plan and spend stay admin-only. Focused rollback tests pass financial privacy, company isolation and inactive-account denial. This is a database-only correction; no paid AI call or GitHub Actions suite is needed.
