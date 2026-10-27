@@ -156,7 +156,7 @@ export function TaskPanel({
           </div>
           <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
           <div className="field"><span>Priority</span><SegmentedControl label="Priority" value={priority} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'}]} onChange={setPriority}/></div>
-          <label className="field">Notes<textarea name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></label>
+          <div className="field"><label htmlFor={`md-notes-${id}`}>Notes</label><textarea id={`md-notes-${id}`} name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></div>
           <details className="md-more">
             <summary>More options</summary>
             <div className="auth-form">
