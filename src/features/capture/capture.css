@@ -660,3 +660,10 @@
 .vc-page .vw-page-heading > div > p { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .vc-page .vc-confirm { padding: 8px 0; gap: 8px; }
 .vc-page .vc-confirm .button { width: auto; flex: 0 0 auto; }
+
+/* Keep draft actions opaque while they stick above the viewport edge. */
+.vc-page .vc-confirm { background: #fffefa; border: 1px solid #dce3eb; border-radius: 8px; padding: 8px 12px; bottom: 8px; }
+@media (min-width: 900px) {
+  .vc-page .vc-review-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; }
+  .vc-page .vc-check { border-top: 0; border-left: 1px solid #e1e7ee; padding-top: 0; padding-left: 24px; }
+}
