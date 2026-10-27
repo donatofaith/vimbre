@@ -64,6 +64,12 @@ end$$;
 select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 select public.role_workspace('guide_revoke',current_setting('test.client_role')::uuid,jsonb_build_object('id',current_setting('test.client_share')));
 do $$begin begin perform public.read_role_guide(current_setting('test.client_guide'));raise exception 'Revoked guide readable';exception when insufficient_privilege then null;end;end$$;
+do $$declare j jsonb;begin
+ j:=public.role_workspace('guide_create',current_setting('test.client_role')::uuid,jsonb_build_object('expires',now()+interval '1 day'));
+ perform set_config('test.client_guide2',j->>'token',true);
+ perform public.role_workspace('settings',current_setting('test.client_role')::uuid,jsonb_build_object('id',current_setting('test.client_work'),'kind','responsibility','include_in_handover',false));
+ begin perform public.read_role_guide(current_setting('test.client_guide2'));raise exception 'Privacy withdrawal left a shared snapshot readable';exception when insufficient_privilege then null;end;
+end$$;
 reset role;
 select 'My role privacy, readiness, versioning, recurring task, manager review, role draft, guide and tenant tests passed' result;
 rollback;

@@ -14,3 +14,11 @@ The two supplied screenshots supersede the prior role presentation and phase cla
 - Notifications suppress superseded reminder rows and show each task once with current status.
 
 Verification uses fixture data, intercepted providers and rollback SQL: no paid Claude request or real review email is sent by tests. Full historical test output is not treated as proof of the new UI.
+
+## Verified status
+
+Application checks pass: 186 unit tests, application/Edge TypeScript checks and production build. Browser run 40445653679 passed on runtime source 43e7f8a742ff8d00be10b60134184672c7a31d55, including note autosave/failure retention, all five forms, decision replacement, Undo/restore, cover privacy, summary acceptance/cache and 14 responsive widths. Desktop and phone screenshots were inspected. Subsequent frontend changes only remove an erased TypeScript cast and declare the RPC type.
+
+The exact SQL proposal in supabase/proposals/my_role_client_final.sql passes hosted rollback tests, including real handover population, tenant isolation, raw RLS denial, stale-version rejection, repeating tasks, manager review, successor acceptance, guide revocation and revocation on consent withdrawal. No fixture remains and no provider request or email was sent.
+
+Deployment is pending: Supabase apply_migration returned “Invalid or expired requestState” twice. Read-only catalog checks confirmed the proposed tables were absent and migration history unchanged. Do not publish the dependent frontend or replace either Edge Function until the migration succeeds. After applying, mirror its server-generated version, deploy ai-run and my-day-mail, and publish with a development-head lease. Cross-origin document sites that disallow HEAD checks require the user to open the link to verify access; the interface reports this limitation rather than declaring a working link broken.
