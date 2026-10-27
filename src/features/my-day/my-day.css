@@ -1738,3 +1738,19 @@
 }
 
 .md-skip-review{padding-block:16px;border-bottom:1px solid #dce3eb}.md-skip-review ul{list-style:none;padding:0;margin:12px 0 0}.md-skip-review li{padding:12px 0;border-top:1px solid #e1e7ee}.md-skip-review .form-actions{margin-top:12px}
+
+/* Header action spans both greeting rows; utility actions stay beside Add. */
+@media(min-width:641px){.vw-shell.app-shell .md-page .md-page-heading > .button{grid-row:1 / 3;align-self:center}.vw-shell.app-shell .md-page .md-page-heading .md-live-line{grid-column:1}}
+.md-tools-menu{position:relative;flex:none;align-self:end}
+.md-tools-menu>summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;min-height:36px;padding:0 12px;border:1px solid #dce3eb;border-radius:8px;background:#fffefa;color:#102a43;font-size:14px;font-weight:500;cursor:pointer}
+.md-tools-menu>summary::-webkit-details-marker{display:none}
+.md-tools-menu>div{position:absolute;right:0;top:calc(100% + 8px);z-index:20;display:grid;min-width:190px;max-width:calc(100vw - 48px);padding:8px;background:#fffefa;border:1px solid #dce3eb;border-radius:8px}
+.md-tools-menu>div>.md-text-button{display:flex;align-items:center;min-height:36px;padding:8px 12px;text-align:left;white-space:nowrap;text-decoration:none;border-radius:6px}
+.md-tools-menu>div>.md-text-button:hover{background:#edf4ff}
+.md-tools-menu>summary:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+@media(pointer:coarse){.md-tools-menu>summary,.md-tools-menu>div>.md-text-button{min-height:44px}}
+
+.md-toolbar-actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto}
+.md-toolbar-actions .md-tools-menu>summary{width:36px;padding:0}
+@media(pointer:coarse){.md-toolbar-actions .md-tools-menu>summary{width:44px}}
+@media(max-width:640px){.md-toolbar-approved>.segmented-control button{padding-inline:10px}}
