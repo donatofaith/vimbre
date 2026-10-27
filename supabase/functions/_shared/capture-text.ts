@@ -32,10 +32,10 @@ export function parseCaptureOutput(raw: string, source=''): CaptureProposal[] {
       if(key==='tasks')rows.push({kind:'action',payload:{title:text(r.title,200),details:text(r.details),due_date:date(r.due_date)}})
       if(key==='summaries')rows.push({kind:'summary',payload:{title:text(r.title,200),details:text(r.details)}})
       if(key==='external_contacts')rows.push({kind:'contact',payload:{title:text(r.name,200),details:[text(r.organisation,200),text(r.contact_details,400),text(r.context)].filter(Boolean).join('\n')}})
+      const row=rows.at(-1)!;const excerpt=text(r.source_excerpt,2000);if(excerpt&&source.includes(excerpt))row.payload.source_excerpt=excerpt;row.payload.source_owner=text(r.owner,200)
     }
   }
-  for(const row of rows){const input=[...(value.decisions||[]),...(value.tasks||[])].find((r:Record<string,unknown>)=>r.decision===row.payload.title||r.title===row.payload.title);const excerpt=text(input?.source_excerpt,2000);if(excerpt&&source.includes(excerpt))row.payload.source_excerpt=excerpt;row.payload.source_owner=text(input?.owner,200)}
   if(rows.length>60||rows.some(r=>!r.payload.title))throw new Error('Invalid drafts')
-  const seen=new Set<string>();return rows.filter(row=>{const key=JSON.stringify([row.kind,row.payload.title.toLocaleLowerCase(),row.payload.due_date||'']);if(seen.has(key))return false;seen.add(key);return true})
+  const seen=new Set<string>();return rows.filter(row=>{const key=JSON.stringify([row.kind,row.payload.title.toLocaleLowerCase(),row.payload.due_date||row.payload.decided_on||'',(row.payload.source_owner||'').toLocaleLowerCase()]);if(seen.has(key))return false;seen.add(key);return true})
 }
 
