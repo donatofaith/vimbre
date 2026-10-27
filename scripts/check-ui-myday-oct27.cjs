@@ -13,7 +13,7 @@ const assert=require('node:assert/strict');
  await page.route('**/rest/v1/rpc/myday_competition_settings',r=>{const args=r.request().postDataJSON();if(args.p_mode)consent.mode=args.p_mode;if(typeof args.p_visible==='boolean')consent.visible=args.p_visible;return r.fulfill({json:consent})});
  await page.goto('http://127.0.0.1:5173/app');await page.getByRole('button',{name:'Plan my day',exact:true}).click();await page.getByRole('heading',{name:'Today’s plan',exact:true}).waitFor();assert.equal(plan.plan,null);await page.getByRole('button',{name:'Use this plan',exact:true}).click();await page.getByText('Today’s plan saved.',{exact:true}).waitFor();assert.equal(plan.plan.items.length,1);await page.getByRole('button',{name:'Close panel',exact:true}).click();
  await page.getByText('Earlier',{exact:true}).waitFor();
- await page.getByRole('checkbox',{name:'Done: Send the supplier update',exact:true}).check();
+ await page.getByRole('checkbox',{name:'Done: Send the supplier update',exact:true}).click();
  await page.locator('.md-task-completed').first().waitFor();
  assert.equal(await page.locator('.md-task-completed .md-task-title').first().evaluate(el=>getComputedStyle(el).textDecorationLine),'line-through');
  await page.waitForTimeout(5200);await page.locator('.md-done-group summary').waitFor();

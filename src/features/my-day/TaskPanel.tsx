@@ -28,7 +28,7 @@ export function TaskPanel({
 }) {
   const {profile}=useAuth();
   const formRef=useRef<HTMLFormElement>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0),closing=useRef(false);
-  const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal');
+  const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal'),[status,setStatus]=useState(task?.status??'open'),[reminder,setReminder]=useState(task?.reminder_option??'at_time'),[duration,setDuration]=useState(task?.time_needed_minutes?String(task.time_needed_minutes):'');
   useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
   function schedule(){if(!task)return;changes.current++;setSaveState('Unsaved changes');if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>{if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setSaveState('Complete the required fields to save.');},800)}
   const [date, setDate] = useState(
@@ -102,7 +102,7 @@ export function TaskPanel({
     }
   }
   function finish(){if(task&&changes.current!==savedChanges.current){closing.current=true;if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setError('Complete the required fields before closing.');}else close()}
-  const controlled=JSON.stringify([date,time,forValue,priority]),lastControlled=useRef(controlled);
+  const controlled=JSON.stringify([date,time,forValue,priority,status,reminder,duration]),lastControlled=useRef(controlled);
   useEffect(()=>{if(lastControlled.current!==controlled){lastControlled.current=controlled;schedule()}},[controlled]);
   return (
     <RoleDrawer
@@ -173,31 +173,12 @@ export function TaskPanel({
             onChange={setFor}
           />
               <div className="field">
-                <label htmlFor="md-status">Status</label>
-                <select
-                  id="md-status"
-                  name="status"
-                  disabled={!task}
-                  defaultValue={task?.status ?? "open"}
-                >
-                  <option value="open">To do</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="done">Done</option>
-
-                </select>
+                <span>Status</span>
+                <input type="hidden" name="status" value={status}/><SegmentedControl label="Status" value={status} onChange={setStatus} options={[{value:'open',label:'To do'},{value:'in_progress',label:'In progress'},{value:'done',label:'Done'}]}/>
               </div>
               <div className="field">
-                <label htmlFor="md-reminder">Remind me</label>
-                <select
-                  id="md-reminder"
-                  name="reminder_option"
-                  defaultValue={task?.reminder_option ?? "at_time"}
-                >
-                  <option value="at_time">At due time</option>
-                  <option value="30_minutes">30 minutes before</option>
-                  <option value="1_hour">1 hour before</option>
-                  <option value="day_before">The day before at 9:00</option>
-                </select>
+                <span>Remind me</span>
+                <input type="hidden" name="reminder_option" value={reminder}/><SegmentedControl label="Remind me" value={reminder} onChange={setReminder} options={[{value:'at_time',label:'At due time'},{value:'30_minutes',label:'30 minutes before'},{value:'1_hour',label:'1 hour before'},{value:'day_before',label:'The day before at 9:00'}]}/>
               </div>
               <div className="field">
                 <label htmlFor="md-cover-note">
@@ -212,7 +193,7 @@ export function TaskPanel({
                 />
               </div>
               <Input label="Label" name="label" maxLength={80} defaultValue={task?.label??""}/>
-              <label className="field">Time needed<select aria-label="Time needed" name="time_needed_minutes" defaultValue={task?.time_needed_minutes??""}><option value="">Not set</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option></select><span className="field-hint">For planning. No time tracking.</span></label>
+              <div className="field"><span>Time needed</span><input type="hidden" name="time_needed_minutes" value={duration}/><SegmentedControl label="Time needed" value={duration} onChange={setDuration} options={[{value:'15',label:'15 minutes'},{value:'30',label:'30 minutes'},{value:'60',label:'1 hour'},{value:'120',label:'2 hours'}]}/>{duration&&<Button variant="secondary" onClick={()=>setDuration('')}>Clear estimate</Button>}<span className="field-hint">For planning. No time tracking.</span></div>
               <label className="field">Steps<textarea name="steps" rows={4} maxLength={5000} defaultValue={(task?.steps??[]).join("\n")} placeholder="One step per line"/></label>
               <label className="field">Links<textarea name="links" rows={3} maxLength={5000} defaultValue={(task?.links??[]).join("\n")} placeholder="One https link per line"/></label>
               <Input
