@@ -154,3 +154,14 @@ describe('Handover saved-source boundary',()=>{
  it('reuses cached drafts without allowance reservation or provider request',async()=>{const app=fixture();app.deps.handoverSource=vi.fn(async()=>'Saved context');app.deps.handoverClaim=vi.fn(async()=>({cached:'Earlier draft'}));app.deps.handoverComplete=vi.fn(async()=>{});const r=await app.call({task:'handover_draft',text:'Saved',handover_id:id});expect((await r.json()).text).toBe('Earlier draft');expect(app.deps.begin).not.toHaveBeenCalled();expect(app.generate).not.toHaveBeenCalled()})
  it('blocks the fourth attempt and cancels the attempt when allowance rejects',async()=>{const app=fixture();app.deps.handoverSource=vi.fn(async()=>'Saved context');app.deps.handoverClaim=vi.fn(async()=>({blocked:'Both redrafts used'}));app.deps.handoverComplete=vi.fn(async()=>{});expect((await app.call({task:'handover_draft',text:'Saved',handover_id:id})).status).toBe(409);expect(app.deps.begin).not.toHaveBeenCalled();app.deps.handoverClaim=vi.fn(async()=>({cached:null}));app.deps.begin=vi.fn(async()=>({ok:false,code:'limit_reached'}));expect((await app.call({task:'handover_draft',text:'Saved',handover_id:id})).status).toBe(429);expect(app.deps.handoverComplete).toHaveBeenCalledWith('server-user',expect.any(String),null,true)})
 })
+
+
+it('logs a safe provider failure category without exposing provider text or credentials',async()=>{
+ const warn=vi.spyOn(console,'warn').mockImplementation(()=>{})
+ try {
+  const request=vi.fn<typeof fetch>().mockResolvedValue(json({error:{message:'Your credit balance is too low. private text sk-secret'}},400))
+  await expect(anthropicAdapter('private-key',request).generate(adapterInput())).rejects.toBeInstanceOf(ProviderError)
+  expect(warn).toHaveBeenCalledWith('ai_provider_failure',JSON.stringify({provider:'anthropic',stage:'count_tokens',status:400,reason:'billing'}))
+  expect(JSON.stringify(warn.mock.calls)).not.toMatch(/private|sk-secret/)
+ } finally {warn.mockRestore()}
+})
