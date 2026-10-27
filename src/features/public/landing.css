@@ -227,3 +227,10 @@
 @media(prefers-reduced-motion:reduce){
   .rf-scroll-step,.rf-screen-sheet,.rf-screen-progress span,.rs-site :is(.rs-button,.rs-text-link){transition:none!important;animation:none!important;transform:none!important}
 }
+
+/* Keep a meaningful first product frame when motion is reduced or scripts are unavailable. */
+.rs-demo-scene[data-scene=cover]{opacity:0}
+.rs-demo-scene[data-scene=email]{opacity:1}
+.rs-story-shell[data-story-complete] .rs-demo-scene[data-scene=email]{opacity:0!important}
+.rs-story-shell[data-story-complete] .rs-demo-scene[data-scene=cover]{opacity:1!important}
+.rf-calculator :is(input,select){font-size:16px}
