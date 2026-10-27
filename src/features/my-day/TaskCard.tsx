@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { supabase } from "../../lib/supabase";
 import { RoleDrawer } from "../records/RoleDrawer";
 import { safeRecordUrl } from "../records/record-utils";
-import { sourceLabels, statuses, taskDate } from "./types";
+import { dateInZone, sourceLabels, statuses, taskDate } from "./types";
 import type { Task } from "./types";
 const label = (value: string | null) =>
   value === "archived"
@@ -102,7 +102,7 @@ export function TaskRecord({
     </RoleDrawer>
   );
 }
-export function TaskCard({task,zone,busy,initialOpen=false,act,edit,remind,context,quickContext,record,drag,inspect,onClose,panelOnly=false,tools,selecting=false,selected=false,select}: {
+export function TaskCard({task,zone,busy,now,initialOpen=false,act,edit,remind,context,quickContext,record,drag,inspect,onClose,panelOnly=false,tools,selecting=false,selected=false,select}: {
  tools?:ReactNode;selecting?:boolean;selected?:boolean;select?:()=>void;
  inspect?:(task:Task)=>void;onClose?:()=>void;panelOnly?:boolean;
  task: Task;zone:string;busy:boolean;rank?:number;initialOpen?:boolean;now:Date;
@@ -115,10 +115,10 @@ export function TaskCard({task,zone,busy,initialOpen=false,act,edit,remind,conte
  const touch=useRef<{x:number;y:number}|null>(null);
  const source=task.source_role_id??task.stable_role_item_id??task.recurring_id;
  const sourceUrl=safeRecordUrl(task.source_origin_url??task.source_url);
- return <>{!panelOnly&&<article className="md-task-card md-slim-row" data-task-id={task.id} onTouchStart={e=>{if(e.touches.length===1)touch.current={x:e.touches[0].clientX,y:e.touches[0].clientY}}} onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start||!e.changedTouches.length||busy||selecting||task.deleted_at||task.missed_at)return;const dx=e.changedTouches[0].clientX-start.x,dy=e.changedTouches[0].clientY-start.y;if(Math.abs(dy)<35&&Math.abs(dx)>85){if(dx>0)act(task,"status",{status:task.status==="done"?"open":"done"});else if(task.status!=="done")act(task,"tomorrow",{})}}} draggable={!task.deleted_at&&!busy} onDragStart={e=>{drag(task.id);e.dataTransfer.setData("text/plain",task.id)}} onDragEnd={()=>drag("")}>
+ return <>{!panelOnly&&<article className={`md-task-card md-slim-row ${task.status==="done"?"md-task-completed":""}`} data-task-id={task.id} onTouchStart={e=>{if(e.touches.length===1)touch.current={x:e.touches[0].clientX,y:e.touches[0].clientY}}} onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start||!e.changedTouches.length||busy||selecting||task.deleted_at||task.missed_at)return;const dx=e.changedTouches[0].clientX-start.x,dy=e.changedTouches[0].clientY-start.y;if(Math.abs(dy)<35&&Math.abs(dx)>85){if(dx>0)act(task,"status",{status:task.status==="done"?"open":"done"});else if(task.status!=="done")act(task,"tomorrow",{})}}} draggable={!task.deleted_at&&!busy} onDragStart={e=>{drag(task.id);e.dataTransfer.setData("text/plain",task.id)}} onDragEnd={()=>drag("")}>
    <input type="checkbox" aria-label={`${selecting?"Select":"Done"}: ${task.title}`} checked={selecting?selected:task.status==="done"} disabled={busy||Boolean(task.deleted_at)||Boolean(task.missed_at)} onChange={e=>selecting?select?.():act(task,"status",{status:e.target.checked?"done":"open"})}/>
    <button className="md-task-title" aria-label={task.title} onClick={()=>inspect?inspect(task):setOpen(true)}>{task.title}{task.missed_at&&<small className="md-progress-chip">Missed</small>}{task.pinned_at&&<span className="md-star-mark" aria-label="Starred">★</span>}{task.status==="in_progress"&&<small className="md-progress-chip">In progress</small>}</button>
-   <time dateTime={task.due_at}>{taskDate(task,zone,format.language,format.style)}</time>
+   <time dateTime={task.due_at}>{taskDate(task,zone,format.language,format.style)}{task.status!=="done"&&task.due_time&&new Date(task.due_at)<now&&dateInZone(zone,new Date(task.due_at))===dateInZone(zone,now)&&<small className="md-earlier-tag">Earlier</small>}</time>
    </article>}{open&&<RoleDrawer context="My day" title={task.title} close={()=>{setOpen(false);onClose?.()}}><div className="md-task-panel">
     <h2>{task.title}</h2><p>{taskDate(task,zone,format.language,format.style)}</p>
     {task.details&&<p className="record-text">{task.details}</p>}
