@@ -60,7 +60,7 @@ function HandoverDetail({id,flags,close,refresh,edit}:{id:string;flags:Record<st
     if(!live)return;
     if(failure){setExternalQuestions([]);return}
     setExternalQuestions(Array.isArray(rows)?rows as unknown as ExternalQuestion[]:[]);
-  }).catch(()=>{if(live)setExternalQuestions([])});
+  },()=>{if(live)setExternalQuestions([])});
   return()=>{live=false};
  },[id,data?.handover?.id,data?.handover?.owner_id,data?.handover?.reviewer_id,profile?.id,profile?.role,revision]);
  async function replyOutsideQuestion(questionId:string){
