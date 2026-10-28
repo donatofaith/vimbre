@@ -57,6 +57,11 @@ begin
   if (select owner_id from public.actions where id=current_setting('test.cover_task_one')::uuid)<>current_setting('test.employee')::uuid then
     raise exception 'Task ownership changed when the cover completed it';
   end if;
+  begin
+    perform public.myday_action(current_setting('test.cover_task_two')::uuid,'delete','{}'::jsonb);
+    raise exception 'Cover was able to delete an owner task';
+  exception when insufficient_privilege then null;
+  end;
   if (select completed_by from private.handover_items where handover_id=h and record_id=current_setting('test.cover_task_one')::uuid)<>auth.uid() then
     raise exception 'Cover completion audit actor was not recorded';
   end if;
@@ -117,7 +122,7 @@ begin
     raise exception 'Cover request accepted a blank decline reason';
   exception when check_violation then null;
   end;
-  j:=public.cover_duties_action('decline',h,jsonb_build_object('reason','Already covering another project','suggested_person_id',current_setting('test.other_admin')));
+  j:=public.cover_duties_action('decline',h,jsonb_build_object('reason','Already covering another project','suggested_person_id',current_setting('test.manager')));
   if j->'handover'->>'cover_response'<>'declined' or j->'handover'->>'state'<>'cancelled' then raise exception 'Decline state was not recorded'; end if;
   if not exists(select 1 from private.handover_notifications where handover_id=h and owner_id=current_setting('test.employee')::uuid and message like '%declined the cover request%') then raise exception 'Owner was not notified of the decline'; end if;
   if not exists(select 1 from private.handover_notifications where handover_id=h and owner_id=current_setting('test.manager')::uuid and message like '%declined the cover request%') then raise exception 'Manager was not notified of the decline'; end if;
