@@ -424,3 +424,5 @@ Full-page Details / Include / Draft / Send editor, mobile fixed actions, selecte
 
 ## 28 October: Stripe sandbox integration prepared
 Client confirmed a 3-day no-card trial. Vimbre Ltd is live merchant; owner approved Genade Global services Ltd sandbox for tests. Three monthly GBP prices, portal and webhook endpoint exist in sandbox. Private sandbox billing schema, service-only Edge workflow and creator-only test interface are prepared. Rollback SQL acceptance passed; persistent schema installation was blocked by automatic approval review, so migration, Edge and frontend are pending release approval. Owner reports STRIPE_SECRET_KEY saved; STRIPE_WEBHOOK_SECRET still required. No live entitlements, AI allowances or real charges changed. See docs/stripe-billing.md.
+
+Owner approved sandbox migration/deployment. Migration 20261028103031 installed, stripe-billing v1 active, installed-schema rollback acceptance passed. Anonymous billing action returns401; webhook503 confirms missing STRIPE_WEBHOOK_SECRET. No Checkout can start until it is configured. Sandbox UI release proceeds; real sandbox Checkout and signed-delivery acceptance remain pending.

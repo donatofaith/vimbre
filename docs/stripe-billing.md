@@ -1,3 +1,7 @@
+# Sandbox release approved and backend deployed
+
+Owner approved the sandbox release. Migration `20261028103031_stripe_billing_sandbox.sql` is installed; installed-schema rollback acceptance passed. Edge `stripe-billing` v1 is active. Anonymous billing requests return401; webhook requests return503 because `STRIPE_WEBHOOK_SECRET` is missing. Checkout is deliberately disabled until it is configured. The previous pre-approval blockers below are historical; the signing secret and real sandbox end-to-end acceptance are the remaining blockers. Live billing remains untouched.
+
 # Stripe billing setup — 28 October 2026
 
 The client approved a **3-day free trial**, with **no card required at signup**. Do not replace this with a 7/14/30-day default or restart it when Checkout is retried.
