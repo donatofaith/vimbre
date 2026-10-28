@@ -1,9 +1,9 @@
 name: Application checks
 on:
   push:
-    branches: [main, development, 'draft/**']
+    branches: [main, development, 'draft/**', 'feat/**']
   pull_request:
-    branches: [main]
+    branches: [main, development]
 permissions:
   contents: read
 jobs:
@@ -29,5 +29,3 @@ jobs:
       - name: Audit deployed public website
         if: github.ref == 'refs/heads/development'
         run: node scripts/audit-public.cjs
-
-
