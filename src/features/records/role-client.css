@@ -3,3 +3,81 @@
 @media(max-width:480px){.rc-heading{gap:14px}.rc-heading h1{font-size:25px}.rc-heading>div:first-child{flex:1 1 100%}.rc-ready{margin-left:0;max-width:none}.rc-profile{padding:15px;gap:14px}.rc-heading-actions{gap:8px}.rc-heading-actions .button{flex:1;font-size:12px}.rc-heading-actions .rc-text{width:100%}.rc-section>summary{padding:15px}.rc-section-body{padding:0 15px 14px}.rc-row-open{gap:8px;font-size:12px}.rc-row-open span{font-size:12px}.rc-filters{grid-template-columns:1fr}.rc-row-actions{flex-wrap:wrap;gap:10px}.rc-shared{margin:0;padding:20px}.rc-page .card{padding:16px}}
 @media(prefers-reduced-motion:reduce){.rc-section>summary:after{transition:none}}
 @media print{body:has(.rc-guide) *{visibility:hidden}body:has(.rc-guide) .rc-guide,body:has(.rc-guide) .rc-guide *{visibility:visible}.rc-guide{position:absolute;inset:0;width:100%;background:white}.rc-guide h1{margin-top:0}.rc-shared{margin:0;padding:0;max-width:none}.rc-no-print{display:none!important}.vr-drawer:has(.rc-guide){position:static!important;transform:none!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;border:0!important;box-shadow:none!important;overflow:visible!important}.vr-drawer:has(.rc-guide) .vr-drawer-bar,.vr-drawer:has(.rc-guide) button,.vr-drawer:has(.rc-guide) .rc-guide-links{display:none!important}.rc-guide section{break-inside:avoid}.rc-guide a{color:#102a43}}
+
+
+/* My Role banner matches the My Day workspace header and sidebar palette. */
+.vw-shell.app-shell .rc-page .rc-heading{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:18px 22px;
+  box-sizing:border-box;
+  min-height:144px;
+  padding:28px 32px;
+  border:1px solid rgb(255 255 255 / 12%);
+  border-radius:24px;
+  background:linear-gradient(165deg,#1c354a,#102a43 58%,#132c40);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / 10%),0 16px 40px rgb(16 42 67 / 12%);
+  color:#fff;
+}
+.vw-shell.app-shell .rc-page .rc-heading>div:first-child{flex:1 1 240px;min-width:0}
+.vw-shell.app-shell .rc-page .rc-heading h1{
+  color:#fff;
+  font-size:clamp(26px,2.6vw,36px);
+  line-height:1.2;
+  margin:0 0 8px;
+  letter-spacing:-.5px;
+}
+.vw-shell.app-shell .rc-page .rc-heading p{color:#d9e7f4;font-size:15px;line-height:1.5}
+.vw-shell.app-shell .rc-page .rc-ready{
+  flex:none;
+  max-width:none;
+  padding:9px 12px;
+  border:1px solid rgb(255 255 255 / 16%);
+  border-radius:12px;
+  background:rgb(255 255 255 / 6%);
+  color:#f5f9ff;
+}
+.vw-shell.app-shell .rc-page .rc-heading .rc-ready circle{stroke:rgb(255 255 255 / 32%)}
+.vw-shell.app-shell .rc-page .rc-heading .rc-ready circle+circle{stroke:#8bbdff}
+.vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-left:auto;
+  min-width:0;
+}
+.vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions .rc-text{
+  color:#edf5ff;
+  padding-inline:2px;
+  text-align:center;
+}
+.vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions .rc-text:hover{color:#fff}
+.vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions .button-secondary{
+  color:#102a43;
+  background:linear-gradient(#fff,#f8fafd);
+  border-color:#d5dfec;
+}
+@media(max-width:900px){
+  .vw-shell.app-shell .rc-page .rc-heading{gap:16px 18px}
+  .vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions{
+    justify-content:flex-start;
+    width:100%;
+    margin-left:0;
+  }
+}
+@media(max-width:640px){
+  .vw-shell.app-shell .rc-page .rc-heading{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    min-height:0;
+    padding:20px;
+    border-radius:20px;
+    gap:16px;
+  }
+  .vw-shell.app-shell .rc-page .rc-heading>div:first-child{width:100%;flex:auto}
+  .vw-shell.app-shell .rc-page .rc-heading .rc-ready{margin-left:0;width:fit-content;max-width:100%}
+  .vw-shell.app-shell .rc-page .rc-heading .rc-heading-actions{width:100%;margin-left:0;justify-content:flex-start}
+}
