@@ -153,7 +153,7 @@ begin
     select coalesce(jsonb_agg(jsonb_build_object(
       'id',a.id,'title',a.title,'status',a.status,'due_date',a.due_date,'due_at',a.due_at,
       'details',case when a.source_kind='manual' then a.details else '' end,'steps',a.steps,'links',case when a.source_kind='manual' then a.links else '[]'::jsonb end,
-      'completion_note',a.completion_note,'do_not_change',hi.do_not_change,'approved',hi.approved,
+      'completion_note',a.completion_note,'source_is_manual',a.source_kind='manual','do_not_change',hi.do_not_change,'approved',hi.approved,
       'handback_pending',exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status='pending'),
       'source_not_shared',a.source_kind<>'manual' and (a.source_url is not null or a.source_excerpt is not null),
       'completed_by_cover',hi.completed_by=p_user
@@ -558,6 +558,7 @@ returns jsonb language sql stable security definer set search_path='' as $functi
       case when a.source_kind='manual' then a.details else '' end as details,
       case when a.source_kind='manual' then a.steps else '[]'::jsonb end as steps,
       case when a.source_kind='manual' then a.links else '[]'::jsonb end as links,
+      (a.source_kind='manual') as source_is_manual,
       (a.source_kind<>'manual' and (a.source_url is not null or a.source_excerpt is not null)) as source_not_shared,
       d.name as department_name,p.full_name as owner_name,p.id as owner_id
     from public.actions a
