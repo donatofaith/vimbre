@@ -7,51 +7,29 @@ const scrollSteps = [
   { title: 'Handover', intro: 'Give the person covering the work a clear view of what comes first.', screen: 'Cover view', headline: 'What comes first', foot: 'Operations · 9 to 27 Nov 2026' },
 ]
 export function ConnectedTimeline() {
-  const storyRef = useRef<HTMLDivElement>(null)
-  const [active, setActive] = useState(0)
-  useEffect(() => {
-    const root = storyRef.current
-    if (!root || typeof IntersectionObserver === 'undefined') return
-    const visible = new Map<Element, number>()
-    const observer = new IntersectionObserver(entries => {
-      for(const entry of entries){if(entry.isIntersecting)visible.set(entry.target,entry.intersectionRatio);else visible.delete(entry.target)}
-      const candidates=[...visible].sort((a,b)=>b[1]-a[1])
-      if(candidates[0])setActive(Number((candidates[0][0] as HTMLElement).dataset.scrollStep??0))
-    }, { rootMargin: '-28% 0px -35% 0px', threshold: [0.1, 0.25, 0.5, 0.75] })
-    root.querySelectorAll<HTMLElement>('[data-scroll-step]').forEach(step => observer.observe(step))
-    return () => observer.disconnect()
-  }, [])
-  const selected = scrollSteps[active]
-  return <div className="rf-scroll-story" ref={storyRef}>
-    <div className="rf-scroll-steps" aria-label="Four steps">
-      {scrollSteps.map((step, index) => <article className={'rf-scroll-step' + (active === index ? ' rf-active' : '')} data-scroll-step={index} key={step.title} aria-describedby={'rf-scroll-copy-' + index}>
-        <span className="rf-scroll-index">0{index + 1} / 04</span><h3>{step.title}</h3><p id={'rf-scroll-copy-' + index}>{step.intro}</p>
-      </article>)}
-    </div>
-    <div className="rf-scroll-screen" aria-label={'Example product screen: ' + selected.screen} aria-live="polite">
-      <div className="rf-screen-topbar"><span className="rf-screen-brand">Vimbre</span><span className="rf-screen-location">{selected.screen}</span></div>
-      <small className="rs-example">Example</small>
-      <div className="rf-screen-sheet" key={selected.screen}>
-        <span className="rf-screen-kicker">{selected.screen}</span><h3>{selected.headline}</h3>
-        {active === 0 && <blockquote className="rf-screen-source">{selected.body}</blockquote>}
-        {active === 1 && <ul className="rf-screen-rows">
-          <li><span className="rf-screen-check">✓</span><div><strong>Share the review notes</strong><small>Owner: Alex · Due: 12 Nov 2026</small></div></li>
-          <li><span className="rf-screen-check">✓</span><div><strong>Move supplier reviews to monthly</strong><small>Decision suggestion · Check source</small></div></li>
-          <li><span className="rf-screen-check">✓</span><div><strong>Reduce meeting load</strong><small>Reason suggestion · Check wording</small></div></li>
-        </ul>}
-        {active === 2 && <ul className="rf-screen-rows">
-          <li><span className="rf-screen-unchecked">□</span><div><strong>Owner: Alex</strong><small>Matches the source</small></div></li>
-          <li><span className="rf-screen-unchecked">□</span><div><strong>Due: 12 Nov 2026</strong><small>Review before confirming</small></div></li>
-          <li><span className="rf-screen-unchecked">□</span><div><strong>Decision and reason</strong><small>Edit or discard if incorrect</small></div></li>
-        </ul>}
-        {active === 3 && <div className="rf-screen-handover">
-          <p><strong>First:</strong> Share the review notes with Operations.</p><p><strong>Decision:</strong> Supplier reviews move to monthly.</p><p><strong>Why:</strong> Reduce meeting load and focus on key updates.</p><p><strong>Next date:</strong> 12 Nov 2026</p>
-        </div>}
-        <p className="rf-screen-foot">{selected.foot}</p>
-      </div>
-      <div className="rf-screen-progress" aria-hidden="true"><span style={{ transform: `scaleX(${(active + 1) / 4})` }} /></div>
-    </div>
+ const storyRef=useRef<HTMLDivElement>(null)
+ const [active,setActive]=useState(0)
+ useEffect(()=>{
+  const root=storyRef.current;if(!root)return
+  let frame=0
+  const update=()=>{frame=0;const steps=[...root.querySelectorAll<HTMLElement>('[data-scroll-step]')];const line=innerHeight*.6;let index=0;for(let i=0;i<steps.length;i++)if(steps[i].getBoundingClientRect().top<=line)index=i;setActive(index)}
+  const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)}
+  const preload=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){for(const name of ['capture-source','capture-review','capture-check','handover-sheet']){const image=new Image();image.src='/product/'+name+'.webp'}preload.disconnect()}},{rootMargin:'600px'});preload.observe(root)
+  update();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule,{passive:true})
+  return()=>{preload.disconnect();window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);cancelAnimationFrame(frame)}
+ },[])
+ const pictures=['capture-source','capture-review','capture-check','handover-sheet']
+ return <div className="rf-scroll-story" ref={storyRef} data-active-step={active}>
+  <div className="rf-scroll-steps" aria-label="Four steps">{scrollSteps.map((step,index)=><article className={'rf-scroll-step'+(active===index?' rf-active':'')} data-scroll-step={index} key={step.title}><span className="rf-scroll-index">0{index+1} / 04</span><h3>{step.title}</h3><p>{step.intro}</p></article>)}</div>
+  <div className="rf-scroll-screen" aria-label="Product walkthrough">
+   <div className="rf-screen-topbar"><span className="rf-screen-brand">Vimbre</span><span className="rf-screen-location">{scrollSteps[active].title}</span></div>
+   <small className="rs-example">Sample workspace</small>
+   <div className="rf-live-screen" key={active}>
+    {<a href={'/product/'+pictures[active]+'.webp'} target="_blank" rel="noreferrer" aria-label={'Enlarge '+scrollSteps[active].title+' product screen'}><img src={'/product/'+pictures[active]+'.webp'} alt={'Actual Vimbre '+(active===3?'Handover':'Capture')+' screen: '+scrollSteps[active].title+'. Sample data.'} width={active===3?680:832} height={[489,614,990,880][active]} loading="lazy"/></a>}
+   </div>
+   <div className="rf-screen-progress" aria-hidden="true"><span style={{transform:`scaleX(${(active+1)/4})`}}/></div>
   </div>
+ </div>
 }
 
 export function CapabilityDemos() {

@@ -53,3 +53,7 @@ Review basis: recorded client requirements in this document, the earlier landing
 | Privacy, Terms, contact and FAQ schema | Existing routes/links preserved; six FAQ items generated from shared source |
 
 Product dependencies remain disclosed rather than implemented by this landing change: paid subscriptions/checkout, plan-specific connector caps, retention guarantees, SSO and audit export. This audit does not certify provider consent for every external account or production enforcement of proposed plan entitlements.
+
+## Original client list supplied
+
+The owner has now supplied the client list directly. docs/client-landing-20261028.md supersedes the earlier unavailable-source audit and the earlier removal of How it works/final CTA. Centered hero and plain wording remain. The implementation restores only the required four-step pinned screen, compact AI note/tools row and final trial CTA, and replaces the earlier multi-scene hero with one actions-to-sheet sequence.

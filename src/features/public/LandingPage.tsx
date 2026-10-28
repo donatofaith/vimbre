@@ -5,7 +5,7 @@ import { BrandLogo } from '../../components/ui/BrandLogo'
 import { LandingHeader } from './LandingHeader'
 import { ContactSection } from './ContactSection'
 import { legalDocuments } from './legal-content'
-import { HandoverExample } from './RefinedProductDemos'
+import { ConnectedTimeline } from './RefinedProductDemos'
 import { faq, plans, schema, heroCopy, pricingDisclosure } from './landing-content'
 import { HeroStory } from './HeroStory'
 import { PricingValueCalculator } from './PricingValueCalculator'
@@ -90,7 +90,12 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
       </section>
-      <section id="handover" className="rs-section" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="cover-title">See what a handover includes.</h2><p>Choose dates to explore this example. In your workspace, you select the records to share.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
+      <section id="how-it-works" className="rs-section" aria-labelledby="how-title"><div className="rs-container">
+       <Reveal><h2 id="how-title">How it works</h2></Reveal>
+       <ConnectedTimeline/>
+       <aside className="rf-ai-note" aria-labelledby="ai-note-title"><h3 id="ai-note-title">What Vimbre AI does and doesn’t do</h3><p>You tap to request a draft. Check names, owners and dates before saving. It does not confirm work for you. If you separately enable a Watch rule, it can prepare private drafts for review.</p><p>At your AI limit, drafting pauses. Your saved records, tasks and manual work keep working.</p></aside>
+       <div className="rf-tools-row" aria-label="Available connections">{['Gmail','Google Drive','Outlook','Microsoft Teams','Slack','Trello'].map(name=><span key={name}><strong>{name}</strong><small>Live</small></span>)}</div><p className="rf-tools-consent">Connect your account with your company’s permission. You choose what to bring in.</p>
+      </div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
           <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">Start a trial without a card. Paid subscriptions and checkout are not active yet.</p></Reveal>
@@ -107,9 +112,10 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         </div>
       </section>
       <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
+      <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={to}>{cta}<Arrow/></Link><p>No card required.</p></div></section>
       <ContactSection />
     </main>
-    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['Handover', '#handover'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
+    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
   </div>
 }

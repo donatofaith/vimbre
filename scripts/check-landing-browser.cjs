@@ -34,17 +34,21 @@ const { chromium } = require('playwright');
     assert(await page.locator('.rs-hero-subhead').isVisible());
     assert.equal(await page.locator('.rs-hero .rs-button').count(), 1, 'One primary hero action');
     assert.equal(await page.locator('.rs-hero .rs-text-link').count(), 1, 'One quiet hero link');
-    assert(await page.getByText('No card required.', { exact: true }).isVisible());
+    assert(await page.locator('.rf-hero-microcopy').isVisible());
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
     assert.equal(await page.locator('[data-draft-row] .md-slim-row').count(),3,'Hero uses actual My Day task rows');
     const heroCTA=page.locator('.rs-hero .rs-button');assert.equal(await heroCTA.getAttribute('href'),'/signup');assert.equal(await heroCTA.innerText(),'Start free trial');
     assert.equal(await page.locator('.rs-demo-window').count(), 1);
-    assert.equal(await page.locator('[data-demo-click]').count(), 6);
+    assert.equal(await page.locator('.rs-check-stamp').innerText(),'Check before saving');
     assert.equal(await page.locator('[data-draft-row]').count(), 3, 'Hero draft shows three extracted actions');
     assert(await page.getByText('Check before saving', { exact: true }).count() >= 1);
     assert.equal(await page.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1', 'Reduced-motion hero shows the source message');
-    for (const selector of ['#features','#tools','#how-it-works','.rf-ai-trust','.rs-final']) assert.equal(await page.locator(selector).count(),0,'Repeated section removed: '+selector);
-    assert.equal(await page.locator('#handover').count(),1);
+    for (const selector of ['#features','#tools','.rf-ai-trust','.rs-final']) assert.equal(await page.locator(selector).count(),0,'Repeated section removed: '+selector);
+    assert.equal(await page.locator('#how-it-works').count(),1);
+    assert.deepEqual(await page.locator('[data-scroll-step] h3').allInnerTexts(),['Bring it in','Vimbre AI drafts','You check','Handover']);
+    assert.equal(await page.locator('.rf-tools-row small').filter({hasText:'Live'}).count(),6);
+    assert.equal(await page.locator('.rf-ai-note').count(),1);
+    assert.equal(await page.locator('.rf-final-cta a').getAttribute('href'),'/signup');
     for (const phrase of ['Source availability','Cover with context','In the workspace','You stay in control']) assert(!(await page.locator('.rs-site').innerText()).includes(phrase));
     for (const anchor of await page.locator('a[href*="#"]').evaluateAll(links=>links.map(link=>link.hash))) assert.equal(await page.locator(anchor).count(),1,'Navigation target exists: '+anchor);
     assert.equal(await page.locator('.rs-plan').count(), 4);
@@ -64,12 +68,15 @@ const { chromium } = require('playwright');
     assert.equal(await accordion.getAttribute('aria-expanded'), 'true');
     assert((await page.locator('#'+await accordion.getAttribute('aria-controls')).innerText()).includes('AI drafting pauses'));
 
-    await page.getByLabel('Start date', { exact: true }).fill('9 Nov 2026');
-    await page.getByLabel('End date', { exact: true }).fill('27 Nov 2026');
-    assert.equal(await page.locator('.rf-report section').count(), 4);
-    await page.getByLabel('End date', { exact: true }).fill('12 Nov 2026');
-    assert.equal(await page.locator('.rf-report section').count(), 2);
-    assert.equal(await page.locator('.rf-report time').first().innerText(), '9 Nov 2026');
+    let screenHeight=null;
+    for(let step=0;step<4;step++){
+      await page.locator('[data-scroll-step="'+step+'"]').evaluate(el=>window.scrollTo(0,scrollY+el.getBoundingClientRect().top-innerHeight*.5));
+      await page.waitForFunction(index=>document.querySelector('.rf-scroll-story').dataset.activeStep===String(index),step);
+      assert.equal(await page.locator('.rf-scroll-screen').evaluate(el=>getComputedStyle(el).position),'sticky');
+      const currentHeight=await page.locator('.rf-scroll-screen').evaluate(el=>el.getBoundingClientRect().height);if(screenHeight!==null)assert(Math.abs(currentHeight-screenHeight)<2,'Pinned screen reserves a stable size');screenHeight=currentHeight;
+      const picture=page.locator('.rf-live-screen img');await picture.scrollIntoViewIfNeeded();
+      await picture.evaluate(el=>el.decode());assert(await picture.evaluate(el=>el.naturalWidth>0),'Real product screen loads for step '+step);
+    }
 
     await page.getByLabel('Handovers per year').fill('20');
     await page.getByLabel('Hours lost per handover').fill('1.5');
@@ -85,11 +92,11 @@ const { chromium } = require('playwright');
       const planOrder=await page.locator('.rs-plan').evaluateAll(cards=>cards.map(card=>({name:card.querySelector('h3').textContent,box:card.getBoundingClientRect().toJSON()})).sort((a,b)=>Math.abs(a.box.y-b.box.y)>2?a.box.y-b.box.y:a.box.x-b.box.x).map(card=>card.name));
       assert.deepEqual(planOrder,['Starter','Growth','Business','Enterprise'],'Visual pricing order at '+width);
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
-      for (const selector of ['#handover', '.rf-calculator']) {
+      for (const selector of ['.rf-scroll-screen', '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
         assert(box && box.x >= -1 && box.x + box.width <= width + 1, selector + ' fits at ' + width);
       }
-      for (const section of ['#product-demo','#handover','#pricing','#questions','#contact']) {
+      for (const section of ['#product-demo','#how-it-works','#pricing','#questions','#contact']) {
         await page.locator(section).scrollIntoViewIfNeeded();
         assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'No overflow after scrolling to '+section+' at '+width);
       }
@@ -119,14 +126,15 @@ const { chromium } = require('playwright');
     await storyPage.getByRole('button', { name: 'Pause hero story' }).waitFor();
     const loopCount = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).some(animation => animation.effect.getTiming().iterations === Infinity));
     assert(loopCount, 'Hero story loops continuously');
-    for (const name of ['email', 'capture', 'draft', 'confirmed', 'saved', 'away', 'cover']) {
+    for (const name of ['email','draft','confirmed','cover']) {
       await storyPage.waitForFunction(scene => Number(getComputedStyle(document.querySelector('[data-scene="' + scene + '"]')).opacity) > .9, name, { timeout: 12000 }).catch(error => { throw new Error('Hero scene did not appear: ' + name, { cause: error }); });
     }
     await storyPage.locator('#contact').scrollIntoViewIfNeeded();
     await storyPage.waitForTimeout(150);
-    const offscreenBefore=await storyPage.locator('[data-scene=capture]').evaluate(el=>el.getAnimations().map(a=>a.currentTime));
+    const offscreenBefore=await storyPage.locator('[data-scene=draft]').evaluate(el=>el.getAnimations().map(a=>a.currentTime));
     await storyPage.waitForTimeout(220);
-    assert.deepEqual(await storyPage.locator('[data-scene=capture]').evaluate(el=>el.getAnimations().map(a=>a.currentTime)),offscreenBefore,'Offscreen hero pauses');
+    assert.deepEqual(await storyPage.locator('[data-scene=draft]').evaluate(el=>el.getAnimations().map(a=>a.currentTime)),offscreenBefore,'Offscreen hero pauses');
+    assert.equal(await storyPage.locator('[data-draft-row]').count(),3,'The same three task rows survive into the handover');
     assert.deepEqual(errors, []);
     await normal.close();
 
@@ -142,7 +150,7 @@ const { chromium } = require('playwright');
     assert.equal(await menu.getAttribute('aria-expanded'),'true');
     await phonePage.keyboard.press('Escape');assert.equal(await menu.getAttribute('aria-expanded'),'false');
     await phone.close();
-    console.log('Landing acceptance passed: copy, pricing visual order, navigation, scroll, story, dates, calculator, responsive layout, reduced motion and no-JS fallback.');
+    console.log('Landing acceptance passed: copy, pricing visual order, navigation, scroll, story, product screens, calculator, responsive layout, reduced motion and no-JS fallback.');
   } finally {
     await browser.close();
     await new Promise(resolve => server.httpServer.close(resolve));
