@@ -152,7 +152,7 @@ begin
     sections_json:=h.sections-array['reason','note_for_manager','return_summary'];
     select coalesce(jsonb_agg(jsonb_build_object(
       'id',a.id,'title',a.title,'status',a.status,'due_date',a.due_date,'due_at',a.due_at,
-      'details',a.details,'steps',a.steps,'links',case when a.source_kind='manual' then a.links else '[]'::jsonb end,
+      'details',case when a.source_kind='manual' then a.details else '' end,'steps',a.steps,'links',case when a.source_kind='manual' then a.links else '[]'::jsonb end,
       'completion_note',a.completion_note,'do_not_change',hi.do_not_change,'approved',hi.approved,
       'handback_pending',exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status='pending'),
       'source_not_shared',a.source_kind<>'manual' and (a.source_url is not null or a.source_excerpt is not null),
@@ -326,12 +326,14 @@ begin
           +(case when lower(coalesce(candidate_role.title,'')) like '%'||lower(split_part(coalesce(owner_role.title,''),' ',1))||'%' and split_part(coalesce(owner_role.title,''),' ',1)<>'' then 25 else 0 end)
           +(case when exists(select 1 from private.handover_cover_availability av where av.company_id=c and av.person_id=cand.id and av.starts_on<=(p_data->>'starts_on')::date and av.ends_on>=(p_data->>'ends_on')::date) then 100 else 0 end)
           +(case when not exists(select 1 from public.work_handovers h2 where h2.company_id=c and h2.cover_id=cand.id and h2.status='approved' and h2.cover_response='accepted' and h2.deleted_at is null and h2.starts_on<=(p_data->>'ends_on')::date and coalesce(h2.ends_on,'infinity'::date)>=(p_data->>'starts_on')::date) then 50 else 0 end)
+          +(case when exists(select 1 from private.handover_cover_pool cp where cp.company_id=c and cp.person_id=cand.id and cp.department_id=cand.department_id) then 30 else 0 end)
           -10*(select count(*) from public.work_handovers hx where hx.company_id=c and hx.cover_id=cand.id and hx.status='approved' and hx.cover_response='accepted' and hx.deleted_at is null and hx.starts_on<=current_date+7 and coalesce(hx.ends_on,'infinity'::date)>=current_date) score,
           array_to_string(array_remove(array[
             case when cand.department_id=owner_profile.department_id then 'Same department' end,
             case when lower(coalesce(candidate_role.title,'')) like '%'||lower(split_part(coalesce(owner_role.title,''),' ',1))||'%' and split_part(coalesce(owner_role.title,''),' ',1)<>'' then 'Similar role' end,
             case when exists(select 1 from private.handover_cover_availability av where av.company_id=c and av.person_id=cand.id and av.starts_on<=(p_data->>'starts_on')::date and av.ends_on>=(p_data->>'ends_on')::date) then 'Available for these dates' end,
-            case when not exists(select 1 from public.work_handovers h2 where h2.company_id=c and h2.cover_id=cand.id and h2.status='approved' and h2.cover_response='accepted' and h2.deleted_at is null and h2.starts_on<=(p_data->>'ends_on')::date and coalesce(h2.ends_on,'infinity'::date)>=(p_data->>'starts_on')::date) then 'No overlapping cover' end
+            case when not exists(select 1 from public.work_handovers h2 where h2.company_id=c and h2.cover_id=cand.id and h2.status='approved' and h2.cover_response='accepted' and h2.deleted_at is null and h2.starts_on<=(p_data->>'ends_on')::date and coalesce(h2.ends_on,'infinity'::date)>=(p_data->>'starts_on')::date) then 'No overlapping cover' end,
+            case when exists(select 1 from private.handover_cover_pool cp where cp.company_id=c and cp.person_id=cand.id and cp.department_id=cand.department_id) then 'In your team’s cover pool' end
           ],null),', ') reason
         from public.profiles cand
         join public.profiles owner_profile on owner_profile.id=suggested and owner_profile.company_id=c
@@ -669,6 +671,108 @@ $replacement$;
   s:=replace(s,needle,replacement);
   execute s;
 end$ai_patch$;
+
+
+-- A request must be authorised before a cover can see the full snapshot through the legacy handover route.
+create or replace function private.handover_authorized(h public.work_handovers,p_write boolean default false)
+returns boolean language sql stable security definer set search_path='' as $function$
+ select exists(
+  select 1 from public.profiles p
+  where p.id=auth.uid() and p.active and p.company_id=h.company_id
+   and (
+    p.id=h.owner_id
+    or p.id=h.created_by and p.role in('manager','hr_admin') and private.can_read_role(h.owner_id)
+    or not p_write and (
+      p.role='hr_admin'
+      or p.id=h.reviewer_id and p.role in('manager','hr_admin')
+      or p.id=h.cover_id and h.deleted_at is null and (
+        h.cover_response='accepted' and h.status in('pending','approved','completed')
+        or coalesce((select cover_visibility='approval' from private.handover_policy where company_id=h.company_id),false) and h.status in('approved','completed')
+      )
+    )
+   )
+ )
+$function$;
+
+-- Notify the assigned cover at the same time the manager is notified that approval is needed.
+do $cover_notice_patch$
+declare s text; needle text; replacement text;
+begin
+ s:=pg_get_functiondef('private.handover_workspace(text,uuid,jsonb)'::regprocedure);
+ needle:=$needle$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.reviewer_id,'Handover ready for review');$needle$;
+ if strpos(s,needle)=0 then raise exception 'Handover submit notification changed; review cover request notification patch'; end if;
+ replacement:=needle||E'\n insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,''You have a cover request to review'');';
+ s:=replace(s,needle,replacement);
+ execute s;
+end$cover_notice_patch$;
+
+-- Upcoming/overdue task reminders follow the active cover assignment instead of continuing to notify the owner.
+create or replace function private.work_reminder_rows(p_timezone text)
+returns table(notification_key text,source_kind text,source_id uuid,title text,due_date date,stage text,section text)
+language plpgsql stable security definer set search_path='' as $function$
+declare viewer public.profiles; today date;
+begin
+ select * into viewer from public.profiles where id=auth.uid() and active;
+ if not found then raise insufficient_privilege using message='Notifications are not available'; end if;
+ if p_timezone is null or not exists(select 1 from pg_catalog.pg_timezone_names where name=p_timezone) then raise exception 'Invalid timezone' using errcode='22023'; end if;
+ today:=(now() at time zone p_timezone)::date;
+ return query with candidates as (
+  select 'task'::text kind,a.id,a.title,a.due_date,null::text section
+  from public.actions a
+  where a.owner_id=viewer.id and a.company_id=viewer.company_id and a.status<>'done'
+   and a.deleted_at is null and a.purged_at is null and a.due_date<=today+3
+   and not exists(
+    select 1 from public.work_handovers h
+    join private.handover_items hi on hi.handover_id=h.id and hi.kind='task' and hi.record_id=a.id and hi.approved
+    where h.company_id=a.company_id and h.owner_id=a.owner_id and h.cover_id<>h.owner_id
+     and h.status='approved' and h.cover_response='accepted' and h.deleted_at is null
+     and today between h.starts_on and coalesce(h.ends_on,'infinity'::date)
+     and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in('pending','returned'))
+   )
+  union all
+  select 'task'::text,a.id,a.title,a.due_date,null::text
+  from public.actions a
+  join public.work_handovers h on h.owner_id=a.owner_id and h.company_id=a.company_id
+  join private.handover_items hi on hi.handover_id=h.id and hi.kind='task' and hi.record_id=a.id and hi.approved
+  where h.cover_id=viewer.id and h.status='approved' and h.cover_response='accepted' and h.deleted_at is null
+   and today between h.starts_on and coalesce(h.ends_on,'infinity'::date)
+   and a.status<>'done' and a.deleted_at is null and a.purged_at is null and a.due_date<=today+3
+   and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in('pending','returned'))
+  union all
+  select 'role_item'::text,r.id,r.title,r.due_date,r.kind
+  from public.role_items r
+  where r.owner_id=viewer.id and r.company_id=viewer.company_id and r.kind in('responsibility','recurring_deadline') and r.deleted_at is null and r.due_date<=today+3
+ ), classified as (
+  select c.*,case when c.due_date<today then 'overdue' when c.due_date=today then 'today' else 'approaching' end phase from candidates c
+ )
+ select c.kind||':'||c.id::text||':'||c.due_date::text||':'||c.phase,c.kind,c.id,c.title,c.due_date,c.phase,c.section from classified c;
+end$function$;
+
+-- The "move to today" shortcut is also allowed for the current, accepted cover assignment.
+do $cover_tomorrow_patch$
+declare s text; needle text; replacement text;
+begin
+ s:=pg_get_functiondef('private.myday_action(uuid,text,jsonb)'::regprocedure);
+ needle:=$needle$select * into a
+   from public.actions
+   where id=p_id and owner_id=auth.uid() and company_id=private.current_company_id()
+   for update;$needle$;
+ if strpos(s,needle)=0 then raise exception 'myday_action today shortcut changed; review cover edit permission patch'; end if;
+ replacement:=$replacement$select * into a
+   from public.actions
+   where id=p_id and company_id=private.current_company_id()
+     and (owner_id=auth.uid() or exists(
+       select 1 from public.work_handovers h
+       join private.handover_items hi on hi.handover_id=h.id and hi.kind='task' and hi.record_id=p_id and hi.approved
+       where h.owner_id=public.actions.owner_id and h.company_id=public.actions.company_id and h.cover_id=auth.uid()
+        and h.status='approved' and h.cover_response='accepted' and h.deleted_at is null
+        and (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=auth.uid()),'Europe/London'))::date between h.starts_on and coalesce(h.ends_on,'infinity'::date)
+        and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=p_id and hb.status in('pending','returned'))
+     ))
+   for update;$replacement$;
+ s:=replace(s,needle,replacement);
+ execute s;
+end$cover_tomorrow_patch$;
 
 -- Authenticated users may submit a question to a non-expired, non-revoked outside-cover link.
 create or replace function public.handover_share_question(p_token text,p_body text,p_email text default '')
