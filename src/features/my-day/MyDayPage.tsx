@@ -99,6 +99,18 @@ function MyDayContent() {
     [undo, setUndo] = useState<{task: Task; ids?:string[]; until: number} | null>(null);
   const [visibleRows,setVisibleRows]=useState<Record<string,number>>({});
   const [coverRequests,setCoverRequests]=useState<CoverDutyRow[]>([]);
+  type CoverTaskRow = NonNullable<DayData['cover_tasks']>[number];
+  const [coverEditKey,setCoverEditKey]=useState('');
+  const [coverEditTitle,setCoverEditTitle]=useState('');
+  const [coverEditDetails,setCoverEditDetails]=useState('');
+  const [coverEditDate,setCoverEditDate]=useState('');
+  const [coverEditTime,setCoverEditTime]=useState('');
+  const [coverEditSteps,setCoverEditSteps]=useState('');
+  const [coverEditLinks,setCoverEditLinks]=useState('');
+  const [coverDoneKey,setCoverDoneKey]=useState('');
+  const [coverOutcomeNote,setCoverOutcomeNote]=useState('');
+  const [coverHandbackKey,setCoverHandbackKey]=useState('');
+  const [coverHandbackReason,setCoverHandbackReason]=useState('');
   const [hasPlan,setHasPlan]=useState(false);
   const [decisionFinish,setDecisionFinish]=useState<Task|null>(null);
   const [finishing,setFinishing] = useState<(Task & {finishPosition:number;finishFilter:string;finishStatus:string})[]>([]);
@@ -130,6 +142,38 @@ function MyDayContent() {
     setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
+  const coverTaskKey=(handoverId:string,taskId:string)=>handoverId+':'+taskId;
+  function beginCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);
+    if(coverEditKey===key){setCoverEditKey('');return}
+    setCoverEditKey(key);setCoverEditTitle(task.title);setCoverEditDetails(task.details||'');
+    setCoverEditDate(task.due_date||'');setCoverEditTime(task.due_time||'');
+    setCoverEditSteps((task.steps||[]).join('\n'));setCoverEditLinks((task.links||[]).join('\n'));
+    setCoverDoneKey('');setCoverHandbackKey('');
+  }
+  async function saveCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
+    if(!coverEditTitle.trim()){setError('Enter a task title.');return}
+    const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
+    const values:Record<string,unknown>={task_id:task.id,title:coverEditTitle.trim(),due_date:coverEditDate||null,due_time:coverEditTime||null,due_at:''};
+    if(task.source_is_manual){values.details=coverEditDetails;values.steps=coverEditSteps.split('\n').map(v=>v.trim()).filter(Boolean);values.links=coverEditLinks.split('\n').map(v=>v.trim()).filter(Boolean)}
+    try{await coverDutyRpc('task_edit',handoverId,values);setCoverEditKey('');setMessage('Covered task updated.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The covered task could not be updated.')}
+    finally{setBusy('')}
+  }
+  async function completeCoveredTask(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
+    try{await coverDutyRpc('task_done',handoverId,{task_id:task.id,outcome_note:coverOutcomeNote.trim()});setCoverDoneKey('');setCoverOutcomeNote('');setMessage('Task marked done.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The task could not be marked done.')}
+    finally{setBusy('')}
+  }
+  async function handBackCoveredTask(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);
+    if(coverHandbackReason.trim().length<3){setError('Give a short reason before handing this task back.');return}
+    setBusy(key);setError('');
+    try{await coverDutyRpc('hand_back',handoverId,{task_id:task.id,reason:coverHandbackReason.trim()});setCoverHandbackKey('');setCoverHandbackReason('');setMessage('Task handed back to the owner for a decision.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The task could not be handed back.')}
+    finally{setBusy('')}
+  }
   useEffect(() => {
     let live = true;
     const loadCoverRequests = async () => {
