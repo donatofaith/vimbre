@@ -79,3 +79,6 @@
 .ho-shared-questions>p{margin:0;color:#52677c;font-size:14px;line-height:1.6}
 .ho-shared-questions .button{min-height:44px;justify-self:start}
 @media(max-width:640px){.ho-external-reply .button,.ho-shared-questions .button{width:100%;min-height:48px}}
+
+/* Keep the fixed wizard controls within the centred editor without a detached white slab. */
+.ho-wizard-footer{background:transparent;border-top:0;box-shadow:none;padding:12px 0 calc(12px + env(safe-area-inset-bottom));pointer-events:none}.ho-wizard-footer>*{pointer-events:auto}.ho-wizard-footer>div:last-child{align-items:center}.ho-wizard-footer .ho-helper{justify-self:start;padding:4px 8px;border-radius:6px;background:var(--surface,#fffdf8)}
