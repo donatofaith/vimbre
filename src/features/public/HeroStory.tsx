@@ -1,3 +1,6 @@
+import {TaskCard} from '../my-day/TaskCard'
+import type {Task} from '../my-day/types'
+import '../my-day/my-day.css'
 import type { RefObject } from 'react'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 import { Button } from '../../components/ui/Button'
@@ -5,11 +8,21 @@ import { Card } from '../../components/ui/Card'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { record, storySummary } from './landing-content'
 
-function DecisionFields({ animated = false }: { animated?: boolean }) {
-  return <dl className="rs-demo-fields">{record.map(([label, value]) => <div key={label} data-draft-row={animated || undefined}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+function DecisionFields() {
+  return <dl className="rs-demo-fields">{record.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
 }
 
-/** A decorative, isolated preview. It never reads an inbox or submits app data. */
+const previewNow=new Date('2026-11-09T12:00:00Z')
+const noChange=()=>{}
+function DraftActions() {
+ const rows=[['Share the review notes','Alex','2026-11-12'],['Schedule the monthly supplier review','Sam','2026-11-16'],['Update the supplier review agenda','Alex','2026-11-20']]
+ return <ul className="rs-demo-action-list">{rows.map(([title,owner,date],index)=>{
+  const task:Task={id:`example-${index}`,title,details:'',due_date:date,due_time:null,due_at:date+'T09:00:00Z',remind_at:'',status:'open',source_kind:'manual',source_url:null,completion_note:'',completed_at:null,deleted_at:null,department_id:null,external_contact_id:null,reminder_option:'at_time',context_added_at:null,context_kind:null,context_record_id:null}
+  return <li className="rs-demo-action-row rs-demo-product-row" key={title} data-draft-row><TaskCard task={task} zone="Europe/London" now={previewNow} busy act={noChange} edit={noChange} remind={noChange} context={noChange} quickContext={noChange} record={noChange} drag={noChange} inspect={noChange}/><small>Owner: {owner}</small></li>
+ })}</ul>
+}
+
+/** An illustrative, isolated preview. It never reads an inbox or submits app data. */
 export function HeroStory({ rootRef, paused, ready, toggle }: {
   rootRef: RefObject<HTMLDivElement | null>
   paused: boolean
@@ -27,40 +40,57 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
               <div className="rs-demo-viewport">
                 <div className="rs-demo-camera">
                   <div className="rs-demo-scene" data-scene="email">
-                    <p className="rs-demo-page-label">My day</p>
-                    <Card className="rs-demo-email"><span className="rs-demo-overline"><WorkspaceIcon name="record" />Operations Manager</span><h3>Supplier reviews are moving to monthly</h3><p>Move supplier reviews to monthly.</p><p>To reduce meeting load and focus on key updates.</p></Card>
-                    <Button className="rs-demo-capture-button" tabIndex={-1}>Capture an email or notes<WorkspaceIcon name="arrow" /></Button>
+                    <p className="rs-demo-page-label">Bring it in</p>
+                    <Card className="rs-demo-email">
+                      <span className="rs-demo-overline"><WorkspaceIcon name="email" />RE: Monthly supplier reviews · 6 replies</span>
+                      <h3>Re: Changing supplier review cadence</h3>
+                      <p><strong>Alex:</strong> Could we move supplier reviews to monthly?</p>
+                      <p><strong>Sam:</strong> Yes. I will schedule the first monthly review for 16 Nov.</p>
+                      <p><strong>Alex:</strong> I will share the notes by 12 Nov and update the agenda by 20 Nov.</p>
+                    </Card>
+                    <Button className="rs-demo-capture-button" tabIndex={-1}>Bring in an email or notes<WorkspaceIcon name="arrow" /></Button>
                   </div>
                   <div className="rs-demo-scene" data-scene="capture">
-                    <p className="rs-demo-page-label">Add an email or notes</p>
-                    <Card className="rs-demo-paste"><span className="rs-demo-overline">Supplier reviews are moving to monthly</span><p>Move supplier reviews to <mark><span>monthly</span><i data-phrase /></mark>.</p><p>To <mark><span>reduce meeting load</span><i data-phrase /></mark> and focus on key updates.</p><p>Owner: <mark><span>Operations</span><i data-phrase /></mark></p><p>Next step: <mark><span>share the notes</span><i data-phrase /></mark>.</p></Card><Button className="rs-demo-review rs-demo-next" tabIndex={-1}>Review drafts<WorkspaceIcon name="arrow" /></Button>
+                    <p className="rs-demo-page-label">Bring it in</p>
+                    <Card className="rs-demo-paste">
+                      <span className="rs-demo-overline">Supplier review conversation · 9 Nov 2026</span>
+                      <p>Move supplier reviews to <mark><span>monthly</span><i data-phrase /></mark>.</p>
+                      <p>To <mark><span>reduce meeting load</span><i data-phrase /></mark> and focus on key updates.</p>
+                      <p>Owner: <mark><span>Alex</span><i data-phrase /></mark> · Due: <mark><span>12 Nov 2026</span><i data-phrase /></mark></p>
+                      <p>Sam: <mark><span>schedule first monthly review by 16 Nov 2026</span><i data-phrase /></mark>.</p>
+                      <p>Alex: <mark><span>update the agenda by 20 Nov 2026</span><i data-phrase /></mark>.</p>
+                    </Card>
+                    <Button className="rs-demo-review rs-demo-next" tabIndex={-1}>Draft with Vimbre AI<WorkspaceIcon name="arrow" /></Button>
                   </div>
                   <div className="rs-demo-scene" data-scene="draft">
-                    <p className="rs-demo-page-label">Review drafts</p>
-                    <div className="rs-demo-ai-label"><span>Draft from Vimbre AI. Check before saving.</span></div>
-                    <Card className="rs-demo-decision"><DecisionFields animated /><Button className="rs-demo-save" tabIndex={-1}>Save<WorkspaceIcon name="tick" /></Button></Card>
+                    <p className="rs-demo-page-label">Vimbre AI drafts</p>
+                    <div className="rs-demo-ai-label"><span>Three action suggestions. Check before saving.</span></div>
+                    <Card className="rs-demo-decision">
+                      <DraftActions />
+                      <Button className="rs-demo-save" tabIndex={-1}>Check before saving<WorkspaceIcon name="tick" /></Button>
+                    </Card>
                   </div>
                   <div className="rs-demo-scene" data-scene="confirmed">
-                    <p className="rs-demo-page-label">Decision saved</p>
+                    <p className="rs-demo-page-label">You check</p>
                     <Card className="rs-demo-decision"><DecisionFields /></Card>
-                    <Button className="rs-demo-role rs-demo-next" tabIndex={-1}>Open in My role<WorkspaceIcon name="arrow" /></Button>
+                    <Button className="rs-demo-role rs-demo-next" tabIndex={-1}>Confirm reviewed records<WorkspaceIcon name="tick" /></Button>
                   </div>
                   <div className="rs-demo-scene" data-scene="saved">
-                    <p className="rs-demo-page-label">Operations role record</p>
+                    <p className="rs-demo-page-label">Handover</p>
                     <Card className="rs-demo-decision"><DecisionFields /></Card>
-                    <Button className="rs-demo-handovers rs-demo-next" tabIndex={-1}>My handovers<WorkspaceIcon name="arrow" /></Button>
+                    <Button className="rs-demo-handovers rs-demo-next" tabIndex={-1}>Prepare handover<WorkspaceIcon name="arrow" /></Button>
                   </div>
                   <div className="rs-demo-scene" data-scene="away">
-                    <p className="rs-demo-page-label">My handovers</p>
-                    <Card className="rs-demo-away"><span className="rs-avatar">S</span><strong>Sam</strong><span>Away 20 to 27 October</span><span className="button button-primary rs-demo-cover-button">View cover<WorkspaceIcon name="arrow" /></span></Card>
+                    <p className="rs-demo-page-label">Handover prepared</p>
+                    <Card className="rs-demo-away"><span className="rs-avatar">S</span><strong>Sam</strong><span>Away 9 to 16 November 2026</span><span className="button button-primary rs-demo-cover-button">View cover<WorkspaceIcon name="arrow" /></span></Card>
                   </div>
                   <div className="rs-demo-scene rs-demo-cover" data-scene="cover">
-                    <div className="rs-demo-cover-header"><span className="rs-avatar rs-avatar-blue">A</span><p className="rs-demo-page-label">Alex, covering for Sam</p></div>
+                    <div className="rs-demo-cover-header"><span className="rs-avatar rs-avatar-blue">A</span><div><p className="rs-demo-page-label">Alex, covering for Sam</p><h3 className="rs-demo-cover-title">What comes first</h3></div></div>
                     <div className="rs-demo-cover-grid">
-                      <Card data-cover-row><h3>Open work</h3><p>Share the review notes</p></Card>
-                      <Card data-cover-row className="rs-demo-recent"><h3>Recent decisions <small>New</small></h3><p>Move supplier reviews to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
-                      <Card data-cover-row><h3>People to know</h3><p>Alex, Operations</p></Card>
-                      <Card data-cover-row><h3>Coming deadlines</h3><p>Supplier review, 27 October</p></Card>
+                      <Card data-cover-row><h3>12 Nov · First</h3><p>Share the review notes</p><small>Owner: Alex</small></Card>
+                      <Card data-cover-row><h3>16 Nov 2026</h3><p>Schedule the monthly supplier review</p><small>Owner: Sam</small></Card>
+                      <Card data-cover-row><h3>20 Nov 2026</h3><p>Update the supplier review agenda</p><small>Owner: Alex</small></Card>
+                      <Card data-cover-row><h3>Decision and reason</h3><p>Supplier reviews move to monthly</p><div className="rs-demo-why"><i data-cover-highlight /><strong>Why</strong><p>To reduce meeting load and focus on key updates</p></div></Card>
                     </div>
                   </div>
                 </div>
@@ -70,7 +100,7 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
             </div>
           </div>
         </div>
-        <p className="rs-story-resolution" data-story-resolution>Nothing lost.</p>
+        <p className="rs-story-resolution" data-story-resolution>What comes first</p>
       </div>
       <p className="sr-only">{storySummary}</p>
       <button className="rs-story-control" type="button" disabled={!ready} aria-label={paused ? 'Play hero story' : 'Pause hero story'} onClick={toggle}><svg viewBox="0 0 24 24" aria-hidden="true">{paused ? <path d="m9 5 10 7-10 7z" /> : <path d="M8 5v14M16 5v14" />}</svg>{paused ? 'Play' : 'Pause'}</button>

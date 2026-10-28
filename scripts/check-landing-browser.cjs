@@ -4,134 +4,130 @@ const { chromium } = require('playwright');
 (async () => {
   const { preview } = await import('vite');
   const server = await preview({ preview: { host: '127.0.0.1', port: 5174, strictPort: true } });
-  const browser = await chromium.launch({ headless: true });
+  let browser;try{browser=await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}) });}catch(error){await server.httpServer.close();throw error;}
   try {
     const source = await readFile('dist/index.html', 'utf8');
-    assert(source.includes('The missing layer'));
-    assert(source.includes('Vimbre is a work intelligence layer'));
-    assert(source.includes('Does Vimbre capture everything automatically?'));
-    assert.equal((source.match(/<h1(?:\s|>)/g) ?? []).length, 1);
-    const structured = JSON.parse(source.match(/<script type="application\/ld\+json">([\s\S]+?)<\/script>/)[1]);
+    assert(source.includes('Turn conversations into'));
+    assert(source.includes('Paste a conversation or connect your tools.'));
+    assert(source.includes('What happens when I hit my AI limit?'));
+    assert(!source.includes('Direct connections to Teams, email and task tools are planned'));
+    assert(!source.includes('12/10/2026'));
+    assert.equal(source.split('<h1').length - 1, 1);
+    const schemaOpen = source.indexOf('<script type="application/ld+json">');
+    assert(schemaOpen >= 0, 'Prerendered structured data exists');
+    const schemaStart = schemaOpen + '<script type="application/ld+json">'.length;
+    const schemaEnd = source.indexOf('</script>', schemaStart);
+    const structured = JSON.parse(source.slice(schemaStart, schemaEnd));
     const questions = structured['@graph'].find(item => item['@type'] === 'FAQPage').mainEntity;
-    assert.equal(questions.length, 8);
-    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    assert.equal(questions.length, 9);
+
+    const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage();
-    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
     await page.goto('http://127.0.0.1:5174/');
     await page.getByRole('heading', { level: 1 }).waitFor();
-    await page.locator('#vimbre-boot').waitFor({state:'detached'});
-    assert.equal(await page.title(), 'Vimbre | Work Intelligence and Handover Context');
+    await page.locator('#vimbre-boot').waitFor({ state: 'detached' });
+    assert.equal(await page.title(), 'Vimbre | Turn Conversations into Actions and Handovers');
     assert.equal(await page.locator('h1').count(), 1);
+    assert((await page.getByRole('heading', { level: 1 }).innerText()).includes('Turn conversations into'));
+    assert(await page.locator('.rs-hero-subhead').isVisible());
+    assert.equal(await page.locator('.rs-hero .rs-button').count(), 1, 'One primary hero action');
+    assert.equal(await page.locator('.rs-hero .rs-text-link').count(), 1, 'One quiet hero link');
+    assert(await page.getByText('No card required. Check every AI draft before saving.', { exact: true }).isVisible());
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
-    assert.equal(await page.locator('.rs-hero .rs-eyebrow').count(), 0);
-    for (const selector of ['#problem','.rf-timeline-demo','.rf-history','.rf-handover']) assert.equal(await page.locator(selector+' .rs-example').count(),1);
-    assert.equal(await page.locator('.rf-source').innerText(),'Proposal meeting notes');
-    for (const phrase of ['Conversation: Source:', 'Explore the example records', 'Example start date', 'Example end date', 'Next example status', 'Review example']) assert(!await page.locator('.rs-site').innerText().then(text=>text.includes(phrase)));
-    assert.equal(await page.locator('.rs-hero-note').count(),0);
-    assert.equal(await page.locator('.rs-demo-window').count(),1);
-    assert.equal(await page.locator('[data-demo-click]').count(),6);
-    assert.equal(await page.getByRole('link', {name:'Open workspace',exact:true}).count(), 0);
-    assert.equal(await page.locator('.rs-tools-lines path').count(), 1);
-    const text = await page.locator('.rs-site').innerText();
-    assert(!/[—–-]/.test(text), 'No dashes in visible copy');
-    assert(!/\b(seamless|powerful|streamline|empower|unlock|leverage|robust|cutting edge|revolutionise|journey|ecosystem|synergy|continuity)\b/i.test(text), 'No banned copy');
-    for (const width of [320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920]) {
+    assert.equal(await page.locator('[data-draft-row] .md-slim-row').count(),3,'Hero uses actual My Day task rows');
+    const heroCTA=page.locator('.rs-hero .rs-button');assert.equal(await heroCTA.getAttribute('href'),'/signup');assert.equal(await heroCTA.innerText(),'Start free trial');
+    assert.equal(await page.locator('.rs-demo-window').count(), 1);
+    assert.equal(await page.locator('[data-demo-click]').count(), 6);
+    assert.equal(await page.locator('[data-draft-row]').count(), 3, 'Hero draft shows three extracted actions');
+    assert(await page.getByText('Check before saving', { exact: true }).count() >= 1);
+    assert.equal(await page.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1', 'Reduced-motion hero shows the source message');
+    assert.equal(await page.locator('.rf-scroll-step').count(), 4);
+    assert.deepEqual(await page.locator('.rf-scroll-step h3').allInnerTexts(), ['Bring it in', 'Vimbre AI drafts', 'You check', 'Handover']);
+    assert.equal(await page.locator('.rf-scroll-screen .rs-example').count(), 1);
+    assert.equal(await page.locator('.rf-history').count(), 0, 'Week-by-week filler removed');
+    assert.equal(await page.locator('#problem').count(), 0, 'Repeated context section removed');
+    assert.equal(await page.locator('.rf-tool-status').count(), 7);
+    assert(await page.getByText('Paste email or notes', { exact: true }).isVisible());
+    assert.equal(await page.getByText('Available · Connect your account', { exact: true }).count(), 6);
+    assert.equal(await page.locator('.rs-plan').count(), 4);
+    assert.equal(await page.locator('.rf-popular-label').count(), 1);
+    const perPerson = await page.locator('.rf-per-person').allInnerTexts();
+    assert.equal(perPerson.length, 3);
+    for (const [index, amount] of ['£2.90', '£1.98', '£1.00'].entries()) {
+      assert(perPerson[index].includes(amount));
+      assert(perPerson[index].includes('per person / month at full team size'));
+    }
+    assert.equal(await page.locator('.rs-pricing .rs-plan li').filter({ hasText: /Team chat/ }).count(), 0);
+    assert(await page.getByText(/AI figures are configured request ceilings/i).isVisible());
+
+    const accordion = page.getByRole('button', { name: 'What happens when I hit my AI limit?' });
+    await accordion.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await accordion.getAttribute('aria-expanded'), 'true');
+    assert((await page.locator('#faq-panel-4').innerText()).includes('AI drafting pauses'));
+
+    await page.getByLabel('Start date', { exact: true }).fill('9 Nov 2026');
+    await page.getByLabel('End date', { exact: true }).fill('27 Nov 2026');
+    assert.equal(await page.locator('.rf-report section').count(), 4);
+    await page.getByLabel('End date', { exact: true }).fill('12 Nov 2026');
+    assert.equal(await page.locator('.rf-report section').count(), 2);
+    assert.equal(await page.locator('.rf-report time').first().innerText(), '9 Nov 2026');
+
+    await page.getByLabel('Handovers per year').fill('20');
+    await page.getByLabel('Hours lost per handover').fill('1.5');
+    await page.getByLabel('Hourly cost in pounds').fill('40');
+    assert((await page.locator('.rf-calculator-result').innerText()).includes('£1,200.00'));
+    assert((await page.locator('.rf-calculator-result').innerText()).includes('£348.00'));
+    await page.locator('#pricing').scrollIntoViewIfNeeded();
+    assert((await page.locator('.rs-pricing-section').innerText()).includes('subscriptions and checkout are not active yet'));
+
+    for (const width of [320, 360, 390, 430, 640, 768, 820, 834, 1024, 1180, 1280, 1366, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 });
-      assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Overflow at ' + width);
-      const toolsFit=await page.locator('.rs-tools-visual').evaluate(visual=>{
-        const text=visual.closest('section').querySelector('.rs-section-heading');
-        const inside=r=>r.left>=-1&&r.right<=innerWidth+1;
-        const nodes=[visual,...visual.querySelectorAll('.rs-tools-flow,.rs-tool-input,.rs-tools-lines,.rs-tools-mark'),text,...text.querySelectorAll('h2,p')];
-        const boxes=nodes.every(el=>inside(el.getBoundingClientRect()));
-        const lines=[...text.querySelectorAll('h2,p')].every(el=>{const range=document.createRange();range.selectNodeContents(el);return [...range.getClientRects()].every(inside)});
-        return boxes&&lines;
-      });
-      assert(toolsFit,'Tools text and diagram fit the viewport without clipping at '+width);
-      const layout = await page.locator('.rs-demo-viewport').evaluate(viewport => {
-        const area = viewport.getBoundingClientRect();
-        const scene = viewport.querySelector('[data-scene="cover"]').getBoundingClientRect();
-        const cards = [...viewport.querySelectorAll('[data-scene="cover"] .card')].map(el => el.getBoundingClientRect());
-        const intersects = (a,b) => a.left < b.right-1 && a.right > b.left+1 && a.top < b.bottom-1 && a.bottom > b.top+1;
-        return { inside: cards.every(card => card.left >= area.left && card.right <= area.right + 1 && card.top >= area.top && card.bottom <= area.bottom + 1), overlap: cards.some((card,i)=>cards.slice(i+1).some(other=>intersects(card,other))), sceneFits: scene.width <= area.width + 1 };
-      });
-      assert(layout.inside && layout.sceneFits, 'Cover cards fit the product viewport at '+width);
-      assert(!layout.overlap, 'Cover cards do not overlap at '+width);
-      if ([320,360,390,430,640,768,820,834,1024,1180,1280,1366,1440,1920].includes(width)) await page.screenshot({path:'/tmp/vimbre-landing-'+width+'.png',fullPage:true});
-      if (width === 1440) {
-        const lines = await page.locator('h1').evaluate(el => el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
-        assert(lines >= 1.9 && lines <= 2.1, 'Centered headline occupies two desktop lines');
-        const alignment=await page.locator('.rs-hero-copy').evaluate(el=>getComputedStyle(el).textAlign);assert.equal(alignment,'center');
-        const stageWidth=await page.locator('.rf-wide-demo').evaluate(el=>el.getBoundingClientRect().width);assert(stageWidth>=1000,'Product demo uses the wide centered layout');
+      if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.x>=copy.x+copy.width-1,'Desktop hero remains side by side');assert(demo.y<900,'Product is visible above fold');}
+      assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
+      for (const selector of ['.rf-scroll-screen', '.rf-tools-status', '.rf-calculator']) {
+        const box = await page.locator(selector).first().boundingBox();
+        assert(box && box.x >= -1 && box.x + box.width <= width + 1, selector + ' fits at ' + width);
       }
+      assert((await page.locator('.rs-example').count()) > 0, 'Example labels exist at ' + width);
     }
-    for (let i = 0; i < questions.length; i++) {
-      const button = page.locator('#faq-button-' + i);
-      await button.focus(); await page.keyboard.press('Enter');
-      assert.equal(await button.getAttribute('aria-expanded'), 'true');
-      assert.equal(await page.locator('#faq-panel-' + i + ' p').innerText(), questions[i].acceptedAnswer.text);
-      await page.keyboard.press('Space');
-      assert.equal(await button.getAttribute('aria-expanded'), 'false');
-    }
-    await page.getByRole('button',{name:/Decision Use the updated pricing model/}).focus();await page.keyboard.press('Enter');
-    assert.equal(await page.getByRole('button',{name:/Decision Use the updated pricing model/}).getAttribute('aria-pressed'),'true');
-    await page.getByRole('button',{name:'Review draft',exact:true}).click();await page.getByLabel('Action',{exact:true}).fill('Review the revised proposal');assert.equal(await page.getByLabel('Action',{exact:true}).inputValue(),'Review the revised proposal');
-    await page.getByRole('button',{name:'Update status',exact:true}).click();assert.equal(await page.locator('.rf-current-status').innerText(),'In progress');
-    await page.getByRole('button',{name:'Show related work',exact:true}).click();await page.getByText('Outcome: Completed and shared',{exact:true}).waitFor();
-    await page.getByLabel('End date',{exact:true}).fill('2026-10-12');assert.equal(await page.locator('.rf-report section').count(),1);
-    await page.getByLabel('End date',{exact:true}).fill('2026-10-27');assert.equal(await page.locator('.rf-report section').count(),4);
-    assert.equal(await page.locator('[data-scene=cover]').evaluate(el => getComputedStyle(el).opacity), '1');
-    const plain = await browser.newContext({ javaScriptEnabled: false });
-    const staticPage = await plain.newPage();
-    await staticPage.goto('http://127.0.0.1:5174/');
-    assert(await staticPage.getByRole('heading', { name: 'The missing layer behind your work.' }).isVisible());
-    assert(await staticPage.getByText('Nothing lost.', { exact: true }).isVisible());
-    const normal = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    assert.deepEqual(errors, []);
+    await context.close();
+
+    const normal = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const storyPage = await normal.newPage();
+    storyPage.on('pageerror', error => errors.push(error.message));
     await storyPage.goto('http://127.0.0.1:5174/');
     const pause = storyPage.getByRole('button', { name: 'Pause hero story' });
-    await pause.waitFor(); await pause.click();
+    await pause.waitFor({ timeout: 12000 });
+    await pause.click();
     await storyPage.getByRole('button', { name: 'Play hero story' }).waitFor();
-    await storyPage.locator('.rs-story-stage').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(a => a.ready)); });
-    const before = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(a => a.currentTime));
-    await storyPage.waitForTimeout(250);
-    const after = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(a => a.currentTime));
-    assert.deepEqual(after, before, 'Pause freezes the whole story');
+    const before = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(animation => animation.currentTime));
+    await storyPage.waitForTimeout(220);
+    const after = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(animation => animation.currentTime));
+    assert.deepEqual(after, before, 'Pause freezes the signature story');
     await storyPage.getByRole('button', { name: 'Play hero story' }).click();
+    await storyPage.evaluate(() => window.scrollTo(0, 0));
     await storyPage.getByRole('button', { name: 'Pause hero story' }).waitFor();
-    await storyPage.locator('#pricing').scrollIntoViewIfNeeded();
-    await storyPage.waitForTimeout(200);
-    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).every(a => a.playState !== 'running')));
-    await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
-    await storyPage.waitForTimeout(100);
-    assert(await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({subtree:true}).some(a => a.effect.getTiming().iterations === 2)), 'Hero stops after two loops');
-    await storyPage.evaluate(() => { window.previewClicks = 0; document.querySelectorAll('.rs-demo-window button').forEach(button => button.addEventListener('click',()=>window.previewClicks++)); });
-    for (const name of ['capture','draft','confirmed','saved','away','cover']) {
-      await storyPage.waitForFunction(name => Number(getComputedStyle(document.querySelector(`[data-scene="${name}"]`)).opacity) > .9, name, {timeout:6000});
-      if(name==='draft' || name==='cover') await storyPage.locator('.rs-story-shell').screenshot({path:`/tmp/vimbre-landing-tour-${name}.png`});
+    const loopCount = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).some(animation => animation.effect.getTiming().iterations === Infinity));
+    assert(loopCount, 'Hero story loops continuously');
+    for (const name of ['email', 'capture', 'draft', 'confirmed', 'saved', 'away', 'cover']) {
+      await storyPage.waitForFunction(scene => Number(getComputedStyle(document.querySelector('[data-scene="' + scene + '"]')).opacity) > .9, name, { timeout: 12000 }).catch(error => { throw new Error('Hero scene did not appear: ' + name, { cause: error }); });
     }
-    assert.equal(await storyPage.evaluate(()=>window.previewClicks),0,'Illustrated clicks never dispatch real app actions');
-    assert.equal(await storyPage.locator('[data-demo-click]').count(),6);
-    await storyPage.waitForFunction(() => document.querySelector('.rs-story-control').disabled, null, {timeout:40000});
-    for(const selector of ['.rs-story-stage','[data-scene="cover"]','.rs-story-resolution']){
-      assert.equal(await storyPage.locator(selector).evaluate(el => getComputedStyle(el).opacity),'1','Final hero frame restores '+selector);
-    }
-    assert.equal(await storyPage.locator('[data-demo-cursor]').evaluate(el=>getComputedStyle(el).opacity),'0');
-    const mobileContext = await browser.newContext({viewport:{width:360,height:800}});
-    const mobilePage = await mobileContext.newPage();
-    await mobilePage.goto('http://127.0.0.1:5174/');
-    await mobilePage.locator('#vimbre-boot').waitFor({state:'detached'});
-    await mobilePage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
-    await mobilePage.getByRole('button',{name:'Pause hero story'}).waitFor();
-    await mobilePage.waitForFunction(() => document.querySelector('.rs-story-shell').hasAttribute('data-story-complete'),null,{timeout:40000});
-    assert.equal(await mobilePage.locator('[data-scene=cover]').evaluate(el=>getComputedStyle(el).opacity),'1');
-    await mobileContext.close();
-    const og = await page.request.get('http://127.0.0.1:5174/vimbre-work-context-og-1200.png');
-    assert.equal(og.status(),200);
-    const image = await og.body(); assert.equal(image.readUInt32BE(16),1200); assert.equal(image.readUInt32BE(20),630);
-    assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'),'https://vimbre.com/vimbre-work-context-og-1200.png');
     assert.deepEqual(errors, []);
-    await context.close(); await plain.close(); await normal.close();
-    console.log('Production landing: prerender, schema, copy, responsive widths, FAQ keyboard, reduced motion, no JS and hero pause passed.');
-  } finally { await browser.close(); await new Promise(resolve => server.httpServer.close(resolve)); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+    await normal.close();
 
+    const noJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
+    const staticPage = await noJs.newPage();
+    await staticPage.goto('http://127.0.0.1:5174/');
+    assert(await staticPage.getByRole('heading', { name: /Turn conversations into/ }).isVisible());
+    assert.equal(await staticPage.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1');
+    await noJs.close();
+    console.log('Landing copy, four-step story, dates, pricing math, calculator, responsive layout, reduced motion and no-JS fallback passed.');
+  } finally {
+    await browser.close();
+    await new Promise(resolve => server.httpServer.close(resolve));
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });

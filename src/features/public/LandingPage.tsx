@@ -5,9 +5,10 @@ import { BrandLogo } from '../../components/ui/BrandLogo'
 import { LandingHeader } from './LandingHeader'
 import { ContactSection } from './ContactSection'
 import { legalDocuments } from './legal-content'
-import { ConnectedTimeline, CapabilityDemos, ContextHistory, HandoverExample } from './RefinedProductDemos'
-import { faq, plans, schema, heroCopy } from './landing-content'
+import { ConnectedTimeline, CapabilityDemos, HandoverExample } from './RefinedProductDemos'
+import { faq, plans, schema, heroCopy, pricingDisclosure } from './landing-content'
 import { HeroStory } from './HeroStory'
+import { PricingValueCalculator } from './PricingValueCalculator'
 import './landing.css'
 
 function Arrow() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg> }
@@ -21,21 +22,50 @@ function Icon({ kind = 'notes' }: { kind?: string }) {
   }
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={paths[kind] ?? paths.notes} /></svg>
 }
-function Example() { return <small className="rs-example">Example</small> }
 function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
-  return <div className={`rs-reveal ${className}`} data-reveal style={{ '--reveal-delay': `${delay}ms` } as CSSProperties}>{children}</div>
+  return <div className={'rs-reveal ' + className} data-reveal style={{ '--reveal-delay': String(delay) + 'ms' } as CSSProperties}>{children}</div>
 }
-function StreamMotif({ className = '' }: { className?: string }) {
-  // The supplied mark, never reconstructed or recoloured.
-  return <img className={`rs-stream-motif ${className}`} src="/vimbre-mark-colour.svg" width="512" height="512" alt="" aria-hidden="true" />
+function StreamMotif() {
+  return <img className="rs-stream-motif" src="/vimbre-mark-colour.svg" width="512" height="512" alt="" aria-hidden="true" />
 }
 function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
-  return <div className="rs-faq-list">{faq.map(([question, answer], i) => <div className={`rs-faq-item${open === i ? ' rs-faq-open' : ''}`} key={question}>
-    <h3><button type="button" id={`faq-button-${i}`} aria-expanded={open === i} aria-controls={`faq-panel-${i}`} onClick={() => setOpen(open === i ? null : i)}>{question}<span aria-hidden="true">+</span></button></h3>
-    <div id={`faq-panel-${i}`} role="region" aria-labelledby={`faq-button-${i}`} className="rs-faq-panel" inert={open !== i}><div><p>{answer}</p></div></div>
+  return <div className="rs-faq-list">{faq.map(([question, answer], i) => <div className={'rs-faq-item' + (open === i ? ' rs-faq-open' : '')} key={question}>
+    <h3><button type="button" id={'faq-button-' + i} aria-expanded={open === i} aria-controls={'faq-panel-' + i} onClick={() => setOpen(open === i ? null : i)}>{question}<span aria-hidden="true">+</span></button></h3>
+    <div id={'faq-panel-' + i} role="region" aria-labelledby={'faq-button-' + i} className="rs-faq-panel" inert={open !== i}><div><p>{answer}</p></div></div>
   </div>)}</div>
 }
+function ToolAvailability() {
+  const tools = [
+    { name: 'Paste email or notes', state: 'Available now', active: true },
+    { name: 'Gmail', state: 'Available · Connect your account', active: true },
+    { name: 'Google Drive', state: 'Available · Connect your account', active: true },
+    { name: 'Outlook', state: 'Available · Connect your account', active: true },
+    { name: 'Microsoft Teams', state: 'Available · Connect your account', active: true },
+    { name: 'Slack', state: 'Available · Connect your account', active: true },
+    { name: 'Trello', state: 'Available · Connect your account', active: true },
+  ]
+  return <div className="rf-tools-status">
+    <div className="rf-tools-status-heading"><div><span className="rs-eyebrow">Source availability</span><h3>Paste a conversation or connect your tools.</h3></div><p>Vimbre does not replace your tools. Choose Gmail, Google Drive, Outlook, Teams, Slack or Trello. Your company must allow the tool, and you approve account access.</p></div>
+    <div className="rf-tool-availability">{tools.map(tool => <div className="rf-tool-status" key={tool.name}>
+      <span className={'rf-tool-state-dot' + (tool.active ? ' rf-tool-state-live' : '')} aria-hidden="true" />
+      <strong>{tool.name}</strong><span className={'rf-tool-state-label' + (tool.active ? ' rf-tool-state-live-label' : '')}>{tool.state}</span>
+    </div>)}</div>
+  </div>
+}
+function AITrustBlock() {
+  return <section className="rs-section rf-ai-trust" aria-labelledby="ai-trust-title">
+    <div className="rs-container rf-ai-trust-layout">
+      <Reveal><span className="rs-eyebrow">You stay in control</span><h2 id="ai-trust-title">Vimbre AI drafts. You decide what gets saved.</h2><p>For normal drafts, Vimbre AI runs only when you tap to request it. Read the source, check names and dates, edit what needs changing, and confirm only what is correct. Nothing becomes a shared action or decision until you confirm it. Your source and pending draft remain private. If you enable a Watch rule separately, it can prepare private drafts under that rule; it never confirms actions for you.</p></Reveal>
+      <div className="rf-ai-trust-points">
+        <article><span className="rf-ai-point-number">01</span><div><h3>It drafts</h3><p>It suggests actions and context from text or a selected source.</p></div></article>
+        <article><span className="rf-ai-point-number">02</span><div><h3>You check</h3><p>Review the wording, owners and dates before anything becomes a record.</p></div></article>
+        <article><span className="rf-ai-point-number">03</span><div><h3>You confirm</h3><p>At the AI limit, drafting pauses. Your saved records and manual work continue.</p></div></article>
+      </div>
+    </div>
+  </section>
+}
+
 export function LandingPage({ authenticated = false, loading = false }: { authenticated?: boolean; loading?: boolean }) {
   const root = useRef<HTMLDivElement>(null)
   const stage = useRef<HTMLDivElement>(null)
@@ -61,7 +91,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
           await document.fonts.ready
           if (disposed || currentGeneration !== generation || media.matches || !root.current || !stage.current) return
           motion.current = createLandingMotion(root.current, stage.current, setStory)
-        }).catch(() => { /* Complete static frames remain usable if enhancement fails. */ })
+        }).catch(() => { /* Static product screens remain usable if motion enhancement fails. */ })
       }) })
     }
     const resized = () => {
@@ -71,13 +101,14 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       resizeTimer = window.setTimeout(start, 150)
     }
     start()
-    window.addEventListener('resize', resized, {passive:true})
+    window.addEventListener('resize', resized, { passive: true })
     media.addEventListener('change', start)
     compact.addEventListener('change', start)
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
   const to = authenticated ? '/app' : '/signup'
-  const cta = authenticated ? 'Open workspace' : 'Get started'
+  const cta = authenticated ? 'Open workspace' : 'Start free trial'
+  const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
     <LandingHeader authenticated={authenticated} loading={loading} />
@@ -85,39 +116,46 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section className="rs-hero rf-hero" aria-labelledby="hero-title">
         <div className="rs-container rs-hero-grid">
           <div className="rs-hero-copy">
-            <h1 id="hero-title" tabIndex={-1}>The missing layer <span>behind your work.</span></h1>
+            <h1 id="hero-title" tabIndex={-1}>Turn conversations into <span>work people can pick up.</span></h1>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
-            <div className="rs-actions"><a className="rs-button" href="#product-demo">See how Vimbre works<Arrow /></a><a className="rs-button rs-button-outline" href="#features">Explore the platform<Arrow /></a></div>
-            <p className="rf-hero-microcopy">Works alongside the tools your team already uses.</p>
+            <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#how-it-works">See the 10-second walkthrough<Arrow /></a></div>
+            <p className="rf-hero-microcopy">No card required. Check every AI draft before saving.</p>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
       </section>
-      <section id="problem" className="rs-section rs-problem" aria-labelledby="problem-title">
-        <div className="rs-container"><Reveal className="rs-section-heading"><h2 id="problem-title">Work happens everywhere. The full picture doesn't.</h2><p>Conversations, decisions, tasks and outcomes end up in different places, leaving people to reconstruct what happened.</p></Reveal>
-          <Example /><div className="rs-problem-visual" data-problem><div className="rs-problem-sources">{['Conversation', 'Decision', 'Action', 'Outcome'].map((label,i)=><div className="rs-source" key={label} data-problem-source><Icon kind={i===0?'email':'notes'} /><strong>{label}</strong><span className="rs-skeleton-lines"><i /><i /></span></div>)}</div><div className="rs-problem-record" data-problem-record><div className="rs-record"><div className="rs-record-bar"><span><Icon />One connected picture</span></div><dl>{[['Conversation','Proposal meeting notes'],['Decision','Use the updated pricing model'],['Action','Revise proposal'],['Outcome','Completed and shared']].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div></div></div>
+      <section id="how-it-works" className="rs-section rf-how" aria-labelledby="how-title">
+        <div className="rs-container">
+          <Reveal className="rs-section-heading"><span className="rs-eyebrow">Four steps</span><h2 id="how-title">From a conversation to a useful handover.</h2><p>Bring it in. Vimbre AI drafts. You check. Then the next person can see what comes first.</p></Reveal>
+          <ConnectedTimeline />
         </div>
       </section>
-      <section id="how-it-works" className="rs-section rf-how" aria-labelledby="how-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="how-title">Connect the conversation to the outcome.</h2><p>Vimbre links what was discussed, what was decided, what needs doing and what happened next.</p></Reveal><Reveal><ConnectedTimeline /></Reveal></div></section>
-      <section id="features" className="rs-section rs-tinted" aria-labelledby="features-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="features-title">Keep the context connected.</h2></Reveal><Reveal><CapabilityDemos /></Reveal></div></section>
-      <section className="rs-section" aria-labelledby="context-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="context-title">The context builds as the work happens.</h2><p>Each connected decision, action and outcome adds to the history people can use later.</p></Reveal><Reveal><ContextHistory /></Reveal></div></section>
-      <section id="handover" className="rs-section rs-tinted" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><h2 id="cover-title">When someone steps in, they know where to start.</h2><p>Prepare an editable handover from your own records or notes.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
-      <section className="rs-section" aria-labelledby="tools-title"><div className="rs-container rs-two-col"><Reveal className="rs-section-heading"><h2 id="tools-title">Keep your tools. Connect the work between them.</h2><p>Vimbre is designed to sit alongside your existing tools, not ask your team to replace them.</p><p className="rf-method-note">Capture from pasted email text or notes. Direct connections to Teams, email and task tools are planned.</p></Reveal><Reveal className="rs-tools-visual"><Example /><div className="rs-tools-flow"><div className="rs-tool-input"><Icon /><span>Pasted notes</span></div><svg className="rs-tools-lines" viewBox="0 0 240 130" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M0 65 C80 65 160 65 240 65" /></svg><span className="rs-tools-mark"><BrandLogo variant="symbol" decorative /></span></div></Reveal></div></section>
-      <section className="rs-section" aria-labelledby="people-title"><div className="rs-container"><Reveal><h2 id="people-title">One connected picture. Different value for everyone.</h2></Reveal><div className="rs-audiences">{[
-        ['Employees','Know what you committed to and pick up where you left off.','notes'],
-        ['Managers','Understand open work, decisions and next steps without reconstructing every conversation.','people'],
-        ['People covering a role','See recent decisions, current responsibilities and what needs attention.','people'],
-        ['New starters','Build an understanding of ongoing work and why things are done a certain way.','notes'],
-      ].map(([title,text,kind],i)=><Reveal className="rs-audience-card" key={title} delay={i*80}><Icon kind={kind} /><h3>{title}</h3><p>{text}</p></Reveal>)}</div></div></section>
-      <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title"><div className="rs-container"><Reveal><h2 id="pricing-title">Simple plans for every team size.</h2></Reveal><div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={`rs-plan ${i === 1 ? 'rs-plan-featured' : ''}`} delay={i * 60}>
-        <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{i < 3 && <span>a month</span>}</div><p>{plan.size}</p><ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>{i === 3 ? <a className="rs-button rs-button-outline" href="mailto:hello@vimbre.com?subject=Vimbre%20Enterprise">{cta}<Arrow /></a> : <Link className={`rs-button ${i !== 1 ? 'rs-button-outline' : ''}`} to={to}>{cta}<Arrow /></Link>}
-      </Reveal>)}</div></div></section>
-      <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
-      <section className="rs-section rs-final" aria-labelledby="final-title" data-final-section><StreamMotif /><div className="rs-container"><Reveal><h2 id="final-title">Let the work build on itself.</h2><p>Connect decisions, actions and outcomes, and keep the context available for the next step.</p><Link className="rs-button rs-button-white" to={to}>{authenticated ? 'Open workspace' : 'Get started with Vimbre'}<Arrow /></Link></Reveal></div></section>
+      <section id="features" className="rs-section rs-tinted" aria-labelledby="features-title">
+        <div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">In the workspace</span><h2 id="features-title">The useful pieces stay connected.</h2><p>Keep the decision, the next action and the role information together, without turning Vimbre into another chat app.</p></Reveal><Reveal><CapabilityDemos /></Reveal></div>
+      </section>
+      <AITrustBlock />
+      <section id="handover" className="rs-section" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">Cover with context</span><h2 id="cover-title">A handover that starts with what matters.</h2><p>Preview an example handover. Change the date range to see the included records; real handovers use the information you choose to include.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
+      <section id="tools" className="rs-section rs-tinted" aria-label="Connected tools"><div className="rs-container"><Reveal><ToolAvailability /></Reveal></div></section>
+      <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
+        <div className="rs-container">
+          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">See the price per person, not just per plan.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">Start a trial without a card. Paid subscriptions and checkout are not active yet.</p></Reveal>
+          <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
+            {i === 1 && <span className="rf-popular-label">Most popular</span>}
+            <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
+            {plan.seats !== null && plan.amount !== null && <p className="rf-per-person">{money(plan.amount / plan.seats)} <span>per person / month at full team size</span></p>}
+            <p className="rf-plan-positioning">{plan.size}<br />{plan.positioning}</p>
+            <ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>
+            <Link className={'rs-button ' + (i !== 1 ? 'rs-button-outline' : '')} to={to}>{cta}<Arrow /></Link>
+          </Reveal>)}</div>
+          <p className="rf-pricing-disclosure">{pricingDisclosure}</p>
+          <PricingValueCalculator />
+        </div>
+      </section>
+      <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
+      <section className="rs-section rs-final" aria-labelledby="final-title" data-final-section><StreamMotif /><div className="rs-container"><Reveal><h2 id="final-title">Make the next handover easier.</h2><p>Start with the conversations, tasks and decisions your team already has. Build a clearer handover from there.</p><Link className="rs-button rs-button-white" to={to}>{authenticated ? 'Open workspace' : 'Start free trial'}<Arrow /></Link></Reveal></div></section>
       <ContactSection />
     </main>
-    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#features'], ['How it works', '#how-it-works'], ['Handover', '#handover'], ['FAQ', '#questions'], ['Pricing', '#pricing'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={`/${slug}`}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
+    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#features'], ['How it works', '#how-it-works'], ['Handover', '#handover'], ['Tools', '#tools'], ['FAQ', '#questions'], ['Pricing', '#pricing'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
   </div>
 }
-

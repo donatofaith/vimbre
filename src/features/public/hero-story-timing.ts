@@ -1,9 +1,9 @@
-// Every illustrated click precedes its scene change. One timeline owns the tour.
+// The hero story is designed as one restrained ten-second loop.
 export const heroStoryTiming = {
-  desktop: { duration: 16.1, capture: 2, draft: 4.3, confirmed: 6.5, saved: 8, away: 10, cover: 12, resolve: 14, reset: 15.5 },
-  mobile: { duration: 16.1, capture: 2, draft: 4.3, confirmed: 6.5, saved: 8, away: 10, cover: 12, resolve: 14, reset: 15.5 },
-  plays: 2,
-  transition: .35,
-  rowStagger: .1,
-  coverStagger: .08,
+  desktop: { duration: 10, capture: 1.15, draft: 2.95, confirmed: 4.65, saved: 5.7, away: 6.65, cover: 7.55, resolve: 8.5, reset: 9.45 },
+  mobile: { duration: 10, capture: 1.15, draft: 2.95, confirmed: 4.65, saved: 5.7, away: 6.65, cover: 7.55, resolve: 8.5, reset: 9.45 },
+  plays: Infinity,
+  transition: .5,
+  rowStagger: .06,
+  coverStagger: .06,
 } as const
