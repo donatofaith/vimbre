@@ -373,7 +373,7 @@ function MyDayContent() {
           <p className="md-live-line">
             {data
               ? <><span>{data.counts.today ?? data.counts.todo + data.counts.progress} today,</span><span>{data.counts.overdue} overdue,</span><span>{waiting + handovers.length+incoming.length} to review</span></>
-              : "Loading your tasks…"}
+              : current?.error ? "Tasks could not be loaded." : "Loading your tasks…"}
           </p>
         </div>
 
