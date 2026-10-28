@@ -2,8 +2,8 @@
 export const landingTitle = 'Vimbre | Turn Conversations into Actions and Handovers'
 export const definition = 'Vimbre turns conversations into reviewed actions, keeps decisions and role records connected, and prepares handovers for the people who cover the work.'
 export const heroCopy = {
-  headline: 'Turn conversations into work people can pick up.',
-  supporting: 'Vimbre AI drafts actions from your conversations. You review them and save the decisions someone covering your work needs.',
+  headline: 'Turn conversations into tasks, decisions and handovers.',
+  supporting: 'Vimbre AI prepares a draft. You review it before saving. Your role record keeps the context someone covering your work needs.',
 }
 export const storySummary = 'Example: paste a conversation, review Vimbre AI draft actions, confirm what is correct, then prepare a handover showing what comes first.'
 export const record = [
@@ -14,13 +14,10 @@ export const record = [
   ['Next step', 'Share the review notes by 12 Nov 2026'],
 ]
 export const faq = [
-  ['What is Vimbre?', 'Vimbre turns conversations into reviewed actions, connects decisions with the work that follows, and helps someone covering a role understand what matters first.'],
   ['Is Vimbre a chat or project management tool?', 'No. Vimbre is designed to work alongside your existing tools. It keeps the decisions, actions, role information and handover context behind the work connected.'],
-  ['How does Vimbre AI work?', 'You start a draft from text or a selected source. Vimbre AI proposes actions and context for you to review. Check names, dates and wording, then edit or confirm only what the source supports.'],
   ['Does Vimbre confirm work automatically?', 'No. Drafts are stored privately for review; only you can confirm them. Optional Watch rules must be set up and enabled by you; they can prepare drafts, not confirmed tasks.'],
   ['What happens when I hit my AI limit?', 'AI drafting pauses until the allowance resets or your workspace admin changes it. Nothing else breaks: your saved records, tasks and manual entry continue to work.'],
   ['Which tools can I connect?', 'Pasting email text, conversations or notes is available now. You can connect Gmail, Google Drive, Outlook, Microsoft Teams, Slack and Trello when your company allows the tool. You choose the account and approve access. Some organisations require approval from their IT administrator.'],
-  ['How does a handover work?', 'Prepare an editable handover from your role information, confirmed work and notes. Review what is included and share a time limited cover guide where appropriate.'],
   ['How is company information protected?', 'Access follows company roles and permissions. Capture sources and pending drafts remain private to their owner; confirmed records follow the company access rules. Contact support@vimbre.com for specific privacy or retention questions.'],
   ['Are subscriptions and plan limits active?', 'The amounts on this page are proposed monthly bundles for discussion. Checkout and plan limits are not enabled yet. The configured monthly AI request ceilings are 500 for Starter, 3,000 for Growth and 15,000 for Business. Daily and spend safeguards can pause drafting sooner; your workspace shows its remaining allowance.'],
 ]

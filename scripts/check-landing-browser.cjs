@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
   try {
     const source = await readFile('dist/index.html', 'utf8');
     assert(source.includes('Turn conversations into'));
-    assert(source.includes('Vimbre AI drafts actions from your conversations.'));
+    assert(source.includes('Vimbre AI prepares a draft.'));
     assert(source.includes('What happens when I hit my AI limit?'));
     assert(!source.includes('Direct connections to Teams, email and task tools are planned'));
     assert(!source.includes('12/10/2026'));
@@ -19,7 +19,7 @@ const { chromium } = require('playwright');
     const schemaEnd = source.indexOf('</script>', schemaStart);
     const structured = JSON.parse(source.slice(schemaStart, schemaEnd));
     const questions = structured['@graph'].find(item => item['@type'] === 'FAQPage').mainEntity;
-    assert.equal(questions.length, 9);
+    assert.equal(questions.length, 6);
 
     const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage();
@@ -34,7 +34,7 @@ const { chromium } = require('playwright');
     assert(await page.locator('.rs-hero-subhead').isVisible());
     assert.equal(await page.locator('.rs-hero .rs-button').count(), 1, 'One primary hero action');
     assert.equal(await page.locator('.rs-hero .rs-text-link').count(), 1, 'One quiet hero link');
-    assert(await page.getByText('No card required. Check every AI draft before saving.', { exact: true }).isVisible());
+    assert(await page.getByText('No card required.', { exact: true }).isVisible());
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
     assert.equal(await page.locator('[data-draft-row] .md-slim-row').count(),3,'Hero uses actual My Day task rows');
     const heroCTA=page.locator('.rs-hero .rs-button');assert.equal(await heroCTA.getAttribute('href'),'/signup');assert.equal(await heroCTA.innerText(),'Start free trial');
@@ -43,14 +43,10 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('[data-draft-row]').count(), 3, 'Hero draft shows three extracted actions');
     assert(await page.getByText('Check before saving', { exact: true }).count() >= 1);
     assert.equal(await page.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1', 'Reduced-motion hero shows the source message');
-    assert.equal(await page.locator('.rf-scroll-step').count(), 4);
-    assert.deepEqual(await page.locator('.rf-scroll-step h3').allInnerTexts(), ['Bring it in', 'Vimbre AI drafts', 'You check', 'Handover']);
-    assert.equal(await page.locator('.rf-scroll-screen .rs-example').count(), 1);
-    assert.equal(await page.locator('.rf-history').count(), 0, 'Week-by-week filler removed');
-    assert.equal(await page.locator('#problem').count(), 0, 'Repeated context section removed');
-    assert.equal(await page.locator('.rf-tool-status').count(), 7);
-    assert(await page.getByText('Paste email or notes', { exact: true }).isVisible());
-    assert.equal(await page.getByText('Available · Connect your account', { exact: true }).count(), 6);
+    for (const selector of ['#features','#tools','#how-it-works','.rf-ai-trust','.rs-final']) assert.equal(await page.locator(selector).count(),0,'Repeated section removed: '+selector);
+    assert.equal(await page.locator('#handover').count(),1);
+    for (const phrase of ['Source availability','Cover with context','In the workspace','You stay in control']) assert(!(await page.locator('.rs-site').innerText()).includes(phrase));
+    for (const anchor of await page.locator('a[href*="#"]').evaluateAll(links=>links.map(link=>link.hash))) assert.equal(await page.locator(anchor).count(),1,'Navigation target exists: '+anchor);
     assert.equal(await page.locator('.rs-plan').count(), 4);
     assert.equal(await page.locator('.rf-popular-label').count(), 1);
     const perPerson = await page.locator('.rf-per-person').allInnerTexts();
@@ -66,7 +62,7 @@ const { chromium } = require('playwright');
     await accordion.focus();
     await page.keyboard.press('Enter');
     assert.equal(await accordion.getAttribute('aria-expanded'), 'true');
-    assert((await page.locator('#faq-panel-4').innerText()).includes('AI drafting pauses'));
+    assert((await page.locator('#'+await accordion.getAttribute('aria-controls')).innerText()).includes('AI drafting pauses'));
 
     await page.getByLabel('Start date', { exact: true }).fill('9 Nov 2026');
     await page.getByLabel('End date', { exact: true }).fill('27 Nov 2026');
@@ -87,7 +83,7 @@ const { chromium } = require('playwright');
       await page.setViewportSize({ width, height: 900 });
       if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.y>=copy.y+copy.height+24,'Information comes before the demo');assert(Math.abs(demo.x+demo.width/2-width/2)<2,'Demo is centered');assert.equal(await page.locator('.rs-hero-copy').evaluate(el=>getComputedStyle(el).textAlign),'center');assert(demo.width>=Math.min(1120,width-48)-2,'Demo uses the available width');}
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
-      for (const selector of ['.rf-scroll-screen', '.rf-tools-status', '.rf-calculator']) {
+      for (const selector of ['#handover', '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
         assert(box && box.x >= -1 && box.x + box.width <= width + 1, selector + ' fits at ' + width);
       }
