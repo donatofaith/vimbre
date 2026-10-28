@@ -34,3 +34,9 @@ This is a landing release. Proposed paid subscriptions/checkout, per-plan connec
 ## Validation
 
 203 unit tests, lint, app/Edge TypeScript and production build pass. Focused browser acceptance covers the provided checklist, all four pinned screen states and actual assets, signature story stages, pause/resume and offscreen pause, copy, primary/quiet CTAs, final CTA, live labels, pricing math/order, calculator, scroll/navigation, fourteen widths, mobile menu, reduced motion and no JavaScript. Desktop/phone screenshots and actual product captures inspected. No GitHub Actions minutes or paid AI calls used.
+
+## Mobile walkthrough correction
+
+The owner's phone screenshot showed a portrait desktop handover reduced to unreadable size inside the pinned frame, with large empty scroll gaps. Mobile now uses four touch-sized step buttons, one concise description and a native phone capture at its natural aspect ratio. The desktop pinned story is preserved above 767px. Phone captures use the actual 390px product UI with fixture data; drafts/check show the relevant action panel, rather than shrinking a desktop two-column layout. Full images remain available by tapping them. No mobile pinning, nested image scrolling or tall spacer steps remain.
+
+Build/TypeScript and browser acceptance pass at fourteen widths. Each mobile step is selected and checked for its native image, full available width, correct natural ratio and pressed state; desktop pinning, stable frame, signature animation, reduced motion, pricing order, menu and links remain passing. The 390px handover screenshot was visually reviewed for readable content.

@@ -336,3 +336,21 @@
 .rs-site .rf-live-screen img{height:100%;max-height:none;object-fit:contain}
 .rs-site .rf-screen-topbar,.rs-site .rf-scroll-screen>.rs-example,.rs-site .rf-screen-progress{flex-shrink:0}
 @media(max-width:767px){.rs-site .rf-scroll-screen{height:43svh}}
+
+/* Mobile uses its own product captures and direct step controls, without pinning. */
+.rf-mobile-walkthrough{display:none}
+@media(max-width:767px){
+ .rs-site .rf-scroll-story{display:block;margin-top:24px}
+ .rs-site .rf-scroll-steps,.rs-site .rf-scroll-screen{display:none}
+ .rf-mobile-walkthrough{display:block;min-width:0}
+ .rf-mobile-step-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .rf-mobile-step-picker button{display:flex;align-items:center;gap:8px;min-height:48px;padding:10px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--navy);font:500 13px/1.4 var(--body-font);text-align:left;cursor:pointer}
+ .rf-mobile-step-picker button>span{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--blue-soft);color:var(--blue-hover);font-size:11px}
+ .rf-mobile-step-picker button[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft)}
+ .rs-site .rf-mobile-step-copy h3{font-size:22px;margin-top:22px}
+ .rs-site .rf-mobile-step-copy p{font-size:15px;line-height:1.6;margin-top:10px}
+ .rf-mobile-product{padding:12px;margin-top:20px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 4px 16px #102a4308}
+ .rf-mobile-product .rs-example{margin-bottom:12px}
+ .rf-mobile-product img{display:block;width:100%;height:auto;max-height:none;object-fit:initial;border-radius:6px}
+ .rf-mobile-product a{display:block}
+}

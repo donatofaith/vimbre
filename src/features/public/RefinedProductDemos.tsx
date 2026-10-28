@@ -9,17 +9,24 @@ const scrollSteps = [
 export function ConnectedTimeline() {
  const storyRef=useRef<HTMLDivElement>(null)
  const [active,setActive]=useState(0)
+ const [mobileActive,setMobileActive]=useState(0)
  useEffect(()=>{
   const root=storyRef.current;if(!root)return
   let frame=0
-  const update=()=>{frame=0;const steps=[...root.querySelectorAll<HTMLElement>('[data-scroll-step]')];const line=innerHeight*.6;let index=0;for(let i=0;i<steps.length;i++)if(steps[i].getBoundingClientRect().top<=line)index=i;setActive(index)}
+  const update=()=>{frame=0;if(window.matchMedia('(max-width:767px)').matches)return;const steps=[...root.querySelectorAll<HTMLElement>('[data-scroll-step]')];const line=innerHeight*.6;let index=0;for(let i=0;i<steps.length;i++)if(steps[i].getBoundingClientRect().top<=line)index=i;setActive(index)}
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)}
-  const preload=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){for(const name of ['capture-source','capture-review','capture-check','handover-sheet']){const image=new Image();image.src='/product/'+name+'.webp'}preload.disconnect()}},{rootMargin:'600px'});preload.observe(root)
+  const preload=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){for(const name of ['capture-source','capture-review','capture-check','handover-sheet']){const image=new Image();image.src='/product/'+name+(window.matchMedia('(max-width:767px)').matches?'-mobile':'')+'.webp'}preload.disconnect()}},{rootMargin:'600px'});preload.observe(root)
   update();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule,{passive:true})
   return()=>{preload.disconnect();window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);cancelAnimationFrame(frame)}
  },[])
  const pictures=['capture-source','capture-review','capture-check','handover-sheet']
  return <div className="rf-scroll-story" ref={storyRef} data-active-step={active}>
+  <div className="rf-mobile-walkthrough">
+   <div className="rf-mobile-step-picker" role="group" aria-label="Choose a walkthrough step">{scrollSteps.map((step,index)=><button type="button" key={step.title} aria-pressed={mobileActive===index} onClick={()=>setMobileActive(index)}><span>{index+1}</span>{step.title}</button>)}</div>
+   <div className="rf-mobile-step-copy" aria-live="polite"><h3>{scrollSteps[mobileActive].title}</h3><p>{scrollSteps[mobileActive].intro}</p></div>
+   <div className="rf-mobile-product"><small className="rs-example">Sample workspace</small><a href={'/product/'+pictures[mobileActive]+'-mobile.webp'} target="_blank" rel="noreferrer" aria-label={'Enlarge mobile '+scrollSteps[mobileActive].title+' screen'}><img src={'/product/'+pictures[mobileActive]+'-mobile.webp'} alt={'Vimbre on mobile: '+scrollSteps[mobileActive].title+'. Sample data.'} width={[358,324,324,370][mobileActive]} height={[659,268,666,900][mobileActive]} loading="lazy"/></a></div>
+   <noscript><ol>{scrollSteps.map(step=><li key={step.title}>{step.title}: {step.intro}</li>)}</ol></noscript>
+  </div>
   <div className="rf-scroll-steps" aria-label="Four steps">{scrollSteps.map((step,index)=><article className={'rf-scroll-step'+(active===index?' rf-active':'')} data-scroll-step={index} key={step.title}><span className="rf-scroll-index">0{index+1} / 04</span><h3>{step.title}</h3><p>{step.intro}</p></article>)}</div>
   <div className="rf-scroll-screen" aria-label="Product walkthrough">
    <div className="rf-screen-topbar"><span className="rf-screen-brand">Vimbre</span><span className="rf-screen-location">{scrollSteps[active].title}</span></div>

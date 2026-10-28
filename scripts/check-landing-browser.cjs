@@ -92,13 +92,25 @@ const { chromium } = require('playwright');
       const planOrder=await page.locator('.rs-plan').evaluateAll(cards=>cards.map(card=>({name:card.querySelector('h3').textContent,box:card.getBoundingClientRect().toJSON()})).sort((a,b)=>Math.abs(a.box.y-b.box.y)>2?a.box.y-b.box.y:a.box.x-b.box.x).map(card=>card.name));
       assert.deepEqual(planOrder,['Starter','Growth','Business','Enterprise'],'Visual pricing order at '+width);
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
-      for (const selector of ['.rf-scroll-screen', '.rf-calculator']) {
+      for (const selector of [...(width>767?['.rf-scroll-screen']:[]), '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
         assert(box && box.x >= -1 && box.x + box.width <= width + 1, selector + ' fits at ' + width);
       }
       for (const section of ['#product-demo','#how-it-works','#pricing','#questions','#contact']) {
         await page.locator(section).scrollIntoViewIfNeeded();
         assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'No overflow after scrolling to '+section+' at '+width);
+      }
+      if(width<=767){
+       const mobile=page.locator('.rf-mobile-walkthrough');assert(await mobile.isVisible());
+       assert(!await page.locator('.rf-scroll-steps').isVisible(),'Tall scroll steps are removed on mobile');
+       for(let i=0;i<4;i++){
+        const control=mobile.getByRole('button').nth(i);await control.click();assert.equal(await control.getAttribute('aria-pressed'),'true');
+        const image=mobile.locator('img');await image.evaluate(el=>el.decode());
+        const size=await image.evaluate(el=>({w:el.clientWidth,h:el.clientHeight,nw:el.naturalWidth,nh:el.naturalHeight}));
+        assert(size.w>=width*.7,'Mobile image uses screen width at '+width);
+        assert(Math.abs(size.h/size.w-size.nh/size.nw)<.02,'Mobile image is not squeezed into a frame');
+        assert((await image.getAttribute('src')).includes('-mobile.webp'),'Native mobile product capture');
+       }
       }
       assert((await page.locator('.rs-example').count()) > 0, 'Example labels exist at ' + width);
     }
