@@ -34,5 +34,9 @@ begin
   ) = 0 then
     raise exception 'Away banner query must exclude soft-deleted handover drafts';
   end if;
+
+  if position('status in(''draft'',''changes_requested'')' in suite_definition) = 0 then
+    raise exception 'Upcoming editable handovers must still prompt their owner to finish the handover';
+  end if;
 end
 $$;
