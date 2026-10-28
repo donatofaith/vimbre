@@ -837,7 +837,7 @@ begin
  if not found then return null; end if;
  insert into private.handover_share_views(share_id) values(sh.id);
  select coalesce(jsonb_agg(jsonb_build_object(
-   'id',q.id,'body',q.body,'sender_email',q.sender_email,'response',q.response,
+   'id',q.id,'body',q.body,'response',q.response,
    'created_at',q.created_at,'replied_at',q.replied_at
  ) order by q.created_at),'[]'::jsonb)
  into questions_json from private.handover_external_questions q where q.share_id=sh.id;
