@@ -126,7 +126,7 @@ begin
   select * into pol from private.handover_policy where company_id=h.company_id;
   if not found then pol:=row(h.company_id,true,false,array['manager','hr_admin'],0,false,14,'approval',array['priorities'],3)::private.handover_policy; end if;
 
-  allowed:=p_user=h.cover_id or (me.role='manager' and private.can_read_role(h.owner_id));
+  allowed:=p_user=h.cover_id or (me.role='manager' and h.status<>'draft' and private.can_read_role(h.owner_id));
   if not allowed then raise insufficient_privilege; end if;
   if me.role='hr_admin' and p_user<>h.cover_id then raise insufficient_privilege; end if;
   full_access:=(p_user=h.cover_id and h.cover_response<>'declined' and
@@ -269,7 +269,6 @@ begin
       end if;
       insert into private.handover_cover_availability(company_id,person_id,starts_on,ends_on,note)
       values(c,u,(p_data->>'starts_on')::date,(p_data->>'ends_on')::date,left(coalesce(p_data->>'note',''),500));
-      perform public.activity_log(company_id,actor_id,record_type,record_id,action) from public.profiles where false;
       insert into public.activity_log(company_id,actor_id,record_type,record_id,action)
       values(c,u,'cover_availability',gen_random_uuid(),'availability_saved');
       return coalesce((select jsonb_agg(jsonb_build_object('id',id,'starts_on',starts_on,'ends_on',ends_on,'note',note) order by starts_on desc)
@@ -454,7 +453,7 @@ begin
     insert into private.handover_notifications(handover_id,owner_id,message)
       values(h.id,h.cover_id,case when decision='return' then 'The task was handed back.' else 'The task stays with you for now.' end);
     perform private.handover_event(h.id,case when decision='return' then 'task_handback_accepted' else 'task_handback_declined' end);
-    return private.handover_cover_brief(h.id,u);
+    return jsonb_build_object('ok',true,'handback_id',nullif(p_data->>'handback_id',''));
 
   elsif p_operation='note' then
     if h.cover_id<>u or not full_access then raise insufficient_privilege; end if;
@@ -462,7 +461,7 @@ begin
     if length(body) not between 1 and 3000 then raise check_violation using message='Write a short note for the owner.'; end if;
     insert into private.handover_cover_notes(handover_id,company_id,author_id,note_type,title,body)
       values(h.id,c,u,'note','For when you’re back',body);
-    insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,'For when you’re back: '||left(body,180));
+    insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.owner_id,'For when you’re back: '||left(body,180));
     perform private.handover_event(h.id,'cover_note_added');
     return private.handover_cover_brief(h.id,u);
 
@@ -474,7 +473,7 @@ begin
       values(c,h.owner_id,h.role_id,reason,body,me.full_name||' (cover)',current_date,'live',jsonb_build_object('made_by_cover',true,'handover_id',h.id,'cover_id',u));
     insert into private.handover_cover_notes(handover_id,company_id,author_id,note_type,title,body)
       values(h.id,c,u,'decision',reason,body);
-    insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,'A decision was recorded while you were away: '||left(reason,180));
+    insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.owner_id,'A decision was recorded while you were away: '||left(reason,180));
     perform private.handover_event(h.id,'decision_recorded');
     return private.handover_cover_brief(h.id,u);
 
@@ -494,7 +493,7 @@ begin
     return private.handover_cover_brief(h.id,u);
 
   elsif p_operation='return_summary' then
-    if h.cover_id<>u or not h.full_access and not full_access or h.status not in ('completed','approved') or h.ends_on is null and h.status<>'completed' or current_date<=coalesce(h.ends_on,current_date) and h.status<>'completed' then
+    if h.cover_id<>u or not full_access or h.status not in ('completed','approved') or h.ends_on is null and h.status<>'completed' or current_date<=coalesce(h.ends_on,current_date) and h.status<>'completed' then
       raise insufficient_privilege;
     end if;
     body:=btrim(coalesce(p_data->>'summary',''));
@@ -609,7 +608,7 @@ begin
      and (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=auth.uid()),'Europe/London'))::date between h.starts_on and coalesce(h.ends_on,'infinity'::date)
      and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned'))
  ) then
-   select a.* into a from public.actions a where a.id=p_id and a.company_id=private.current_company_id() for update;
+   select z.* into a from public.actions z where z.id=p_id and z.company_id=private.current_company_id() for update;
    if p_operation='status' and p_data->>'status'='done' then
      update public.actions set status='done',completed_at=now(),completion_note=case when p_data ? 'completion_note' then left(coalesce(p_data->>'completion_note',''),1000) else completion_note end,updated_at=now()
        where id=p_id and owner_id=a.owner_id and company_id=a.company_id and deleted_at is null;
@@ -648,13 +647,14 @@ do $ai_patch$
 declare s text; needle text; replacement text;
 begin
   s:=pg_get_functiondef('private.handover_ai_source(uuid,uuid,text)'::regprocedure);
-  needle:="if h.id is null or p_user<>h.owner_id and not(p_user=h.created_by and exists(select 1 from public.profiles pv join public.profiles po on po.id=h.owner_id where pv.id=p_user and pv.active and pv.company_id=po.company_id and (pv.role='hr_admin' or pv.role='manager' and pv.department_id=po.department_id))) or p_kind not in ('handover_draft','handover_return') then raise insufficient_privilege;end if;";
+  needle := $needle$if h.id is null or p_user<>h.owner_id and not(p_user=h.created_by and exists(select 1 from public.profiles pv join public.profiles po on po.id=h.owner_id where pv.id=p_user and pv.active and pv.company_id=po.company_id and (pv.role='hr_admin' or pv.role='manager' and pv.department_id=po.department_id))) or p_kind not in ('handover_draft','handover_return') then raise insufficient_privilege;end if;$needle$;
   if strpos(s,needle)=0 then raise exception 'handover_ai_source changed; review the cover summary AI extension before applying'; end if;
-  replacement:="if h.id is null or p_user<>h.owner_id and not(p_user=h.created_by and exists(select 1 from public.profiles pv join public.profiles po on po.id=h.owner_id where pv.id=p_user and pv.active and pv.company_id=po.company_id and (pv.role='hr_admin' or pv.role='manager' and pv.department_id=po.department_id))) and not(p_user=h.cover_id and h.status='completed' and h.cover_response='accepted') or p_kind not in ('handover_draft','handover_return') then raise insufficient_privilege;end if;";
+  replacement := $replacement$if h.id is null or p_user<>h.owner_id and not(p_user=h.created_by and exists(select 1 from public.profiles pv join public.profiles po on po.id=h.owner_id where pv.id=p_user and pv.active and pv.company_id=po.company_id and (pv.role='hr_admin' or pv.role='manager' and pv.department_id=po.department_id))) and not(p_user=h.cover_id and h.status='completed' and h.cover_response='accepted') or p_kind not in ('handover_draft','handover_return') then raise insufficient_privilege;end if;$replacement$;
   s:=replace(s,needle,replacement);
-  needle:="if p_kind='handover_return' then";
+
+  needle := $needle$if p_kind='handover_return' then$needle$;
   if strpos(s,needle)=0 then raise exception 'handover return source changed'; end if;
-  replacement:=$coverreturn$
+  replacement := $replacement$
 if p_kind='handover_return' and p_user=h.cover_id and h.status='completed' and h.cover_response='accepted' then
  return jsonb_build_object(
    'handover',h.sections-array['reason','note_for_manager','return_summary'],
@@ -665,7 +665,7 @@ if p_kind='handover_return' and p_user=h.cover_id and h.status='completed' and h
  )::text;
 end if;
 if p_kind='handover_return' then
-$coverreturn$;
+$replacement$;
   s:=replace(s,needle,replacement);
   execute s;
 end$ai_patch$;
@@ -689,4 +689,4 @@ end$function$;
 revoke all on function public.handover_share_question(text,text,text) from public,anon;
 grant execute on function public.handover_share_question(text,text,text) to anon,authenticated;
 
-select cron.schedule('cover-duties-notices','*/15 * * * *','select private.process_cover_duties_reminders()');
+
