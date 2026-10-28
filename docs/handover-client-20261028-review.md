@@ -1,3 +1,7 @@
+# Release approved — 28 October 2026
+
+The owner explicitly approved final database validation, migrations and deployment. Final core validation passed before installation; core and helper acceptance passed against the installed schema in rollback transactions. Both migrations installed as `20261028033318` and `20261028033338`; repository filenames match hosted history. PR #10 merged. The previous pending status below records the pre-approval review and is superseded by this release note.
+
 # Handovers review release — 28 October 2026
 
 The client specification replaces the handover drawer with a full-page, four-step editor and review, cover and return workflow.

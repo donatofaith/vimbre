@@ -418,3 +418,5 @@ The user explicitly approved production kudos and shared team challenges with ca
 
 ## 28 October: Handovers review release
 Full-page Details / Include / Draft / Send editor, mobile fixed actions, selected sources, private manager notes, approval/cover lifecycle, questions, external sharing and company policy are prepared for review. npm run check passes 207 tests; the mocked browser workflow passes 15 widths. Earlier rollback-only SQL groups passed, but the final rerun and persistent database changes were blocked by automatic approval review. Neither pending migration nor dependent frontend is live. See docs/handover-client-20261028-review.md. Do not bypass the production approval block.
+
+28 October release approval received. Final core rollback validation passed; both migrations installed as 20261028033318 and 20261028033338. Core and helper acceptance passed on the installed schema. PR #10 merged at 53afea20bcda2ed1cb05e7aac3d77963156d0c4c; production build verification follows. No paid AI test or real test message was sent.

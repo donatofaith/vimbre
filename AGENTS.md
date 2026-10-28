@@ -39,4 +39,4 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 
 - The owner's 27 October layout correction in docs/client-centred-forms-20261027.md supersedes compact greeting height and side/bottom form positioning: shared forms are centred on every device; My Day uses the spacious Handovers-style header. Remove competing geometry rules and verify actual dialog centring, not only no-overflow.
 
-- The 28 October Handovers specification in docs/client-handover-20261028.md supersedes earlier handover UI and phase gating. Preserve private manager notes, owner-only note opt-in, company boundaries, explicit AI and approval before cover access. Database release and dependent frontend remain pending explicit approval; see docs/handover-client-20261028-review.md.
+- The 28 October Handovers specification in docs/client-handover-20261028.md supersedes earlier handover UI and phase gating. Preserve private manager notes, owner-only note opt-in, company boundaries, explicit AI and approval before cover access. Owner approved the release; database migrations are installed and final SQL acceptance passed; see docs/handover-client-20261028-review.md.
