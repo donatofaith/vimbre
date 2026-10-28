@@ -26,7 +26,7 @@ export type CoverDutyRow={
  cover_capacity?:number;sudden?:boolean;
 }
 export type CoverDutyTask={
- id:string;title:string;status:string;due_date:string|null;due_at:string|null;details?:string;
+ id:string;title:string;status:string;due_date:string|null;due_at:string|null;due_time?:string|null;details?:string;
  steps?:string[];links?:string[];completion_note?:string;do_not_change?:boolean;approved?:boolean;
  source_not_shared?:boolean;source_is_manual?:boolean;handback_pending?:boolean;completed_by_cover?:boolean;
 }
