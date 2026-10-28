@@ -11,3 +11,9 @@ AI request ceilings were read from live public.ai_limits: Starter 500/month and 
 Verification: 203 tests in 39 files, lint, frontend/Edge TypeScript, production build and prerender generation passed. Chromium browser checks pass for first-screen layout, actual task rows, signup links, dates, calculator, all seven story scenes, continuous loops, pause/resume, reduced motion, no JavaScript and 14 viewport widths. Desktop and phone full-page screenshots were reviewed. Corrected the runtime page title and made the playback test return the hero to view after the browser scrolls its control; offscreen playback remains paused. No GitHub Actions run or paid AI request was made.
 
 Release scope: public landing files and runtime homepage title only. No backend plan entitlements, retention or SSO functionality is added by this release.
+
+## Owner correction after live review
+
+The owner rejected the side by side hero. This supersedes that layout: centered information first, then the wide centered automated dashboard, then the remaining sections. Restore the 22 October composition while retaining current product behavior. Keep plain, short copy; no generic marketing terms, dashes or hyphens in visible copy, unsupported claims or invented popularity. Removed the Most popular claim, vague headings and full picture wording. Walkthrough link targets the demo.
+
+Build and lint pass. Chromium acceptance passes at fourteen widths with explicit centered copy/demo geometry, no banned terms or dashes, animation pause/resume and all scenes, reduced motion, no JavaScript, FAQ, date filtering and calculator. Desktop and phone screenshots reviewed. The owner will assess the remaining scrolling concerns after this correction.

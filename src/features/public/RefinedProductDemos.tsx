@@ -4,7 +4,7 @@ const scrollSteps = [
   { title: 'Bring it in', intro: 'Paste a conversation or choose a connected source.', screen: 'Source received', headline: 'Supplier review thread', body: '“Let’s move supplier reviews to monthly. We need fewer meetings, and Alex can share the notes next week.”', foot: 'Pasted conversation · 9 Nov 2026' },
   { title: 'Vimbre AI drafts', intro: 'Ask for a draft. Vimbre suggests actions and context from the source.', screen: 'AI draft', headline: 'Three suggestions found', foot: 'Draft only · Nothing saved yet' },
   { title: 'You check', intro: 'Check the wording, owner and date. Edit or dismiss anything that is wrong.', screen: 'Review before saving', headline: 'Check the details', foot: 'You decide what becomes a record' },
-  { title: 'Handover', intro: 'Give the person covering the work a clear view of what comes first.', screen: 'Cover view', headline: 'What comes first', foot: 'Operations · 9–27 Nov 2026' },
+  { title: 'Handover', intro: 'Give the person covering the work a clear view of what comes first.', screen: 'Cover view', headline: 'What comes first', foot: 'Operations · 9 to 27 Nov 2026' },
 ]
 export function ConnectedTimeline() {
   const storyRef = useRef<HTMLDivElement>(null)

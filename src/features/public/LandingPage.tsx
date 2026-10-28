@@ -118,7 +118,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
           <div className="rs-hero-copy">
             <h1 id="hero-title" tabIndex={-1}>Turn conversations into <span>work people can pick up.</span></h1>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
-            <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#how-it-works">See the 10-second walkthrough<Arrow /></a></div>
+            <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
             <p className="rf-hero-microcopy">No card required. Check every AI draft before saving.</p>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
@@ -131,16 +131,16 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         </div>
       </section>
       <section id="features" className="rs-section rs-tinted" aria-labelledby="features-title">
-        <div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">In the workspace</span><h2 id="features-title">The useful pieces stay connected.</h2><p>Keep the decision, the next action and the role information together, without turning Vimbre into another chat app.</p></Reveal><Reveal><CapabilityDemos /></Reveal></div>
+        <div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">In the workspace</span><h2 id="features-title">Decisions, tasks and role records.</h2><p>Keep the decision, the next action and the role information together, without turning Vimbre into another chat app.</p></Reveal><Reveal><CapabilityDemos /></Reveal></div>
       </section>
       <AITrustBlock />
-      <section id="handover" className="rs-section" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">Cover with context</span><h2 id="cover-title">A handover that starts with what matters.</h2><p>Preview an example handover. Change the date range to see the included records; real handovers use the information you choose to include.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
+      <section id="handover" className="rs-section" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">Cover with context</span><h2 id="cover-title">Show the next person what needs doing.</h2><p>Preview an example handover. Change the date range to see the included records; real handovers use the information you choose to include.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
       <section id="tools" className="rs-section rs-tinted" aria-label="Connected tools"><div className="rs-container"><Reveal><ToolAvailability /></Reveal></div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">See the price per person, not just per plan.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">Start a trial without a card. Paid subscriptions and checkout are not active yet.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">Start a trial without a card. Paid subscriptions and checkout are not active yet.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
-            {i === 1 && <span className="rf-popular-label">Most popular</span>}
+            {i === 1 && <span className="rf-popular-label">More AI requests</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
             {plan.seats !== null && plan.amount !== null && <p className="rf-per-person">{money(plan.amount / plan.seats)} <span>per person / month at full team size</span></p>}
             <p className="rf-plan-positioning">{plan.size}<br />{plan.positioning}</p>

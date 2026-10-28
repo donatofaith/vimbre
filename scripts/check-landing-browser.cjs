@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
   try {
     const source = await readFile('dist/index.html', 'utf8');
     assert(source.includes('Turn conversations into'));
-    assert(source.includes('Paste a conversation or connect your tools.'));
+    assert(source.includes('Vimbre AI drafts actions from your conversations.'));
     assert(source.includes('What happens when I hit my AI limit?'));
     assert(!source.includes('Direct connections to Teams, email and task tools are planned'));
     assert(!source.includes('12/10/2026'));
@@ -85,7 +85,7 @@ const { chromium } = require('playwright');
 
     for (const width of [320, 360, 390, 430, 640, 768, 820, 834, 1024, 1180, 1280, 1366, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 });
-      if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.x>=copy.x+copy.width-1,'Desktop hero remains side by side');assert(demo.y<900,'Product is visible above fold');}
+      if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.y>=copy.y+copy.height+24,'Information comes before the demo');assert(Math.abs(demo.x+demo.width/2-width/2)<2,'Demo is centered');assert.equal(await page.locator('.rs-hero-copy').evaluate(el=>getComputedStyle(el).textAlign),'center');assert(demo.width>=Math.min(1120,width-48)-2,'Demo uses the available width');}
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
       for (const selector of ['.rf-scroll-screen', '.rf-tools-status', '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
@@ -93,6 +93,9 @@ const { chromium } = require('playwright');
       }
       assert((await page.locator('.rs-example').count()) > 0, 'Example labels exist at ' + width);
     }
+    const visibleCopy=await page.locator('.rs-site').innerText();
+    assert(!/[—–-]/.test(visibleCopy),'Visible copy has no dashes or hyphens');
+    assert(!/\b(seamless|powerful|streamline|empower|unlock|leverage|robust|cutting edge|revolutionise|journey|ecosystem|synergy|continuity|effortless)\b/i.test(visibleCopy),'Plain copy avoids banned marketing terms');
     assert.deepEqual(errors, []);
     await context.close();
 
@@ -101,6 +104,7 @@ const { chromium } = require('playwright');
     storyPage.on('pageerror', error => errors.push(error.message));
     await storyPage.goto('http://127.0.0.1:5174/');
     const pause = storyPage.getByRole('button', { name: 'Pause hero story' });
+    await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await pause.waitFor({ timeout: 12000 });
     await pause.click();
     await storyPage.getByRole('button', { name: 'Play hero story' }).waitFor();
@@ -109,7 +113,7 @@ const { chromium } = require('playwright');
     const after = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(animation => animation.currentTime));
     assert.deepEqual(after, before, 'Pause freezes the signature story');
     await storyPage.getByRole('button', { name: 'Play hero story' }).click();
-    await storyPage.evaluate(() => window.scrollTo(0, 0));
+    await storyPage.locator('.rs-story-shell').scrollIntoViewIfNeeded();
     await storyPage.getByRole('button', { name: 'Pause hero story' }).waitFor();
     const loopCount = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).some(animation => animation.effect.getTiming().iterations === Infinity));
     assert(loopCount, 'Hero story loops continuously');
