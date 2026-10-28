@@ -126,12 +126,13 @@ begin
   select * into pol from private.handover_policy where company_id=h.company_id;
   if not found then pol:=row(h.company_id,true,false,array['manager','hr_admin'],0,false,14,'approval',array['priorities'],3)::private.handover_policy; end if;
 
-  allowed:=p_user=h.cover_id or (me.role='manager' and h.status<>'draft' and private.can_read_role(h.owner_id));
+  allowed:=p_user=h.cover_id or p_user=h.owner_id or (me.role='manager' and h.status<>'draft' and private.can_read_role(h.owner_id));
   if not allowed then raise insufficient_privilege; end if;
-  if me.role='hr_admin' and p_user<>h.cover_id then raise insufficient_privilege; end if;
-  full_access:=(p_user=h.cover_id and h.cover_response<>'declined' and
+  if me.role='hr_admin' and p_user<>h.cover_id and p_user<>h.owner_id then raise insufficient_privilege; end if;
+  full_access:=(p_user=h.owner_id and h.status in ('approved','completed'))
+       or (p_user=h.cover_id and h.cover_response<>'declined' and
        (h.cover_response='accepted' or pol.cover_visibility='approval' and h.status in ('approved','completed')))
-       or (p_user<>h.cover_id and me.role='manager' and h.status in ('approved','completed') and private.can_read_role(h.owner_id));
+       or (p_user<>h.cover_id and p_user<>h.owner_id and me.role='manager' and h.status in ('approved','completed') and private.can_read_role(h.owner_id));
 
   select coalesce(rp.title,'') into role_title from public.role_profiles rp where rp.id=h.role_id and rp.holder_id=h.owner_id;
   select count(*) filter(where hi.kind='task' and a.id is not null),count(*),
@@ -361,7 +362,8 @@ begin
   select * into h from public.work_handovers where id=p_id and company_id=c for update;
   if not found or h.deleted_at is not null then raise insufficient_privilege; end if;
   if h.cover_id<>u and not(me.role='manager' and private.can_read_role(h.owner_id)) and h.owner_id<>u and h.reviewer_id<>u then raise insufficient_privilege; end if;
-  full_access:=(u=h.cover_id and h.cover_response<>'declined' and
+  full_access:=(u=h.owner_id and h.status in ('approved','completed'))
+       or (u=h.cover_id and h.cover_response<>'declined' and
        (h.cover_response='accepted' or pol.cover_visibility='approval' and h.status in ('approved','completed')));
 
   if p_operation='get' then
