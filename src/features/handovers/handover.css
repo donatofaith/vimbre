@@ -82,3 +82,6 @@
 
 /* Keep the fixed wizard controls within the centred editor without a detached white slab. */
 .ho-wizard-footer{background:transparent;border-top:0;box-shadow:none;padding:12px 0 calc(12px + env(safe-area-inset-bottom));pointer-events:none}.ho-wizard-footer>*{pointer-events:auto}.ho-wizard-footer>div:last-child{align-items:center}.ho-wizard-footer .ho-helper{justify-self:start;padding:4px 8px;border-radius:6px;background:var(--surface,#fffdf8)}
+
+/* Empty save status must not leave a white mark. */
+.ho-wizard-footer .ho-helper:empty{display:none}
