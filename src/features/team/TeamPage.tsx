@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from 'react'
+import {useSearchParams} from 'react-router-dom'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
@@ -10,8 +11,8 @@ import { DepartmentPicker } from './DepartmentPicker'
 import { invitationStatus, roleLabel, roles, teamError } from './team-utils'
 type Profile = Database['public']['Tables']['profiles']['Row']
 type Invitation = Database['public']['Tables']['invitations']['Row']
-type Member = Profile & { department: { name: string } | null }
-type Invite = Invitation & { department: { name: string } | null }
+type Member = Profile & { department: { name: string;manager_id?:string|null } | null }
+type Invite = Invitation & { department: { name: string;manager_id?:string|null } | null }
 function ResponsibilityContext({value=''}: {value?:string}) {
  const id=useId()
  const [text,setText]=useState(value), [open,setOpen]=useState(false)
@@ -22,7 +23,11 @@ function ResponsibilityContext({value=''}: {value?:string}) {
 const pageSize = 20
 function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { member: Member; departmentsRequired: boolean; onSaved: () => void; onCancel: () => void }) {
   const { company } = useAuth()
+  const editorRef=useRef<HTMLElement>(null)
+  useEffect(()=>{editorRef.current?.scrollIntoView({block:'start'})},[member.id])
   const [role, setRole] = useState(member.role)
+  const [departmentId,setDepartmentId]=useState(member.department_id??'')
+  const [appoint,setAppoint]=useState(member.department?.manager_id===member.id)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -33,14 +38,20 @@ function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { memb
     try {
       const { error: failure } = await supabase.rpc('manage_member_context', { p_id: member.id, p_full_name: String(form.get('name')).trim(), p_role: role, p_department: String(form.get('department_id')) || null, p_active: active, p_description: String(form.get('role_description') ?? '').trim(), p_start: String(form.get('role_start_date') ?? '') || null })
       if (failure) throw failure
+      if(departmentId&&(role==='manager'||role==='hr_admin')){
+        const dept=await supabase.from('departments').select('id,name,manager_id').eq('id',departmentId).single()
+        if(dept.error)throw Error('Member saved. Department manager details could not be loaded; retry assigning the manager.')
+        if(appoint||dept.data.manager_id===member.id){const assigned=await supabase.rpc('manage_department',{p_id:departmentId,p_name:dept.data.name,p_manager:appoint?member.id:null});if(assigned.error)throw Error('Member saved. Department manager could not be updated; retry assigning the manager.')}
+      }
       onSaved()
-    } catch (reason) { setError(teamError((reason as { message?: string }).message)) }
+    } catch (reason) { setError((reason as Error).message?.startsWith('Member saved.')?(reason as Error).message:teamError((reason as { message?: string }).message)) }
     finally { setBusy(false) }
   }
-  return <section className="card settings-card" aria-label="Edit member"><h2>Edit {member.full_name}</h2><p>{member.email}</p><form className="auth-form" onSubmit={save}>
+  return <section className="card settings-card" aria-label="Edit member" ref={editorRef}><h2>Edit {member.full_name}</h2><p>{member.email}</p><form className="auth-form" onSubmit={save}>
     <Input label="Full name" name="name" defaultValue={member.full_name} required maxLength={100} />
     <div className="field"><label htmlFor={`role-${member.id}`}>Role</label><select id={`role-${member.id}`} value={role} onChange={event => setRole(event.target.value)}>{roles.map(value => <option key={value} value={value}>{roleLabel(value, member.id === company?.created_by && value === 'hr_admin')}</option>)}</select></div>
-    <DepartmentPicker initial={member.department_id ? { id: member.department_id, name: member.department?.name ?? 'Current department' } : null} required={departmentsRequired && role !== 'hr_admin'} />
+    <DepartmentPicker initial={member.department_id ? { id: member.department_id, name: member.department?.name ?? 'Current department' } : null} required={departmentsRequired && role !== 'hr_admin'} onChange={id=>{setDepartmentId(id);setAppoint(false)}} />
+    {departmentId&&(role==='manager'||role==='hr_admin')&&<label className="checkbox-line"><input type="checkbox" name="department_manager" checked={appoint} onChange={e=>setAppoint(e.target.checked)}/>Assign as department manager</label>}
     <ResponsibilityContext value={member.role_description} />
     <Input label="Start date" name="role_start_date" type="date" defaultValue={member.role_start_date ?? ''} />
     <label className="checkbox-line"><input type="checkbox" name="active" defaultChecked={member.active} />Active account</label><p className="muted">Changing a manager’s role or department clears any manager assignment they can no longer hold.</p>
@@ -50,6 +61,8 @@ function MemberEditor({ member, departmentsRequired, onSaved, onCancel }: { memb
 export function TeamPage() {
   const { profile, company, refresh } = useAuth()
   const admin = profile?.role === 'hr_admin'
+  const [params,setParams]=useSearchParams()
+  const requestedMember=params.get('member')
   const [page, setPage] = useState(0)
   const [invitePage, setInvitePage] = useState(0)
   const [revision, setRevision] = useState(0)
@@ -66,14 +79,15 @@ export function TeamPage() {
     let cancelled = false
     async function load() {
       const [members, invitations] = await Promise.all([
-        supabase.from('profiles').select('*,department:departments!profiles_department_id_company_id_fkey(name)', { count: 'exact' }).order('full_name').order('id').range(page * pageSize, page * pageSize + pageSize - 1),
+        supabase.from('profiles').select('*,department:departments!profiles_department_id_company_id_fkey(name,manager_id)', { count: 'exact' }).order('full_name').order('id').range(page * pageSize, page * pageSize + pageSize - 1),
         admin ? supabase.from('invitations').select('*,department:departments!invitations_department_id_company_id_fkey(name)', { count: 'exact' }).order('created_at', { ascending: false }).order('id').range(invitePage * pageSize, invitePage * pageSize + pageSize - 1) : Promise.resolve({ data: [], error: null, count: 0 }),
       ])
+      if(!cancelled&&admin&&requestedMember){let target=members.data?.find(m=>m.id===requestedMember);if(!target){const found=await supabase.from('profiles').select('*,department:departments!profiles_department_id_company_id_fkey(name,manager_id)').eq('id',requestedMember).single();target=found.data??undefined}if(target)setEditing(target)}
       if (!cancelled) setResult({ key, members: members.data ?? [], invitations: invitations.data ?? [], memberCount: members.count ?? 0, inviteCount: invitations.count ?? 0, error: Boolean(members.error || invitations.error) })
     }
     void load()
     return () => { cancelled = true }
-  }, [key, admin, page, invitePage])
+  }, [key, admin, page, invitePage,requestedMember])
   async function send(action: 'create' | 'resend', form?: FormData, id?: string) {
     setBusy(true); setError(''); setMessage('')
     try {
@@ -108,7 +122,7 @@ export function TeamPage() {
       <Input label="Start date" name="role_start_date" type="date" />
       <DepartmentPicker required={company?.team_mode === 'departments' && inviteRole !== 'hr_admin'} /><Button type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Send invitation'}</Button>
     </form></section>}
-    {editing && admin && <MemberEditor key={editing.id} member={editing} departmentsRequired={company?.team_mode === 'departments'} onCancel={() => setEditing(null)} onSaved={() => { setEditing(null); setMessage('Member updated.'); refresh(); reload() }} />}
+    {editing && admin && <MemberEditor key={editing.id} member={editing} departmentsRequired={company?.team_mode === 'departments'} onCancel={() => {setEditing(null);setParams({})}} onSaved={() => { setEditing(null);setParams({}); setMessage('Member updated.'); refresh(); reload() }} />}
     <section className="card"><h2>Members</h2>{!current ? <p role="status">Loading members…</p> : current.error ? <><p role="alert">The team could not be loaded.</p><Button onClick={reload}>Retry</Button></> : current.members.length === 0 ? <p>No members are visible.</p> : <><div className="table-scroll"><table><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Status</th>{admin && <th>Manage</th>}</tr></thead><tbody>{current.members.map(member => <tr key={member.id}><td data-label="Name"><div><strong>{member.full_name}</strong><br /><span className="muted">{member.email}</span></div></td><td data-label="Role">{roleLabel(member.role, member.id === company?.created_by)}</td><td data-label="Department">{member.department?.name ?? 'No department'}</td><td data-label="Status">{member.active ? 'Active' : 'Inactive or invited'}</td>{admin && <td data-label="Manage"><Button variant="secondary" aria-label={`Edit ${member.full_name}`} onClick={() => { setEditing(member); setError(''); setMessage('') }}>Edit</Button></td>}</tr>)}</tbody></table></div><div className="pagination"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Previous members</Button><span>Page {page + 1}</span><Button variant="secondary" disabled={(page + 1) * pageSize >= current.memberCount} onClick={() => setPage(value => value + 1)}>Next members</Button></div></>}
     </section>
     {admin && <section className="card"><h2>Invitations</h2>{!current ? <p role="status">Loading invitations…</p> : current.error ? <p role="alert">Invitations could not be loaded. Please retry loading the team.</p> : current.invitations.length === 0 ? <p>No invitations yet.</p> : <><ul className="record-list">{current.invitations.map(invite => { const status = invitationStatus(invite.status, invite.expires_at); return <li key={invite.id}><div><strong>{invite.full_name}</strong><p>{invite.email} · {roleLabel(invite.role)}{invite.department ? ` · ${invite.department.name}` : ''}</p><span className="badge">{status}</span><p className="muted">Expires {new Date(invite.expires_at).toLocaleString()}</p></div>{['pending','expired'].includes(status) && <div className="form-actions"><Button variant="secondary" aria-label={`Resend to ${invite.full_name}`} disabled={busy} onClick={() => { void send('resend', undefined, invite.id) }}>Resend</Button><Button variant="secondary" aria-label={`Cancel invitation for ${invite.full_name}`} disabled={busy} onClick={() => { void cancel(invite) }}>Cancel invitation</Button></div>}</li> })}</ul><div className="pagination"><Button variant="secondary" disabled={invitePage === 0} onClick={() => setInvitePage(value => value - 1)}>Previous invitations</Button><span>Page {invitePage + 1}</span><Button variant="secondary" disabled={(invitePage + 1) * pageSize >= current.inviteCount} onClick={() => setInvitePage(value => value + 1)}>Next invitations</Button></div></>}
