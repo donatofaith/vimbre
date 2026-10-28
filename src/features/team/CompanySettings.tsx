@@ -1,3 +1,4 @@
+import {BillingSettings} from '../billing/BillingSettings'
 import {HandoverSettings} from '../handovers/HandoverSettings'
 import {PlanningCalendarSettings} from '../my-day/PlanningCalendarSettings'
 import {CompetitionSettings} from '../my-day/CompetitionSettings'
@@ -41,6 +42,6 @@ export function CompanySettings() {
     <p className="settings-plan-link">To change your team structure, <Link to="/#pricing">view plans and subscribe</Link>.</p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your company administrator to change company settings.</p>}</section><HandoverSettings/><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/></div>
+  </form> : <p>Contact your company administrator to change company settings.</p>}</section><BillingSettings/><HandoverSettings/><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/></div>
 }
 

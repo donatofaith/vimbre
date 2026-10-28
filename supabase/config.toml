@@ -30,3 +30,10 @@ import_map = "./functions/my-day-mail/deno.json"
 verify_jwt = false
 entrypoint = "./functions/capture-worker/index.ts"
 import_map = "./functions/capture-worker/deno.json"
+
+
+[functions.stripe-billing]
+# Billing actions verify Auth.getUser; webhook requests verify the Stripe signature.
+verify_jwt = false
+entrypoint = "./functions/stripe-billing/index.ts"
+import_map = "./functions/stripe-billing/deno.json"

@@ -1,0 +1,21 @@
+-- Append team-fixtures.sql inside a rollback transaction before these cases.
+reset role;
+set local role service_role;
+do $$declare j jsonb;c uuid:=current_setting('test.company')::uuid;u uuid:=current_setting('test.admin')::uuid;first_end timestamptz;claim jsonb;begin
+j:=public.billing_sandbox_backend('context',jsonb_build_object('user_id',u));first_end:=(j->>'trial_ends_at')::timestamptz;
+if first_end-now()<>interval '3 days' then raise exception 'Trial must be exactly three days';end if;
+j:=public.billing_sandbox_backend('context',jsonb_build_object('user_id',u));if (j->>'trial_ends_at')::timestamptz<>first_end then raise exception 'Trial reset';end if;
+j:=public.billing_sandbox_backend('bind_customer',jsonb_build_object('user_id',u,'customer_id','cus_billingfixture'));
+claim:=public.billing_sandbox_backend('checkout_claim',jsonb_build_object('user_id',u,'plan','starter'));
+j:=public.billing_sandbox_backend('checkout_claim',jsonb_build_object('user_id',u,'plan','starter'));if j->>'checkout_token'<>claim->>'checkout_token' then raise exception 'Checkout race protection failed';end if;
+begin perform public.billing_sandbox_backend('context',jsonb_build_object('user_id',current_setting('test.employee')));raise exception 'Employee may manage company billing';exception when insufficient_privilege then null;end;
+j:=public.billing_sandbox_backend('event',jsonb_build_object('event_id','evt_billingfixture','event_type','customer.subscription.updated','stripe_account','acct_1UUoHn3dlOUNkjoi','livemode',false,'customer_id','cus_billingfixture','subscription_id','sub_fixture','price_id','price_1UVThi3dlOUNkjoi0ggow2Zu','status','trialing','synced_at',now()));
+if not(j->>'ok')::boolean then raise exception 'Event failed';end if;
+j:=public.billing_sandbox_backend('event',jsonb_build_object('event_id','evt_billingfixture','event_type','customer.subscription.updated','stripe_account','acct_1UUoHn3dlOUNkjoi','livemode',false,'customer_id','cus_billingfixture','subscription_id','sub_fixture','price_id','price_1UVThi3dlOUNkjoi0ggow2Zu','status','trialing','synced_at',now()));
+if not(j->>'duplicate')::boolean then raise exception 'Webhook replay not idempotent';end if;
+begin perform public.billing_sandbox_backend('event',jsonb_build_object('stripe_account','acct_1UUoHn3dlOUNkjoi','livemode',true));raise exception 'Live event accepted';exception when insufficient_privilege then null;end;
+end$$;
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
+do $$begin begin perform public.billing_sandbox_backend('context',jsonb_build_object('user_id',auth.uid()));raise exception 'Browser can call service-only billing API';exception when insufficient_privilege then null;end;end$$;
+rollback;
