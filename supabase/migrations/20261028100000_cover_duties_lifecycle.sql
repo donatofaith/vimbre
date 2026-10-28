@@ -161,7 +161,8 @@ begin
     into tasks_json
     from private.handover_items hi join public.actions a on a.id=hi.record_id
     where hi.handover_id=h.id and hi.kind='task' and a.company_id=h.company_id
-      and a.owner_id=h.owner_id and a.deleted_at is null and a.purged_at is null;
+      and a.owner_id=h.owner_id and a.deleted_at is null and a.purged_at is null
+      and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned'));
 
     select a.title,a.due_date into next_title,next_due
     from private.handover_items hi join public.actions a on a.id=hi.record_id
@@ -212,7 +213,8 @@ begin
       'covering_people_count',current_load+1,'cover_capacity',capacity
     ),
     'full_access',full_access,'tasks',tasks_json,'notes',notes_json,'comments',comments_json,
-    'activity',activity_json,'handbacks',handbacks_json
+    'activity',case when full_access then activity_json else '[]'::jsonb end,
+    'handbacks',case when full_access then handbacks_json else '[]'::jsonb end
   );
 end;
 $function$;
