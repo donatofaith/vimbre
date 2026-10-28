@@ -877,3 +877,19 @@ begin
 end$function$;
 revoke all on function public.handover_external_questions_action(text,uuid,jsonb) from public,anon;
 grant execute on function public.handover_external_questions_action(text,uuid,jsonb) to authenticated;
+
+
+-- The return action ends cover and informs both the cover person and manager.
+do $cover_return_notice_patch$
+declare s text; needle text; replacement text;
+begin
+ s:=pg_get_functiondef('private.handover_workspace(text,uuid,jsonb)'::regprocedure);
+ needle := $needle$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,'Handover completed');$needle$;
+ if strpos(s,needle)=0 then raise exception 'Handover take-back notification changed; review return-notification patch'; end if;
+ replacement := $replacement$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,'The owner has returned. Your cover has ended.');
+ if h.reviewer_id is not null then
+   insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.reviewer_id,'The owner returned and the cover has ended.');
+ end if;$replacement$;
+ s:=replace(s,needle,replacement);
+ execute s;
+end$cover_return_notice_patch$;
