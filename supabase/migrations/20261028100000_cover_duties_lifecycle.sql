@@ -152,7 +152,7 @@ begin
     sections_json:=h.sections-array['reason','note_for_manager','return_summary'];
     select coalesce(jsonb_agg(jsonb_build_object(
       'id',a.id,'title',a.title,'status',a.status,'due_date',a.due_date,'due_at',a.due_at,
-      'details',case when a.source_kind='manual' then a.details else '' end,'steps',a.steps,'links',case when a.source_kind='manual' then a.links else '[]'::jsonb end,
+      'details',case when a.source_kind='manual' then a.details else '' end,'steps',case when a.source_kind='manual' then a.steps else '[]'::jsonb end,'links',case when a.source_kind='manual' then a.links else '[]'::jsonb end,
       'completion_note',a.completion_note,'source_is_manual',a.source_kind='manual','do_not_change',hi.do_not_change,'approved',hi.approved,
       'handback_pending',exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status='pending'),
       'source_not_shared',a.source_kind<>'manual' and (a.source_url is not null or a.source_excerpt is not null),
