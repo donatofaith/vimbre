@@ -10,9 +10,10 @@ import {HandoverEditor} from './HandoverEditor'
 import {handoverRpc,sectionLabels,statusNames,typeNames} from './model'
 import type {Handover,Options,Section} from './model'
 import './handover.css'
+import {CoverDutiesPage} from './CoverDutiesPage'
 type History={version:number;operation:string;actor:string;at:string}
 export function HandoversPage(){const location=useLocation();if(location.pathname.endsWith('/start'))return <HandoverRoute/>;const part=location.pathname.split('/').filter(Boolean).at(-1);if(part&&part!=='handovers')return <HandoverPage id={part}/>;return <Handovers/>}
-export function CoverPage(){return <Handovers cover/>}
+export function CoverPage(){return <CoverDutiesPage/>}
 function HandoverRoute(){
  const [params]=useSearchParams();const navigate=useNavigate();const [id]=useState(()=>params.get('draft')||crypto.randomUUID());const fresh=useState(()=>params.get('new')==='1'||!params.get('draft'))[0];const [initial,setInitial]=useState<Handover|null|undefined>(fresh?null:undefined),[error,setError]=useState(''),[reload,setReload]=useState(0);
  useEffect(()=>{if(fresh)return;let live=true;void handoverRpc('get',id).then(data=>{if(live)setInitial((data as unknown as {handover:Handover}).handover)}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[id,fresh,reload]);
