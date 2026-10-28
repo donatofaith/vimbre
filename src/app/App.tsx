@@ -170,7 +170,7 @@ export function App() {
               <Route path="role-record" element={<RoleRecordPage />} />
 
               <Route
-                path="handovers"
+                path="handovers/*"
                 element={
                   <HandoverDraftPage />
                 }

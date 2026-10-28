@@ -414,3 +414,7 @@ My role acceptance completed on 27 October: 186 unit tests and the focused two-s
 
 ## 27 October: approved Stars and planner follow-up
 The user explicitly approved production kudos and shared team challenges with capped star awards. See docs/ui-myday-20261027-status.md for the four installed migrations, rollback tests and pending browser acceptance. Integer fractional credit now carries across tasks before rounding, preserving the daily cap and Undo rebalance. Company mode and individual appearance remain opt-in. Explicit three-day Not today review and briefing/digest My Day links are included. my-day-mail v14 preserves its scheduler authentication and recipients. Do not claim browser acceptance or production frontend release until verified.
+
+
+## 28 October: Handovers review release
+Full-page Details / Include / Draft / Send editor, mobile fixed actions, selected sources, private manager notes, approval/cover lifecycle, questions, external sharing and company policy are prepared for review. npm run check passes 207 tests; the mocked browser workflow passes 15 widths. Earlier rollback-only SQL groups passed, but the final rerun and persistent database changes were blocked by automatic approval review. Neither pending migration nor dependent frontend is live. See docs/handover-client-20261028-review.md. Do not bypass the production approval block.

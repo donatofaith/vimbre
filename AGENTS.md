@@ -38,3 +38,5 @@ Read `PROJECT_NOTES.md` and the relevant feature documentation before changing t
 - The 27 October shared UI and My Day screenshots supersede prior visual sizing: 36px buttons (44px on touch), 1120px content, 24/16px insets, flat 16px-padded cards. Finish UI before new My Day planning/stars. Competition must be company opt-in and individually opt-in; stars are not performance scores.
 
 - The owner's 27 October layout correction in docs/client-centred-forms-20261027.md supersedes compact greeting height and side/bottom form positioning: shared forms are centred on every device; My Day uses the spacious Handovers-style header. Remove competing geometry rules and verify actual dialog centring, not only no-overflow.
+
+- The 28 October Handovers specification in docs/client-handover-20261028.md supersedes earlier handover UI and phase gating. Preserve private manager notes, owner-only note opt-in, company boundaries, explicit AI and approval before cover access. Database release and dependent frontend remain pending explicit approval; see docs/handover-client-20261028-review.md.

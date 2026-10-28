@@ -79,6 +79,7 @@ export type DayData = {
   review_drafts?: {id:string;capture_id:string;kind:string;version:number;payload:Record<string,string|null>;duplicate:boolean}[];
   drafts_waiting?: number;
   decisions_waiting?: number;
+  returning_handovers?: {id:string;title:string}[];
   handovers_waiting?: { id: string; title: string }[];
   covering?: { id: string; owner_id: string; owner_name: string }[];
   cover_tasks?: {
