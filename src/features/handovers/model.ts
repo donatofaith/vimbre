@@ -13,3 +13,41 @@ export function parseHandoverDraft(text:string){let value:unknown;try{value=JSON
 
 export type SourceRecord={confirmed?:boolean;id:string;title:string;group:string;reviewed_at?:string;do_not_change?:boolean}
 export type HandoverPolicy={approval_required:boolean;allow_top_no_approval:boolean;approver_roles:string[];minimum_notice_days:number;external_sharing:boolean;link_expiry_days:number;cover_visibility:'approval'|'assignment';required_sections:string[];cover_capacity:number;admin?:boolean}
+
+
+export type CoverDutyState='waiting'|'upcoming'|'active'|'ended'|'cancelled'
+export type CoverDutyRow={
+ id:string;title:string;owner_id:string;owner_name:string;role_id:string|null;role_title:string|null;
+ cover_id:string;cover_name:string|null;reviewer_id:string|null;reviewer_name:string|null;
+ starts_on:string|null;ends_on:string|null;return_unknown?:boolean;handover_type:Handover['handover_type'];
+ status:string;display_status:string;cover_response:'pending'|'accepted'|'declined';cover_visibility:'approval'|'assignment';
+ state:CoverDutyState;full_access:boolean;task_count:number;item_count:number;completed_count:number;
+ next_task_title:string|null;next_task_due:string|null;updated_at:string;covering_people_count?:number;
+ cover_capacity?:number;sudden?:boolean;
+}
+export type CoverDutyTask={
+ id:string;title:string;status:string;due_date:string|null;due_at:string|null;due_time?:string|null;details?:string;
+ steps?:string[];links?:string[];completion_note?:string;do_not_change?:boolean;approved?:boolean;
+ source_not_shared?:boolean;source_is_manual?:boolean;handback_pending?:boolean;completed_by_cover?:boolean;
+}
+export type CoverDutyNote={id:string;note_type:'note'|'decision';title:string;body:string;author_name:string;created_at:string}
+export type CoverDutyComment={id:string;author:string;author_id:string;body:string;created_at:string}
+export type CoverDutyActivity={operation:string;actor:string;at:string}
+export type CoverDutyBriefing={
+ handover:CoverDutyRow&{sections:Record<string,string>;priority_order:string[];review_comment?:string;owner_returned?:boolean;cover_summary?:string};
+ full_access:boolean;tasks:CoverDutyTask[];notes:CoverDutyNote[];comments:CoverDutyComment[];
+ activity:CoverDutyActivity[];handbacks:{id:string;task_id:string;task_title:string;reason:string;status:string;created_at:string}[];
+ counts?:{active:number;upcoming:number;past:number;waiting:number};
+ team?:boolean;
+}
+export type CoverDutyAvailability={id:string;starts_on:string;ends_on:string;note:string}
+export type CoverDutyPoolPerson={id:string;person_id:string;person_name:string;department_id:string|null;department_name:string|null;priority:number}
+
+export async function coverDutyRpc<T=unknown>(operation:string,id:string|null=null,data:Json={}):Promise<T>{
+ const r=await supabase.rpc('cover_duties_action',{p_operation:operation,p_id:id,p_data:data});
+ if(r.error){
+  const code=(r.error as {code?:string}).code;
+  throw Error(code==='42501'?'This cover information is not available for your account.':code==='40001'?'This handover changed in another session. Reload before saving.':r.error.message||'Cover duties could not be updated. Your entries are still here.');
+ }
+ return r.data as T;
+}

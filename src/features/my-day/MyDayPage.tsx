@@ -24,6 +24,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { WorkspaceIcon } from "../../components/ui/WorkspaceIcon";
 import { supabase } from "../../lib/supabase";
+import type { Json } from "../../lib/database.types";
+import { coverDutyRpc, type CoverDutyRow } from "../handovers/model";
 import { useAuth } from "../auth/AuthProvider";
 import { CaptureSummary } from "../workspace/MyDayOverview";
 import { useMyDaySummary } from "../workspace/useMyDaySummary";
@@ -97,6 +99,19 @@ function MyDayContent() {
     [quick, setQuick] = useState(false), [quickText,setQuickText]=useState(""),
     [undo, setUndo] = useState<{task: Task; ids?:string[]; until: number} | null>(null);
   const [visibleRows,setVisibleRows]=useState<Record<string,number>>({});
+  const [coverRequests,setCoverRequests]=useState<CoverDutyRow[]>([]);
+  type CoverTaskRow = NonNullable<DayData['cover_tasks']>[number];
+  const [coverEditKey,setCoverEditKey]=useState('');
+  const [coverEditTitle,setCoverEditTitle]=useState('');
+  const [coverEditDetails,setCoverEditDetails]=useState('');
+  const [coverEditDate,setCoverEditDate]=useState('');
+  const [coverEditTime,setCoverEditTime]=useState('');
+  const [coverEditSteps,setCoverEditSteps]=useState('');
+  const [coverEditLinks,setCoverEditLinks]=useState('');
+  const [coverDoneKey,setCoverDoneKey]=useState('');
+  const [coverOutcomeNote,setCoverOutcomeNote]=useState('');
+  const [coverHandbackKey,setCoverHandbackKey]=useState('');
+  const [coverHandbackReason,setCoverHandbackReason]=useState('');
   const [hasPlan,setHasPlan]=useState(false);
   const [decisionFinish,setDecisionFinish]=useState<Task|null>(null);
   const [finishing,setFinishing] = useState<(Task & {finishPosition:number;finishFilter:string;finishStatus:string})[]>([]);
@@ -128,6 +143,59 @@ function MyDayContent() {
     setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
+  const coverTaskKey=(handoverId:string,taskId:string)=>handoverId+':'+taskId;
+  function beginCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);
+    if(coverEditKey===key){setCoverEditKey('');return}
+    setCoverEditKey(key);setCoverEditTitle(task.title);setCoverEditDetails(task.details||'');
+    setCoverEditDate(task.due_date||'');setCoverEditTime((task.due_time||'').slice(0,5));
+    setCoverEditSteps((task.steps||[]).join('\n'));setCoverEditLinks((task.links||[]).join('\n'));
+    setCoverDoneKey('');setCoverHandbackKey('');
+  }
+  async function saveCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
+    if(!coverEditTitle.trim()){setError('Enter a task title.');return}
+    const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
+    const values:Record<string,unknown>={task_id:task.id,title:coverEditTitle.trim(),due_date:coverEditDate||null,due_time:coverEditTime||null};
+    if(task.source_is_manual){values.details=coverEditDetails;values.steps=coverEditSteps.split('\n').map(v=>v.trim()).filter(Boolean);values.links=coverEditLinks.split('\n').map(v=>v.trim()).filter(Boolean)}
+    try{await coverDutyRpc('task_edit',handoverId,values as unknown as Json);setCoverEditKey('');setMessage('Covered task updated.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The covered task could not be updated.')}
+    finally{setBusy('')}
+  }
+  async function completeCoveredTask(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
+    try{await coverDutyRpc('task_done',handoverId,{task_id:task.id,outcome_note:coverOutcomeNote.trim()});setCoverDoneKey('');setCoverOutcomeNote('');setMessage('Task marked done.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The task could not be marked done.')}
+    finally{setBusy('')}
+  }
+  async function handBackCoveredTask(handoverId:string,task:CoverTaskRow){
+    const key=coverTaskKey(handoverId,task.id);
+    if(coverHandbackReason.trim().length<3){setError('Give a short reason before handing this task back.');return}
+    setBusy(key);setError('');
+    try{await coverDutyRpc('hand_back',handoverId,{task_id:task.id,reason:coverHandbackReason.trim()});setCoverHandbackKey('');setCoverHandbackReason('');setMessage('Task handed back to the owner for a decision.');refresh()}
+    catch(e){setError(e instanceof Error?e.message:'The task could not be handed back.')}
+    finally{setBusy('')}
+  }
+  useEffect(() => {
+    let live = true;
+    const loadCoverRequests = async () => {
+      try {
+        const result = await coverDutyRpc<{ rows: CoverDutyRow[] }>("list", null, { view: "mine" });
+        if (live) setCoverRequests((result.rows ?? []).filter(row => row.cover_response === "pending" && row.state === "waiting"));
+      } catch {
+        if (live) setCoverRequests([]);
+      }
+    };
+    void loadCoverRequests();
+    const refreshRequests = () => { if (!document.hidden) void loadCoverRequests(); };
+    window.addEventListener("focus", refreshRequests);
+    window.addEventListener("vimbre:work-changed", refreshRequests);
+    return () => {
+      live = false;
+      window.removeEventListener("focus", refreshRequests);
+      window.removeEventListener("vimbre:work-changed", refreshRequests);
+    };
+  }, [profile?.id]);
+
   useEffect(()=>{setSelectedIds([])},[filter,search,forValue,source,priority,page]);
   useEffect(() => {
     if (!message) return;
@@ -381,7 +449,7 @@ function MyDayContent() {
           </h1>
           <p className="md-live-line">
             {data
-              ? <><span>{data.counts.today ?? data.counts.todo + data.counts.progress} today,</span><span>{data.counts.overdue} overdue,</span><span>{waiting + handovers.length+incoming.length} to review</span></>
+              ? <><span>{data.counts.today ?? data.counts.todo + data.counts.progress} today,</span><span>{data.counts.overdue} overdue,</span><span>{waiting + handovers.length+incoming.length+coverRequests.length} to review</span></>
               : "Loading your tasks…"}
           </p>
         </div>
@@ -453,11 +521,12 @@ function MyDayContent() {
             )}
             {filter === "today" && (
               <>
-                {(waiting > 0 || handovers.length > 0 || incoming.length>0 || Boolean(data?.returning_handovers?.length)) && <section className="md-day-group" aria-label="To review">
+                {(waiting > 0 || handovers.length > 0 || incoming.length>0 || coverRequests.length>0 || Boolean(data?.returning_handovers?.length)) && <section className="md-day-group" aria-label="To review">
                   <h3>To review</h3>
                   <div className="md-waiting-links">
                     {(data?.review_drafts??[]).map(d=><article className="md-review-draft" key={d.id}><span className="md-muted">Draft · {d.kind==='action'?'Task':d.kind==='decision'?'Decision':d.kind}</span><h4>{d.payload.title}</h4>{d.payload.details&&<p>{d.payload.details}</p>}{d.payload.due_date&&<p>Due: {formatTaskDay(d.payload.due_date,format)}{d.payload.due_time?` · ${d.payload.due_time}`:''}</p>}<p>Owner: {d.payload.owner_id&&d.payload.owner_id!==profile!.id?'Review owner in Capture':'Me'} · Reminder: {(d.payload.reminder_option??'at_time').replaceAll('_',' ')}</p>{d.duplicate&&<p className="field-error">A matching item already exists. Review it before accepting.</p>}<div className="md-expanded-actions"><Button disabled={Boolean(busy)||d.duplicate} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_accept',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Accept</Button><Link to={`/app/capture?capture=${d.capture_id}`}>Edit</Link><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_dismiss',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Dismiss</button></div></article>)}
                     {waiting>0&&!data?.review_drafts&&<Link to="/app/capture">{waiting} drafts to review</Link>}
+                    {coverRequests.map(h=><article className="md-review-draft md-cover-request" key={'cover:'+h.id}><span className="md-muted">Cover request · {h.owner_name}</span><h4>{h.owner_name} has asked you to cover their work.</h4><p>{h.role_title||'Role not recorded'} · {h.starts_on||'Dates to be confirmed'}{h.ends_on?' – '+h.ends_on:''}</p><p>{h.task_count} tasks and {Math.max(0,h.item_count-h.task_count)} other items · Manager: {h.reviewer_name||'Not set'}</p><div className="md-expanded-actions"><Button disabled={Boolean(busy)} onClick={async()=>{setBusy(h.id);setError('');try{await coverDutyRpc('accept',h.id,{});refresh()}catch(e){setError(e instanceof Error?e.message:'Cover request could not be accepted.')}finally{setBusy('')}}}>Accept cover</Button><Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{const reason=window.prompt('Briefly explain why you cannot cover these dates. The owner and manager will be told.');if(!reason||reason.trim().length<3)return;setBusy(h.id);setError('');try{await coverDutyRpc('decline',h.id,{reason:reason.trim()});refresh()}catch(e){setError(e instanceof Error?e.message:'Cover request could not be declined.')}finally{setBusy('')}}}>Decline</Button><Link to={'/app/my-cover-duties/'+h.id}>Review request</Link></div></article>)}
                     {incoming.map(a=><article className="md-review-draft" key={a.id}><span className="md-muted">Assigned by {a.creator_name}</span><h4>{a.title}</h4>{a.details&&<p>{a.details}</p>}<p>Due: {formatTaskDay(a.suggested_date??a.due_date,format)}</p><div className="md-expanded-actions">{['accept','decline'].map(op=><Button key={op} variant={op==='accept'?'primary':'secondary'} disabled={Boolean(busy)} onClick={async()=>{setBusy(a.id);setError('');try{await daySuite(op,a.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='accept'?'Accept':'Decline'}</Button>)}</div><form className="md-suggest-date" onSubmit={async e=>{e.preventDefault();const date=String(new FormData(e.currentTarget).get('date')??'');setBusy(a.id);try{await daySuite('suggest_date',a.id,{date});refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}><label className="field">Suggest a new date<input type="date" name="date" min={today} required/></label><Button type="submit" variant="secondary" disabled={Boolean(busy)}>Suggest date</Button></form></article>)}
                     {(data?.returning_handovers??[]).map(h=><Link key={h.id} to={`/app/handovers/${h.id}`}>Take back: {h.title}</Link>)}
                     {handovers.map((h) => (
@@ -480,26 +549,31 @@ function MyDayContent() {
                     aria-label={`Covering for ${h.owner_name}`}
                   >
                     <h3>Covering for {h.owner_name}</h3>
-                    <Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{if(!window.confirm('Hand this cover back to the owner?'))return;setBusy(h.id);try{await daySuite('cover_hand_back',h.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Hand back</Button>
+                    <Link className="md-cover-brief-link" to={'/app/my-cover-duties/'+h.id}>Open cover briefing</Link>
                     <ul className="md-cover-tasks">
                       {(data?.cover_tasks ?? [])
                         .filter((t) => t.owner_id === h.owner_id)
-                        .map((t) => (
-                          <li key={t.id}>
-                            <strong>{t.title}</strong>
-                            <span>
-                              {h.owner_name} ·{" "}
-                              {statuses.find(([v]) => v === t.status)?.[1] ??
-                                "To do"}
-                            </span>
-                            <time>
-                              {t.due_at ? new Intl.DateTimeFormat("en-GB", {
-                                dateStyle: "medium",
-                                timeZone: zone,
-                              }).format(new Date(t.due_at)) : "No date"}
-                            </time>
-                          </li>
-                        ))}
+                        .map((t) => {
+                          const actionKey=coverTaskKey(h.id,t.id);
+                          return (
+                            <li key={t.id} className="md-cover-task">
+                              <div className="md-cover-task-summary">
+                                <strong>{t.title}</strong>
+                                <span>{h.owner_name} · {statuses.find(([v])=>v===t.status)?.[1]??"To do"}</span>
+                                <time>{t.due_date?formatTaskDay(t.due_date,format):t.due_at?new Intl.DateTimeFormat("en-GB",{dateStyle:"medium",timeZone:zone}).format(new Date(t.due_at)):"No date"}</time>
+                                {t.source_not_shared&&<span className="md-cover-source-chip">Source not shared</span>}
+                              </div>
+                              <div className="md-cover-task-actions">
+                                <Button variant="secondary" disabled={Boolean(busy)} onClick={()=>{setCoverDoneKey(coverDoneKey===actionKey?'':actionKey);setCoverOutcomeNote('');setCoverEditKey('');setCoverHandbackKey('')}}>Mark done</Button>
+                                <Button variant="secondary" disabled={Boolean(busy)} onClick={()=>{beginCoveredTaskEdit(h.id,t);setCoverDoneKey('');setCoverHandbackKey('')}}>Edit</Button>
+                                <Button variant="secondary" disabled={Boolean(busy)} onClick={()=>{setCoverHandbackKey(coverHandbackKey===actionKey?'':actionKey);setCoverHandbackReason('');setCoverDoneKey('');setCoverEditKey('')}}>Hand back</Button>
+                              </div>
+                              {coverDoneKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void completeCoveredTask(h.id,t)}}><label>Outcome note (optional)<textarea rows={2} maxLength={1000} value={coverOutcomeNote} onChange={e=>setCoverOutcomeNote(e.target.value)} placeholder="What happened or what should the owner know?"/></label><div><Button type="submit" disabled={Boolean(busy)}>Mark done</Button><Button type="button" variant="secondary" onClick={()=>setCoverDoneKey('')}>Cancel</Button></div></form>}
+                              {coverEditKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void saveCoveredTaskEdit(h.id,t)}}><label>Task title<input maxLength={300} required value={coverEditTitle} onChange={e=>setCoverEditTitle(e.target.value)}/></label><div className="md-cover-edit-dates"><label>Due date<input type="date" value={coverEditDate} onChange={e=>setCoverEditDate(e.target.value)}/></label><label>Due time<input type="time" value={coverEditTime} onChange={e=>setCoverEditTime(e.target.value)}/></label></div>{t.source_is_manual&&<><label>Notes<textarea rows={3} maxLength={6000} value={coverEditDetails} onChange={e=>setCoverEditDetails(e.target.value)}/></label><label>Steps (one per line)<textarea rows={3} maxLength={6000} value={coverEditSteps} onChange={e=>setCoverEditSteps(e.target.value)}/></label><label>Links (one URL per line)<textarea rows={2} maxLength={6000} value={coverEditLinks} onChange={e=>setCoverEditLinks(e.target.value)}/></label></>}<div><Button type="submit" disabled={Boolean(busy)||!coverEditTitle.trim()}>Save task</Button><Button type="button" variant="secondary" onClick={()=>setCoverEditKey('')}>Cancel</Button></div></form>}
+                              {coverHandbackKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void handBackCoveredTask(h.id,t)}}><label>Reason for handing back<textarea rows={3} minLength={3} maxLength={1000} required value={coverHandbackReason} onChange={e=>setCoverHandbackReason(e.target.value)} placeholder="Explain why the owner or manager needs to decide this task."/></label><div><Button type="submit" disabled={Boolean(busy)||coverHandbackReason.trim().length<3}>Hand back task</Button><Button type="button" variant="secondary" onClick={()=>setCoverHandbackKey('')}>Cancel</Button></div></form>}
+                            </li>
+                          );
+                        })}
                     </ul>
                   </section>
                 ))}

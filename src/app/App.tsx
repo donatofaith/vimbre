@@ -177,7 +177,7 @@ export function App() {
               />
 
               <Route
-                path="my-cover-duties"
+                path="my-cover-duties/*"
                 element={
                   <CoverPage />
                 }

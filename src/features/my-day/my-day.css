@@ -1627,3 +1627,31 @@
 @media(max-width:760px){.md-accepted-plan>li{flex-direction:column}.md-accepted-plan .form-actions{width:100%;flex-wrap:wrap}.md-stars-strip{gap:12px}.md-plan-postpone{align-items:stretch}.md-plan-postpone .field{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.md-completion-pending{animation:none}}
 .md-work-section:has(.md-plan-focus)>:not(.md-plan-focus){display:none}
+
+
+/* Cover requests shown in My Day > To review. */
+.md-review-draft.md-cover-request{border-color:#ead8ab;background:#fffaf0}
+.md-review-draft.md-cover-request>h4{font-size:16px;line-height:1.45}
+.md-review-draft.md-cover-request>p{font-size:14px;line-height:1.55}
+.md-review-draft.md-cover-request .md-expanded-actions{display:flex;flex-wrap:wrap;gap:8px}
+.md-review-draft.md-cover-request .md-expanded-actions a{display:inline-flex;align-items:center;min-height:44px;padding:9px 12px;border-radius:8px;color:#315e9f;font-size:13px;font-weight:700;text-decoration:none}
+.md-review-draft.md-cover-request .md-expanded-actions a:focus-visible{outline:2px solid #2464c5;outline-offset:3px}
+@media(max-width:640px){.md-review-draft.md-cover-request .md-expanded-actions{display:grid;grid-template-columns:1fr}.md-review-draft.md-cover-request .md-expanded-actions>*{width:100%}}
+
+
+/* Shared covered tasks use the same source records and practical actions as the briefing. */
+.md-cover-task-summary{display:grid;gap:6px}
+.md-cover-task-summary strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.md-cover-task-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.md-cover-task-actions .button{min-height:44px}
+.md-cover-brief-link{display:inline-flex;align-items:center;min-height:44px;width:fit-content;padding:8px 12px;border-radius:9px;background:#edf4fb;color:#315e9f;text-decoration:none;font-size:13px;font-weight:700}
+.md-cover-brief-link:focus-visible,.md-cover-task-actions button:focus-visible,.md-cover-task-form button:focus-visible{outline:2px solid #2464c5;outline-offset:3px}
+.md-cover-source-chip{display:inline-flex;width:fit-content;align-items:center;min-height:28px;padding:4px 9px;border:1px solid #e1e8f0;border-radius:8px;background:#f5f7fa;color:#526579;font-size:12px;font-weight:700}
+.md-cover-task-form{display:grid;gap:12px;margin-top:8px;padding:13px;border:1px solid #dbe5f0;border-radius:12px;background:#f8fbff}
+.md-cover-task-form label{display:grid;gap:6px;font-size:13px;font-weight:650}
+.md-cover-task-form input:not([type=checkbox]),.md-cover-task-form textarea{box-sizing:border-box;width:100%;max-width:100%;min-height:44px;padding:10px 11px;border:1px solid #cbd7e5;border-radius:9px;background:#fff;color:#102a43;font:inherit;font-size:16px}
+.md-cover-task-form textarea{min-height:80px;resize:vertical}
+.md-cover-task-form>div{display:flex;gap:8px;flex-wrap:wrap}
+.md-cover-task-form>div .button{min-height:44px}
+.md-cover-edit-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:640px){.md-cover-task-actions{display:grid;grid-template-columns:1fr}.md-cover-task-actions .button,.md-cover-task-form>div .button{width:100%;min-height:48px}.md-cover-edit-dates{grid-template-columns:1fr}}
