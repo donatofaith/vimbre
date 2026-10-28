@@ -12,3 +12,4 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     return this.props.children
   }
 }
+

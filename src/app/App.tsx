@@ -1,3 +1,5 @@
+import { UIPreview } from '../components/ui/UIPreview'
+import { MenuLifecycle } from '../components/ui/MenuLifecycle'
 const RoleGuidePage = lazy(() => import('../features/records/RoleGuide').then(module => ({default:module.RoleGuidePage})))
 import { lazy, Suspense, useEffect } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -73,7 +75,7 @@ function PageFocus() {
 
       document.title =
         pathname === '/'
-          ? 'Vimbre | Work Intelligence and Handover Context'
+          ? 'Vimbre | Turn Conversations into Actions and Handovers'
           : `${heading.textContent} | Vimbre`
 
       window.dispatchEvent(new Event('vimbre:ready'))
@@ -122,6 +124,7 @@ export function App() {
   return (
     <>
       <PageFocus />
+      <MenuLifecycle />
       <AnchorScroll />
 
       <Suspense
@@ -160,6 +163,7 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<WorkspacePage />} />
+              <Route path="ui" element={<UIPreview />} />
               <Route path="weekly-summary" element={<WeeklySummaryPage />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="capture" element={<CapturePage />} />

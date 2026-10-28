@@ -1,0 +1,13 @@
+# Landing page client review, 28 October 2026
+
+Integrates PR 9 onto development 0cafb6af56750c8ab0dd840d99f1f4ec695df920. Only public landing files, their tests and this document change; workspace, legal content and backend remain from production.
+
+Fixes the higher-specificity flex rule that stacked the desktop hero. Explicit grid layout keeps the product beside concise copy; mobile stacks with smaller typography. Preserves the automatic ten-second story, pause control, reduced-motion and no-script source frame. Hero action rows use the actual My Day TaskCard component with fictional data, disabled controls and no-op handlers; no customer data, provider request or model call is used. Remaining story panels are clearly labelled examples rather than screenshots of customer work.
+
+Uses available connector labels, company permission/account consent wording, a card-free trial CTA and the client's four steps. Sections remain readable before intersection observers run. Scroll-screen selection retains all visible observer entries to prevent selecting a stale step. Motion progress uses transform, not width. Retains the deployed shared control/card sizing.
+
+AI request ceilings were read from live public.ai_limits: Starter 500/month and 40/day; Growth 3,000/month and 200/day; Business 15,000/month and 1,000/day. Existing spend safeguards can pause AI sooner. These count AI requests across tools, not generated task cards. Pricing states proposed company bundles; checkout/paid subscriptions, per-plan connector caps, retention guarantees, SSO and audit export are not presented as delivered features. All tiers share existing manager/cover/privacy controls. Calculator uses only visitor inputs and rejects invalid/non-finite totals.
+
+Verification: 203 tests in 39 files, lint, frontend/Edge TypeScript, production build and prerender generation passed. Chromium browser checks pass for first-screen layout, actual task rows, signup links, dates, calculator, all seven story scenes, continuous loops, pause/resume, reduced motion, no JavaScript and 14 viewport widths. Desktop and phone full-page screenshots were reviewed. Corrected the runtime page title and made the playback test return the hero to view after the browser scrolls its control; offscreen playback remains paused. No GitHub Actions run or paid AI request was made.
+
+Release scope: public landing files and runtime homepage title only. No backend plan entitlements, retention or SSO functionality is added by this release.

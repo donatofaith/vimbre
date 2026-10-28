@@ -1,0 +1,22 @@
+create or replace function private.myday_plan_tasks() returns jsonb language sql stable security definer set search_path='' as $$
+ with usual as(select percentile_cont(0.5) within group(order by minutes) minutes from (select extract(epoch from(a.completed_at-max(e.created_at)))/60 minutes from public.actions a join public.task_events e on e.task_id=a.id and e.actor_id=auth.uid() and e.status='in_progress' where a.owner_id=auth.uid() and a.company_id=private.current_company_id() and a.status='done' and a.deleted_at is null and a.completed_at>now()-interval '90 days' and e.created_at<a.completed_at group by a.id order by a.completed_at desc limit 30)x where minutes between 1 and 480)
+ select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'title',a.title,'status',a.status,'due_date',a.due_date,'due_time',a.due_time,'due_at',a.due_at,'priority',a.priority,'created_at',a.created_at,'time_needed_minutes',coalesce(a.time_needed_minutes,round(usual.minutes)::int,30),'duration_source',case when a.time_needed_minutes is not null then 'estimate' when usual.minutes is not null then 'history' else 'default' end,'covering',a.owner_id<>auth.uid(),'owner_id',a.owner_id,'owner_name',p.full_name,'decision_id',case when a.owner_id=auth.uid() then a.decision_id end,'decision_reason',case when a.owner_id=auth.uid() then d.reason end,'needs_reason',a.owner_id=auth.uid() and a.decision_id is not null and (a.context_added_at is null or btrim(coalesce(d.reason,''))='')) order by a.due_at nulls last,a.created_at,a.id),'[]') from public.actions a cross join usual join public.profiles p on p.id=a.owner_id left join public.decisions d on d.id=a.decision_id and d.owner_id=auth.uid() and d.company_id=private.current_company_id() and d.deleted_at is null where a.status<>'done' and private.myday_can_plan(a.id)
+$$;
+
+create or replace function private.process_myday_plan_notices(p_now timestamptz default now(),p_owner uuid default null) returns integer language plpgsql security definer set search_path='' as $$
+declare count integer:=0;row record;kind text;begin
+ for row in select p.owner_id,p.company_id,p.day,item,a.title,a.decision_id,a.owner_id as task_owner,a.context_added_at,w.timezone from private.myday_plans p join public.profiles holder on holder.id=p.owner_id and holder.active and holder.company_id=p.company_id left join public.work_preferences w on w.owner_id=p.owner_id cross join lateral jsonb_array_elements(p.items)item join public.actions a on a.id=(item->>'id')::uuid and a.company_id=p.company_id and a.status<>'done' and a.deleted_at is null and a.purged_at is null where (p_owner is null or p.owner_id=p_owner) and (item->>'start')::timestamptz between p_now-interval '15 minutes' and p_now+interval '10 minutes' and (a.owner_id=p.owner_id or exists(select 1 from public.work_handovers h join private.handover_items i on i.handover_id=h.id and i.record_id=a.id and i.kind='task' and i.approved where h.company_id=p.company_id and h.owner_id=a.owner_id and h.cover_id=p.owner_id and h.status='approved' and (p_now at time zone coalesce(w.timezone,'Europe/London'))::date between h.starts_on and h.ends_on)) loop
+  kind:=case when (row.item->>'start')::timestamptz<=p_now then 'start' when row.task_owner=row.owner_id and row.decision_id is not null and row.context_added_at is null then 'reason' else null end;
+  if kind is null then continue;end if;
+  insert into private.myday_plan_notices values(row.owner_id,row.day,(row.item->>'id')::uuid,kind) on conflict do nothing;
+  if found then
+   insert into private.myday_notifications(owner_id,company_id,task_id,title,body) values(row.owner_id,row.company_id,(row.item->>'id')::uuid,case when kind='start' then 'Next: '||row.title else 'Add your reason before '||to_char((row.item->>'start')::timestamptz at time zone coalesce(row.timezone,'Europe/London'),'HH24:MI') end,case when kind='start' then 'Your planned task is ready to start.' else 'Why did you decide this? Add one line before your planned task.' end);
+   count:=count+1;
+  end if;
+ end loop;
+ return count;
+end$$;
+-- Explicitly retain the narrow grants of the existing functions.
+revoke all on function private.myday_plan_tasks() from public,anon,authenticated,service_role;
+grant execute on function private.myday_plan_tasks() to authenticated;
+revoke all on function private.process_myday_plan_notices(timestamptz,uuid) from public,anon,authenticated,service_role;

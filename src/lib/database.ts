@@ -20,6 +20,15 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
+      myday_competition_settings: {Args:{p_mode?:string|null;p_visible?:boolean|null};Returns:Json}
+      myday_streak_settings: {Args:{p_days?:number[]|null;p_from?:string|null;p_until?:string|null};Returns:Json}
+      myday_skip_review: {Args:{p_operation?:string;p_task?:string|null;p_date?:string|null};Returns:Json}
+      myday_social: {Args:{p_operation?:string;p_recipient?:string|null;p_body?:string};Returns:Json}
+      myday_stars: {Args:Record<PropertyKey,never>;Returns:Json}
+      myday_defer_plan_task: {Args:{p_task:string;p_date:string};Returns:undefined}
+      myday_plan_action: {Args:{p_task:string;p_operation:string;p_reason?:string|null};Returns:undefined}
+      myday_plan: {Args:{p_operation:string;p_data?:Json};Returns:Json}
+      myday_edit: {Args:{p_id:string;p_data:Json};Returns:Json}
       myday_suite: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}
       handover_workspace: {Args:{p_operation:string;p_id?:string|null;p_data?:Json};Returns:Json}
       handover_shared: {Args:{p_token:string};Returns:Json}

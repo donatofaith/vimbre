@@ -1,3 +1,9 @@
+import {DecisionReasonPrompt} from './DecisionReasonPrompt'
+import {planTaskAction} from './plan-api'
+import {SkipReview} from './SkipReview'
+import {NextPlannedTask} from './NextPlannedTask'
+import {StarsPanel} from './StarsPanel'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import {TaskFormatContext,formatTaskDay} from './task-format'
 import type {TaskFormat} from './task-format'
 import {OfflineStatus} from './OfflineStatus'
@@ -77,7 +83,7 @@ function MyDayContent() {
       data: DayData | null;
       error: boolean;
     } | null>(null),
-    [editor, setEditor] = useState<{ task?: Task } | null>(null),
+    [editor, setEditor] = useState<{ task?: Task; stepsFirst?:boolean } | null>(null),
     [context, setContext] = useState<Task | null>(null),
     [reminder, setReminder] = useState<Task | null>(null),
     [record, setRecord] = useState<Task | null>(null),
@@ -90,6 +96,13 @@ function MyDayContent() {
     [message, setMessage] = useState(""),
     [quick, setQuick] = useState(false), [quickText,setQuickText]=useState(""),
     [undo, setUndo] = useState<{task: Task; ids?:string[]; until: number} | null>(null);
+  const [visibleRows,setVisibleRows]=useState<Record<string,number>>({});
+  const [hasPlan,setHasPlan]=useState(false);
+  const [decisionFinish,setDecisionFinish]=useState<Task|null>(null);
+  const [finishing,setFinishing] = useState<(Task & {finishPosition:number;finishFilter:string;finishStatus:string})[]>([]);
+  const [finishBatch,setFinishBatch]=useState(0);
+  const finishTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  useEffect(()=>()=>{if(finishTimer.current)clearTimeout(finishTimer.current)},[]);
   const access = useRef<HTMLDialogElement>(null),
     dragging = useRef(""),
     pending = useRef(false);
@@ -193,13 +206,20 @@ function MyDayContent() {
   }, [params]);
   async function act(task: Task, op: string, values: Record<string, unknown>) {
     if (pending.current) return;
+    if(op==="status"&&values.status==="done"&&task.decision_id&&!values.reason_reviewed){setDecisionFinish(task);return;}
     pending.current = true;
     setBusy(task.id);
     setError("");
     try {
-      if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
+      if(op==="status"&&values.status==="done"&&typeof values.decision_reason==="string"&&values.decision_reason.trim())await planTaskAction(task.id,"done",values.decision_reason);else if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
       if (op === "archive" || op === "delete_series" || op === "status" && values.status === "done") setUndo({task,until:Date.now()+10000});
-      if(op === "undo") setUndo(null);
+      if(op === "status" && values.status === "done") {
+        setFinishing(previous=>[...previous.filter(t=>t.id!==task.id),{...task,status:"done",finishFilter:filter,finishStatus:task.status,finishPosition:Math.max(0,(data?.rows??[]).findIndex(t=>t.id===task.id))}]);
+        setFinishBatch(Date.now());
+        if(finishTimer.current)clearTimeout(finishTimer.current);
+        finishTimer.current=setTimeout(()=>setFinishing([]),5000);
+      }
+      if(op === "undo" || op === "status" && values.status !== "done") {setFinishing(previous=>previous.filter(t=>t.id!==task.id));if(op === "undo")setUndo(null);}
       setMessage(
         op === "pin"
           ? values.pinned
@@ -210,12 +230,14 @@ function MyDayContent() {
             : "Task updated.",
       );
       refresh();
+      return true;
     } catch (e) {
       setError(
         op === "pin" && (e as { code?: string }).code === "22023"
           ? "This task could not be starred. Refresh and try again."
           : taskError(e),
       );
+      return false;
     } finally {
       setBusy("");
       pending.current = false;
@@ -241,7 +263,7 @@ function MyDayContent() {
   function card(task: Task, rank?: number, panelOnly=false) {
     return (
       <TaskCard
-        key={task.id}
+        key={task.id+(finishing.some(t=>t.id===task.id)?`:${finishBatch}`:"")}
         task={task}
         selecting={selecting&&!panelOnly}
         selected={selectedIds.includes(task.id)}
@@ -255,6 +277,7 @@ function MyDayContent() {
         rank={rank}
         initialOpen={panelOnly || task.id === taskId && !params.has("task_action")}
         busy={Boolean(busy)}
+        undo={finishing.some(t=>t.id===task.id)?()=>void act(task,"undo",{}):undefined}
         act={(t, o, v) => void act(t, o, v)}
         edit={(t) => {setInspected(null);setEditor({ task: t })}}
         remind={t=>{setInspected(null);setReminder(t)}}
@@ -277,7 +300,7 @@ function MyDayContent() {
     return (
       <div className="md-board">
         {statuses.map(([status, label]) => {
-          const tasks = items.filter((t) => t.status === status);
+          const tasks = items.filter((t) => (finishing.find(f=>f.id===t.id)?.finishStatus??t.status) === status);
           return (
             <details
               className={`md-board-column md-column-${status}`}
@@ -316,15 +339,16 @@ function MyDayContent() {
       </div>
     );
   }
-  const done = data?.done_today ?? [],
+  const done = (data?.done_today ?? []).filter(t=>!finishing.some(f=>f.id===t.id)),
     upcoming = data?.upcoming ?? [],
     waiting = data?.drafts_waiting ?? summary.data?.pending_drafts ?? 0,
     handovers = data?.handovers_waiting ?? [];
   const overdueRows = data?.overdue_rows ?? [];
   const incoming=data?.review_assignments??extras.data?.incoming??[];
   const format:TaskFormat={language:String(extras.data?.settings.language??"en-GB"),style:(extras.data?.settings.date_style??"medium") as TaskFormat["style"]};
-  const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)) : rows;
-  function list(items: Task[]) {return <div className="md-task-list">{items.map(t=>card(t))}</div>}
+  const todayRows = filter === "today" ? rows.filter(t => !overdueRows.some(o => o.id === t.id)&&!finishing.some(f=>f.id===t.id)) : rows.filter(t=>!finishing.some(f=>f.id===t.id));
+  for(const task of finishing.filter(t=>t.finishFilter===filter).sort((a,b)=>a.finishPosition-b.finishPosition))todayRows.splice(Math.min(task.finishPosition,todayRows.length),0,task);
+  function list(items: Task[]) {const key=items[0]?.id??"empty",shown=visibleRows[key]??5;return <><div className="md-task-list">{items.slice(0,shown).map(t=>card(t))}</div>{items.length>shown&&<Button variant="secondary" onClick={()=>setVisibleRows(previous=>({...previous,[key]:shown+5}))}>Show 5 more</Button>}</>}
   function weekView(items: Task[]) {return <>{Boolean(data?.undated?.length)&&<section className="md-undated-strip"><h3>No date</h3>{list(data!.undated!)}</section>}<div className="md-week">{Array.from({length:7},(_,i)=>{const date=addDays(today,i), group=items.filter(t=>(t.due_time?dateInZone(zone,new Date(t.due_at)):t.due_date)===date);return <section key={date}><h3>{new Intl.DateTimeFormat(format.language,{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"))}</h3>{group.length?list(group):<p className="md-muted">No tasks</p>}</section>})}</div></>}
   const empty = (
     <div className="md-empty">
@@ -357,11 +381,12 @@ function MyDayContent() {
           </h1>
           <p className="md-live-line">
             {data
-              ? `${data.counts.today ?? data.counts.todo + data.counts.progress} today, ${data.counts.overdue} overdue, ${waiting + handovers.length+incoming.length} to review`
+              ? <><span>{data.counts.today ?? data.counts.todo + data.counts.progress} today,</span><span>{data.counts.overdue} overdue,</span><span>{waiting + handovers.length+incoming.length} to review</span></>
               : "Loading your tasks…"}
           </p>
         </div>
 
+        <Button variant={hasPlan?"secondary":"primary"} onClick={()=>setPlanning(true)}>Plan my day</Button>
       </header>
       {extras.data?.settings.briefing===true&&extras.data?.flags.ai&&extras.data.briefing&&<aside className="md-briefing"><h2>Daily briefing</h2><p className="record-text">{extras.data.briefing.body}</p></aside>}
       {extras.data?.away.map(h=><aside className="md-away-banner" key={h.id}>You’re away from {formatTaskDay(h.starts_on,format)}. Your handover isn’t submitted yet.</aside>)}
@@ -382,13 +407,13 @@ function MyDayContent() {
         <div className="md-toolbar md-toolbar-approved">
           <label className="md-search"><span className="sr-only">Search tasks</span><input id="md-search" type="search" placeholder="Search tasks" maxLength={100} value={query} onChange={e=>setQuery(e.target.value)}/></label>
           <label className="md-menu-label">Filter<select aria-label="Task filter" value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l])=><option key={v} value={v}>{l} ({data?.tab_counts?.[v]??0})</option>)}</select></label>
-          <label className="md-menu-label">View<select aria-label="Task view" value={layout} onChange={e=>{const value=e.target.value as "list"|"board"|"week";setLayout(value);if(value==="week")setFilter("week");else if(value==="board"&&filter==="today")setFilter("all");try{localStorage.setItem("vimbre:myday-view",value)}catch{}}}><option value="list">List</option><option value="board">Board</option><option value="week">Week</option></select></label>
-          <details className="md-tools-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary>Tools</summary><div>{extras.data?.flags.rules&&<button onClick={()=>setRules(true)}>Rules</button>}{extras.data?.flags.calendar&&<button onClick={()=>setCalendar(true)}>Calendar feeds</button>}<button onClick={()=>setTransfers(true)}>Import and export</button>{profile!.role!=='employee'&&extras.data?.flags.team&&<button aria-expanded={teamOpen} onClick={()=>setTeamOpen(v=>!v)}>Team</button>}</div></details>
-          <details className="md-add-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="Add" aria-describedby="myday-add-hint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg><span id="myday-add-hint" className="md-add-hint" role="tooltip">Add a task or capture a conversation</span></summary><div><button onClick={()=>setEditor({})}>Add task</button><Link to="/app/capture">Capture</Link>{extras.data?.flags.templates&&<button onClick={()=>setTemplates(true)}>Add from template</button>}<button onClick={()=>setRolePicker(true)}>Add from My role</button>{profile!.role!=='employee'&&<button onClick={()=>setAssignment({})}>Assign task</button>}<button onClick={()=>{setSelecting(v=>!v);setSelectedIds([])}}>{selecting?"Finish selecting":"Select several"}</button></div></details>
+          <SegmentedControl label="Task view" value={layout} options={[{value:"list",label:"List"},{value:"board",label:"Board"},{value:"week",label:"Week"}]} onChange={value=>{setLayout(value);if(value==="week")setFilter("week");else if(value==="board"&&filter==="today")setFilter("all");try{localStorage.setItem("vimbre:myday-view",value)}catch{}}}/>
+          <div className="md-toolbar-actions"><details className="md-add-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="Add" aria-describedby="myday-add-hint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg><span id="myday-add-hint" className="md-add-hint" role="tooltip">Add a task or capture a conversation</span></summary><div><button onClick={()=>setEditor({})}>Add task</button><Link to="/app/capture">Capture</Link>{extras.data?.flags.templates&&<button onClick={()=>setTemplates(true)}>Add from template</button>}<button onClick={()=>setRolePicker(true)}>Add from My role</button>{profile!.role!=='employee'&&<button onClick={()=>setAssignment({})}>Assign task</button>}<button onClick={()=>{setSelecting(v=>!v);setSelectedIds([])}}>{selecting?"Finish selecting":"Select several"}</button></div></details>
+          <details className="md-tools-menu" data-menu onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="More task tools" title="Rules, calendar, import and export"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary><div>{extras.data?.flags.rules&&<button className="md-text-button" onClick={()=>setRules(true)}>Rules</button>}{extras.data?.flags.calendar&&<button className="md-text-button" onClick={()=>setCalendar(true)}>Calendar feed</button>}<button className="md-text-button" onClick={()=>setTransfers(true)}>Import and export</button>{profile!.role!=='employee'&&extras.data?.flags.team&&<button className="md-text-button" aria-expanded={teamOpen} onClick={()=>setTeamOpen(v=>!v)}>Team</button>}</div></details></div>
         </div>
         {quick && <form className="md-quick-add" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy("quick");setError("");try{const task=parseQuickTask(quickText,today);if(!task.title)throw new Error();await changeTask(crypto.randomUUID(),"create",{...task,reminder_option:"at_time"});setQuickText("");setQuick(false);refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}><label>Quick add<input autoFocus value={quickText} onChange={e=>setQuickText(e.target.value)} maxLength={300} placeholder="Send quote Friday 3pm" required/></label><Button type="submit" disabled={Boolean(busy)}>Add task</Button></form>}
         <details className="md-filter-disclosure"><summary>More filters{search||forValue||source ? " · Active":""}</summary><div className="md-filter-row"><ForPicker filter value={forValue} onChange={v=>{setFor(v);setPage(0)}}/><label>From<select value={source} onChange={e=>{setSource(e.target.value);setPage(0)}}><option value="">All sources</option>{Object.entries(sourceLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{(query||forValue||source)&&<button className="md-text-button" onClick={()=>{setQuery("");setSearch("");setFor(null);setSource("");setPage(0)}}>Clear filters</button>}</div></details>
-        {extras.data?.flags.ai&&<button className="md-text-button md-plan-action" onClick={()=>setPlanning(true)}>Plan my day</button>}
+        <SkipReview breakDown={task=>setEditor({task,stepsFirst:true})}/><NextPlannedTask onPlan={setHasPlan} replan={()=>setPlanning(true)}/><StarsPanel compact/>
         {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={()=>setAssignment({ids:selectedIds})}>Assign</Button><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});if(op==='done'||op==='delete'){const first=allRows.find(t=>t.id===selectedIds[0]);if(first)setUndo({task:first,ids:[...selectedIds],until:Date.now()+10000})}setMessage(op==='done'?'Tasks marked done.':op==='delete'?'Tasks deleted.':'Tasks moved to tomorrow.');setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
         {(taskId || linked) && (
           <Link className="md-text-button" to="/app">
@@ -404,7 +429,7 @@ function MyDayContent() {
           </div>
         ) : (
           <>
-            {filter === "today" && overdueRows.length>0 && <section className="md-day-group" aria-label="Overdue"><h3>Overdue <span>{overdueRows.length}</span></h3><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{if(!overdueRows.length)return;setBusy("move-overdue");setError("");let moved=0;const failures:string[]=[];let firstError:unknown=null;try{for(const task of overdueRows){try{await changeTask(task.id,"tomorrow",{date:today});moved++}catch(e){failures.push(task.title);if(firstError===null)firstError=e}}if(moved)setMessage(failures.length?`Moved ${moved} of ${overdueRows.length} overdue tasks to today.`:`All ${moved} overdue tasks moved to today.`);if(failures.length)setError(firstError?`${failures.length} task(s) could not be moved. ${taskError(firstError)}`:`${failures.length} task(s) could not be moved.`);refresh()}finally{setBusy("")}}}>{busy==="move-overdue"?"Moving tasks…":"Move all to today"}</button>{list(overdueRows)}</section>}
+            {filter === "today" && overdueRows.length>0 && <section className="md-day-group" aria-label="Overdue"><h3>Overdue <span>{overdueRows.length}</span></h3><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{if(!overdueRows.length)return;setBusy("move-overdue");setError("");try{for(const task of overdueRows){await changeTask(task.id,"tomorrow",{date:today})}setMessage("Overdue tasks moved to today.");refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}>Move all to today</button>{list(overdueRows)}</section>}
             {filter === "today" && <h3 className="md-group-title">Today <span>{todayRows.length}</span></h3>}
             {layout==="week" ? weekView(todayRows) : todayRows.length ? (layout === "board" && filter !== "archived" ? board(todayRows) : list(todayRows)) : empty}
             {data && filter !== "today" && data.count > 60 && (
@@ -444,13 +469,7 @@ function MyDayContent() {
                 </section>}
                 {(upcoming.length > 0) && <section className="md-day-group" aria-label="Coming up">
                   <h3>Coming up <span>{upcoming.length}</span></h3>
-                  {upcoming.length ? (
-                    <div className="md-task-list">
-                      {upcoming.map((t) => card(t))}
-                    </div>
-                  ) : (
-                    <p>No upcoming tasks in the next seven days.</p>
-                  )}
+                  {list(upcoming)}
                 </section>}
                 {Boolean(extras.data?.waiting.length)&&<section className="md-day-group" aria-label="Waiting on others"><h3>Waiting on others</h3><ul className="md-waiting-list">{extras.data!.waiting.map(a=><li key={a.id}><div><strong>{a.title}</strong><span>{a.recipient_name} · {a.status==='accepted'?'Accepted':'To review'}{a.suggested_date?` · Suggested ${formatTaskDay(a.suggested_date,format)}`:''}</span></div><Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{setBusy(a.id);try{await daySuite('nudge',a.id);setMessage('Nudge sent.')}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Nudge</Button><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{if(!window.confirm('Withdraw this assignment?'))return;setBusy(a.id);try{await daySuite('cancel_assignment',a.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Withdraw</button></li>)}</ul></section>}
                 {(data?.covering ?? []).map((h) => (
@@ -487,13 +506,7 @@ function MyDayContent() {
                   <summary>
                     Done today <span>{data?.counts.done ?? done.length}</span>
                   </summary>
-                  {done.length ? (
-                    <div className="md-task-list">
-                      {done.map((t) => card(t))}
-                    </div>
-                  ) : (
-                    <p>No tasks completed today.</p>
-                  )}
+                  {list(done)}
                 </details>}
               </>
             )}
@@ -501,6 +514,7 @@ function MyDayContent() {
         )}
       </section>
       {extras.error&&<p className="field-error" role="alert">Task tools could not be loaded. <button className="md-text-button" onClick={extras.retry}>Retry task tools</button></p>}
+
       {teamOpen&&<TeamDayPanel/>}
       <footer className="md-footer"><button className="md-visibility" onClick={()=>access.current?.showModal()}>Who sees my tasks</button></footer>
       <CaptureSummary
@@ -527,12 +541,13 @@ function MyDayContent() {
         </details>
       )}
       {templates&&<TemplatePicker today={today} close={()=>setTemplates(false)} saved={()=>{setTemplates(false);setMessage('Task added from template.');refresh()}}/>}
-      {rules&&<RulesPanel close={()=>setRules(false)}/>}{planning&&<PlanMyDay close={()=>setPlanning(false)}/>}{calendar&&<CalendarPanel close={()=>setCalendar(false)} enabled={extras.data?.calendar_enabled??false}/>}{transfers&&<ImportExportPanel close={()=>setTransfers(false)}/>}
+      {rules&&<RulesPanel close={()=>setRules(false)}/>}{planning&&<PlanMyDay aiEnabled={extras.data?.flags.ai??false} close={()=>setPlanning(false)}/>}{calendar&&<CalendarPanel close={()=>setCalendar(false)} enabled={extras.data?.calendar_enabled??false}/>}{transfers&&<ImportExportPanel close={()=>setTransfers(false)}/>}
       {assignment&&<AssignmentPanel ids={assignment.ids} task={assignment.task} close={()=>setAssignment(null)} saved={()=>{setAssignment(null);setSelectedIds([]);setMessage('Sent for acceptance.');refresh()}}/>}{comments&&<TaskComments id={comments} close={()=>setComments(null)}/>}
+      {decisionFinish&&<DecisionReasonPrompt title={decisionFinish.title} close={()=>setDecisionFinish(null)} confirm={async reason=>{if(!await act(decisionFinish,"status",{status:"done",reason_reviewed:true,decision_reason:reason}))throw Error("Completion failed")}}/>}
       {editor && (
         <TaskPanel
           key={editor.task?.id ?? "new"}
-          task={editor.task}
+          task={editor.task} stepsFirst={editor.stepsFirst}
           today={today}
           close={() => setEditor(null)}
           saved={() => {

@@ -12,9 +12,11 @@ export function ConnectedTimeline() {
   useEffect(() => {
     const root = storyRef.current
     if (!root || typeof IntersectionObserver === 'undefined') return
+    const visible = new Map<Element, number>()
     const observer = new IntersectionObserver(entries => {
-      const candidates = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
-      if (candidates[0]) setActive(Number((candidates[0].target as HTMLElement).dataset.scrollStep ?? 0))
+      for(const entry of entries){if(entry.isIntersecting)visible.set(entry.target,entry.intersectionRatio);else visible.delete(entry.target)}
+      const candidates=[...visible].sort((a,b)=>b[1]-a[1])
+      if(candidates[0])setActive(Number((candidates[0][0] as HTMLElement).dataset.scrollStep??0))
     }, { rootMargin: '-28% 0px -35% 0px', threshold: [0.1, 0.25, 0.5, 0.75] })
     root.querySelectorAll<HTMLElement>('[data-scroll-step]').forEach(step => observer.observe(step))
     return () => observer.disconnect()
@@ -47,7 +49,7 @@ export function ConnectedTimeline() {
         </div>}
         <p className="rf-screen-foot">{selected.foot}</p>
       </div>
-      <div className="rf-screen-progress" aria-hidden="true"><span style={{ width: ((active + 1) * 25) + '%' }} /></div>
+      <div className="rf-screen-progress" aria-hidden="true"><span style={{ transform: `scaleX(${(active + 1) / 4})` }} /></div>
     </div>
   </div>
 }
@@ -56,7 +58,7 @@ export function CapabilityDemos() {
   const [showReason, setShowReason] = useState(false)
   const [status, setStatus] = useState(0)
   const [handover, setHandover] = useState(false)
-  const statuses = ['Open', 'In progress', 'Completed']
+  const statuses = ['To do', 'In progress', 'Done']
   return <div className="rf-capabilities">
     <article className="rf-feature"><span className="rf-feature-index">01</span><h3>Keep the reason with the decision</h3><p>See what changed and why, then open the action connected to it.</p><div className="rf-feature-demo"><small className="rs-example">Example</small><strong>Move supplier reviews to monthly</strong><p>Decision · 9 Nov 2026</p><button type="button" className="rs-text-link" aria-expanded={showReason} onClick={() => setShowReason(value => !value)}>{showReason ? 'Hide reason' : 'Show reason'}<span aria-hidden="true">→</span></button>{showReason && <div className="rf-linked-result"><span>Why: reduce meeting load and focus on key updates.</span><span>Next step: share the notes by 12 Nov 2026.</span></div>}</div></article>
     <article className="rf-feature"><span className="rf-feature-index">02</span><h3>Keep open work and dates in view</h3><p>Track the next action and its outcome instead of reconstructing a thread later.</p><div className="rf-feature-demo"><small className="rs-example">Example</small><strong>Share the review notes</strong><div className="rf-status-track">{statuses.map((label, index) => <span className={index === status ? 'rf-current-status' : ''} key={label}>{label}</span>)}</div><p aria-live="polite"><strong>{statuses[status]}</strong> · Due 12 Nov 2026</p><button type="button" className="rs-text-link" onClick={() => setStatus(value => (value + 1) % 3)}>Change example status<span aria-hidden="true">→</span></button></div></article>

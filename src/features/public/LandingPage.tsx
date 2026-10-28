@@ -38,15 +38,15 @@ function FAQ() {
 function ToolAvailability() {
   const tools = [
     { name: 'Paste email or notes', state: 'Available now', active: true },
-    { name: 'Gmail', state: 'Setup required' },
-    { name: 'Google Drive', state: 'Setup required' },
-    { name: 'Outlook', state: 'Setup required' },
-    { name: 'Microsoft Teams', state: 'Setup required' },
-    { name: 'Slack', state: 'Setup required' },
-    { name: 'Trello', state: 'Setup required' },
+    { name: 'Gmail', state: 'Available · Connect your account', active: true },
+    { name: 'Google Drive', state: 'Available · Connect your account', active: true },
+    { name: 'Outlook', state: 'Available · Connect your account', active: true },
+    { name: 'Microsoft Teams', state: 'Available · Connect your account', active: true },
+    { name: 'Slack', state: 'Available · Connect your account', active: true },
+    { name: 'Trello', state: 'Available · Connect your account', active: true },
   ]
   return <div className="rf-tools-status">
-    <div className="rf-tools-status-heading"><div><span className="rs-eyebrow">Source availability</span><h3>Start with a paste. Connect more when your setup is ready.</h3></div><p>Vimbre does not replace your tools. External connections require provider setup, consent and workspace configuration.</p></div>
+    <div className="rf-tools-status-heading"><div><span className="rs-eyebrow">Source availability</span><h3>Paste a conversation or connect your tools.</h3></div><p>Vimbre does not replace your tools. Choose Gmail, Google Drive, Outlook, Teams, Slack or Trello. Your company must allow the tool, and you approve account access.</p></div>
     <div className="rf-tool-availability">{tools.map(tool => <div className="rf-tool-status" key={tool.name}>
       <span className={'rf-tool-state-dot' + (tool.active ? ' rf-tool-state-live' : '')} aria-hidden="true" />
       <strong>{tool.name}</strong><span className={'rf-tool-state-label' + (tool.active ? ' rf-tool-state-live-label' : '')}>{tool.state}</span>
@@ -107,7 +107,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
   const to = authenticated ? '/app' : '/signup'
-  const cta = authenticated ? 'Open workspace' : 'Get started'
+  const cta = authenticated ? 'Open workspace' : 'Start free trial'
   const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
@@ -119,7 +119,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             <h1 id="hero-title" tabIndex={-1}>Turn conversations into <span>work people can pick up.</span></h1>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#how-it-works">See the 10-second walkthrough<Arrow /></a></div>
-            <p className="rf-hero-microcopy">Create a workspace first. No checkout at signup.</p>
+            <p className="rf-hero-microcopy">No card required. Check every AI draft before saving.</p>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
@@ -135,10 +135,10 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       </section>
       <AITrustBlock />
       <section id="handover" className="rs-section" aria-labelledby="cover-title"><div className="rs-container"><Reveal className="rs-section-heading"><span className="rs-eyebrow">Cover with context</span><h2 id="cover-title">A handover that starts with what matters.</h2><p>Preview an example handover. Change the date range to see the included records; real handovers use the information you choose to include.</p></Reveal><Reveal><HandoverExample /></Reveal></div></section>
-      <section id="tools" className="rs-section rs-tinted" aria-labelledby="tools-title"><div className="rs-container"><Reveal><ToolAvailability /></Reveal></div></section>
+      <section id="tools" className="rs-section rs-tinted" aria-label="Connected tools"><div className="rs-container"><Reveal><ToolAvailability /></Reveal></div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">See the price per person, not just per plan.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Growth is the most popular starting point.</p><p className="rf-pricing-start-note">Get started by creating a workspace. There is no checkout or card step on signup.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Transparent starting prices</span><h2 id="pricing-title">See the price per person, not just per plan.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the per-person price at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">Start a trial without a card. Paid subscriptions and checkout are not active yet.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
             {i === 1 && <span className="rf-popular-label">Most popular</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
@@ -152,7 +152,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         </div>
       </section>
       <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
-      <section className="rs-section rs-final" aria-labelledby="final-title" data-final-section><StreamMotif /><div className="rs-container"><Reveal><h2 id="final-title">Make the next handover easier.</h2><p>Start with the conversations, tasks and decisions your team already has. Build a clearer handover from there.</p><Link className="rs-button rs-button-white" to={to}>{authenticated ? 'Open workspace' : 'Get started'}<Arrow /></Link></Reveal></div></section>
+      <section className="rs-section rs-final" aria-labelledby="final-title" data-final-section><StreamMotif /><div className="rs-container"><Reveal><h2 id="final-title">Make the next handover easier.</h2><p>Start with the conversations, tasks and decisions your team already has. Build a clearer handover from there.</p><Link className="rs-button rs-button-white" to={to}>{authenticated ? 'Open workspace' : 'Start free trial'}<Arrow /></Link></Reveal></div></section>
       <ContactSection />
     </main>
     <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#features'], ['How it works', '#how-it-works'], ['Handover', '#handover'], ['Tools', '#tools'], ['FAQ', '#questions'], ['Pricing', '#pricing'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>

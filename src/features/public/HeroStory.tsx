@@ -1,3 +1,6 @@
+import {TaskCard} from '../my-day/TaskCard'
+import type {Task} from '../my-day/types'
+import '../my-day/my-day.css'
 import type { RefObject } from 'react'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 import { Button } from '../../components/ui/Button'
@@ -9,15 +12,14 @@ function DecisionFields() {
   return <dl className="rs-demo-fields">{record.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
 }
 
+const previewNow=new Date('2026-11-09T12:00:00Z')
+const noChange=()=>{}
 function DraftActions() {
-  const actions = [
-    ['Share the review notes', 'Alex', '12 Nov 2026'],
-    ['Schedule the monthly supplier review', 'Sam', '16 Nov 2026'],
-    ['Update the supplier review agenda', 'Alex', '20 Nov 2026'],
-  ]
-  return <ul className="rs-demo-action-list">{actions.map(([title, owner, due]) => <li className="rs-demo-action-row" key={title} data-draft-row>
-    <span className="rs-demo-action-check" aria-hidden="true">✓</span><div><strong>{title}</strong><p>Owner: {owner} · Due: {due}</p></div>
-  </li>)}</ul>
+ const rows=[['Share the review notes','Alex','2026-11-12'],['Schedule the monthly supplier review','Sam','2026-11-16'],['Update the supplier review agenda','Alex','2026-11-20']]
+ return <ul className="rs-demo-action-list">{rows.map(([title,owner,date],index)=>{
+  const task:Task={id:`example-${index}`,title,details:'',due_date:date,due_time:null,due_at:date+'T09:00:00Z',remind_at:'',status:'open',source_kind:'manual',source_url:null,completion_note:'',completed_at:null,deleted_at:null,department_id:null,external_contact_id:null,reminder_option:'at_time',context_added_at:null,context_kind:null,context_record_id:null}
+  return <li className="rs-demo-action-row rs-demo-product-row" key={title} data-draft-row><TaskCard task={task} zone="Europe/London" now={previewNow} busy act={noChange} edit={noChange} remind={noChange} context={noChange} quickContext={noChange} record={noChange} drag={noChange} inspect={noChange}/><small>Owner: {owner}</small></li>
+ })}</ul>
 }
 
 /** An illustrative, isolated preview. It never reads an inbox or submits app data. */

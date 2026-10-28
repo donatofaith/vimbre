@@ -1,0 +1,5 @@
+# My Day release, 27 October 2026
+
+Adds approved cover tasks to reviewed plans, separate calendar consent and primary-calendar busy intervals, personal duration suggestions, per-row accepted-plan controls, explicit due-today overflow review, private cover deferrals, decision completion prompts, task order labels and a linked progress strip. Keeps the approved navy header and centred forms.
+
+201 unit tests, lint, frontend/Edge type checks and production build passed. Database rollback checks passed for cover isolation, unchanged owner dates, decision reason saves, busy conflicts, learned durations, completed slots, idempotency and reminder deduplication. Browser acceptance was not run: the browser download returned a truncated archive. User explicitly requested deployment after being told this limitation. Google and Microsoft calendar consent still requires the account holder to approve access; provider API enablement/tenant policy may also be required. No paid model request or real email was used for verification.

@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {supabase} from '../../lib/supabase'
+import type {Json} from '../../lib/database.types'
+import {useAuth} from '../auth/AuthProvider'
+import {SegmentedControl} from '../../components/ui/SegmentedControl'
+import { useState,useEffect,useRef } from "react";
 import type { FormEvent } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -12,16 +16,23 @@ import { changeTask, taskError } from "./api";
 export function TaskPanel({
   task,
   draft,
+  stepsFirst=false,
   today,
   close,
   saved,
 }: {
   task?: Task;
+  stepsFirst?: boolean;
   draft?: StructuredDraft;
   today: string;
   close: () => void;
   saved: () => void;
 }) {
+  const {profile}=useAuth();
+  const formRef=useRef<HTMLFormElement>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0),closing=useRef(false);
+  const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal'),[status,setStatus]=useState(task?.status??'open'),[reminder,setReminder]=useState(task?.reminder_option??'at_time'),[duration,setDuration]=useState(task?.time_needed_minutes?String(task.time_needed_minutes):'');
+  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+  function schedule(){if(!task)return;changes.current++;setSaveState('Unsaved changes');if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>{if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setSaveState('Complete the required fields to save.');},800)}
   const [date, setDate] = useState(
       task ? task.due_date??"" : (draft ? draft.due_date || "" : today),
     ),
@@ -53,6 +64,7 @@ export function TaskPanel({
     if (busy) return;
     setBusy(true);
     setError("");
+    const savingRevision=changes.current;
     const fd = new FormData(event.currentTarget),
       get = (k: string) => String(fd.get(k) ?? "").trim();
     const url = get("source_url"), links=get("links").split("\n").map(s=>s.trim()).filter(Boolean);
@@ -62,14 +74,14 @@ export function TaskPanel({
       return;
     }
     try {
-      await changeTask(id, task ? "edit" : "create", {
+      const payload={
         title: get("title"),
-        base_updated_at: task?.updated_at,
+        base_updated_at: version.current,
         due_date: date,
         due_time: date?time:"",
         details: get("details"),
         status: get("status"),
-        priority: "normal",
+        priority,
         time_needed_minutes: get("time_needed_minutes")?Number(get("time_needed_minutes")):null,
         label: get("label"),
         steps: get("steps").split("\n").map(s=>s.trim()).filter(Boolean),
@@ -80,20 +92,26 @@ export function TaskPanel({
         department_id: forValue?.kind === "department" ? forValue.id : null,
         external_contact_id: forValue?.kind === "contact" ? forValue.id : null,
         source_kind: task?.source_kind ?? (draft ? "ai" : "manual"),
-      });
-      saved();
+      };
+      if(task&&!navigator.onLine){await changeTask(id,'edit',payload);savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(closing.current)saved();}
+      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(closing.current&&changes.current===savingRevision)saved();}
+      else {await changeTask(id,'create',payload);saved();}
     } catch (reason) {
-      setError(taskError(reason));
+      setError(taskError(reason));setSaveState('Changes not saved');closing.current=false;
     } finally {
       setBusy(false);
+      if(task&&changes.current!==savingRevision){if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>formRef.current?.requestSubmit(),800)}
     }
   }
+  function finish(){if(task&&changes.current!==savedChanges.current){closing.current=true;if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setError('Complete the required fields before closing.');}else close()}
+  const controlled=JSON.stringify([date,time,forValue,priority,status,reminder,duration]),lastControlled=useRef(controlled);
+  useEffect(()=>{if(lastControlled.current!==controlled){lastControlled.current=controlled;schedule()}},[controlled]);
   return (
     <RoleDrawer
       context="My day"
       className="md-task-drawer"
       title={task ? "Edit task" : "Add a task"}
-      close={close}
+      close={finish}
     >
       <section className="md-task-panel">
         <h2>{task ? "Edit task" : "Add a task"}</h2>
@@ -102,7 +120,7 @@ export function TaskPanel({
             Draft from Vimbre AI. Check before saving.
           </p>
         )}
-        <form className="auth-form" onSubmit={save}>
+        <form ref={formRef} className="auth-form" onSubmit={save} onInput={schedule} onChange={schedule}>
           <Input
             autoFocus
             data-autofocus=""
@@ -138,6 +156,12 @@ export function TaskPanel({
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
+          <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
+          <div className="field"><span>Priority</span><SegmentedControl label="Priority" value={priority} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'}]} onChange={setPriority}/></div>
+          <div className="field"><label htmlFor={`md-notes-${id}`}>Notes</label><textarea id={`md-notes-${id}`} name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></div>
+          <details className="md-more" open={stepsFirst||undefined}>
+            <summary>More options</summary>
+            <div className="auth-form">
           <Input
             label="Time (optional)"
             disabled={!date}
@@ -150,45 +174,13 @@ export function TaskPanel({
             value={forValue}
             onChange={setFor}
           />
-          <details className="md-more" open={task ? true : undefined}>
-            <summary>More options</summary>
-            <div className="auth-form">
               <div className="field">
-                <label htmlFor="md-details">Details</label>
-                <textarea
-                  id="md-details"
-                  name="details"
-                  rows={4}
-                  maxLength={5000}
-                  defaultValue={task?.details ?? draft?.details}
-                />
+                <span>Status</span>
+                <input type="hidden" name="status" value={status}/><SegmentedControl label="Status" value={status} onChange={setStatus} options={[{value:'open',label:'To do'},{value:'in_progress',label:'In progress'},{value:'done',label:'Done'}]}/>
               </div>
               <div className="field">
-                <label htmlFor="md-status">Status</label>
-                <select
-                  id="md-status"
-                  name="status"
-                  disabled={!task}
-                  defaultValue={task?.status ?? "open"}
-                >
-                  <option value="open">To do</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="done">Done</option>
-                  {task && <option value="archived">Deleted</option>}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="md-reminder">Remind me</label>
-                <select
-                  id="md-reminder"
-                  name="reminder_option"
-                  defaultValue={task?.reminder_option ?? "at_time"}
-                >
-                  <option value="at_time">At due time</option>
-                  <option value="30_minutes">30 minutes before</option>
-                  <option value="1_hour">1 hour before</option>
-                  <option value="day_before">The day before at 9:00</option>
-                </select>
+                <span>Remind me</span>
+                <input type="hidden" name="reminder_option" value={reminder}/><SegmentedControl label="Remind me" value={reminder} onChange={setReminder} options={[{value:'at_time',label:'At due time'},{value:'30_minutes',label:'30 minutes before'},{value:'1_hour',label:'1 hour before'},{value:'day_before',label:'The day before at 9:00'}]}/>
               </div>
               <div className="field">
                 <label htmlFor="md-cover-note">
@@ -203,7 +195,7 @@ export function TaskPanel({
                 />
               </div>
               <Input label="Label" name="label" maxLength={80} defaultValue={task?.label??""}/>
-              <label className="field">Time needed<select aria-label="Time needed" name="time_needed_minutes" defaultValue={task?.time_needed_minutes??""}><option value="">Not set</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option></select><span className="field-hint">For planning. No time tracking.</span></label>
+              <div className="field"><span>Time needed</span><input type="hidden" name="time_needed_minutes" value={duration}/><SegmentedControl label="Time needed" value={duration} onChange={setDuration} options={[{value:'15',label:'15 minutes'},{value:'30',label:'30 minutes'},{value:'60',label:'1 hour'},{value:'120',label:'2 hours'}]}/>{duration&&<Button variant="secondary" onClick={()=>setDuration('')}>Clear estimate</Button>}<span className="field-hint">Your estimate takes priority over your usual task duration.</span></div>
               <label className="field">Steps<textarea name="steps" rows={4} maxLength={5000} defaultValue={(task?.steps??[]).join("\n")} placeholder="One step per line"/></label>
               <label className="field">Links<textarea name="links" rows={3} maxLength={5000} defaultValue={(task?.links??[]).join("\n")} placeholder="One https link per line"/></label>
               <Input
@@ -221,12 +213,7 @@ export function TaskPanel({
             </p>
           )}
           <div className="md-panel-actions">
-            <Button type="submit" disabled={busy}>
-              {busy ? "Saving…" : "Save task"}
-            </Button>
-            <Button variant="secondary" onClick={close} disabled={busy}>
-              Cancel edit
-            </Button>
+            {task?<><span role="status">{busy?'Saving…':saveState||'Saved'}</span>{error&&<><Button variant="secondary" type="submit" disabled={busy}>Retry save</Button><Button variant="secondary" onClick={()=>{if(window.confirm('Discard your unsaved changes?'))close()}}>Discard unsaved changes</Button></>}</>:<><Button type="submit" disabled={busy}>{busy?'Saving…':'Save task'}</Button><Button variant="secondary" onClick={close} disabled={busy}>Cancel</Button></>}
           </div>
         </form>
       </section>

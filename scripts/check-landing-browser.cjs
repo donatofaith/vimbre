@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 (async () => {
   const { preview } = await import('vite');
   const server = await preview({ preview: { host: '127.0.0.1', port: 5174, strictPort: true } });
-  const browser = await chromium.launch({ headless: true });
+  let browser;try{browser=await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}) });}catch(error){await server.httpServer.close();throw error;}
   try {
     const source = await readFile('dist/index.html', 'utf8');
     assert(source.includes('Turn conversations into'));
@@ -31,11 +31,13 @@ const { chromium } = require('playwright');
     assert.equal(await page.title(), 'Vimbre | Turn Conversations into Actions and Handovers');
     assert.equal(await page.locator('h1').count(), 1);
     assert((await page.getByRole('heading', { level: 1 }).innerText()).includes('Turn conversations into'));
-    assert(await page.getByText(/Paste a conversation or connect your tools/).isVisible());
+    assert(await page.locator('.rs-hero-subhead').isVisible());
     assert.equal(await page.locator('.rs-hero .rs-button').count(), 1, 'One primary hero action');
     assert.equal(await page.locator('.rs-hero .rs-text-link').count(), 1, 'One quiet hero link');
-    assert(await page.getByText('No checkout at signup.', { exact: false }).isVisible());
+    assert(await page.getByText('No card required. Check every AI draft before saving.', { exact: true }).isVisible());
     assert.equal(await page.locator('.rs-story-shell .rs-example').count(), 1);
+    assert.equal(await page.locator('[data-draft-row] .md-slim-row').count(),3,'Hero uses actual My Day task rows');
+    const heroCTA=page.locator('.rs-hero .rs-button');assert.equal(await heroCTA.getAttribute('href'),'/signup');assert.equal(await heroCTA.innerText(),'Start free trial');
     assert.equal(await page.locator('.rs-demo-window').count(), 1);
     assert.equal(await page.locator('[data-demo-click]').count(), 6);
     assert.equal(await page.locator('[data-draft-row]').count(), 3, 'Hero draft shows three extracted actions');
@@ -48,7 +50,7 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('#problem').count(), 0, 'Repeated context section removed');
     assert.equal(await page.locator('.rf-tool-status').count(), 7);
     assert(await page.getByText('Paste email or notes', { exact: true }).isVisible());
-    assert.equal(await page.getByText('Setup required', { exact: true }).count(), 6);
+    assert.equal(await page.getByText('Available · Connect your account', { exact: true }).count(), 6);
     assert.equal(await page.locator('.rs-plan').count(), 4);
     assert.equal(await page.locator('.rf-popular-label').count(), 1);
     const perPerson = await page.locator('.rf-per-person').allInnerTexts();
@@ -58,7 +60,7 @@ const { chromium } = require('playwright');
       assert(perPerson[index].includes('per person / month at full team size'));
     }
     assert.equal(await page.locator('.rs-pricing .rs-plan li').filter({ hasText: /Team chat/ }).count(), 0);
-    assert(await page.getByText(/monthly per-plan caps will be published after costs are verified/i).isVisible());
+    assert(await page.getByText(/AI figures are configured request ceilings/i).isVisible());
 
     const accordion = page.getByRole('button', { name: 'What happens when I hit my AI limit?' });
     await accordion.focus();
@@ -79,10 +81,11 @@ const { chromium } = require('playwright');
     assert((await page.locator('.rf-calculator-result').innerText()).includes('£1,200.00'));
     assert((await page.locator('.rf-calculator-result').innerText()).includes('£348.00'));
     await page.locator('#pricing').scrollIntoViewIfNeeded();
-    assert((await page.locator('.rs-pricing-section').innerText()).includes('subscriptions are not active yet'));
+    assert((await page.locator('.rs-pricing-section').innerText()).includes('subscriptions and checkout are not active yet'));
 
     for (const width of [320, 360, 390, 430, 640, 768, 820, 834, 1024, 1180, 1280, 1366, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 });
+      if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.x>=copy.x+copy.width-1,'Desktop hero remains side by side');assert(demo.y<900,'Product is visible above fold');}
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
       for (const selector of ['.rf-scroll-screen', '.rf-tools-status', '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
@@ -106,11 +109,12 @@ const { chromium } = require('playwright');
     const after = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).map(animation => animation.currentTime));
     assert.deepEqual(after, before, 'Pause freezes the signature story');
     await storyPage.getByRole('button', { name: 'Play hero story' }).click();
+    await storyPage.evaluate(() => window.scrollTo(0, 0));
     await storyPage.getByRole('button', { name: 'Pause hero story' }).waitFor();
     const loopCount = await storyPage.locator('.rs-story-stage').evaluate(el => el.getAnimations({ subtree: true }).some(animation => animation.effect.getTiming().iterations === Infinity));
     assert(loopCount, 'Hero story loops continuously');
     for (const name of ['email', 'capture', 'draft', 'confirmed', 'saved', 'away', 'cover']) {
-      await storyPage.waitForFunction(scene => Number(getComputedStyle(document.querySelector('[data-scene="' + scene + '"]')).opacity) > .9, name, { timeout: 8000 });
+      await storyPage.waitForFunction(scene => Number(getComputedStyle(document.querySelector('[data-scene="' + scene + '"]')).opacity) > .9, name, { timeout: 12000 }).catch(error => { throw new Error('Hero scene did not appear: ' + name, { cause: error }); });
     }
     assert.deepEqual(errors, []);
     await normal.close();

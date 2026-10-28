@@ -249,3 +249,41 @@
 .rf-wide-demo .rs-demo-cover-title{font-size:20px!important;line-height:1.2;margin-top:4px}
 .rs-demo-cover-grid .card small{display:block;font-size:11px;color:#64748b;margin-top:8px}
 @media(max-width:389px){.rf-wide-demo .rs-demo-cover-title{font-size:18px!important}}
+
+/* Retain the deployed workspace-wide control and card scale. */
+.rs-container{width:min(1120px,calc(100% - 48px))}
+.rs-site .rs-button{min-height:36px;padding:0 14px;border-radius:8px;font-size:14px;font-weight:500;gap:8px}
+.rs-site .rs-button svg{width:16px;height:16px}
+.rs-site .rs-plan{padding:16px;border-radius:12px;box-shadow:none}
+@media(max-width:640px){.rs-container{width:calc(100% - 32px)}}
+@media(pointer:coarse){.rs-site .rs-button,.rs-site button{min-height:44px}}
+/* Client hero: a visible product beside the copy, with the approved mobile stack. */
+.rs-site .rf-hero{padding:32px 0 52px}
+.rs-site .rf-hero .rs-hero-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:32px;align-items:center}
+.rs-site .rf-hero .rs-hero-copy{text-align:left;max-width:none}
+.rs-site .rf-hero h1{font-size:clamp(36px,3.8vw,56px);text-align:left;margin:0;max-width:18ch}
+.rs-site .rf-hero .rs-hero-subhead{margin:18px 0 0;max-width:44ch;font-size:18px!important;line-height:1.5}
+.rs-site .rf-hero .rs-actions{justify-content:flex-start}
+.rs-site .rf-hero .rf-wide-demo{width:100%;min-width:0}
+@media(max-width:767px){.rs-site .rf-hero{padding:24px 0 48px}.rs-site .rf-hero .rs-hero-grid{grid-template-columns:minmax(0,1fr);gap:24px}.rs-site .rf-hero h1{font-size:clamp(30px,7.6vw,40px)}.rs-site .rf-hero .rs-hero-subhead{font-size:16px!important}}
+
+.rs-site{--rs-ease:cubic-bezier(.22,1,.36,1)}
+.rs-site .rs-reveal.rs-pending:not(.rs-visible){opacity:1;transform:none}
+.rs-site .rs-pending:not(.rs-visible) .rs-headline-line>span{opacity:1;transform:none}
+.rs-site .rs-visible .rs-headline-line>span{transition:opacity 500ms var(--rs-ease),transform 500ms var(--rs-ease)}
+.rs-site .rf-screen-progress span{width:100%!important;transform-origin:left;transition:transform 500ms var(--rs-ease)}
+.rs-site :is(.rs-button,.rs-text-link){transition:transform 500ms var(--rs-ease)}
+.rs-site :is(.rs-button,.rs-text-link) svg{transition:transform 500ms var(--rs-ease)}
+.rs-site :is(.rs-button,.rs-text-link):hover{transform:translateY(-2px)}
+.rs-site :is(input,select){box-sizing:border-box}
+@media(prefers-reduced-motion:reduce){.rs-site *,.rs-site *:before,.rs-site *:after{animation:none!important;transition:none!important}.rs-site :is(.rs-button,.rs-text-link):hover{transform:none}}
+
+.rs-site .rs-demo-product-row{display:block;padding:8px 0}
+.rs-site .rs-demo-product-row .md-slim-row{display:grid;grid-template-columns:24px minmax(0,1fr) 92px;gap:8px;padding:10px 8px;min-height:48px;background:#fffdf8;border:1px solid #dbe4ef;border-radius:10px;box-shadow:none}
+.rs-site .rs-demo-product-row .md-task-title{font:600 13px/1.4 var(--body-font);text-align:left;white-space:normal;overflow:visible;padding:0;min-height:36px;color:var(--navy);border:0;background:transparent}
+.rs-site .rs-demo-product-row time{font-size:11px;line-height:1.4;color:#526579}
+.rs-site .rs-demo-product-row>small{display:block;font-size:11px;color:#526579;padding:4px 0 0 40px}
+@media(max-width:389px){.rs-site .rs-demo-product-row .md-slim-row{grid-template-columns:20px minmax(0,1fr)}.rs-site .rs-demo-product-row time{grid-column:2}}
+
+/* Keep the playback icon within its control and inside the visible hero. */
+.rs-story-control svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2}
