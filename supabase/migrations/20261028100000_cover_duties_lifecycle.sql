@@ -224,7 +224,7 @@ returns jsonb language plpgsql security definer set search_path='' as $function$
 declare
   u uuid:=auth.uid(); c uuid:=private.current_company_id(); me public.profiles; h public.work_handovers;
   pol private.handover_policy; item_id uuid; body text; reason text; decision text; suggested uuid;
-  task_row public.actions; full_access boolean; cover_count integer:=0; counts_json jsonb;
+  task_row public.actions; full_access boolean; cover_count integer:=0; counts_json jsonb; suggested_name text;
   department uuid; row_json jsonb; ai_summary text;
 begin
   if u is null or c is null then raise insufficient_privilege; end if;
@@ -386,11 +386,12 @@ begin
     end if;
     suggested:=nullif(p_data->>'suggested_person_id','')::uuid;
     if suggested is not null and not exists(select 1 from public.profiles p where p.id=suggested and p.company_id=c and p.active and p.id<>h.owner_id and p.id<>u) then raise check_violation using message='Choose an active colleague as a suggestion.'; end if;
+    select full_name into suggested_name from public.profiles where id=suggested and company_id=c;
     update public.work_handovers set cover_response='declined',cover_declined_at=now(),cover_decline_reason=body,cover_suggested_id=suggested,updated_at=now() where id=h.id;
     insert into private.handover_notifications(handover_id,owner_id,message)
-      values(h.id,h.owner_id,me.full_name||' declined the cover request: '||left(body,400));
+      values(h.id,h.owner_id,me.full_name||' declined the cover request: '||left(body,400)||case when suggested is not null then '. Suggested cover: '||coalesce(suggested_name,'a colleague') else '' end);
     if h.reviewer_id is not null then insert into private.handover_notifications(handover_id,owner_id,message)
-      values(h.id,h.reviewer_id,me.full_name||' declined the cover request.'); end if;
+      values(h.id,h.reviewer_id,me.full_name||' declined the cover request.'||case when suggested is not null then ' Suggested cover: '||coalesce(suggested_name,'a colleague')||'. Reason: '||left(body,300) else ' Reason: '||left(body,300) end); end if;
     perform private.handover_event(h.id,'cover_declined');
     return private.handover_cover_brief(h.id,u);
 
