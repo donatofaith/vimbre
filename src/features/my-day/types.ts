@@ -96,6 +96,7 @@ export type DayData = {
     steps?: string[];
     links?: string[];
     source_not_shared?: boolean;
+    source_is_manual?: boolean;
     owner_id: string;
     owner_name: string;
   }[];
