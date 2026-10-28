@@ -1627,3 +1627,13 @@
 @media(max-width:760px){.md-accepted-plan>li{flex-direction:column}.md-accepted-plan .form-actions{width:100%;flex-wrap:wrap}.md-stars-strip{gap:12px}.md-plan-postpone{align-items:stretch}.md-plan-postpone .field{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.md-completion-pending{animation:none}}
 .md-work-section:has(.md-plan-focus)>:not(.md-plan-focus){display:none}
+
+
+/* Cover requests shown in My Day > To review. */
+.md-review-draft.md-cover-request{border-color:#ead8ab;background:#fffaf0}
+.md-review-draft.md-cover-request>h4{font-size:16px;line-height:1.45}
+.md-review-draft.md-cover-request>p{font-size:14px;line-height:1.55}
+.md-review-draft.md-cover-request .md-expanded-actions{display:flex;flex-wrap:wrap;gap:8px}
+.md-review-draft.md-cover-request .md-expanded-actions a{display:inline-flex;align-items:center;min-height:44px;padding:9px 12px;border-radius:8px;color:#315e9f;font-size:13px;font-weight:700;text-decoration:none}
+.md-review-draft.md-cover-request .md-expanded-actions a:focus-visible{outline:2px solid #2464c5;outline-offset:3px}
+@media(max-width:640px){.md-review-draft.md-cover-request .md-expanded-actions{display:grid;grid-template-columns:1fr}.md-review-draft.md-cover-request .md-expanded-actions>*{width:100%}}
