@@ -136,6 +136,9 @@ const { chromium } = require('playwright');
     assert.deepEqual(await storyPage.locator('[data-scene=draft]').evaluate(el=>el.getAnimations().map(a=>a.currentTime)),offscreenBefore,'Offscreen hero pauses');
     assert.equal(await storyPage.locator('[data-draft-row]').count(),3,'The same three task rows survive into the handover');
     assert.deepEqual(errors, []);
+    await storyPage.emulateMedia({reducedMotion:'reduce'});
+    await storyPage.waitForFunction(()=>getComputedStyle(document.querySelector('[data-scene=email]')).opacity==='1');
+    assert.equal(await storyPage.locator('.rs-story-control').isVisible(),false,'Changing to reduced motion restores a static source frame');
     await normal.close();
 
     const noJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });

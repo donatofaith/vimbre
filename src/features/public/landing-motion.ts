@@ -31,9 +31,9 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   hero.pause()
   all.add(hero)
   const restore = () => {
-    shell.dataset.storyComplete = 'true'
+    delete shell.dataset.storyComplete
     hero.cancel()
-    shell.querySelectorAll<HTMLElement>('.rs-story-stage, [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-demo-click], [data-cover-highlight], [data-story-resolution], .rs-demo-next, .rs-demo-save, .rs-demo-capture-button, .rs-demo-cover-button').forEach(el => {
+    shell.querySelectorAll<HTMLElement>('.rs-story-stage, [data-signature-paper], [data-scene], [data-phrase], [data-draft-row], [data-cover-row], [data-capture-dot], [data-demo-cursor], [data-demo-click], [data-cover-highlight], [data-story-resolution], .rs-demo-next, .rs-demo-save, .rs-demo-capture-button, .rs-demo-cover-button').forEach(el => {
       el.style.removeProperty('opacity')
       el.style.removeProperty('transform')
     })
