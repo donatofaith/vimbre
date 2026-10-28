@@ -46,3 +46,18 @@
   }
   .vw-shell.app-shell .ho-heading--workspace .button{justify-self:start;width:auto;max-width:100%}
 }
+
+
+/* Cover suggestions use the same compact, readable workspace controls. */
+.ho-cover-suggestions{display:grid;gap:10px;padding:14px;border:1px solid #dbe5f0;border-radius:12px;background:#f7faff}
+.ho-cover-suggestions>strong{font-size:14px;color:#102a43}
+.ho-cover-suggestions>p{margin:0}
+.ho-cover-suggestions>div{display:grid;gap:8px}
+.ho-cover-suggestions>div>button{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:56px;padding:10px 12px;border:1px solid #d8e3ef;border-radius:10px;background:#fff;color:#102a43;font:inherit;text-align:left;cursor:pointer}
+.ho-cover-suggestions>div>button[aria-pressed=true]{border-color:#2464c5;background:#edf4ff}
+.ho-cover-suggestions>div>button>span:first-child{display:grid;gap:4px}
+.ho-cover-suggestions b{font-size:14px}
+.ho-cover-suggestions small{font-size:12px;line-height:1.45;color:#60758a}
+.ho-cover-score{flex:none;font-size:11px;color:#315e9f}
+.ho-cover-suggestions button:focus-visible{outline:2px solid #2464c5;outline-offset:3px}
+@media(max-width:640px){.ho-cover-suggestions>div>button{align-items:flex-start;flex-direction:column}.ho-cover-score{white-space:normal}}
