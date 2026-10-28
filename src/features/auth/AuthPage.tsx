@@ -1,4 +1,4 @@
-import {billingReturnPath} from '../billing/return-path'
+import {billingReturnPath,billingSignupCallback} from '../billing/return-path'
 import { myDayReturnPath } from './return-path'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
@@ -157,7 +157,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         type: 'signup',
         email: signupEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback${new URLSearchParams(location.search).get('plan')&&billingReturnPath(location.search)!=='/app'?'?plan='+new URLSearchParams(location.search).get('plan'):''}`,
+          emailRedirectTo: billingSignupCallback(window.location.origin,location.search),
         },
       })
 
@@ -214,7 +214,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
               full_name: name,
               company_name: company,
             },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: billingSignupCallback(window.location.origin,location.search),
           },
         })
 

@@ -1,3 +1,15 @@
+# Live billing release activated — 28 October 2026
+
+Owner approved the separate billing reminder dispatcher and final activation. Installed migrations: 20261028111439_stripe_live_billing, 20261028112037_hold_live_billing_activation, 20261028112442_billing_trial_dispatch, 20261028112840_activate_live_billing. The hold is now lifted. stripe-billing v9 enables live Checkout; ai-run v29, my-day-mail v19 and billing-mail v3 retain their authentication boundaries.
+
+Readiness evidence: installed billing/trial SQL acceptance passed. The private every-minute billing reminder cron is active. An authenticated no-send probe returned HTTP200 with ready=true, emails_sent=0 and verified the configured Brevo sender. The live signed webhook probe returned HTTP200 and verified all three live prices and portal, created and immediately expired a card-required 3-day Checkout draft, and reported charges_made=0. A real card charge or customer email was not used as a test. The initial forced-send probe was rejected by automatic review and replaced with this no-send verification.
+
+213 unit tests, lint, app/Edge types and build passed before activation; the focused signup handoff tests also pass. Signup confirmation now returns to billing with an allowlisted selected plan; accounts without a selected plan choose one before starting the card-required trial. Public trial CTAs lead to pricing. The trial starts only after card-confirmed Checkout, runs once for 3 days, and charges the monthly rate unless cancelled. Confirmation and 24-hour reminder emails are scheduled; manual work remains available if payment fails and AI pauses.
+
+Stripe Tax registrations were inspected: none are configured, and automatic tax remains off. Client/accountant must confirm whether VAT or other tax needs to be collected before broad public launch; this release does not assert tax compliance or add an unapproved tax charge. Technical payment readiness does not establish completion of the client's non-payment launch obligations.
+
+Historical preparation and hold notes follow; this status supersedes their pending-release wording.
+
 # Release status — live checkout held
 
 Owner approved the live release. Migration 20261028111439 is installed; installed-schema acceptance passed. ai-run v29, my-day-mail v19 and stripe-billing v7 are deployed with existing authentication preserved. Live signature endpoint rejects unsigned requests (400); existing email credentials are configured (invalid scheduler token returns401, not missing-config503). No real customer was charged or mailed during checks.

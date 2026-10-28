@@ -33,6 +33,15 @@ async function webhook(req:Request){
  let event:Stripe.Event
  try{event=await stripe.webhooks.constructEventAsync(raw,req.headers.get('stripe-signature')??'',secret,300,Stripe.createSubtleCryptoProvider())}catch{return new Response(null,{status:400})}
  if(event.livemode===sandbox)return new Response(null,{status:400})
+ if(String(event.type)==='vimbre.readiness'){
+   try{
+     for(const plan of Object.values(plans)){const price=await stripe.prices.retrieve(plan.price);if(price.livemode===sandbox||!price.active||price.currency!=='gbp'||price.unit_amount!==plan.amount)throw Error('Price mismatch')}
+     const portal=await stripe.billingPortal.configurations.retrieve(PORTAL_CONFIGURATION);if(!portal.active||portal.livemode===sandbox)throw Error('Portal mismatch')
+     const draft=await stripe.checkout.sessions.create({mode:'subscription',line_items:[{price:plans.starter.price,quantity:1}],payment_method_collection:'always',subscription_data:{trial_period_days:3},success_url:returnUrl,cancel_url:returnUrl,integration_identifier:'vimbre_readiness_'+Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>String.fromCharCode(97+n%26)).join(''),metadata:{application:'vimbre',readiness_probe:'true'}})
+     await stripe.checkout.sessions.expire(draft.id)
+     return Response.json({ready:true,prices:3,portal:true,draft_checkout_expired:true,charges_made:0})
+   }catch{return Response.json({ready:false,error:'Stripe live configuration check failed.'},{status:503})}
+ }
  if(!acceptedEvents.has(event.type))return Response.json({ignored:true})
  try{
    let id:string|undefined

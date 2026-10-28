@@ -72,7 +72,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     compact.addEventListener('change', start)
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
-  const to = authenticated ? '/app' : '/signup'
+  const to = authenticated ? '/app' : '/#pricing'
   const cta = authenticated ? 'Open workspace' : 'Start free trial'
   const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   return <div className="rs-site" data-theme="light" ref={root}>
@@ -98,7 +98,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       </div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">3 days free. Card required. Cancel before the trial ends to avoid being charged. Live checkout is not active yet.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">3 days free. Card required. Cancel before the trial ends to avoid being charged.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
             {i === 1 && <span className="rf-popular-label">More AI requests</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>

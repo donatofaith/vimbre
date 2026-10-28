@@ -11,6 +11,13 @@ Deno.serve(async req=>{
  const auth=await service.rpc('billing_trial_authorize',{p_hash:hash})
  if(auth.error||auth.data!==true)return new Response(null,{status:401})
  if(!key||!sender)return new Response('Billing email is not configured',{status:503})
+ let input:{probe?:boolean}={};try{input=await req.json()}catch{}
+ if(input.probe===true){
+  const response=await fetch('https://api.brevo.com/v3/senders',{headers:{'api-key':key},signal:AbortSignal.timeout(10000)})
+  if(!response.ok)return Response.json({ready:false,reason:'Email provider verification failed',provider_status:response.status},{status:503})
+  const result=await response.json();const active=Array.isArray(result.senders)&&result.senders.some((item:{email?:string;active?:boolean})=>item.email?.toLowerCase()===sender.toLowerCase()&&item.active)
+  return Response.json({ready:active,emails_sent:0},{status:active?200:503})
+ }
  EdgeRuntime.waitUntil(deliverBillingTrials({rpc:async(action,id,state)=>{const r=await service.rpc('billing_trial_delivery',{p_action:action,p_id:id??null,p_state:state??null});if(r.error)throw Error('Billing reminder queue unavailable');return r.data},send:job=>fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'Content-Type':'application/json','api-key':key},body:JSON.stringify({sender:{email:sender,name:'Vimbre'},to:[{email:job.email,name:job.name}],subject:job.title,textContent:job.body,headers:{'Idempotency-Key':job.id},replyTo:{email:'support@vimbre.com',name:'Vimbre Support'}}),signal:AbortSignal.timeout(15000)})}).catch(()=>{console.warn('Billing reminder delivery requires review')}))
  return new Response(null,{status:202})
 })
