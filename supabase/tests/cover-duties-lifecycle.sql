@@ -48,6 +48,38 @@ begin
 
   j:=public.cover_duties_action('accept',h,'{}'::jsonb);
   if j->'handover'->>'cover_response'<>'accepted' then raise exception 'Cover acceptance did not persist'; end if;
+  update public.actions
+    set source_kind='slack',source_url='https://slack.example.test/thread/123',source_excerpt='PRIVATE SOURCE EXCERPT MUST NEVER LEAK'
+    where id=current_setting('test.cover_task_two')::uuid;
+  j:=public.cover_duties_action('get',h,'{}'::jsonb);
+  if j::text like '%PRIVATE SOURCE EXCERPT MUST NEVER LEAK%' or j::text like '%slack.example.test%' then
+    raise exception 'An unshared source excerpt or URL leaked into the cover briefing';
+  end if;
+  if not exists(select 1 from jsonb_array_elements(j->'tasks') task
+    where task->>'id'=current_setting('test.cover_task_two') and task->>'source_not_shared'='true') then
+    raise exception 'An unshared source is missing its Source not shared marker';
+  end if;
+
+  perform public.cover_duties_action('task_edit',h,jsonb_build_object(
+    'task_id',current_setting('test.cover_task_two'),'title','Update the agenda','due_date',current_date+2,'due_time','10:30'
+  ));
+  if not exists(select 1 from public.actions
+    where id=current_setting('test.cover_task_two')::uuid and owner_id=current_setting('test.employee')::uuid
+      and title='Update the agenda' and due_date=current_date+2 and due_time='10:30'::time
+      and source_excerpt='PRIVATE SOURCE EXCERPT MUST NEVER LEAK') then
+    raise exception 'Cover task editing changed the wrong record or lost its source metadata';
+  end if;
+
+  if not exists(select 1 from private.work_reminder_rows('Europe/London')
+    where source_kind='task' and source_id=current_setting('test.cover_task_two')::uuid) then
+    raise exception 'Accepted cover did not receive the covered task reminder row';
+  end if;
+  perform set_config('request.jwt.claim.sub',current_setting('test.employee'),true);
+  if exists(select 1 from private.work_reminder_rows('Europe/London')
+    where source_kind='task' and source_id=current_setting('test.cover_task_two')::uuid) then
+    raise exception 'Owner still receives the due reminder during active cover';
+  end if;
+  perform set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
   if (select count(*) from public.actions where id in(current_setting('test.cover_task_one')::uuid,current_setting('test.cover_task_two')::uuid) and owner_id=current_setting('test.employee')::uuid)<>2 then
     raise exception 'Cover created duplicate tasks or changed ownership';
   end if;
