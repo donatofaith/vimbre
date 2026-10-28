@@ -33,22 +33,30 @@ begin
     'public.myday_tasks(text,text,text,integer,uuid,uuid,text,text)'::regprocedure
   );
 
-  if position(trim(task_old) in task_definition) = 0 then
+  if position(btrim(task_old, E' \n\r\t') in task_definition) = 0 then
     raise exception 'Could not locate the expected handover reviewer filter in public.myday_tasks';
   end if;
 
-  task_definition := replace(task_definition, trim(task_old), trim(task_new));
+  task_definition := replace(
+    task_definition,
+    btrim(task_old, E' \n\r\t'),
+    btrim(task_new, E' \n\r\t')
+  );
   execute task_definition;
 
   suite_definition := pg_get_functiondef(
     'private.myday_suite_role_notice_base(text,uuid,jsonb)'::regprocedure
   );
 
-  if position(trim(away_old) in suite_definition) = 0 then
+  if position(btrim(away_old, E' \n\r\t') in suite_definition) = 0 then
     raise exception 'Could not locate the expected away-draft filter in private.myday_suite_role_notice_base';
   end if;
 
-  suite_definition := replace(suite_definition, trim(away_old), trim(away_new));
+  suite_definition := replace(
+    suite_definition,
+    btrim(away_old, E' \n\r\t'),
+    btrim(away_new, E' \n\r\t')
+  );
   execute suite_definition;
 end
 $$;
