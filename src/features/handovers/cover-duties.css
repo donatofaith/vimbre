@@ -185,7 +185,7 @@ details.cd-brief-section>summary span{margin-left:auto;padding:4px 8px;border-ra
  .cd-counts>div{padding:8px 5px}
  .cd-sticky-question{display:block;position:fixed;left:16px;right:16px;bottom:0;z-index:40;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:#fffdf8}
  .cd-detail-page{padding-bottom:88px}
- .cd-sticky-question .button{width:100%;min-height:48px;box-shadow:0 6px 20px #102a4324}
+ .cd-sticky-question .cd-sticky-button{width:100%;min-height:48px;box-shadow:0 6px 20px #102a4324}
  .cd-modal-backdrop{padding:10px}
  .cd-modal{padding:18px;max-height:92vh}
 }
