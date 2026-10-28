@@ -111,7 +111,6 @@ function CoverDetail({id}:{id:string}){
  const dateMessage=h.ends_on?'Back on '+date(h.ends_on,{day:'numeric',month:'short'}):'Return date not set'
  const suddenMessage=h.sudden?h.owner_name+' didn’t prepare this. Ask '+(h.reviewer_name||'your manager')+' if you have questions.':''
  const waiting=h.cover_response==='pending'
- const past=h.state==='ended'||h.state==='cancelled'
  return <div className="ho-page cd-page cd-detail-page">
   <div className="cd-back"><Link to="/app/my-cover-duties">← Cover duties</Link><span className={'cd-status cd-status-'+h.state}>{h.state==='ended'&&h.owner_returned?'Ended':statusLabel[h.state]||'Upcoming'}</span></div>
   <header className="ho-heading ho-heading--workspace cd-heading cd-detail-heading"><div><span className="cd-eyebrow">Covering for</span><h1>{h.owner_name}</h1><p>{h.role_title||'Role not recorded'} · {dateRange(h)}</p><div className="cd-detail-meta"><span>{dateMessage}</span><span>Manager: {h.reviewer_name||'Not set'}</span></div></div><Button onClick={jumpToQuestions}>Ask a question</Button></header>
