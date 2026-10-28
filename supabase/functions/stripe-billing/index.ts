@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import {createClient} from '@supabase/supabase-js'
 import {plans as sandboxPlans,PORTAL_CONFIGURATION as sandboxPortal,STRIPE_ACCOUNT as sandboxAccount,remainingTrial,type Plan} from './catalog.ts'
-import {livePlans,LIVE_ACCOUNT,LIVE_PORTAL} from './live-catalog.ts'
+import {livePlans,LIVE_ACCOUNT,LIVE_PORTAL,LIVE_CHECKOUT_ENABLED} from './live-catalog.ts'
 const origins=new Set(['https://vimbre.com','https://www.vimbre.com','https://vimbre.co.uk','https://www.vimbre.co.uk','http://localhost:5173'])
 const service=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}})
 function makeHandler(sandbox:boolean){
@@ -70,8 +70,9 @@ return async(req:Request)=>{
        const customer=await stripe.customers.retrieve(customerId)
        if(!customer.deleted)hasPaymentMethod=hasPaymentMethod||Boolean(customer.invoice_settings.default_payment_method||customer.default_source)
      }
-     return Response.json({...account,has_payment_method:hasPaymentMethod,checked_at:new Date().toISOString(),ready:Boolean(Deno.env.get(secretName))},{headers})
+     return Response.json({...account,has_payment_method:hasPaymentMethod,checked_at:new Date().toISOString(),ready:Boolean(Deno.env.get(secretName))&&(sandbox||LIVE_CHECKOUT_ENABLED)},{headers})
    }
+   if(!sandbox&&!LIVE_CHECKOUT_ENABLED)return Response.json({error:'Subscriptions are not available yet.'},{status:503,headers})
    if(!Deno.env.get(secretName))return Response.json({error:'Billing is temporarily unavailable. Please try again.'},{status:503,headers})
    if(operation!=='checkout'&&operation!=='portal')return new Response(null,{status:400,headers})
    if(!account.customer_id){const customer=await stripe.customers.create({name:account.company_name,email:auth.data.user.email,metadata:{application:'vimbre',company_id:account.company_id}},{idempotencyKey:'vimbre-'+(sandbox?'test':'live')+'-customer-'+account.company_id});account=await backend('bind_customer',{user_id:userId,customer_id:customer.id})}

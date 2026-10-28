@@ -1,3 +1,13 @@
+# Release status — live checkout held
+
+Owner approved the live release. Migration 20261028111439 is installed; installed-schema acceptance passed. ai-run v29, my-day-mail v19 and stripe-billing v7 are deployed with existing authentication preserved. Live signature endpoint rejects unsigned requests (400); existing email credentials are configured (invalid scheduler token returns401, not missing-config503). No real customer was charged or mailed during checks.
+
+A real launch blocker was found: task_delivery_config.enabled=false and the existing dispatcher only runs for task jobs, so the trial reminder worker would not reliably run. A separate billing-mail Edge handler and private per-minute billing dispatcher were prepared and rollback-validated. Automatic approval review rejected persistent installation of 20261028111808_billing_trial_dispatch.sql because the new scheduler/email effect needed specific approval. Do not bypass this rejection.
+
+To prevent incomplete live activation, LIVE_CHECKOUT_ENABLED=false is deployed. Migration 20261028112037 restores the previous AI gateway behavior while activation is held; ordinary users are not blocked by the partial rollout. The new private billing schema remains installed, but no live Checkout can start. The pending frontend is not published yet.
+
+Final activation requires approval of the billing dispatcher and enabling live checkout. Then: install/reconcile dispatcher migration, deploy billing-mail, run an authenticated empty-queue scheduler probe, apply supabase/proposals/activate_live_billing.sql, set LIVE_CHECKOUT_ENABLED=true, deploy billing Edge, and merge/publish the customer-facing release. Confirm live signature and provider readiness without real charges. The existing task-mail preference remains disabled and unchanged.
+
 # Updated client rule: card-required trial and reminder
 
 This supersedes earlier no-card trial wording below. The client now requires a saved card before starting the free trial. The live Checkout collects the card and creates one 3-day Stripe trial; the authoritative trial starts at successful Checkout, not account signup. The card is charged the monthly price at expiry unless the customer cancels. Cardless companies cannot enter the AI trial. Previously used trials are not granted again. Creating an account and using manual work remain possible without a card.
