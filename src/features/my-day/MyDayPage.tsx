@@ -155,7 +155,7 @@ function MyDayContent() {
   async function saveCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
     if(!coverEditTitle.trim()){setError('Enter a task title.');return}
     const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
-    const values:Record<string,unknown>={task_id:task.id,title:coverEditTitle.trim(),due_date:coverEditDate||null,due_time:coverEditTime||null,due_at:''};
+    const values:Record<string,unknown>={task_id:task.id,title:coverEditTitle.trim(),due_date:coverEditDate||null,due_time:coverEditTime||null};
     if(task.source_is_manual){values.details=coverEditDetails;values.steps=coverEditSteps.split('\n').map(v=>v.trim()).filter(Boolean);values.links=coverEditLinks.split('\n').map(v=>v.trim()).filter(Boolean)}
     try{await coverDutyRpc('task_edit',handoverId,values as unknown as Json);setCoverEditKey('');setMessage('Covered task updated.');refresh()}
     catch(e){setError(e instanceof Error?e.message:'The covered task could not be updated.')}
