@@ -82,10 +82,16 @@ const { chromium } = require('playwright');
     for (const width of [320, 360, 390, 430, 640, 768, 820, 834, 1024, 1180, 1280, 1366, 1440, 1920]) {
       await page.setViewportSize({ width, height: 900 });
       if(width>=1024){const copy=await page.locator('.rs-hero-copy').boundingBox(),demo=await page.locator('.rf-wide-demo').boundingBox();assert(demo.y>=copy.y+copy.height+24,'Information comes before the demo');assert(Math.abs(demo.x+demo.width/2-width/2)<2,'Demo is centered');assert.equal(await page.locator('.rs-hero-copy').evaluate(el=>getComputedStyle(el).textAlign),'center');assert(demo.width>=Math.min(1120,width-48)-2,'Demo uses the available width');}
+      const planOrder=await page.locator('.rs-plan').evaluateAll(cards=>cards.map(card=>({name:card.querySelector('h3').textContent,box:card.getBoundingClientRect().toJSON()})).sort((a,b)=>Math.abs(a.box.y-b.box.y)>2?a.box.y-b.box.y:a.box.x-b.box.x).map(card=>card.name));
+      assert.deepEqual(planOrder,['Starter','Growth','Business','Enterprise'],'Visual pricing order at '+width);
       assert(!await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), 'Horizontal overflow at ' + width);
       for (const selector of ['#handover', '.rf-calculator']) {
         const box = await page.locator(selector).first().boundingBox();
         assert(box && box.x >= -1 && box.x + box.width <= width + 1, selector + ' fits at ' + width);
+      }
+      for (const section of ['#product-demo','#handover','#pricing','#questions','#contact']) {
+        await page.locator(section).scrollIntoViewIfNeeded();
+        assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'No overflow after scrolling to '+section+' at '+width);
       }
       assert((await page.locator('.rs-example').count()) > 0, 'Example labels exist at ' + width);
     }
@@ -116,6 +122,11 @@ const { chromium } = require('playwright');
     for (const name of ['email', 'capture', 'draft', 'confirmed', 'saved', 'away', 'cover']) {
       await storyPage.waitForFunction(scene => Number(getComputedStyle(document.querySelector('[data-scene="' + scene + '"]')).opacity) > .9, name, { timeout: 12000 }).catch(error => { throw new Error('Hero scene did not appear: ' + name, { cause: error }); });
     }
+    await storyPage.locator('#contact').scrollIntoViewIfNeeded();
+    await storyPage.waitForTimeout(150);
+    const offscreenBefore=await storyPage.locator('[data-scene=capture]').evaluate(el=>el.getAnimations().map(a=>a.currentTime));
+    await storyPage.waitForTimeout(220);
+    assert.deepEqual(await storyPage.locator('[data-scene=capture]').evaluate(el=>el.getAnimations().map(a=>a.currentTime)),offscreenBefore,'Offscreen hero pauses');
     assert.deepEqual(errors, []);
     await normal.close();
 
@@ -125,7 +136,13 @@ const { chromium } = require('playwright');
     assert(await staticPage.getByRole('heading', { name: /Turn conversations into/ }).isVisible());
     assert.equal(await staticPage.locator('.rs-demo-scene[data-scene=email]').evaluate(el => getComputedStyle(el).opacity), '1');
     await noJs.close();
-    console.log('Landing copy, four-step story, dates, pricing math, calculator, responsive layout, reduced motion and no-JS fallback passed.');
+    const phone=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+    const phonePage=await phone.newPage();await phonePage.goto('http://127.0.0.1:5174/');
+    const menu=phonePage.locator('.rs-menu');await menu.click();
+    assert.equal(await menu.getAttribute('aria-expanded'),'true');
+    await phonePage.keyboard.press('Escape');assert.equal(await menu.getAttribute('aria-expanded'),'false');
+    await phone.close();
+    console.log('Landing acceptance passed: copy, pricing visual order, navigation, scroll, story, dates, calculator, responsive layout, reduced motion and no-JS fallback.');
   } finally {
     await browser.close();
     await new Promise(resolve => server.httpServer.close(resolve));
