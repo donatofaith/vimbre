@@ -638,7 +638,7 @@ function ActionWorkspace({
       {own && tasksAI && <RoleDrawer context="My day" title="Use Vimbre AI" close={() => setTasksAI(false)}><StructuredAI kind="task" cached={taskDrafts} onDrafts={setTaskDrafts} choose={(initialDraft, _file, index) => {setTaskDrafts(rows => rows?.filter((_, i) => i !== index) ?? null);setTasksAI(false);setEditor({initialDraft})}} /></RoleDrawer>}
       {own && summaryOpen && <RoleDrawer context="My day" title="Weekly summary" close={() => setSummaryOpen(false)}><AIDraftPanel task="weekly_summary" loadRecords={() => loadOwnRecords(profile!.id, company!.id)} /></RoleDrawer>}
       {own && <Button variant="secondary" onClick={() => setSummaryOpen(true)}>Weekly summary</Button>}
-      {own && <nav className="vw-secondary-links" aria-label="More workspace pages"><Link to="/app/handovers"><WorkspaceIcon name="handover" />My handovers</Link><Link to="/app/my-cover-duties"><WorkspaceIcon name="cover" />Cover duties</Link></nav>}
+      {own && <nav className="vw-secondary-links" aria-label="More workspace pages"><Link to="/app/handovers"><WorkspaceIcon name="handover" />Handovers</Link><Link to="/app/my-cover-duties"><WorkspaceIcon name="cover" />Cover duties</Link></nav>}
 
       {own && (
         <>

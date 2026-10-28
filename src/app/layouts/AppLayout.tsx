@@ -75,11 +75,11 @@ function WorkspaceLayout() {
       (!('leaders' in item) || profile?.role !== 'employee'),
   )
 
-  const active = navigation.find(item => pathname === item.path)
+  const active = navigation.find(item => pathname === item.path || item.path === '/app/handovers' && pathname.startsWith(item.path+'/'))
 
   const pageName =
     active?.label === 'Handovers'
-      ? 'My handovers'
+      ? 'Handovers'
       : pathname === '/app/chat' ? 'Chat' : active?.label ?? 'Workspace'
 
   useEffect(() => {
@@ -161,7 +161,7 @@ function WorkspaceLayout() {
               <WorkspaceIcon name={icons[item.path]} />
               <span>
                 {item.label === 'Handovers'
-                  ? 'My handovers'
+                  ? 'Handovers'
                   : item.label}
               </span>
               {item.path==='/app'&&daySummary.data?.task_counts&&daySummary.data.task_counts.today+daySummary.data.task_counts.overdue>0&&<span className="vw-task-count" aria-label="Today and overdue tasks">{daySummary.data.task_counts.today+daySummary.data.task_counts.overdue}</span>}

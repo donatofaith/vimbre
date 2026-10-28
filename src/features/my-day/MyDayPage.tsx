@@ -453,14 +453,15 @@ function MyDayContent() {
             )}
             {filter === "today" && (
               <>
-                {(waiting > 0 || handovers.length > 0 || incoming.length>0) && <section className="md-day-group" aria-label="To review">
+                {(waiting > 0 || handovers.length > 0 || incoming.length>0 || Boolean(data?.returning_handovers?.length)) && <section className="md-day-group" aria-label="To review">
                   <h3>To review</h3>
                   <div className="md-waiting-links">
                     {(data?.review_drafts??[]).map(d=><article className="md-review-draft" key={d.id}><span className="md-muted">Draft · {d.kind==='action'?'Task':d.kind==='decision'?'Decision':d.kind}</span><h4>{d.payload.title}</h4>{d.payload.details&&<p>{d.payload.details}</p>}{d.payload.due_date&&<p>Due: {formatTaskDay(d.payload.due_date,format)}{d.payload.due_time?` · ${d.payload.due_time}`:''}</p>}<p>Owner: {d.payload.owner_id&&d.payload.owner_id!==profile!.id?'Review owner in Capture':'Me'} · Reminder: {(d.payload.reminder_option??'at_time').replaceAll('_',' ')}</p>{d.duplicate&&<p className="field-error">A matching item already exists. Review it before accepting.</p>}<div className="md-expanded-actions"><Button disabled={Boolean(busy)||d.duplicate} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_accept',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Accept</Button><Link to={`/app/capture?capture=${d.capture_id}`}>Edit</Link><button className="md-text-button" disabled={Boolean(busy)} onClick={async()=>{setBusy(d.id);setError('');try{await changeTask(d.id,'review_dismiss',{version:d.version});refresh()}catch(e){setError(taskError(e))}finally{setBusy('')}}}>Dismiss</button></div></article>)}
                     {waiting>0&&!data?.review_drafts&&<Link to="/app/capture">{waiting} drafts to review</Link>}
                     {incoming.map(a=><article className="md-review-draft" key={a.id}><span className="md-muted">Assigned by {a.creator_name}</span><h4>{a.title}</h4>{a.details&&<p>{a.details}</p>}<p>Due: {formatTaskDay(a.suggested_date??a.due_date,format)}</p><div className="md-expanded-actions">{['accept','decline'].map(op=><Button key={op} variant={op==='accept'?'primary':'secondary'} disabled={Boolean(busy)} onClick={async()=>{setBusy(a.id);setError('');try{await daySuite(op,a.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='accept'?'Accept':'Decline'}</Button>)}</div><form className="md-suggest-date" onSubmit={async e=>{e.preventDefault();const date=String(new FormData(e.currentTarget).get('date')??'');setBusy(a.id);try{await daySuite('suggest_date',a.id,{date});refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}><label className="field">Suggest a new date<input type="date" name="date" min={today} required/></label><Button type="submit" variant="secondary" disabled={Boolean(busy)}>Suggest date</Button></form></article>)}
+                    {(data?.returning_handovers??[]).map(h=><Link key={h.id} to={`/app/handovers/${h.id}`}>Take back: {h.title}</Link>)}
                     {handovers.map((h) => (
-                      <Link key={h.id} to="/app/handovers">
+                      <Link key={h.id} to={`/app/handovers/${h.id}`}>
                         Review handover: {h.title}
                       </Link>
                     ))}
