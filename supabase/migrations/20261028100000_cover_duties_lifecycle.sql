@@ -589,7 +589,7 @@ begin
       select 'cover-start-today',h.cover_id,'Your cover starts today: '||h.title where h.starts_on=day and h.cover_response in ('pending','accepted')
     loop
       insert into private.handover_reminder_log(handover_id,kind,day) values(h.id,kind,day) on conflict do nothing;
-      if found then insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,recipient,message); n:=n+1; end if;
+      if found then insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,recipient,message); if kind='cover-start-today' and h.cover_response='accepted' then perform private.handover_event(h.id,'cover_started'); end if; n:=n+1; end if;
     end loop;
     if h.cover_response='accepted' and day between h.starts_on and coalesce(h.ends_on,'infinity'::date) then
       for task_row in
@@ -716,7 +716,7 @@ begin
  s:=pg_get_functiondef('private.handover_workspace(text,uuid,jsonb)'::regprocedure);
  needle:=$needle$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.reviewer_id,'Handover ready for review');$needle$;
  if strpos(s,needle)=0 then raise exception 'Handover submit notification changed; review cover request notification patch'; end if;
- replacement:=needle||E'\n insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,''You have a cover request to review'');';
+ replacement:=needle||E'\n insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,''You have a cover request to review'');\n perform private.handover_event(h.id,''cover_requested'');';
  s:=replace(s,needle,replacement);
  execute s;
 end$cover_notice_patch$;
@@ -893,6 +893,7 @@ begin
  needle := $needle$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,'Handover completed');$needle$;
  if strpos(s,needle)=0 then raise exception 'Handover take-back notification changed; review return-notification patch'; end if;
  replacement := $replacement$insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.cover_id,'The owner has returned. Your cover has ended.');
+ perform private.handover_event(h.id,'cover_ended');
  if h.reviewer_id is not null then
    insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.reviewer_id,'The owner returned and the cover has ended.');
  end if;$replacement$;
