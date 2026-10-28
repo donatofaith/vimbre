@@ -11,7 +11,6 @@ type View='active'|'upcoming'|'past'
 type ListResult={team:boolean;admin_counts_only:boolean;rows:CoverDutyRow[];counts?:{active:number;upcoming:number;past:number;waiting:number}}
 type CoverPoolOptions={departments:{id:string;name:string}[];people:{id:string;name:string;department_id:string|null;department_name:string|null}[]}
 const statusLabel:Record<string,string>={waiting:'Waiting for you',upcoming:'Upcoming',active:'Active',ended:'Ended',cancelled:'Cancelled'}
-const sectionKeys:[string,string][]=[['decisions','Decisions to keep'],['contacts','Contacts'],['documents','Documents'],['dates','Deadlines'],['watch_outs','Watch outs'],['notes','Notes']]
 function date(value?:string|null,options:Intl.DateTimeFormatOptions={day:'numeric',month:'short'}){if(!value)return 'Date not set';const d=new Date(value.length===10?value+'T12:00:00':value);return Number.isNaN(d.getTime())?'Date not set':new Intl.DateTimeFormat('en-GB',options).format(d)}
 function dateRange(row:CoverDutyRow){if(!row.starts_on)return 'Dates to be confirmed';if(row.return_unknown)return 'From '+date(row.starts_on)+' · Return date not set';return date(row.starts_on)+' – '+date(row.ends_on)}
 function rpcData(value:Record<string,unknown>){return value as unknown as Json}
