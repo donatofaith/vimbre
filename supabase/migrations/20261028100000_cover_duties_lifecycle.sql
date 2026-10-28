@@ -803,3 +803,77 @@ revoke all on function public.handover_share_question(text,text,text) from publi
 grant execute on function public.handover_share_question(text,text,text) to anon,authenticated;
 
 
+
+
+
+-- Questions from an outside-cover link can be answered by the owner or authorised manager.
+alter table private.handover_external_questions
+  add column if not exists response text not null default '' check(length(response)<=3000),
+  add column if not exists replied_by uuid references public.profiles(id),
+  add column if not exists replied_at timestamptz;
+
+create or replace function private.handover_shared(p_token text)
+returns jsonb language plpgsql security definer set search_path='' as $function$
+declare sh private.handover_shares; questions_json jsonb;
+begin
+ select shares.* into sh
+ from private.handover_shares shares
+ join public.work_handovers h on h.id=shares.handover_id
+ join private.handover_policy policy on policy.company_id=h.company_id and policy.external_sharing
+ where shares.token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
+   and length(coalesce(p_token,''))=64 and shares.revoked_at is null and shares.expires_at>now()
+   and h.deleted_at is null and h.status in('approved','completed');
+ if not found then return null; end if;
+ insert into private.handover_share_views(share_id) values(sh.id);
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'id',q.id,'body',q.body,'sender_email',q.sender_email,'response',q.response,
+   'created_at',q.created_at,'replied_at',q.replied_at
+ ) order by q.created_at),'[]'::jsonb)
+ into questions_json from private.handover_external_questions q where q.share_id=sh.id;
+ return sh.snapshot||jsonb_build_object('external_questions',questions_json);
+end$function$;
+revoke all on function private.handover_shared(text) from public,anon,authenticated,service_role;
+
+create or replace function public.handover_external_questions_action(
+ p_operation text,p_id uuid,p_data jsonb default '{}'::jsonb
+)
+returns jsonb language plpgsql security definer set search_path='' as $function$
+declare u uuid:=auth.uid(); c uuid:=private.current_company_id(); me public.profiles; h public.work_handovers; q private.handover_external_questions; body text;
+begin
+ if u is null or c is null then raise insufficient_privilege; end if;
+ select * into me from public.profiles where id=u and active and company_id=c;
+ if not found then raise insufficient_privilege; end if;
+ select * into h from public.work_handovers where id=p_id and company_id=c and deleted_at is null and status in('approved','completed');
+ if not found or not (u=h.owner_id or u=h.reviewer_id and me.role in('manager','hr_admin') or me.role='manager' and private.can_read_role(h.owner_id)) then raise insufficient_privilege; end if;
+ if p_operation='list' then
+   return coalesce((select jsonb_agg(jsonb_build_object(
+     'id',q.id,'sender_email',q.sender_email,'body',q.body,'response',q.response,
+     'created_at',q.created_at,'replied_at',q.replied_at,
+     'reply_author',coalesce(p.full_name,'')
+   ) order by q.created_at desc)
+   from private.handover_external_questions q left join public.profiles p on p.id=q.replied_by
+   where q.handover_id=h.id and q.company_id=c),'[]'::jsonb);
+ elsif p_operation='reply' then
+   body:=btrim(coalesce(p_data->>'response',''));
+   if length(body) not between 1 and 3000 then raise check_violation using message='Write a short answer before sending.'; end if;
+   update private.handover_external_questions set response=body,replied_by=u,replied_at=now()
+   where id=nullif(p_data->>'question_id','')::uuid and handover_id=h.id and company_id=c;
+   if not found then raise check_violation using message='That outside-cover question could not be found.'; end if;
+   insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.owner_id,'An answer was added to an outside-cover question.');
+   if h.reviewer_id is not null and h.reviewer_id<>h.owner_id then
+     insert into private.handover_notifications(handover_id,owner_id,message) values(h.id,h.reviewer_id,'An answer was added to an outside-cover question.');
+   end if;
+   perform private.handover_event(h.id,'external_question_answered');
+   return coalesce((select jsonb_agg(jsonb_build_object(
+     'id',q.id,'sender_email',q.sender_email,'body',q.body,'response',q.response,
+     'created_at',q.created_at,'replied_at',q.replied_at,
+     'reply_author',coalesce(p.full_name,'')
+   ) order by q.created_at desc)
+   from private.handover_external_questions q left join public.profiles p on p.id=q.replied_by
+   where q.handover_id=h.id and q.company_id=c),'[]'::jsonb);
+ else
+   raise invalid_parameter_value using message='Unknown outside-cover question action.';
+ end if;
+end$function$;
+revoke all on function public.handover_external_questions_action(text,uuid,jsonb) from public,anon;
+grant execute on function public.handover_external_questions_action(text,uuid,jsonb) to authenticated;
