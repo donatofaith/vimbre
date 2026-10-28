@@ -44,6 +44,6 @@ export function PricingValueCalculator() {
           : 'Your estimate is ' + money(Math.abs(difference!)) + ' below the annualized plan price.'}</p>
       </>}
     </div>
-    <p className="rf-calculator-disclaimer">Uses your own estimates and the listed company price. It excludes taxes, setup, and any effects not entered above. Plan subscriptions are not active yet.</p>
+    <p className="rf-calculator-disclaimer">Uses your own estimates and the listed company price. It excludes taxes, setup, and any effects not entered above.</p>
   </section>
 }
