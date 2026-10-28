@@ -37,3 +37,9 @@ import_map = "./functions/capture-worker/deno.json"
 verify_jwt = false
 entrypoint = "./functions/stripe-billing/index.ts"
 import_map = "./functions/stripe-billing/deno.json"
+
+[functions.billing-mail]
+# Existing scheduler capability is hashed and validated by a service-only RPC.
+verify_jwt = false
+entrypoint = "./functions/billing-mail/index.ts"
+import_map = "./functions/billing-mail/deno.json"
