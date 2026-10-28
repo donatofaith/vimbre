@@ -2,6 +2,7 @@
 create table private.billing_live_accounts(
  company_id uuid primary key references public.companies(id),
  customer_id text unique,
+ trial_consumed boolean not null default false,
  checkout_token uuid,
  checkout_lock_until timestamptz,
  checkout_plan text,
@@ -42,7 +43,7 @@ begin
    if account.subscription_id is not null and account.subscription_id<>p_data->>'subscription_id' and account.status not in('canceled','incomplete_expired','unsubscribed') then raise check_violation using message='Subscription conflict';end if;
    if account.synced_at is null or incoming>account.synced_at then
      update private.billing_live_accounts set subscription_id=p_data->>'subscription_id',price_id=p_data->>'price_id',status=p_data->>'status',
-       period_ends_at=nullif(p_data->>'period_ends_at','')::timestamptz,cancel_at_period_end=coalesce((p_data->>'cancel_at_period_end')::boolean,false),synced_at=incoming,updated_at=now()
+       trial_consumed=trial_consumed or nullif(p_data->>'trial_started_at','') is not null,trial_started_at=coalesce(nullif(p_data->>'trial_started_at','')::timestamptz,trial_started_at),trial_ends_at=coalesce(nullif(p_data->>'trial_ends_at','')::timestamptz,trial_ends_at),period_ends_at=nullif(p_data->>'period_ends_at','')::timestamptz,cancel_at_period_end=coalesce((p_data->>'cancel_at_period_end')::boolean,false),synced_at=incoming,updated_at=now()
        where company_id=account.company_id;
    end if;
    insert into private.billing_live_events(event_id,customer_id,event_type) values(p_data->>'event_id',account.customer_id,p_data->>'event_type');
@@ -79,7 +80,7 @@ begin insert into private.billing_live_accounts(company_id) values(new.id) on co
 create trigger billing_live_trial after insert on public.companies for each row execute function private.billing_live_trial();
 
 create function private.billing_ai_allowed(p_company uuid) returns boolean language sql stable security definer set search_path='' as $$
- select coalesce((select case when subscription_id is null then now()<trial_ends_at
+ select coalesce((select case when subscription_id is null then false
  when status='trialing' then now()<trial_ends_at
  when status='active' then now()<period_ends_at else false end from private.billing_live_accounts where company_id=p_company),true)
 $$;
@@ -169,3 +170,46 @@ begin
 end $function$;
 
 revoke all on function private.billing_live_trial(),private.billing_apply_live_plan(),private.billing_live_member_cap() from public,anon,authenticated,service_role;
+
+-- Transactional trial confirmation and 24-hour reminder; no marketing preferences are reused.
+create table private.billing_trial_mail(
+ id uuid primary key default gen_random_uuid(),company_id uuid not null references public.companies(id),
+ subscription_id text not null,trial_ends_at timestamptz not null,kind text not null check(kind in('started','ending')),
+ due_at timestamptz not null,state text not null default 'queued' check(state in('queued','sending','sent','failed','uncertain','rejected')),
+ attempts integer not null default 0,claimed_at timestamptz,sent_at timestamptz,
+ unique(subscription_id,trial_ends_at,kind)
+);
+alter table private.billing_trial_mail enable row level security;
+revoke all on private.billing_trial_mail from public,anon,authenticated,service_role;
+create function private.billing_trial_delivery(p_action text,p_id uuid default null,p_state text default null) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare jobs jsonb;
+begin
+ if p_action='finish' then
+  if p_state not in('sent','failed','uncertain','rejected') then raise invalid_parameter_value;end if;
+  update private.billing_trial_mail set state=p_state,sent_at=case when p_state='sent' then now() else null end where id=p_id and state='sending';
+  return '{"ok":true}'::jsonb;
+ elsif p_action<>'claim' then raise invalid_parameter_value;end if;
+ insert into private.billing_trial_mail(company_id,subscription_id,trial_ends_at,kind,due_at)
+ select a.company_id,a.subscription_id,a.trial_ends_at,k.kind,case when k.kind='ending' then a.trial_ends_at-interval '24 hours' else now() end
+ from private.billing_live_accounts a cross join(values('started'),('ending')) k(kind)
+ where a.status='trialing' and a.subscription_id is not null and a.trial_ends_at>now() and not a.cancel_at_period_end
+ on conflict(subscription_id,trial_ends_at,kind) do nothing;
+ -- Do not repeat an ambiguous/crashed send: provider acceptance may have happened.
+ update private.billing_trial_mail set state='uncertain' where state='sending' and claimed_at<now()-interval '30 minutes';
+ with picked as(select m.id from private.billing_trial_mail m join private.billing_live_accounts a on a.company_id=m.company_id and a.subscription_id=m.subscription_id
+ where m.state in('queued','failed') and m.attempts<3 and m.due_at<=now() and (m.claimed_at is null or m.claimed_at<now()-interval '5 minutes')
+ and a.status='trialing' and a.trial_ends_at=m.trial_ends_at and a.trial_ends_at>now() and not a.cancel_at_period_end
+ order by m.due_at limit 20 for update of m skip locked), claimed as(
+ update private.billing_trial_mail set state='sending',attempts=attempts+1,claimed_at=now() where id in(select id from picked) returning *)
+ select coalesce(jsonb_agg(jsonb_build_object('id',m.id,'email',p.email,'name',p.full_name,'kind',m.kind,
+ 'plan',case a.price_id when 'price_1UVUXb4AwSci2kG6vvor5nsm' then 'Starter' when 'price_1UVUXg4AwSci2kG6AX2jfzEK' then 'Growth' when 'price_1UVUXm4AwSci2kG6lxKPqCNa' then 'Business' end,
+ 'amount',case a.price_id when 'price_1UVUXb4AwSci2kG6vvor5nsm' then 29 when 'price_1UVUXg4AwSci2kG6AX2jfzEK' then 99 when 'price_1UVUXm4AwSci2kG6lxKPqCNa' then 249 end,
+ 'trial_ends_at',m.trial_ends_at)),'[]'::jsonb) into jobs
+ from claimed m join private.billing_live_accounts a on a.company_id=m.company_id join public.companies c on c.id=m.company_id join public.profiles p on p.id=c.created_by and p.active;
+ return jobs;
+end$$;
+create function public.billing_trial_delivery(p_action text,p_id uuid default null,p_state text default null) returns jsonb
+language sql security invoker set search_path='' as $$select private.billing_trial_delivery(p_action,p_id,p_state)$$;
+revoke all on function private.billing_trial_delivery(text,uuid,text),public.billing_trial_delivery(text,uuid,text) from public,anon,authenticated;
+grant execute on function private.billing_trial_delivery(text,uuid,text),public.billing_trial_delivery(text,uuid,text) to service_role;

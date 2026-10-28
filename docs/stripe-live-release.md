@@ -1,3 +1,13 @@
+# Updated client rule: card-required trial and reminder
+
+This supersedes earlier no-card trial wording below. The client now requires a saved card before starting the free trial. The live Checkout collects the card and creates one 3-day Stripe trial; the authoritative trial starts at successful Checkout, not account signup. The card is charged the monthly price at expiry unless the customer cancels. Cardless companies cannot enter the AI trial. Previously used trials are not granted again. Creating an account and using manual work remain possible without a card.
+
+A transactional email confirms the trial/price/date, then a separately scheduled reminder is due 24 hours before the charge. Both include the monthly amount, cancellation link and charge date in UTC. Stripe's default reminder on a 3-day trial is immediate, so it cannot alone satisfy the requested 24-hour timing. A private idempotent reminder queue is drained by the existing authenticated mail scheduler; cancellation suppresses future reminders. Failed sends retry boundedly; ambiguous sends are held for review. Tests use stubs, never real recipients. Existing role/task reminders continue if the billing queue fails.
+
+All 213 tests, types, lint and build pass. Rollback SQL additionally verifies no early ending reminder, a single reminder at the 24-hour boundary, concurrent claim deduplication and no cardless AI trial. Live activation remains blocked by the earlier automatic approval review; the updated migration also includes the reminder queue and service-only delivery RPC. No live SQL, Edge or frontend from this release is installed.
+
+The older implementation notes below are historical where they conflict with this section. The previous last-48-hours trial restriction applies to sandbox only; live trials now start at card-confirmed Checkout with trial_period_days=3.
+
 # Live Stripe release — pending explicit migration approval
 
 Client rules: 3-day free trial, no card required at signup. Settings → View plans → landing pricing → chosen plan → authenticated billing review. Existing subscribers review a change to their existing subscription instead of buying a second subscription. Settings also links directly to Manage subscription.

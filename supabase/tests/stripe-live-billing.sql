@@ -28,4 +28,18 @@ end$$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub',current_setting('test.admin'),true);
 do $$begin begin perform public.billing_live_backend('context',jsonb_build_object('user_id',auth.uid()));raise exception 'Browser can call service-only billing API';exception when insufficient_privilege then null;end;end$$;
+
+reset role;
+do $$declare j jsonb;n integer;c uuid:=current_setting('test.company')::uuid;begin
+ update private.billing_live_accounts set status='trialing',trial_ends_at=now()+interval '3 days',cancel_at_period_end=false where company_id=c;
+ j:=public.billing_trial_delivery('claim');
+ select count(*) into n from jsonb_array_elements(j) x where x->>'kind'='ending';if n<>0 then raise exception 'Reminder sent before 24-hour boundary';end if;
+ update private.billing_live_accounts set trial_ends_at=now()+interval '24 hours' where company_id=c;
+ j:=public.billing_trial_delivery('claim');
+ select count(*) into n from jsonb_array_elements(j) x where x->>'kind'='ending';if n<>1 then raise exception 'Missing 24-hour reminder';end if;
+ j:=public.billing_trial_delivery('claim');if jsonb_array_length(j)<>0 then raise exception 'Concurrent reminder claim duplicated';end if;
+ update private.billing_live_accounts set subscription_id=null where company_id=c;
+ if private.billing_ai_allowed(c) then raise exception 'Cardless company entered trial';end if;
+end$$;
+
 rollback;

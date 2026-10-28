@@ -14,7 +14,7 @@ const secretName=sandbox?'STRIPE_WEBHOOK_SECRET':'STRIPE_LIVE_WEBHOOK_SECRET'
 const returnUrl='https://vimbre.com/app/billing'+(sandbox?'?billing=sandbox':'')
 const key=Deno.env.get(sandbox?'STRIPE_SECRET_KEY':'STRIPE_LIVE_SECRET_KEY')??''
 const stripe=key.startsWith(sandbox?'rk_test_':'rk_live_')?new Stripe(key,{apiVersion:'2026-08-26.dahlia',httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:2,timeout:15000}):null
-type BillingAccount={company_id:string;company_name:string;customer_id:string|null;subscription_id:string|null;trial_ends_at:string;members:number;checkout_token:string}
+type BillingAccount={company_id:string;company_name:string;customer_id:string|null;subscription_id:string|null;trial_ends_at:string;members:number;checkout_token:string;trial_consumed?:boolean}
 async function backend(operation:string,data:Record<string,unknown>){const r=await service.rpc(backendName,{p_operation:operation,p_data:data});if(r.error)throw r.error;return r.data}
 const acceptedEvents=new Set(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed','invoice.paid','invoice.payment_failed'])
 async function syncSubscription(subscriptionId:string,event:{id:string;type:string}){
@@ -23,7 +23,7 @@ async function syncSubscription(subscriptionId:string,event:{id:string;type:stri
  const sub=await stripe.subscriptions.retrieve(subscriptionId)
  if(sub.livemode===sandbox||sub.items.data.length!==1||!planForPrice(sub.items.data[0].price.id)||sub.items.data[0].quantity!==1)throw Error('subscription_mismatch')
  const item=sub.items.data[0]
- return backend('event',{stripe_account:STRIPE_ACCOUNT,livemode:!sandbox,event_id:event.id,event_type:event.type,customer_id:typeof sub.customer==='string'?sub.customer:sub.customer.id,subscription_id:sub.id,price_id:item.price.id,status:sub.status,period_ends_at:item.current_period_end?new Date(item.current_period_end*1000).toISOString():null,cancel_at_period_end:sub.cancel_at_period_end,synced_at:syncedAt})
+ return backend('event',{stripe_account:STRIPE_ACCOUNT,livemode:!sandbox,event_id:event.id,event_type:event.type,customer_id:typeof sub.customer==='string'?sub.customer:sub.customer.id,subscription_id:sub.id,price_id:item.price.id,status:sub.status,period_ends_at:item.current_period_end?new Date(item.current_period_end*1000).toISOString():null,cancel_at_period_end:sub.cancel_at_period_end,synced_at:syncedAt,...(!sandbox?{trial_started_at:sub.trial_start?new Date(sub.trial_start*1000).toISOString():null,trial_ends_at:sub.trial_end?new Date(sub.trial_end*1000).toISOString():null}:{})})
 }
 async function webhook(req:Request){
  const secret=Deno.env.get(secretName)
@@ -99,12 +99,12 @@ return async(req:Request)=>{
    const providerPrice=await stripe.prices.retrieve(plan.price)
    if(providerPrice.livemode===sandbox||providerPrice.unit_amount!==plan.amount||providerPrice.currency!=='gbp'||providerPrice.recurring?.interval!=='month')throw Error('price_mismatch')
    account=await backend('checkout_claim',{user_id:userId,plan:input.plan})
-   const trialEnd=remainingTrial(account.trial_ends_at)
+   const trialEnd=sandbox?remainingTrial(account.trial_ends_at):undefined
    // Stripe requires at least 48 hours for a trial Checkout. Shorter remaining trials stay local;
    // paid checkout is explicit in the UI and never silently charges before the trial deadline.
-   if(!trialEnd&&Date.parse(account.trial_ends_at)>Date.now())return Response.json({error:'Your free trial is still running. Add billing after it ends, or manage an existing subscription.'},{status:409,headers})
+   if(sandbox&&!trialEnd&&Date.parse(account.trial_ends_at)>Date.now())return Response.json({error:'Your free trial is still running. Add billing after it ends, or manage an existing subscription.'},{status:409,headers})
    const suffix=account.checkout_token.replaceAll('-','').slice(0,8).split('').map((c:string)=>String.fromCharCode(97+parseInt(c,16))).join('')
-   const session=await stripe.checkout.sessions.create({mode:'subscription',customer:customerId,line_items:[{price:plan.price,quantity:1}],payment_method_collection:trialEnd?'if_required':'always',client_reference_id:account.company_id,metadata:{application:'vimbre',company_id:account.company_id},subscription_data:{metadata:{application:'vimbre',company_id:account.company_id},billing_mode:{type:'flexible'},...(trialEnd?{trial_end:trialEnd,trial_settings:{end_behavior:{missing_payment_method:'cancel' as const}}}:{})},success_url:returnUrl+(sandbox?'&':'?')+'checkout=returned',cancel_url:'https://vimbre.com/app/billing?billing=sandbox',integration_identifier:'vimbre_'+(sandbox?'sandbox':'live')+'_'+suffix},{idempotencyKey:'vimbre-'+(sandbox?'test':'live')+'-checkout-'+account.checkout_token})
+   const session=await stripe.checkout.sessions.create({mode:'subscription',customer:customerId,line_items:[{price:plan.price,quantity:1}],payment_method_collection:'always',client_reference_id:account.company_id,metadata:{application:'vimbre',company_id:account.company_id},subscription_data:{metadata:{application:'vimbre',company_id:account.company_id},billing_mode:{type:'flexible'},...(trialEnd?{trial_end:trialEnd,trial_settings:{end_behavior:{missing_payment_method:'cancel' as const}}}:!sandbox&&!account.trial_consumed?{trial_period_days:3,trial_settings:{end_behavior:{missing_payment_method:'cancel' as const}}}:{})},success_url:returnUrl+(sandbox?'&':'?')+'checkout=returned',cancel_url:returnUrl,integration_identifier:'vimbre_'+(sandbox?'sandbox':'live')+'_'+suffix},{idempotencyKey:'vimbre-'+(sandbox?'test':'live')+'-checkout-'+account.checkout_token})
    return Response.json({url:session.url},{headers})
  }catch{return Response.json({error:'Billing could not be updated. Your workspace has not changed.'},{status:503,headers})}
 }
