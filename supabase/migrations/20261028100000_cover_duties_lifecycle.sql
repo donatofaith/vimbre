@@ -134,8 +134,8 @@ begin
        or (p_user<>h.cover_id and me.role='manager' and h.status in ('approved','completed') and private.can_read_role(h.owner_id));
 
   select coalesce(rp.title,'') into role_title from public.role_profiles rp where rp.id=h.role_id and rp.holder_id=h.owner_id;
-  select count(*) filter(where hi.kind='task'),count(*),
-         count(*) filter(where hi.kind='task' and a.status='done')
+  select count(*) filter(where hi.kind='task' and a.id is not null),count(*),
+         count(*) filter(where hi.kind='task' and a.id is not null and a.status='done')
     into task_count,item_count,completed_count
   from private.handover_items hi
   left join public.actions a on hi.kind='task' and a.id=hi.record_id and a.deleted_at is null and a.purged_at is null
@@ -165,7 +165,7 @@ begin
 
     select a.title,a.due_date into next_title,next_due
     from private.handover_items hi join public.actions a on a.id=hi.record_id
-    where hi.handover_id=h.id and hi.kind='task' and a.status<>'done'
+    where hi.handover_id=h.id and hi.kind='task' and hi.approved and a.status<>'done'
       and a.deleted_at is null and a.purged_at is null
       and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned'))
     order by a.due_date nulls last,a.due_time nulls last,a.created_at,a.id limit 1;
@@ -279,7 +279,16 @@ begin
     end if;
   end if;
 
-  if p_operation='pool_list' then
+  if p_operation='pool_options' then
+    if me.role not in ('manager','hr_admin') then raise insufficient_privilege; end if;
+    return jsonb_build_object(
+      'departments',coalesce((select jsonb_agg(jsonb_build_object('id',d.id,'name',d.name) order by d.name)
+        from public.departments d where d.company_id=c and (me.role='hr_admin' or d.manager_id=u or d.id=me.department_id)),'[]'::jsonb),
+      'people',coalesce((select jsonb_agg(jsonb_build_object('id',p.id,'name',p.full_name,'department_id',p.department_id,'department_name',d.name) order by p.full_name)
+        from public.profiles p left join public.departments d on d.id=p.department_id and d.company_id=p.company_id
+        where p.company_id=c and p.active and p.id<>u),'[]'::jsonb)
+    );
+  elsif p_operation='pool_list' then
     if me.role not in ('manager','hr_admin') then raise insufficient_privilege; end if;
     return coalesce((select jsonb_agg(jsonb_build_object('id',cp.id,'person_id',cp.person_id,'person_name',p.full_name,'department_id',cp.department_id,'department_name',d.name,'priority',cp.priority) order by d.name,cp.priority,p.full_name)
       from private.handover_cover_pool cp join public.profiles p on p.id=cp.person_id and p.active join public.departments d on d.id=cp.department_id
