@@ -5,9 +5,10 @@ const origins=new Set(['https://vimbre.com','https://www.vimbre.com','https://vi
 const service=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}})
 const key=Deno.env.get('STRIPE_SECRET_KEY')??''
 const stripe=key.startsWith('rk_test_')?new Stripe(key,{apiVersion:'2026-08-26.dahlia',httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:2,timeout:15000}):null
+type BillingAccount={company_id:string;company_name:string;customer_id:string|null;subscription_id:string|null;trial_ends_at:string;members:number;checkout_token:string}
 async function backend(operation:string,data:Record<string,unknown>){const r=await service.rpc('billing_sandbox_backend',{p_operation:operation,p_data:data});if(r.error)throw r.error;return r.data}
 const acceptedEvents=new Set(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed','invoice.paid','invoice.payment_failed'])
-async function syncSubscription(subscriptionId:string,event:Stripe.Event){
+async function syncSubscription(subscriptionId:string,event:{id:string;type:string}){
  if(!stripe)throw Error('not_configured')
  const syncedAt=new Date().toISOString()
  const sub=await stripe.subscriptions.retrieve(subscriptionId)
@@ -47,24 +48,37 @@ Deno.serve(async req=>{
    const auth=await service.auth.getUser(token)
    if(auth.error||!auth.data.user?.email_confirmed_at)return new Response(null,{status:401,headers})
    const userId=auth.data.user.id
-   let account
+   let account:BillingAccount
    try{account=await backend('context',{user_id:userId})}catch{return new Response(null,{status:403,headers})}
    const input=await req.json();const operation=input.operation
-   if(operation==='status')return Response.json({...account,ready:Boolean(Deno.env.get('STRIPE_WEBHOOK_SECRET'))},{headers})
-   if(!Deno.env.get('STRIPE_WEBHOOK_SECRET'))return Response.json({error:'Webhook setup is still required before checkout testing.'},{status:503,headers})
+   if(operation==='status'){
+     let hasPaymentMethod=false
+     if(account.customer_id){
+       const customerId=account.customer_id
+       const list=await stripe.subscriptions.list({customer:customerId,status:'all',limit:100})
+       const current=list.data.find(s=>s.id===account.subscription_id)??list.data.find(s=>s.metadata.application==='vimbre')
+       if(current){await syncSubscription(current.id,{id:'reconcile_'+crypto.randomUUID(),type:'billing.status.refreshed'});account=await backend('context',{user_id:userId});hasPaymentMethod=Boolean(current.default_payment_method||current.default_source)}
+       const customer=await stripe.customers.retrieve(customerId)
+       if(!customer.deleted)hasPaymentMethod=hasPaymentMethod||Boolean(customer.invoice_settings.default_payment_method||customer.default_source)
+     }
+     return Response.json({...account,has_payment_method:hasPaymentMethod,checked_at:new Date().toISOString(),ready:Boolean(Deno.env.get('STRIPE_WEBHOOK_SECRET'))},{headers})
+   }
+   if(!Deno.env.get('STRIPE_WEBHOOK_SECRET'))return Response.json({error:'Billing is temporarily unavailable. Please try again.'},{status:503,headers})
    if(operation!=='checkout'&&operation!=='portal')return new Response(null,{status:400,headers})
    if(!account.customer_id){const customer=await stripe.customers.create({name:account.company_name,email:auth.data.user.email,metadata:{application:'vimbre',company_id:account.company_id}},{idempotencyKey:'vimbre-sandbox-customer-'+account.company_id});account=await backend('bind_customer',{user_id:userId,customer_id:customer.id})}
+   const customerId=account.customer_id
+   if(!customerId)throw Error('customer_missing')
    if(operation==='portal'){
-     const portal=await stripe.billingPortal.sessions.create({customer:account.customer_id,configuration:PORTAL_CONFIGURATION,return_url:'https://vimbre.com/app/settings?billing=sandbox'})
+     const portal=await stripe.billingPortal.sessions.create({customer:customerId,configuration:PORTAL_CONFIGURATION,return_url:'https://vimbre.com/app/billing?billing=sandbox'})
      return Response.json({url:portal.url},{headers})
    }
    const plan=typeof input.plan==='string'&&Object.hasOwn(plans,input.plan)?plans[input.plan as Plan]:null
    if(!plan)return Response.json({error:'Choose a listed plan.'},{status:400,headers})
    if(account.members>plan.seats)return Response.json({error:'Choose a plan that fits your active team size.'},{status:409,headers})
    // Check provider state too: webhook delivery may lag behind a previous completed checkout.
-   const subscriptions=await stripe.subscriptions.list({customer:account.customer_id,status:'all',limit:100})
+   const subscriptions=await stripe.subscriptions.list({customer:customerId,status:'all',limit:100})
    if(subscriptions.has_more||subscriptions.data.some(s=>!['canceled','incomplete_expired'].includes(s.status)))return Response.json({error:'A subscription already exists. Use Manage billing.'},{status:409,headers})
-   const existing=await stripe.checkout.sessions.list({customer:account.customer_id,status:'open',limit:100})
+   const existing=await stripe.checkout.sessions.list({customer:customerId,status:'open',limit:100})
    if(existing.data.length||existing.has_more){const current=existing.data.find(s=>s.mode==='subscription'&&s.metadata?.application==='vimbre');if(current?.url)return Response.json({url:current.url},{headers});return Response.json({error:'A checkout is already in progress.'},{status:409,headers})}
    const providerPrice=await stripe.prices.retrieve(plan.price)
    if(providerPrice.livemode||providerPrice.unit_amount!==plan.amount||providerPrice.currency!=='gbp'||providerPrice.recurring?.interval!=='month')throw Error('price_mismatch')
@@ -74,7 +88,7 @@ Deno.serve(async req=>{
    // paid checkout is explicit in the UI and never silently charges before the trial deadline.
    if(!trialEnd&&Date.parse(account.trial_ends_at)>Date.now())return Response.json({error:'Your free trial is still running. Add billing after it ends, or manage an existing subscription.'},{status:409,headers})
    const suffix=account.checkout_token.replaceAll('-','').slice(0,8).split('').map((c:string)=>String.fromCharCode(97+parseInt(c,16))).join('')
-   const session=await stripe.checkout.sessions.create({mode:'subscription',customer:account.customer_id,line_items:[{price:plan.price,quantity:1}],payment_method_collection:trialEnd?'if_required':'always',client_reference_id:account.company_id,metadata:{application:'vimbre',company_id:account.company_id},subscription_data:{metadata:{application:'vimbre',company_id:account.company_id},billing_mode:{type:'flexible'},...(trialEnd?{trial_end:trialEnd,trial_settings:{end_behavior:{missing_payment_method:'cancel' as const}}}:{})},success_url:'https://vimbre.com/app/settings?billing=sandbox&checkout=returned',cancel_url:'https://vimbre.com/app/settings?billing=sandbox',integration_identifier:'vimbre_sandbox_'+suffix},{idempotencyKey:'vimbre-sandbox-checkout-'+account.checkout_token})
+   const session=await stripe.checkout.sessions.create({mode:'subscription',customer:customerId,line_items:[{price:plan.price,quantity:1}],payment_method_collection:trialEnd?'if_required':'always',client_reference_id:account.company_id,metadata:{application:'vimbre',company_id:account.company_id},subscription_data:{metadata:{application:'vimbre',company_id:account.company_id},billing_mode:{type:'flexible'},...(trialEnd?{trial_end:trialEnd,trial_settings:{end_behavior:{missing_payment_method:'cancel' as const}}}:{})},success_url:'https://vimbre.com/app/billing?billing=sandbox&checkout=returned',cancel_url:'https://vimbre.com/app/billing?billing=sandbox',integration_identifier:'vimbre_sandbox_'+suffix},{idempotencyKey:'vimbre-sandbox-checkout-'+account.checkout_token})
    return Response.json({url:session.url},{headers})
  }catch{return Response.json({error:'Billing could not be updated. Your workspace has not changed.'},{status:503,headers})}
 })

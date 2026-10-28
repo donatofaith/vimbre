@@ -8,6 +8,7 @@ import { FeaturePage } from '../components/ui/FeaturePage'
 import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
+import {BillingSettings} from '../features/billing/BillingSettings'
 import { HomePage } from '../features/public/HomePage'
 import { HelpPage } from '../features/support/HelpPage'
 
@@ -193,6 +194,7 @@ export function App() {
                 element={<DepartmentsPage />}
               />
               <Route path="settings" element={<CompanySettings />} />
+              <Route path="billing" element={<BillingSettings />} />
               <Route path="help" element={<HelpPage />} />
 
               <Route
