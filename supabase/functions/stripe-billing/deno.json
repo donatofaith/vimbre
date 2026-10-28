@@ -1,0 +1,1 @@
+{"imports":{"@supabase/supabase-js":"npm:@supabase/supabase-js@2.118.0","stripe":"npm:stripe@22.6.0"},"compilerOptions":{"strict":true}}
