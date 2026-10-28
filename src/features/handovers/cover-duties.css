@@ -190,3 +190,10 @@ details.cd-brief-section>summary span{margin-left:auto;padding:4px 8px;border-ra
  .cd-modal{padding:18px;max-height:92vh}
 }
 @media(prefers-reduced-motion:reduce){.cd-row{transition:none}.cd-skeleton i{animation:none}}
+
+
+.cd-no-match{display:grid;gap:12px;padding:22px;border:1px solid #dfe7f0;border-radius:16px;background:#fff}
+.cd-no-match>strong{font-size:17px;line-height:1.4}
+.cd-no-match>p{margin:0;color:#60758a;font-size:14px;line-height:1.55}
+.cd-no-match .cd-actions{display:flex;flex-wrap:wrap}
+@media(max-width:640px){.cd-no-match{padding:17px}.cd-no-match .cd-actions{display:grid;grid-template-columns:1fr}.cd-no-match .cd-actions .button{width:100%;min-height:44px}}
