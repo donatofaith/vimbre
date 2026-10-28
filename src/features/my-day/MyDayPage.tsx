@@ -24,6 +24,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { WorkspaceIcon } from "../../components/ui/WorkspaceIcon";
 import { supabase } from "../../lib/supabase";
+import type { Json } from "../../lib/database.types";
 import { coverDutyRpc, type CoverDutyRow } from "../handovers/model";
 import { useAuth } from "../auth/AuthProvider";
 import { CaptureSummary } from "../workspace/MyDayOverview";
@@ -147,7 +148,7 @@ function MyDayContent() {
     const key=coverTaskKey(handoverId,task.id);
     if(coverEditKey===key){setCoverEditKey('');return}
     setCoverEditKey(key);setCoverEditTitle(task.title);setCoverEditDetails(task.details||'');
-    setCoverEditDate(task.due_date||'');setCoverEditTime(task.due_time||'');
+    setCoverEditDate(task.due_date||'');setCoverEditTime((task.due_time||'').slice(0,5));
     setCoverEditSteps((task.steps||[]).join('\n'));setCoverEditLinks((task.links||[]).join('\n'));
     setCoverDoneKey('');setCoverHandbackKey('');
   }
@@ -156,7 +157,7 @@ function MyDayContent() {
     const key=coverTaskKey(handoverId,task.id);setBusy(key);setError('');
     const values:Record<string,unknown>={task_id:task.id,title:coverEditTitle.trim(),due_date:coverEditDate||null,due_time:coverEditTime||null,due_at:''};
     if(task.source_is_manual){values.details=coverEditDetails;values.steps=coverEditSteps.split('\n').map(v=>v.trim()).filter(Boolean);values.links=coverEditLinks.split('\n').map(v=>v.trim()).filter(Boolean)}
-    try{await coverDutyRpc('task_edit',handoverId,values);setCoverEditKey('');setMessage('Covered task updated.');refresh()}
+    try{await coverDutyRpc('task_edit',handoverId,values as unknown as Json);setCoverEditKey('');setMessage('Covered task updated.');refresh()}
     catch(e){setError(e instanceof Error?e.message:'The covered task could not be updated.')}
     finally{setBusy('')}
   }
@@ -563,7 +564,7 @@ function MyDayContent() {
                                 {t.source_not_shared&&<span className="md-cover-source-chip">Source not shared</span>}
                               </div>
                               <div className="md-cover-task-actions">
-                                <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{setCoverDoneKey(coverDoneKey===actionKey?'':actionKey);setCoverOutcomeNote('');setCoverEditKey('');setCoverHandbackKey('')}}>Mark done</Button>
+                                <Button variant="secondary" disabled={Boolean(busy)} onClick={()=>{setCoverDoneKey(coverDoneKey===actionKey?'':actionKey);setCoverOutcomeNote('');setCoverEditKey('');setCoverHandbackKey('')}}>Mark done</Button>
                                 <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{beginCoveredTaskEdit(h.id,t);setCoverDoneKey('');setCoverHandbackKey('')}}>Edit</Button>
                                 <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{setCoverHandbackKey(coverHandbackKey===actionKey?'':actionKey);setCoverHandbackReason('');setCoverDoneKey('');setCoverEditKey('')}}>Hand back</Button>
                               </div>
