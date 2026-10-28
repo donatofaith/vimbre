@@ -85,3 +85,11 @@
 
 /* Empty save status must not leave a white mark. */
 .ho-wizard-footer .ho-helper:empty{display:none}
+
+/* Wizard navigation follows the final field instead of covering the form. */
+.ho-wizard{padding-bottom:32px}
+.ho-wizard-footer{position:static;inset:auto;width:100%;margin-top:32px;padding:20px 0 0;border-top:1px solid var(--border);display:grid;gap:12px;pointer-events:auto}
+.ho-wizard-footer>div:last-child{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px}
+.ho-wizard-footer .button{width:auto;min-height:48px}
+.ho-wizard-footer .ho-helper{padding:0;background:transparent}
+.ho-wizard-footer .field-error button{margin-left:8px;min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface,#fffdf8);font:inherit;cursor:pointer}
