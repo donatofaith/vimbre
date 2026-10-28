@@ -554,7 +554,12 @@ $function$;
 create or replace function private.myday_cover_tasks()
 returns jsonb language sql stable security definer set search_path='' as $function$
   select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) from (
-    select a.id,a.title,a.status,a.due_date,a.due_at,d.name as department_name,p.full_name as owner_name,p.id as owner_id
+    select a.id,a.title,a.status,a.due_date,a.due_at,a.due_time,a.priority,a.label,a.time_needed_minutes,
+      case when a.source_kind='manual' then a.details else '' end as details,
+      case when a.source_kind='manual' then a.steps else '[]'::jsonb end as steps,
+      case when a.source_kind='manual' then a.links else '[]'::jsonb end as links,
+      (a.source_kind<>'manual' and (a.source_url is not null or a.source_excerpt is not null)) as source_not_shared,
+      d.name as department_name,p.full_name as owner_name,p.id as owner_id
     from public.actions a
     join public.profiles p on p.id=a.owner_id and p.active
     left join public.departments d on d.id=a.department_id
@@ -562,7 +567,7 @@ returns jsonb language sql stable security definer set search_path='' as $functi
       and exists(select 1 from public.work_handovers h where h.owner_id=a.owner_id and h.company_id=a.company_id and h.cover_id=auth.uid()
         and h.status='approved' and h.deleted_at is null
         and (h.cover_response='accepted' or coalesce((select cover_visibility from private.handover_policy where company_id=h.company_id),'approval')='approval')
-        and (not h.structured or exists(select 1 from private.handover_items hi where hi.handover_id=h.id and hi.record_id=a.id and hi.kind='task' and hi.approved))
+        and exists(select 1 from private.handover_items hi where hi.handover_id=h.id and hi.record_id=a.id and hi.kind='task' and hi.approved)
         and (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=auth.uid()),'Europe/London'))::date between h.starts_on and coalesce(h.ends_on,'infinity'::date)
         and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned')))
     order by a.due_at,a.id limit 60
