@@ -108,7 +108,7 @@ function CoverDetail({id}:{id:string}){
  if(loading)return <div className="ho-page cd-page"><div className="cd-back"><Link to="/app/my-cover-duties">← Cover duties</Link></div><div className="cd-skeleton" role="status"><i/><i/><i/></div></div>
  if(error&&!data)return <div className="ho-page cd-page"><div className="cd-back"><Link to="/app/my-cover-duties">← Cover duties</Link></div><p className="field-error" role="alert">{error} <button type="button" onClick={()=>setRevision(v=>v+1)}>Retry</button></p></div>
  if(!h||!data)return null
- const priorities=(h.sections?.priorities||'').split('\n').map(v=>v.replace(/^\s*(?:\d+[.)]|[-•])\s*/,'').trim()).filter(Boolean)
+ const priorities=(h.priority_order||[]).map(taskId=>tasks.find(task=>task.id===taskId)?.title||'').filter(Boolean).concat((h.sections?.priorities||'').split('\n').map(v=>v.replace(/^\s*(?:\d+[.)]|[-•])\s*/,'').trim()).filter(Boolean)).filter((value,index,array)=>array.indexOf(value)===index)
  const dateMessage=h.ends_on?'Back on '+date(h.ends_on,{day:'numeric',month:'short'}):'Return date not set'
  const suddenMessage=h.sudden?h.owner_name+' didn’t prepare this. Ask '+(h.reviewer_name||'your manager')+' if you have questions.':''
  const waiting=h.cover_response==='pending'
