@@ -395,7 +395,7 @@ begin
     return private.handover_cover_brief(h.id,u);
 
   elsif p_operation in ('task_done','task_edit','hand_back') then
-    if h.cover_id<>u or not full_access or h.status<>'approved'
+    if h.cover_id<>u or h.cover_response<>'accepted' or not full_access or h.status<>'approved'
        or (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=u),'Europe/London'))::date<h.starts_on
        or (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=u),'Europe/London'))::date>coalesce(h.ends_on,'infinity'::date) then
       raise insufficient_privilege;
@@ -469,7 +469,7 @@ begin
     return jsonb_build_object('ok',true,'handback_id',nullif(p_data->>'handback_id',''));
 
   elsif p_operation='note' then
-    if h.cover_id<>u or not full_access then raise insufficient_privilege; end if;
+    if h.cover_id<>u or h.cover_response<>'accepted' or not full_access then raise insufficient_privilege; end if;
     body:=btrim(coalesce(p_data->>'body',''));
     if length(body) not between 1 and 3000 then raise check_violation using message='Write a short note for the owner.'; end if;
     insert into private.handover_cover_notes(handover_id,company_id,author_id,note_type,title,body)
@@ -479,7 +479,7 @@ begin
     return private.handover_cover_brief(h.id,u);
 
   elsif p_operation='decision' then
-    if h.cover_id<>u or not full_access then raise insufficient_privilege; end if;
+    if h.cover_id<>u or h.cover_response<>'accepted' or not full_access then raise insufficient_privilege; end if;
     body:=btrim(coalesce(p_data->>'reason','')); reason:=btrim(coalesce(p_data->>'title',''));
     if length(reason) not between 1 and 200 or length(body) not between 1 and 3000 then raise check_violation using message='Add a decision title and a short reason.'; end if;
     insert into public.decisions(company_id,owner_id,role_id,title,reason,decided_by,decided_on,status,role_fields)
@@ -506,7 +506,7 @@ begin
     return private.handover_cover_brief(h.id,u);
 
   elsif p_operation='return_summary' then
-    if h.cover_id<>u or not full_access or h.status not in ('completed','approved') or h.ends_on is null and h.status<>'completed' or current_date<=coalesce(h.ends_on,current_date) and h.status<>'completed' then
+    if h.cover_id<>u or h.cover_response<>'accepted' or not full_access or h.status not in ('completed','approved') or h.ends_on is null and h.status<>'completed' or current_date<=coalesce(h.ends_on,current_date) and h.status<>'completed' then
       raise insufficient_privilege;
     end if;
     body:=btrim(coalesce(p_data->>'summary',''));
@@ -545,7 +545,7 @@ returns boolean language sql stable security definer set search_path='' as $func
         select 1 from public.work_handovers h
         where h.company_id=a.company_id and h.owner_id=a.owner_id and h.cover_id=me.id
           and h.status='approved' and h.deleted_at is null
-          and (h.cover_response='accepted' or coalesce((select cover_visibility from private.handover_policy where company_id=h.company_id),'approval')='approval')
+          and h.cover_response='accepted'
           and (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=me.id),'Europe/London'))::date between h.starts_on and coalesce(h.ends_on,'infinity'::date)
           and exists(select 1 from private.handover_items i where i.handover_id=h.id and i.kind='task' and i.record_id=a.id and i.approved)
           and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned'))
@@ -569,7 +569,7 @@ returns jsonb language sql stable security definer set search_path='' as $functi
     where a.company_id=private.current_company_id() and a.deleted_at is null and a.status<>'done' and a.purged_at is null
       and exists(select 1 from public.work_handovers h where h.owner_id=a.owner_id and h.company_id=a.company_id and h.cover_id=auth.uid()
         and h.status='approved' and h.deleted_at is null
-        and (h.cover_response='accepted' or coalesce((select cover_visibility from private.handover_policy where company_id=h.company_id),'approval')='approval')
+        and h.cover_response='accepted'
         and exists(select 1 from private.handover_items hi where hi.handover_id=h.id and hi.record_id=a.id and hi.kind='task' and hi.approved)
         and (now() at time zone coalesce((select timezone from public.work_preferences where owner_id=auth.uid()),'Europe/London'))::date between h.starts_on and coalesce(h.ends_on,'infinity'::date)
         and not exists(select 1 from private.handover_task_handbacks hb where hb.handover_id=h.id and hb.task_id=a.id and hb.status in ('pending','returned')))
