@@ -548,26 +548,31 @@ function MyDayContent() {
                     aria-label={`Covering for ${h.owner_name}`}
                   >
                     <h3>Covering for {h.owner_name}</h3>
-                    <Button variant="secondary" disabled={Boolean(busy)} onClick={async()=>{if(!window.confirm('Hand this cover back to the owner?'))return;setBusy(h.id);try{await daySuite('cover_hand_back',h.id);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>Hand back</Button>
+                    <Link className="md-cover-brief-link" to={'/app/my-cover-duties/'+h.id}>Open cover briefing</Link>
                     <ul className="md-cover-tasks">
                       {(data?.cover_tasks ?? [])
                         .filter((t) => t.owner_id === h.owner_id)
-                        .map((t) => (
-                          <li key={t.id}>
-                            <strong>{t.title}</strong>
-                            <span>
-                              {h.owner_name} ·{" "}
-                              {statuses.find(([v]) => v === t.status)?.[1] ??
-                                "To do"}
-                            </span>
-                            <time>
-                              {t.due_at ? new Intl.DateTimeFormat("en-GB", {
-                                dateStyle: "medium",
-                                timeZone: zone,
-                              }).format(new Date(t.due_at)) : "No date"}
-                            </time>
-                          </li>
-                        ))}
+                        .map((t) => {
+                          const actionKey=coverTaskKey(h.id,t.id);
+                          return (
+                            <li key={t.id} className="md-cover-task">
+                              <div className="md-cover-task-summary">
+                                <strong>{t.title}</strong>
+                                <span>{h.owner_name} · {statuses.find(([v])=>v===t.status)?.[1]??"To do"}</span>
+                                <time>{t.due_date?formatTaskDay(t.due_date,format):t.due_at?new Intl.DateTimeFormat("en-GB",{dateStyle:"medium",timeZone:zone}).format(new Date(t.due_at)):"No date"}</time>
+                                {t.source_not_shared&&<span className="md-cover-source-chip">Source not shared</span>}
+                              </div>
+                              <div className="md-cover-task-actions">
+                                <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{setCoverDoneKey(coverDoneKey===actionKey?'':actionKey);setCoverOutcomeNote('');setCoverEditKey('');setCoverHandbackKey('')}}>Mark done</Button>
+                                <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{beginCoveredTaskEdit(h.id,t);setCoverDoneKey('');setCoverHandbackKey('')}}>Edit</Button>
+                                <Button variant="secondary" disabled={Boolean(busy)||Boolean(t.handback_pending)} onClick={()=>{setCoverHandbackKey(coverHandbackKey===actionKey?'':actionKey);setCoverHandbackReason('');setCoverDoneKey('');setCoverEditKey('')}}>Hand back</Button>
+                              </div>
+                              {coverDoneKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void completeCoveredTask(h.id,t)}}><label>Outcome note (optional)<textarea rows={2} maxLength={1000} value={coverOutcomeNote} onChange={e=>setCoverOutcomeNote(e.target.value)} placeholder="What happened or what should the owner know?"/></label><div><Button type="submit" disabled={Boolean(busy)}>Mark done</Button><Button type="button" variant="secondary" onClick={()=>setCoverDoneKey('')}>Cancel</Button></div></form>}
+                              {coverEditKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void saveCoveredTaskEdit(h.id,t)}}><label>Task title<input maxLength={300} required value={coverEditTitle} onChange={e=>setCoverEditTitle(e.target.value)}/></label><div className="md-cover-edit-dates"><label>Due date<input type="date" value={coverEditDate} onChange={e=>setCoverEditDate(e.target.value)}/></label><label>Due time<input type="time" value={coverEditTime} onChange={e=>setCoverEditTime(e.target.value)}/></label></div>{t.source_is_manual&&<><label>Notes<textarea rows={3} maxLength={6000} value={coverEditDetails} onChange={e=>setCoverEditDetails(e.target.value)}/></label><label>Steps (one per line)<textarea rows={3} maxLength={6000} value={coverEditSteps} onChange={e=>setCoverEditSteps(e.target.value)}/></label><label>Links (one URL per line)<textarea rows={2} maxLength={6000} value={coverEditLinks} onChange={e=>setCoverEditLinks(e.target.value)}/></label></>}<div><Button type="submit" disabled={Boolean(busy)||!coverEditTitle.trim()}>Save task</Button><Button type="button" variant="secondary" onClick={()=>setCoverEditKey('')}>Cancel</Button></div></form>}
+                              {coverHandbackKey===actionKey&&<form className="md-cover-task-form" onSubmit={e=>{e.preventDefault();void handBackCoveredTask(h.id,t)}}><label>Reason for handing back<textarea rows={3} minLength={3} maxLength={1000} required value={coverHandbackReason} onChange={e=>setCoverHandbackReason(e.target.value)} placeholder="Explain why the owner or manager needs to decide this task."/></label><div><Button type="submit" disabled={Boolean(busy)||coverHandbackReason.trim().length<3}>Hand back task</Button><Button type="button" variant="secondary" onClick={()=>setCoverHandbackKey('')}>Cancel</Button></div></form>}
+                            </li>
+                          );
+                        })}
                     </ul>
                   </section>
                 ))}
