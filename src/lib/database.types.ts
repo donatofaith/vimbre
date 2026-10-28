@@ -1108,6 +1108,7 @@ export type Database = {
       chat_team: { Args: never; Returns: string }
       cover_duties_action: { Args: { p_operation: string; p_id?: string | null; p_data?: Json }; Returns: Json }
       handover_share_question: { Args: { p_token: string; p_body: string; p_email?: string }; Returns: Json }
+      handover_external_questions_action: { Args: { p_operation: string; p_id: string; p_data?: Json }; Returns: Json }
       company_active_member_count: { Args: never; Returns: number }
       complete_invitation_delivery: {
         Args: { p_error_code?: string; p_id: string; p_status: string }
