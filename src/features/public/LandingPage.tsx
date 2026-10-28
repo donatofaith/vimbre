@@ -105,7 +105,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             {plan.seats !== null && plan.amount !== null && <p className="rf-per-person">{money(plan.amount / plan.seats)} <span>per person / month at full team size</span></p>}
             <p className="rf-plan-positioning">{plan.size}<br />{plan.positioning}</p>
             <ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>
-            <Link className={'rs-button ' + (i !== 1 ? 'rs-button-outline' : '')} to={to}>{cta}<Arrow /></Link>
+            <Link className={'rs-button ' + (i !== 1 ? 'rs-button-outline' : '')} to={plan.amount===null?'/#contact':authenticated?'/app/billing?plan='+plan.name.toLowerCase():'/signup?plan='+plan.name.toLowerCase()}>{plan.amount===null?'Contact us':authenticated?'Choose '+plan.name:'Start free trial'}<Arrow /></Link>
           </Reveal>)}</div>
           <p className="rf-pricing-disclosure">{pricingDisclosure}</p>
           <PricingValueCalculator />

@@ -1,3 +1,4 @@
+import {billingReturnPath} from '../billing/return-path'
 import { myDayReturnPath } from './return-path'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
@@ -156,7 +157,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         type: 'signup',
         email: signupEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback${new URLSearchParams(location.search).get('plan')&&billingReturnPath(location.search)!=='/app'?'?plan='+new URLSearchParams(location.search).get('plan'):''}`,
         },
       })
 
@@ -233,7 +234,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
         if (result.error) throw result.error
 
-        navigate(myDayReturnPath(location.state?.myDayTask), { replace: true })
+        navigate(billingReturnPath(location.search,myDayReturnPath(location.state?.myDayTask)), { replace: true })
       } else if (mode === 'forgot') {
         const result = await supabase.auth.resetPasswordForEmail(
           email,
@@ -492,7 +493,7 @@ export function AuthCallback() {
       navigate(
         recovery || account.recovery
           ? '/reset-password'
-          : '/app',
+          : billingReturnPath(window.location.search),
         { replace: true },
       )
     }

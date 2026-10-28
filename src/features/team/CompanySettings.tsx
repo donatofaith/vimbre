@@ -38,7 +38,7 @@ export function CompanySettings() {
     <Input label="Account email" type="email" value={session?.user.email ?? profile.email} readOnly />
     <Input label="Company contact email" type="email" value={company.contact_email ?? ''} readOnly />
     <div className="field"><label htmlFor="team-mode">Team structure</label><input id="team-mode" value={company.team_mode === 'departments' ? 'Departments' : 'Small team'} readOnly /></div>
-    <p className="settings-plan-link">To change your team structure, <Link to={new URLSearchParams(window.location.search).get('billing')==='sandbox'?'/app/billing?billing=sandbox':'/app/billing'}>view plans and subscribe</Link>.</p>
+    <p className="settings-plan-link"><Link to="/#pricing">View plans</Link> · <Link to="/app/billing">Manage subscription</Link></p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
   </form> : <p>Contact your company administrator to change company settings.</p>}</section><HandoverSettings/><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/></div>

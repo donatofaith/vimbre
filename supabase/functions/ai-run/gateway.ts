@@ -27,6 +27,7 @@ export function allowanceMessage(period?: string, resetAt?: string) {
 }
 const unavailable = 'AI is unavailable right now. You can continue by hand.'
 const messages: Record<string, string> = {
+  billing_required: 'Your free trial or paid access has ended. Ask your company owner to review billing. Tasks, saved records and manual work remain available.',
   not_configured: 'AI is not enabled for this company yet. You can continue by hand.',
   limit_reached: 'Your company’s AI limit has been reached. You can continue by hand.',
   already_requested: 'This AI request has already been received. You can continue by hand.',
