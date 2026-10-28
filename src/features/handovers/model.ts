@@ -28,7 +28,7 @@ export type CoverDutyRow={
 export type CoverDutyTask={
  id:string;title:string;status:string;due_date:string|null;due_at:string|null;details?:string;
  steps?:string[];links?:string[];completion_note?:string;do_not_change?:boolean;approved?:boolean;
- source_not_shared?:boolean;handback_pending?:boolean;completed_by_cover?:boolean;
+ source_not_shared?:boolean;source_is_manual?:boolean;handback_pending?:boolean;completed_by_cover?:boolean;
 }
 export type CoverDutyNote={id:string;note_type:'note'|'decision';title:string;body:string;author_name:string;created_at:string}
 export type CoverDutyComment={id:string;author:string;author_id:string;body:string;created_at:string}
