@@ -37,3 +37,9 @@ Recreate verified prices and portal/webhook configuration in the Vimbre Ltd live
 - `scripts/check-billing-browser.cjs`: mocked authenticated browser passed webhook gating, 3-day trial display, plan selection, checkout failure retention, hidden ordinary settings and widths 320, 390, 768, 1024 and 1440.
 - Rollback SQL: exact trial duration, no reset, customer binding, serialized checkout claim, webhook replay, live-event rejection, creator-only access and ordinary-client RPC denial passed.
 - Actual sandbox Checkout and signed webhook delivery remain pending signing-secret configuration and release approval. No real charge or real customer subscription was created.
+
+
+## Billing page and refresh follow-up
+Settings now links to a dedicated /app/billing page; the embedded Billing test section is removed. The normal billing route uses customer-facing plan/subscription copy and does not call the sandbox backend or enable live checkout. Explicit ?billing=sandbox testing remains creator-only with one test-mode badge. Checkout and portal return links point to the dedicated page.
+
+Refresh reconciles canonical Stripe subscription and customer payment-method state, shows loading/completion/error feedback, and runs when returning to the window. Adding a card does not end the three-day trial: Free trial remains the correct status until expiry. Edge stripe-billing v3 is deployed. TypeScript, production build, lint and mocked browser acceptance pass, including Settings navigation, refresh requests, saved payment method, failure retention, five responsive widths and disabled live checkout. Public plan entitlement and live billing remain unchanged.
