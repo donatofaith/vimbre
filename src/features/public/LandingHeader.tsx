@@ -24,6 +24,7 @@ export function LandingHeader({ authenticated = false, loading = false }: { auth
       <Link className="rs-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link>
       <nav id="rs-navigation" className={`rs-nav${menuOpen ? ' rs-nav-open' : ''}`} aria-label="Public">
         {[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions']].map(([label, href]) => <a key={label} href={`/${href}`} onClick={() => setMenuOpen(false)}>{label}</a>)}
+        <Link to="/blog" onClick={()=>setMenuOpen(false)}>Blog</Link>
       </nav>
       <div className="rs-header-actions">
         {!authenticated && !loading && <Link className="rs-login" to="/login">Log in</Link>}

@@ -8,6 +8,7 @@ import { legalDocuments } from './legal-content'
 import { CaptureSourceLogo } from '../capture/CaptureSourceLogo'
 import { ConnectedTimeline } from './RefinedProductDemos'
 import { faq, plans, schema, heroCopy, pricingDisclosure } from './landing-content'
+import { HeroHeadline } from './HeroHeadline'
 import { HeroStory } from './HeroStory'
 import { PricingValueCalculator } from './PricingValueCalculator'
 import './landing.css'
@@ -82,18 +83,21 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section className="rs-hero rf-hero" aria-labelledby="hero-title">
         <div className="rs-container rs-hero-grid">
           <div className="rs-hero-copy">
-            <h1 id="hero-title" tabIndex={-1}>Turn conversations into <span>tasks, decisions and handovers.</span></h1>
+            <HeroHeadline/>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
       </section>
+      <section className="rs-section rf-problem" aria-labelledby="problem-title"><div className="rs-container"><Reveal><h2 id="problem-title">Work is easy to start, hard to follow.</h2><p className="rf-section-intro">Common frustrations</p></Reveal><div className="rf-frustrations" role="list">{['Decisions are buried in chats and meetings','New team members struggle to catch up','People repeatedly ask for updates','Handovers depend on memory','Nobody knows why something was done'].map((text,i)=><Reveal key={text} delay={i*60}><div className="rf-frustration" role="listitem"><Icon kind="notes"/>{text}</div></Reveal>)}</div><p className="rf-problem-answer">Vimbre keeps the story behind work connected.</p></div></section>
+      <section className="rs-section rf-difference" aria-labelledby="difference-title"><div className="rs-container"><Reveal><h2 id="difference-title">What makes Vimbre different</h2></Reveal><div className="rf-comparison" role="table" aria-label="Existing tools and Vimbre"><div className="rf-comparison-row rf-comparison-head" role="row"><div role="columnheader">Your existing tools</div><div role="columnheader">What Vimbre adds</div></div>{[['Chats and meetings hold discussions.','Reviewed decisions and the reason behind them stay with the work.'],['Task lists track what needs doing.','Actions connect to the conversation or decision they came from.'],['Files hold documents and notes.','Role records and handovers bring selected work together for the next person.']].map(([existing,vimbre])=><div className="rf-comparison-row" role="row" key={existing}><div role="cell">{existing}</div><div role="cell"><Icon kind="check"/>{vimbre}</div></div>)}</div></div></section>
       <section id="how-it-works" className="rs-section" aria-labelledby="how-title"><div className="rs-container">
        <Reveal><h2 id="how-title">How it works</h2></Reveal>
        <ConnectedTimeline/>
        <div className="rf-tools-row" aria-label="Available connections">{[['gmail','Gmail'],['drive','Google Drive'],['outlook','Outlook'],['teams','Microsoft Teams'],['slack','Slack'],['trello','Trello']].map(([provider,name])=><span key={provider} aria-label={name} title={name}><CaptureSourceLogo provider={provider}/></span>)}</div><p className="rf-tools-consent">Connect your account with your company’s permission. You choose what to bring in.</p>
       </div></section>
+      <section className="rs-section rf-use-cases" aria-labelledby="use-cases-title"><div className="rs-container"><Reveal><h2 id="use-cases-title">Built for everyday business situations.</h2></Reveal><div className="rf-use-case-grid">{[['Covering a colleague','Pick up work without lengthy briefings.'],['New staff onboarding','Understand ongoing work faster.'],['Handovers','Keep progress moving between people.'],['Management visibility',"Understand what's happening without chasing updates."],['Audit & accountability','Know who decided what and when.']].map(([title,description],i)=><Reveal className="rf-use-case" key={title} delay={i*60}><Icon kind={['people','notes','record','people','check'][i]}/><h3>{title}</h3><p>{description}</p></Reveal>)}</div></div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
           <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Choose a company plan for your team size and AI usage.</p></Reveal>
@@ -112,7 +116,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={to}>{cta}<Arrow/></Link></div></section>
       <ContactSection />
     </main>
-    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
+    <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}<Link to="/blog">Blog</Link>{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
   </div>
 }

@@ -1,9 +1,9 @@
 // Public product copy and pricing. Keep capability claims aligned with the shipped product.
-export const landingTitle = 'Vimbre | Turn Conversations into Actions and Handovers'
+export const landingTitle = 'Vimbre | Understand the Why'
 export const definition = 'Vimbre turns conversations into reviewed actions, keeps decisions and role records connected, and prepares handovers for the people who cover the work.'
 export const heroCopy = {
-  headline: 'Turn conversations into tasks, decisions and handovers.',
-  supporting: 'Vimbre AI prepares a draft. You review it before saving. Your role record keeps the context someone covering your work needs.',
+  headline: 'Understand the Why',
+  supporting: 'Vimbre automatically connects decisions, discussions and actions across your existing tools, so anyone can quickly understand what happened, why it happened and what needs attention next.',
 }
 export const storySummary = 'Example: paste a conversation, request task and decision drafts, accept the details, save the reviewed drafts, then select work for a handover and submit it to a manager.'
 export const record = [

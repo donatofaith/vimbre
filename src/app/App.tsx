@@ -9,6 +9,7 @@ import { AuthPage, AuthCallback } from '../features/auth/AuthPage'
 import { RequireAuth } from '../features/auth/AuthProvider'
 import { CompanySettings } from '../features/team/CompanySettings'
 import {BillingSettings} from '../features/billing/BillingSettings'
+import { BlogRoute } from '../features/public/BlogPage'
 import { HomePage } from '../features/public/HomePage'
 import { HelpPage } from '../features/support/HelpPage'
 
@@ -76,7 +77,7 @@ function PageFocus() {
 
       document.title =
         pathname === '/'
-          ? 'Vimbre | Turn Conversations into Actions and Handovers'
+          ? 'Vimbre | Understand the Why'
           : `${heading.textContent} | Vimbre`
 
       window.dispatchEvent(new Event('vimbre:ready'))
@@ -139,6 +140,8 @@ export function App() {
       <Route path="/role-guide" element={<RoleGuidePage/>}/>
       <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
+          <Route path="/blog" element={<BlogRoute/>}/>
+          <Route path="/blog/:slug" element={<BlogRoute/>}/>
           <Route path="/privacy" element={<LegalPage page="privacy" />} />
           <Route path="/terms" element={<LegalPage page="terms" />} />
           <Route path="/contact" element={<Navigate to="/#contact" replace />} />
