@@ -13,5 +13,5 @@ export function HeroHeadline() {
     sync(); media.addEventListener('change', sync); document.addEventListener('visibilitychange', sync)
     return () => { clearInterval(timer); media.removeEventListener('change', sync); document.removeEventListener('visibilitychange', sync) }
   }, [paused])
-  return <div className="rf-headline-wrap"><h1 id="hero-title" tabIndex={-1}><span className="sr-only">Understand the Why</span><span aria-hidden="true" className="rf-headline-fixed">Understand the</span><span aria-hidden="true" className="rf-rotating-word"><span key={index}>“{words[index]}”</span></span></h1><button type="button" className="rf-word-pause" aria-label={paused?'Resume rotating headline':'Pause rotating headline'} aria-pressed={paused} onClick={()=>setPaused(p=>!p)}>{paused?'▶':'Ⅱ'}</button></div>
+  return <div className="rf-headline-wrap"><h1 id="hero-title" tabIndex={-1}><span className="sr-only">Understand the Why</span><span aria-hidden="true" className="rf-headline-fixed">Understand the</span><span aria-hidden="true" className="rf-rotating-word"><span key={index}>“{words[index]}”</span></span></h1><button type="button" className="rf-word-pause sr-only" aria-label={paused?'Resume rotating headline':'Pause rotating headline'} aria-pressed={paused} onClick={()=>setPaused(p=>!p)}>{paused?'▶':'Ⅱ'}</button></div>
 }

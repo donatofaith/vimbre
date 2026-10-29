@@ -15,16 +15,20 @@ export function useWorkNotifications(page: number) {
  const refresh=()=>setRevision(n=>n+1)
  useEffect(()=>{
   if(!owner)return
-  let alive=true, sequence=0
+  let alive=true, sequence=0, running=false
   const load=async()=>{
+   if(running||document.hidden)return
+   running=true
+   try{
    const n=++sequence
    const {data,error}=await supabase.rpc('work_notification_inbox',{p_timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',p_page:page})
    const parsed=error?null:parseWorkInbox(data)
    if(alive&&n===sequence)setResult({key,data:parsed??emptyWorkInbox,error:!parsed})
+   }finally{running=false}
   }
   void load()
   const onReturn=()=>{if(!document.hidden)void load()}
-  const timer=setInterval(onReturn,20000)
+  const timer=setInterval(onReturn,60000)
   window.addEventListener('focus',onReturn);document.addEventListener('visibilitychange',onReturn)
   window.addEventListener('vimbre:work-changed',onReturn)
   return()=>{alive=false;clearInterval(timer);window.removeEventListener('focus',onReturn);document.removeEventListener('visibilitychange',onReturn);window.removeEventListener('vimbre:work-changed',onReturn)}
