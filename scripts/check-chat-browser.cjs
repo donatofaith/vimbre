@@ -267,6 +267,10 @@ const assert = require('node:assert/strict')
     await page
       .getByRole('heading', { name: 'Team chat', exact: true })
       .waitFor()
+    for(const width of [320,390,768,980,1024]){
+      await page.setViewportSize({width,height:850});assert.equal(Math.round((await page.locator('.vw-sidebar').boundingBox()).width),width);await page.getByRole('button',{name:'Menu',exact:true}).click();const menu=page.getByRole('dialog',{name:'Workspace menu',exact:true});const b=await menu.boundingBox();assert.equal(Math.round(b.x),0);assert.equal(Math.round(b.y),0);assert.equal(Math.round(b.width),width);assert.equal(Math.round(b.height),850);assert.equal(await page.locator('.vw-workspace').getAttribute('inert'),'');await menu.getByRole('link',{name:'Back to website',exact:true}).scrollIntoViewIfNeeded();assert.equal(await page.evaluate(()=>document.body.style.overflow),'hidden');await menu.getByRole('button',{name:'Sign out',exact:true}).focus();await page.keyboard.press('Tab');assert(await menu.getByRole('link',{name:'Vimbre home',exact:true}).evaluate(el=>el===document.activeElement));if(width===390)await page.screenshot({path:'/tmp/mobile32-menu.png'});await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog',{name:'Workspace menu',exact:true}).count(),0);assert.equal(await page.locator('.vw-workspace').getAttribute('inert'),null);
+    }
+    await page.setViewportSize({width:390,height:850});const header=page.locator('.chat-thread-header');assert.equal(await header.getByRole('button',{name:'New chat',exact:true}).innerText(),'+');assert.equal(await header.getByRole('button',{name:'Back to conversations',exact:true}).innerText(),'←');assert.equal(await page.locator('.chat-page .vw-page-heading').count(),0);const box=await page.locator('.chat-workspace').boundingBox();assert(Math.abs(box.y+box.height-850)<=2,'Chat should fill remaining screen');assert.equal(await page.getByRole('button',{name:'New chat',exact:true}).count(),1);await page.screenshot({path:'/tmp/mobile32-chat.png'});await page.setViewportSize({width:1440,height:1000});
     const cid = conversations[0].id
     assert.equal(conversations.filter(c=>c.is_team).length, 1)
     assert.equal(conversations[0].members.length, 3)
@@ -403,7 +407,7 @@ const assert = require('node:assert/strict')
       assert(fit, `Thread overflow at ${width}`)
     }
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.getByRole('button', { name: '← Chats', exact: true }).click()
+    await page.getByRole('button', { name: 'Back to conversations', exact: true }).click()
     await page.getByRole('button', { name: /Team chat/ }).click()
     await page.getByLabel('Message', { exact: true }).waitFor()
     denied = true

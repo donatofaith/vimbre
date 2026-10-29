@@ -57,19 +57,9 @@ export function ChatPage() {
   }
   return (
     <section className="chat-page">
-      <div className="vw-page-heading">
-        <div>
-          <h1 tabIndex={-1}>Chat</h1>
-        </div>
-        <button
-          className="button button-primary"
-          onClick={() => setCreating(true)}
-        >
-          New chat
-        </button>
-      </div>
+      <h1 className="sr-only" tabIndex={-1}>Messages</h1>
       <div className="chat-workspace" data-conversation={Boolean(selected)}>
-        <aside className="chat-list" aria-label="Conversations">
+        <aside className="chat-list" aria-label="Conversations"><div className="chat-list-toolbar"><h2>Conversations</h2>{!selected&&<button className="button button-secondary chat-new" aria-label="New chat" title="New chat" onClick={()=>setCreating(true)}><span aria-hidden="true">+</span></button>}</div>
           <label className="chat-search">
             Find a conversation
             <input
@@ -158,6 +148,7 @@ export function ChatPage() {
             id={selected}
             anchor={anchor}
             revision={revision + detailReload}
+            onNew={()=>setCreating(true)}
             onBack={() => setParams({})}
             onLatest={() => setParams({ conversation: selected })}
             onJump={(message) => {
@@ -407,6 +398,7 @@ function ConversationPanel({
   anchor,
   revision,
   onBack,
+  onNew,
   onLatest,
   onJump,
   onSent,
@@ -415,6 +407,7 @@ function ConversationPanel({
   anchor: string | null
   revision: number
   onBack: () => void
+  onNew: () => void
   onLatest: () => void
   onJump: (message: string) => void
   onSent: () => void
@@ -564,8 +557,8 @@ function ConversationPanel({
   return (
     <section className="chat-thread" aria-label="Conversation">
       <header className="chat-thread-header">
-        <button className="button button-secondary chat-back" onClick={onBack}>
-          ← Chats
+        <button className="button button-secondary chat-back" aria-label="Back to conversations" title="Back to conversations" onClick={onBack}>
+          <span aria-hidden="true">←</span>
         </button>
         <div>
           <h2>{title}</h2>
@@ -579,6 +572,7 @@ function ConversationPanel({
             </button>
           )}
         </div>
+        <button className="button button-secondary chat-new" aria-label="New chat" title="New chat" onClick={onNew}><span aria-hidden="true">+</span></button>
       </header>
       {showMembers && result && (
         <ul className="chat-member-list" aria-label="Participants">

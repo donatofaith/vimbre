@@ -59,6 +59,17 @@ function WorkspaceLayout() {
   const [loggingOut, setLoggingOut] = useState(false)
 
   const menuButton = useRef<HTMLButtonElement>(null)
+  const sidebarRef=useRef<HTMLElement>(null)
+  useEffect(()=>{
+    if(!menuOpen)return
+    const media=window.matchMedia('(max-width: 1024px)')
+    if(!media.matches){setMenuOpen(false);return}
+    const previous=document.body.style.overflow;document.body.style.overflow='hidden'
+    function trap(event:KeyboardEvent){if(event.key!=='Tab')return;const nodes=Array.from(sidebarRef.current?.querySelectorAll<HTMLElement>('a[href],button:not(:disabled)')??[]).filter(el=>el.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}}
+    const resize=()=>{if(!media.matches)setMenuOpen(false)}
+    document.addEventListener('keydown',trap);media.addEventListener('change',resize)
+    return()=>{document.body.style.overflow=previous;document.removeEventListener('keydown',trap);media.removeEventListener('change',resize)}
+  },[menuOpen])
 
   const initials =
     profile?.full_name
@@ -118,12 +129,12 @@ function WorkspaceLayout() {
   }
 
   return (
-    <div className="app-shell vw-shell" data-sidebar-collapsed={sidebarCollapsed}>
+    <div className="app-shell vw-shell" data-sidebar-collapsed={sidebarCollapsed} data-chat={pathname==='/app/chat'}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
 
-      <aside className="vw-sidebar" id="workspace-sidebar" data-open={menuOpen}>
+      <aside ref={sidebarRef} role={menuOpen?'dialog':undefined} aria-modal={menuOpen?true:undefined} aria-label={menuOpen?'Workspace menu':undefined} className="vw-sidebar" id="workspace-sidebar" data-open={menuOpen}>
         <div className="vw-sidebar-top">
           <Link
             className="vw-brand"
@@ -182,7 +193,7 @@ function WorkspaceLayout() {
             Settings
           </NavLink>
 
-          <Link to="/">
+          <Link to="/" onClick={()=>setMenuOpen(false)}>
             <WorkspaceIcon name="home" />
             Back to website
           </Link>
@@ -208,7 +219,7 @@ function WorkspaceLayout() {
         </div>
       </aside>
 
-      <div className="vw-workspace">
+      <div className="vw-workspace" inert={menuOpen}>
         <header className="vw-topbar">
           <button type="button" className="vw-collapse-sidebar" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-controls="workspace-sidebar" aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             <WorkspaceIcon name="sidebar" />
