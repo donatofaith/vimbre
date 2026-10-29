@@ -1,4 +1,5 @@
 import { shouldFollowMessages } from './chat-scroll'
+import { createPortal } from 'react-dom'
 import {mentionAt,insertMention,bodyMentions,hasMention,mentionParts} from './chat-mentions'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -214,7 +215,8 @@ export function NewChat({
   const [peopleError, setPeopleError] = useState(false)
   const [retry, setRetry] = useState(0)
   useEffect(() => {
-    dialog.current?.showModal()
+    const node=dialog.current
+    if(node&&!node.open)node.showModal()
   }, [])
   useEffect(() => {
     if (kind !== 'direct') return
@@ -263,7 +265,7 @@ export function NewChat({
       setBusy(false)
     }
   }
-  return (
+  return createPortal(
     <dialog
       ref={dialog}
       className="vw-dialog chat-new-dialog"
@@ -393,7 +395,7 @@ export function NewChat({
           {busy ? 'Opening…' : kind === 'group' ? 'Open Team chat' : 'Create chat'}
         </button>
       </form>
-    </dialog>
+    </dialog>, document.body
   )
 }
 function ConversationPanel({
