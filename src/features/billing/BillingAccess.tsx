@@ -24,8 +24,9 @@ export function BillingAccessProvider({children}:{children:ReactNode}){
   if(!current)return <main className="standalone" role="status">Loading your plan…</main>
   if(current.needs_choice)return <Navigate to="/app/billing?flow=signup" replace/>
  }
- return <Context.Provider value={{data:current,error,retry:()=>{setError(false);setRevision(n=>n+1)},reload:async()=>{const r=await supabase.rpc('billing_access',{p_operation:'status'});if(r.error)throw r.error;if(company)setData({company:company.id,value:r.data as unknown as Access})}}}>{children}</Context.Provider>
+ return <Context.Provider value={{data:current,error,retry:()=>{setError(false);setRevision(n=>n+1)},reload:async()=>{const r=await supabase.rpc('billing_access',{p_operation:'status'});if(r.error)throw r.error;setError(false);if(company)setData({company:company.id,value:r.data as unknown as Access})}}}>{children}</Context.Provider>
 }
+export function useBillingAccess(){return useContext(Context)}
 export function FreeWorkspacePlan({section='plan'}:{section?:'plan'|'code'}){
  const state=useContext(Context),navigate=useNavigate()
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[code,setCode]=useState(''),[message,setMessage]=useState('')
