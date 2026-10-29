@@ -599,3 +599,5 @@
 .chat-mention-picker{max-height:220px;overflow:auto;min-width:0}.chat-mention-picker .chat-mention-option{min-height:44px;padding:8px;border-radius:8px;overflow-wrap:anywhere}.chat-mention-picker .chat-mention-option[data-highlighted=true]{background:var(--blue-soft,#eaf2fe)}
 
 .chat-mention-option{display:block;width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+
+.chat-mention-inline{color:var(--blue-hover,#1e56b4);font-weight:600;white-space:pre-wrap}.chat-receipt{display:block;margin-top:8px;font-size:12px;color:var(--text-muted,#526678);text-align:right}
