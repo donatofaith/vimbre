@@ -16,13 +16,14 @@ export const record = [
 export const faq = [
   ['Is Vimbre a chat or project management tool?', 'No. Vimbre is designed to work alongside your existing tools. It keeps the decisions, actions, role information and handover context behind the work connected.'],
   ['Does Vimbre confirm work automatically?', 'No. Drafts are stored privately for review; only you can confirm them. Optional Watch rules must be set up and enabled by you; they can prepare drafts, not confirmed tasks.'],
-  ['What happens when I hit my AI limit?', 'AI drafting pauses until the allowance resets or your workspace admin changes it. Nothing else breaks: your saved records, tasks and manual entry continue to work.'],
+  ['What happens when I hit my AI limit?', 'AI drafting pauses until the allowance resets or your company upgrades. Your saved records, tasks and manual entry remain available.'],
   ['Which tools can I connect?', 'Pasting email text, conversations or notes is available now. You can connect Gmail, Google Drive, Outlook, Microsoft Teams, Slack and Trello when your company allows the tool. You choose the account and approve access. Some organisations require approval from their IT administrator.'],
   ['How is company information protected?', 'Access follows company roles and permissions. Capture sources and pending drafts remain private to their owner; confirmed records follow the company access rules. Contact support@vimbre.com for specific privacy or retention questions.'],
 ]
 // Request ceilings checked against the live ai_limits configuration on 28 October 2026.
 // These are requests across AI tools, not a promise of this many generated task cards.
 export const plans = [
+  { name: 'Free', price: '£0', amount: 0, seats: 3, size: 'Up to 3 people', positioning: 'Start with your tasks and a small shared AI allowance.', items: ['15 AI requests / month · up to 3 / day', '100 chat messages / month', '100 MB of uploads', 'No card required'] },
   { name: 'Starter', price: '£29', amount: 29, seats: 10, size: 'Up to 10 people', positioning: 'For a small team keeping work ready for cover.', items: ['Up to 500 AI requests / month', 'Daily ceiling: 40 AI requests', 'Company AI spend safeguard applies', 'Tasks, role records and reviewed handovers'] },
   { name: 'Growth', price: '£99', amount: 99, seats: 50, size: 'Up to 50 people', positioning: 'More people and more room for AI drafting.', items: ['Up to 3,000 AI requests / month', 'Daily ceiling: 200 AI requests', 'Higher company AI spend safeguard', 'The same review and cover controls'] },
   { name: 'Business', price: '£249', amount: 249, seats: 250, size: 'Up to 250 people', positioning: 'A larger company allowance for wider use.', items: ['Up to 15,000 AI requests / month', 'Daily ceiling: 1,000 AI requests', 'Higher company AI spend safeguard', 'The same source and record privacy rules'] },

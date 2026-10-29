@@ -1,3 +1,4 @@
+import {BillingAccessProvider} from '../../features/billing/BillingAccess'
 import {offlineQueue} from '../../features/my-day/offline'
 import {useMyDaySummary,MyDaySummaryProvider} from '../../features/workspace/useMyDaySummary'
 import { useEffect, useRef, useState } from 'react'
@@ -35,7 +36,7 @@ const icons: Record<string, string> = {
 
 export function AppLayout() {
   const {profile}=useAuth()
-  return <ChatProvider><MyDaySummaryProvider key={profile?.id} owner={profile?.id??''}><WorkspaceLayout /></MyDaySummaryProvider></ChatProvider>
+  return <BillingAccessProvider><ChatProvider><MyDaySummaryProvider key={profile?.id} owner={profile?.id??''}><WorkspaceLayout /></MyDaySummaryProvider></ChatProvider></BillingAccessProvider>
 }
 
 function WorkspaceLayout() {
