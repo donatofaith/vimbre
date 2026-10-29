@@ -368,7 +368,7 @@ function MyDayContent() {
     return (
       <div className="md-board">
         {statuses.map(([status, label]) => {
-          const tasks = items.filter((t) => (finishing.find(f=>f.id===t.id)?.finishStatus??t.status) === status);
+          const tasks = status === "done" ? done : items.filter((t) => (finishing.find(f=>f.id===t.id)?.finishStatus??t.status) === status);
           return (
             <details
               className={`md-board-column md-column-${status}`}
@@ -394,7 +394,7 @@ function MyDayContent() {
                 {!tasks.length && (
                   <p className="md-column-empty">
                     {status === "done"
-                      ? "No completed tasks."
+                      ? "No tasks completed today."
                       : status === "in_progress"
                         ? "No tasks in progress."
                         : "No tasks to do."}
@@ -499,7 +499,7 @@ function MyDayContent() {
           <>
             {filter === "today" && overdueRows.length>0 && <section className="md-day-group" aria-label="Overdue"><h3>Overdue <span>{overdueRows.length}</span></h3><button className="md-text-button md-overdue-action" disabled={Boolean(busy)} onClick={async()=>{if(!overdueRows.length)return;setBusy("move-overdue");setError("");try{for(const task of overdueRows){await changeTask(task.id,"tomorrow",{date:today})}setMessage("Overdue tasks moved to today.");refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}>Move all to today</button>{list(overdueRows)}</section>}
             {filter === "today" && <h3 className="md-group-title">Today <span>{todayRows.length}</span></h3>}
-            {layout==="week" ? weekView(todayRows) : todayRows.length ? (layout === "board" && filter !== "archived" ? board(todayRows) : list(todayRows)) : empty}
+            {layout==="week" ? weekView(todayRows) : layout === "board" && filter !== "archived" ? board(todayRows) : todayRows.length ? list(todayRows) : empty}
             {data && filter !== "today" && data.count > 60 && (
               <div className="pagination">
                 <Button
@@ -577,7 +577,7 @@ function MyDayContent() {
                     </ul>
                   </section>
                 ))}
-                {done.length > 0 && <details className="md-day-group md-done-group">
+                {layout !== "board" && done.length > 0 && <details className="md-day-group md-done-group">
                   <summary>
                     Done today <span>{data?.counts.done ?? done.length}</span>
                   </summary>
