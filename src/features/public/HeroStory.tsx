@@ -17,6 +17,6 @@ export function HeroStory({ rootRef, paused, ready, toggle }: {
     {['email','draft','confirmed','cover'].map((scene,step)=><div key={scene} className="rs-demo-scene" data-scene={scene}><ProductWalkthroughScreen step={step}/></div>)}
    </div>
   </div></div>
-  <p className="sr-only">{storySummary}</p><button className="rs-story-control" type="button" disabled={!ready} aria-label={paused?'Play hero story':'Pause hero story'} onClick={toggle}>{paused?'Play':'Pause'}</button>
+  <p className="sr-only">{storySummary}</p><button className="rs-story-control sr-only" type="button" disabled={!ready} aria-label={paused?'Play hero story':'Pause hero story'} onClick={toggle}>{paused?'Play':'Pause'}</button>
  </div></div>
 }
