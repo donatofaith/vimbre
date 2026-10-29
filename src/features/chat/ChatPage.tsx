@@ -789,9 +789,9 @@ function MessageComposer({
       setShowLink(false)
       setShowMentions(false)
       onSent()
-    } catch {
+    } catch (reason) {
       setError(
-        'Your message was not confirmed as sent. Retry to check or send it safely.',
+        (reason as {message?:string})?.message?.includes('100 chat messages') ? 'Your company has reached the Free plan’s 100 chat messages this month. Ask your company owner to upgrade in Plans and billing.' : 'Your message was not confirmed as sent. Retry to check or send it safely.',
       )
     } finally {
       setBusy(false)

@@ -1,4 +1,4 @@
-const allowed=['starter','growth','business']
+const allowed=['free','starter','growth','business']
 export function billingReturnPath(search:string,fallback='/app'){
  const params=new URLSearchParams(search),plan=params.get('plan')
  return plan&&allowed.includes(plan)?'/app/billing?plan='+plan:params.get('flow')==='signup'?'/app/billing':fallback

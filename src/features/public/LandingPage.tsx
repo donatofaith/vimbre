@@ -73,7 +73,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
   const to = authenticated ? '/app' : '/#pricing'
-  const cta = authenticated ? 'Open workspace' : 'Start free trial'
+  const cta = authenticated ? 'Open workspace' : 'Start free'
   const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
@@ -98,13 +98,13 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
           <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p></Reveal>
-          <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
-            {i === 1 && <span className="rf-popular-label">More AI requests</span>}
+          <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (plan.name === 'Growth' ? 'rs-plan-featured' : '')} delay={i * 60}>
+            {plan.name === 'Growth' && <span className="rf-popular-label">More AI requests</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
             {plan.seats !== null && plan.amount !== null && <p className="rf-per-person">{money(plan.amount / plan.seats)} <span>per person / month at full team size</span></p>}
             <p className="rf-plan-positioning">{plan.size}<br />{plan.positioning}</p>
             <ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>
-            <Link className={'rs-button ' + (i !== 1 ? 'rs-button-outline' : '')} to={plan.amount===null?'/#contact':authenticated?'/app/billing?plan='+plan.name.toLowerCase():'/signup?plan='+plan.name.toLowerCase()}>{plan.amount===null?'Contact us':authenticated?'Choose '+plan.name:'Start free trial'}<Arrow /></Link>
+            <Link className={'rs-button ' + (plan.name !== 'Growth' ? 'rs-button-outline' : '')} to={plan.amount===null?'/#contact':authenticated?'/app/billing?plan='+plan.name.toLowerCase():'/signup?plan='+plan.name.toLowerCase()}>{plan.amount===null?'Contact us':authenticated?'Choose '+plan.name:plan.name==='Free'?'Start free':'Start free trial'}<Arrow /></Link>
           </Reveal>)}</div>
           <p className="rf-pricing-disclosure">{pricingDisclosure}</p>
           <PricingValueCalculator />
