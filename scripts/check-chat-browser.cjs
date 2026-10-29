@@ -194,7 +194,7 @@ const assert = require('node:assert/strict')
           }
           body = {
             messages: messages.slice(-50),
-            members: c.members,
+            members: c.members.map(p=>({...p,last_read_seq:p.last_read_seq??(p.id===uid?read.get(c.id)||0:0)})),
             title: c.title,
             kind: c.kind,
           }
@@ -277,15 +277,30 @@ const assert = require('node:assert/strict')
       .getByRole('group', { name: 'Mention a participant' })
       .getByRole('button', {name:'Bob Example',exact:true})
       .click()
+    await page.getByLabel('Message',{exact:true}).pressSequentially('please check this')
+    assert.equal(await page.getByRole('group',{name:'Mention a participant'}).count(),0)
+    assert.equal(await page.locator('.chat-selected').count(),0)
     await page.getByRole('button', { name: 'Link record', exact: true }).click()
     await page
       .getByLabel('Record link', { exact: true })
       .fill('https://vimbre.com/app/role-record?section=decision')
     await page.getByRole('button', { name: 'Send', exact: true }).click()
     await page.locator('.chat-messages')
-      .getByText('Please review the handover @Bob Example', { exact: true })
+      .getByText('Please review the handover @Bob Example please check this', { exact: true })
       .waitFor()
     assert.deepEqual(messageMap.get(cid)[0].mentions, [bob])
+    const sent=page.getByRole('article',{name:'Message from Alice Test'}).first()
+    assert.equal(await sent.locator('.chat-mention-inline').innerText(),'@Bob Example')
+    assert.equal(await sent.locator('.chat-mentions').count(),0)
+    await sent.getByLabel('Message status',{exact:true}).filter({hasText:'Sent · Unread'}).waitFor()
+    conversations[0].members.find(p=>p.id===bob).last_read_seq=seq
+    await page.reload()
+    await page.getByRole('article',{name:'Message from Alice Test'}).first().getByLabel('Message status',{exact:true}).filter({hasText:'Read by 1 of 2'}).waitFor()
+    conversations[0].members.find(p=>p.id===cara).last_read_seq=seq
+    await page.reload()
+    await page.getByRole('article',{name:'Message from Alice Test'}).first().getByLabel('Message status',{exact:true}).filter({hasText:/^Read$/}).waitFor()
+    const chatNav=page.getByRole('navigation',{name:'Workspace',exact:true}).getByRole('link',{name:'Chat',exact:true})
+    assert.equal(await chatNav.evaluate(el=>el.nextElementSibling?.textContent.trim()),'Help and support')
     assert.equal(
       await page
         .getByRole('link', { name: 'Open linked record' })
@@ -400,7 +415,7 @@ const assert = require('node:assert/strict')
     assert.equal(await page.getByLabel('Message', { exact: true }).count(), 0)
     assert.equal(
       await page
-        .getByText('Please review the handover @Bob Example', { exact: true })
+        .getByText('Please review the handover @Bob Example please check this', { exact: true })
         .count(),
       0,
     )

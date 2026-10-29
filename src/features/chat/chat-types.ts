@@ -3,6 +3,8 @@ export type ChatPerson = {
   full_name: string
   role?: string
   active?: boolean
+  last_read_seq?: number
+  joined_at?: string
 }
 export type Conversation = {
   id: string
@@ -79,4 +81,11 @@ export function chatTime(value: string): string {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+export function messageReceipt(message:Message,members:ChatPerson[]):string{
+ const peers=members.filter(p=>p.id!==message.sender_id&&p.active!==false&&(!p.joined_at||Date.parse(p.joined_at)<=Date.parse(message.created_at)))
+ if(!peers.length||peers.some(p=>typeof p.last_read_seq!=='number'))return 'Sent'
+ const read=peers.filter(p=>p.last_read_seq!>=message.seq).length
+ return read===peers.length?'Read':read>0?`Read by ${read} of ${peers.length}`:'Sent · Unread'
 }

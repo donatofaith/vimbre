@@ -1,4 +1,4 @@
-import {mentionAt,insertMention,bodyMentions,hasMention} from './chat-mentions'
+import {mentionAt,insertMention,bodyMentions,hasMention,mentionParts} from './chat-mentions'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { roleLabel } from '../team/team-utils'
 import { supabase } from '../../lib/supabase'
 import { useChat } from './chat-context'
-import { chatTime, mergeMessages, recordPath } from './chat-types'
+import { chatTime, mergeMessages, recordPath, messageReceipt } from './chat-types'
 import type {
   ChatPerson,
   Conversation,
@@ -666,14 +666,8 @@ function ConversationPanel({
                   <span>{m.reply.body}</span>
                 </button>
               )}
-              <p>{m.body}</p>
-              {m.mention_names.length > 0 && (
-                <div className="chat-mentions">
-                  {m.mention_names.map((p) => (
-                    <span key={p.id}>@{p.name}</span>
-                  ))}
-                </div>
-              )}
+              <p>{mentionParts(m.body,m.mention_names).map((part,index)=>part.id?<span className="chat-mention-inline" key={index}>{part.text}</span>:part.text)}</p>
+              {m.sender_id===profile?.id&&<span className="chat-receipt" aria-label="Message status">{messageReceipt(m,result.members)}</span>}
               {m.record_path && (
                 <Link to={m.record_path}>Open linked record ↗</Link>
               )}
@@ -831,7 +825,7 @@ function MessageComposer({
         value={body}
         onChange={(e) => {
           setBody(e.target.value)
-          const match=mentionAt(e.target.value,e.target.selectionStart)
+          const match=mentionAt(e.target.value,e.target.selectionStart,[...mentions.map(p=>p.full_name),...members.map(p=>p.full_name)])
           setShowMentions(Boolean(match));setMentionSearch(match?.query??'');setMentionIndex(0)
         }}
         maxLength={4000}
@@ -840,21 +834,6 @@ function MessageComposer({
         required
         disabled={busy}
       />
-      {mentions.length > 0 && (
-        <div className="chat-selected" aria-label="Mentioned teammates">
-          {mentions.map((p) => (
-            <button
-              type="button"
-              disabled={busy}
-              key={p.id}
-              onClick={() => {setMentions(old=>old.filter(s=>s.id!==p.id));setBody(old=>old.replace('@'+p.full_name,''))}}
-              aria-label={`Remove mention ${p.full_name}`}
-            >
-              @{p.full_name} ×
-            </button>
-          ))}
-        </div>
-      )}
       {showMentions && (
         <fieldset id="chat-mention-choices" className="chat-mention-picker" disabled={busy}>
           <legend>Mention a participant</legend>
