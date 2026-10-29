@@ -1,3 +1,4 @@
+import { shouldFollowMessages } from './chat-scroll'
 import {mentionAt,insertMention,bodyMentions,hasMention,mentionParts} from './chat-mentions'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -15,7 +16,7 @@ import type {
 } from './chat-types'
 
 export function ChatPage() {
-  const { profile } = useAuth()
+  const { profile, company } = useAuth()
   const { revision, refresh } = useChat()
   const [params, setParams] = useSearchParams()
   const selected = params.get('conversation') ?? ''
@@ -179,6 +180,7 @@ export function ChatPage() {
       </div>
       {creating && (
         <NewChat
+          companyCreator={company?.created_by ?? undefined}
           onClose={() => setCreating(false)}
           onCreated={(id) => {
             open(id)
@@ -190,14 +192,15 @@ export function ChatPage() {
     </section>
   )
 }
-function NewChat({
+export function NewChat({
+  companyCreator,
   onClose,
   onCreated,
 }: {
+  companyCreator?: string
   onClose: () => void
   onCreated: (id: string) => void
 }) {
-  const { company } = useAuth()
   const dialog = useRef<HTMLDialogElement>(null)
   const [kind, setKind] = useState<'direct' | 'group'>('direct')
     const [search, setSearch] = useState('')
@@ -263,7 +266,7 @@ function NewChat({
   return (
     <dialog
       ref={dialog}
-      className="vw-dialog chat-new"
+      className="vw-dialog chat-new-dialog"
       aria-labelledby="chat-new-title"
       onCancel={(e) => {
         if (busy) e.preventDefault()
@@ -361,7 +364,7 @@ function NewChat({
                   />
                   <span>{p.full_name}</span>
                   <small>
-                    {roleLabel(p.role ?? 'employee', p.id === company?.created_by)}
+                    {roleLabel(p.role ?? 'employee', p.id === companyCreator)}
                   </small>
                 </label>
               ))}
@@ -423,6 +426,7 @@ function ConversationPanel({
   const [reply, setReply] = useState<Message | null>(null)
   const [showMembers, setShowMembers] = useState(false)
   const [unseen, setUnseen] = useState(0)
+  const [copyStatus, setCopyStatus] = useState('')
   const scroll = useRef<HTMLDivElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
   const lastRead = useRef(0)
@@ -482,13 +486,14 @@ function ConversationPanel({
           (detail.messages.at(-1)?.seq ?? 0) > latestSeq.current
         )
           setUnseen((n) => n + 1)
+        const selecting = !window.getSelection()?.isCollapsed
+        const shouldScroll = shouldFollowMessages(initial.current, nearBottom, selecting, latestSeq.current, detail.messages.at(-1)?.seq ?? 0)
         latestSeq.current = detail.messages.at(-1)?.seq ?? 0
-        const shouldScroll = initial.current || nearBottom || Boolean(anchor)
         initial.current = false
         if (shouldScroll)
           requestAnimationFrame(() => {
             if (alive) {
-              bottom.current?.scrollIntoView({ block: 'nearest' })
+              if (scroll.current && window.getSelection()?.isCollapsed) scroll.current.scrollTop = scroll.current.scrollHeight
               setUnseen(0)
             }
           })
@@ -607,6 +612,7 @@ function ConversationPanel({
           Loading messages…
         </p>
       )}
+      <span className="sr-only" role="status">{copyStatus}</span>
       <div
         className="chat-messages"
         ref={scroll}
@@ -650,7 +656,7 @@ function ConversationPanel({
               <strong>{m.sender_name}</strong>
               <time dateTime={m.created_at}>{chatTime(m.created_at)}</time>
             </div>
-            <div className="chat-bubble">
+            <div className="chat-bubble" tabIndex={0}>
               {m.reply && (
                 <button
                   className="chat-reply-preview"
@@ -675,6 +681,7 @@ function ConversationPanel({
             >
               Reply<span className="sr-only"> to {m.sender_name}</span>
             </button>
+            <button type="button" className="chat-reply-button" aria-label={`Copy message from ${m.sender_name}`} onClick={async()=>{try{await navigator.clipboard.writeText(m.body);setCopyStatus('Message copied.')}catch{setCopyStatus('Select the message text and choose Copy.')}}}>Copy</button>
           </article>
         ))}
         <div ref={bottom} />
@@ -688,7 +695,7 @@ function ConversationPanel({
         <button
           className="chat-new-messages"
           onClick={() => {
-            bottom.current?.scrollIntoView({ block: 'nearest' })
+            if (scroll.current && window.getSelection()?.isCollapsed) scroll.current.scrollTop = scroll.current.scrollHeight
             setUnseen(0)
             setLoadVersion((n) => n + 1)
           }}

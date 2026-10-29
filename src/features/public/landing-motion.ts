@@ -15,18 +15,12 @@ export function createLandingMotion(root: HTMLElement, shell: HTMLElement, onSta
   const frame = (selector: string, frames: Record<string, number[] | string[]>, at: number, length: number = .5, times?: number[]) => {
     elements(selector, shell).forEach(el => timeline.push([el, frames, { at, duration: length, ease, times }]))
   }
-  frame('[data-scene="email"]',{opacity:[1,1,0],transform:['translateY(0)','translateY(0)','translateY(-12px)']},0,2.5,[0,.8,1])
-  frame('[data-scene="draft"]',{opacity:[0,1,1,0]},2,4.5,[0,.12,.88,1])
-  frame('[data-signature-paper]',{opacity:[0,1],transform:['scaleY(.92)','scaleY(1)']},6,.5)
-  frame('[data-scene="cover"]',{opacity:[0,1],transform:['translateY(8px)','translateY(0)']},6.5,.5)
-  elements('[data-draft-row]',shell).forEach((el,i)=>{
-    timeline.push([el,{opacity:[0,1],transform:[`translate(${(i-1)*24}px,${16+i*8}px) rotate(${(i-1)*2}deg)`,'translate(0,0) rotate(0deg)']},{at:2.5+i*.06,duration:.5,ease}])
-    timeline.push([el,{transform:['perspective(700px) rotateX(0deg) translateY(0)','perspective(700px) rotateX(65deg) translateY(-8px)','perspective(700px) rotateX(0deg) translateY(0)']},{at:6+i*.06,duration:.5,ease}])
-    timeline.push([el,{opacity:[1,0],transform:['translateY(0)','translateY(8px)']},{at:reset,duration:.5,ease}])
-  })
-  frame('[data-scene="confirmed"]',{opacity:[0,1,1,0],transform:['translateY(-16px) scale(.96)','translateY(0) scale(1)','translateY(0) scale(1)','translateY(0) scale(1)']},4.5,2,[0,.25,.75,1])
-  frame('[data-scene="cover"],[data-signature-paper]',{opacity:[1,0]},reset,.5)
-  frame('[data-scene="email"]',{opacity:[0,1],transform:['translateY(8px)','translateY(0)']},reset,.5)
+  // Four current product stages; each transition uses the same 500 ms curve.
+  frame('[data-scene="email"]',{opacity:[1,1,0]},0,2.5,[0,.8,1])
+  frame('[data-scene="draft"]',{opacity:[0,1,1,0]},2,3,[0,1/6,5/6,1])
+  frame('[data-scene="confirmed"]',{opacity:[0,1,1,0]},4.5,3,[0,1/6,5/6,1])
+  frame('[data-scene="cover"]',{opacity:[0,1,1,0]},7,3,[0,1/6,5/6,1])
+  frame('[data-scene="email"]',{opacity:[0,1]},reset,.5)
   const hero = animate(timeline, { repeat: heroStoryTiming.plays - 1 })
   hero.pause()
   all.add(hero)
