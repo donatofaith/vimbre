@@ -5,6 +5,7 @@ import { BrandLogo } from '../../components/ui/BrandLogo'
 import { LandingHeader } from './LandingHeader'
 import { ContactSection } from './ContactSection'
 import { legalDocuments } from './legal-content'
+import { CaptureSourceLogo } from '../capture/CaptureSourceLogo'
 import { ConnectedTimeline } from './RefinedProductDemos'
 import { faq, plans, schema, heroCopy, pricingDisclosure } from './landing-content'
 import { HeroStory } from './HeroStory'
@@ -74,7 +75,6 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
   }, [])
   const to = authenticated ? '/app' : '/#pricing'
   const cta = authenticated ? 'Open workspace' : 'Start free'
-  const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
     <LandingHeader authenticated={authenticated} loading={loading} />
@@ -92,16 +92,14 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section id="how-it-works" className="rs-section" aria-labelledby="how-title"><div className="rs-container">
        <Reveal><h2 id="how-title">How it works</h2></Reveal>
        <ConnectedTimeline/>
-       <aside className="rf-ai-note" aria-labelledby="ai-note-title"><h3 id="ai-note-title">What Vimbre AI does and doesn’t do</h3><p>You tap to request a draft. Check names, owners and dates before saving. It does not confirm work for you. If you separately enable a Watch rule, it can prepare private drafts for review.</p><p>At your AI limit, drafting pauses. Your saved records, tasks and manual work keep working.</p></aside>
-       <div className="rf-tools-row" aria-label="Available connections">{['Gmail','Google Drive','Outlook','Microsoft Teams','Slack','Trello'].map(name=><span key={name}><strong>{name}</strong><small>Live</small></span>)}</div><p className="rf-tools-consent">Connect your account with your company’s permission. You choose what to bring in.</p>
+       <div className="rf-tools-row" aria-label="Available connections">{[['gmail','Gmail'],['drive','Google Drive'],['outlook','Outlook'],['teams','Microsoft Teams'],['slack','Slack'],['trello','Trello']].map(([provider,name])=><span key={provider} aria-label={name} title={name}><CaptureSourceLogo provider={provider}/></span>)}</div><p className="rf-tools-consent">Connect your account with your company’s permission. You choose what to bring in.</p>
       </div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Choose a company plan for your team size and AI usage.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (plan.name === 'Growth' ? 'rs-plan-featured' : '')} delay={i * 60}>
             {plan.name === 'Growth' && <span className="rf-popular-label">More AI requests</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
-            {plan.seats !== null && plan.amount !== null && <p className="rf-per-person">{money(plan.amount / plan.seats)} <span>per person / month at full team size</span></p>}
             <p className="rf-plan-positioning">{plan.size}<br />{plan.positioning}</p>
             <ul>{plan.items.map(item => <li key={item}><Icon kind="check" />{item}</li>)}</ul>
             <Link className={'rs-button ' + (plan.name !== 'Growth' ? 'rs-button-outline' : '')} to={plan.amount===null?'/#contact':authenticated?'/app/billing?plan='+plan.name.toLowerCase():'/signup?plan='+plan.name.toLowerCase()}>{plan.amount===null?'Contact us':authenticated?'Choose '+plan.name:plan.name==='Free'?'Start free':'Start free trial'}<Arrow /></Link>

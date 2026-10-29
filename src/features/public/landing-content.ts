@@ -5,7 +5,7 @@ export const heroCopy = {
   headline: 'Turn conversations into tasks, decisions and handovers.',
   supporting: 'Vimbre AI prepares a draft. You review it before saving. Your role record keeps the context someone covering your work needs.',
 }
-export const storySummary = 'Example: paste a conversation, review Vimbre AI draft actions, confirm what is correct, then prepare a handover showing what comes first.'
+export const storySummary = 'Example: paste a conversation, request task and decision drafts, accept the details, save the reviewed drafts, then select work for a handover and submit it to a manager.'
 export const record = [
   ['Decision', 'Move supplier reviews to monthly'],
   ['Why', 'To reduce meeting load and focus on key updates'],
@@ -24,12 +24,12 @@ export const faq = [
 // These are requests across AI tools, not a promise of this many generated task cards.
 export const plans = [
   { name: 'Free', price: '£0', amount: 0, seats: 3, size: 'Up to 3 people', positioning: 'Start with your tasks and a small shared AI allowance.', items: ['15 AI requests / month · up to 3 / day', '100 chat messages / month', '100 MB of uploads', 'No card required'] },
-  { name: 'Starter', price: '£29', amount: 29, seats: 10, size: 'Up to 10 people', positioning: 'For a small team keeping work ready for cover.', items: ['Up to 500 AI requests / month', 'Daily ceiling: 40 AI requests', 'Company AI spend safeguard applies', 'Tasks, role records and reviewed handovers'] },
-  { name: 'Growth', price: '£99', amount: 99, seats: 50, size: 'Up to 50 people', positioning: 'More people and more room for AI drafting.', items: ['Up to 3,000 AI requests / month', 'Daily ceiling: 200 AI requests', 'Higher company AI spend safeguard', 'The same review and cover controls'] },
-  { name: 'Business', price: '£249', amount: 249, seats: 250, size: 'Up to 250 people', positioning: 'A larger company allowance for wider use.', items: ['Up to 15,000 AI requests / month', 'Daily ceiling: 1,000 AI requests', 'Higher company AI spend safeguard', 'The same source and record privacy rules'] },
-  { name: 'Enterprise', price: 'Custom', amount: null, seats: null, size: '250+ people', positioning: 'Discuss your team size, allowance and rollout.', items: ['Custom AI allowance and spend safeguards', 'Rollout and access requirements review'] },
+  { name: 'Starter', price: '£29', amount: 29, seats: 10, size: 'Up to 10 people', positioning: 'For a small team keeping work ready for cover.', items: ['Up to 500 AI requests / month', 'Daily ceiling: 40 AI requests', 'AI usage control', 'Tasks, role records and reviewed handovers'] },
+  { name: 'Growth', price: '£99', amount: 99, seats: 50, size: 'Up to 50 people', positioning: 'More people and more room for AI drafting.', items: ['Up to 3,000 AI requests / month', 'Daily ceiling: 200 AI requests', 'AI usage control', 'Five times the Starter team capacity'] },
+  { name: 'Business', price: '£249', amount: 249, seats: 250, size: 'Up to 250 people', positioning: 'A larger company allowance for wider use.', items: ['Up to 15,000 AI requests / month', 'Daily ceiling: 1,000 AI requests', 'AI usage control', 'Five times the Growth team capacity'] },
+  { name: 'Enterprise', price: 'Custom', amount: null, seats: null, size: '250+ people', positioning: 'Discuss your team size, allowance and rollout.', items: ['Custom AI allowance and usage control', 'Rollout and access requirements review'] },
 ]
-export const pricingDisclosure = 'Subscriptions bill monthly per company. AI request ceilings are subject to daily limits, spend safeguards and workspace settings. Long requests can use the allowance sooner.'
+export const pricingDisclosure = 'Subscriptions bill monthly per company. AI request ceilings are subject to daily limits, AI usage control and workspace settings. Long requests can use the allowance sooner.'
 export const schema = {
   '@context': 'https://schema.org',
   '@graph': [
