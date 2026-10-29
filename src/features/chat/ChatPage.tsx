@@ -1,3 +1,4 @@
+import {mentionAt,insertMention,bodyMentions,hasMention} from './chat-mentions'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -741,6 +742,15 @@ function MessageComposer({
   const [body, setBody] = useState('')
   const [mentions, setMentions] = useState<ChatPerson[]>([])
   const [showMentions, setShowMentions] = useState(false)
+  const [mentionSearch,setMentionSearch]=useState('')
+  const [mentionIndex,setMentionIndex]=useState(0)
+  const messageInput=useRef<HTMLTextAreaElement>(null)
+  const candidates=members.filter(p=>p.id!==profile?.id&&p.active!==false&&p.full_name.toLowerCase().includes(mentionSearch.toLowerCase().trim())).slice(0,20)
+  function chooseMention(person:ChatPerson){
+    const next=insertMention(body,messageInput.current?.selectionStart??body.length,person.full_name)
+    setBody(next.text);setMentions(old=>old.some(p=>p.id===person.id)?old:[...old,person]);setShowMentions(false);setMentionSearch('');setMentionIndex(0)
+    requestAnimationFrame(()=>{messageInput.current?.focus();messageInput.current?.setSelectionRange(next.caret,next.caret)})
+  }
   const [link, setLink] = useState('')
   const [showLink, setShowLink] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -758,7 +768,7 @@ function MessageComposer({
       p_conversation: conversation,
       p_body: body.trim(),
       p_reply: reply?.id ?? null,
-      p_mentions: mentions.map((p) => p.id),
+      p_mentions: Array.from(new Set([...bodyMentions(body,members,profile?.id),...mentions.filter(p=>hasMention(body,p.full_name)).map(p=>p.id)])),
       p_record_path: path,
     }
     const fingerprint = JSON.stringify(payload)
@@ -814,11 +824,15 @@ function MessageComposer({
         Message
       </label>
       <textarea
+        ref={messageInput}
         id="chat-message-input"
+        aria-controls={showMentions?"chat-mention-choices":undefined}
+        onKeyDown={e=>{if(!showMentions)return;if(e.key==='Escape'){e.preventDefault();setShowMentions(false)}else if(candidates.length&&e.key==='ArrowDown'){e.preventDefault();setMentionIndex(i=>(i+1)%candidates.length)}else if(candidates.length&&e.key==='ArrowUp'){e.preventDefault();setMentionIndex(i=>(i+candidates.length-1)%candidates.length)}else if(candidates.length&&e.key==='Enter'){e.preventDefault();chooseMention(candidates[Math.min(mentionIndex,candidates.length-1)])}}}
         value={body}
         onChange={(e) => {
           setBody(e.target.value)
-          if (/(^|\s)@$/.test(e.target.value)) setShowMentions(true)
+          const match=mentionAt(e.target.value,e.target.selectionStart)
+          setShowMentions(Boolean(match));setMentionSearch(match?.query??'');setMentionIndex(0)
         }}
         maxLength={4000}
         placeholder="Write a message…"
@@ -833,9 +847,7 @@ function MessageComposer({
               type="button"
               disabled={busy}
               key={p.id}
-              onClick={() =>
-                setMentions((old) => old.filter((s) => s.id !== p.id))
-              }
+              onClick={() => {setMentions(old=>old.filter(s=>s.id!==p.id));setBody(old=>old.replace('@'+p.full_name,''))}}
               aria-label={`Remove mention ${p.full_name}`}
             >
               @{p.full_name} ×
@@ -844,30 +856,13 @@ function MessageComposer({
         </div>
       )}
       {showMentions && (
-        <fieldset className="chat-mention-picker" disabled={busy}>
+        <fieldset id="chat-mention-choices" className="chat-mention-picker" disabled={busy}>
           <legend>Mention a participant</legend>
-          {members
-            .filter((p) => p.id !== profile?.id && p.active !== false)
-            .map((p) => (
-              <label key={p.id}>
-                <input
-                  type="checkbox"
-                  checked={mentions.some((s) => s.id === p.id)}
-                  onChange={(e) =>
-                    setMentions((old) =>
-                      e.target.checked
-                        ? [...old, p]
-                        : old.filter((s) => s.id !== p.id),
-                    )
-                  }
-                />
-                {p.full_name}
-              </label>
-            ))}
-          {members.filter((p) => p.id !== profile?.id && p.active !== false)
-            .length === 0 && <p>No other active participants.</p>}
+          {candidates.map((p,index)=><button type="button" key={p.id} className="chat-mention-option" data-highlighted={index===mentionIndex} onClick={()=>chooseMention(p)}>{p.full_name}</button>)}
+          {!candidates.length&&<p>No matching participants.</p>}
         </fieldset>
       )}
+
       {showLink && (
         <label className="chat-label">
           Record link
@@ -892,7 +887,7 @@ function MessageComposer({
           className="button button-secondary"
           aria-expanded={showMentions}
           disabled={busy}
-          onClick={() => setShowMentions((v) => !v)}
+          onClick={() => {setMentionSearch('');setMentionIndex(0);setShowMentions(v=>!v)}}
         >
           @ Mention
         </button>

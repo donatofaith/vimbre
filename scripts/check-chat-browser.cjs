@@ -251,7 +251,7 @@ const assert = require('node:assert/strict')
     await page
       .getByRole('heading', { name: /^Good (morning|afternoon|evening),/ })
       .waitFor()
-    assert.equal(await page.getByRole('navigation', {name: 'Workspace', exact: true}).getByRole('link', {name: /^Chat/}).count(), 0)
+    assert.equal(await page.getByRole('navigation', {name: 'Workspace', exact: true}).getByRole('link', {name: /^Chat/}).count(), 1)
     await page.locator('.vw-topbar').getByRole('link', { name: 'Chat', exact: true }).click()
     await page
       .getByRole('button', { name: /Team chat/ })
@@ -272,19 +272,18 @@ const assert = require('node:assert/strict')
     assert.equal(conversations[0].members.length, 3)
     await page
       .getByLabel('Message', { exact: true })
-      .fill('Please review the handover')
-    await page.getByRole('button', { name: '@ Mention', exact: true }).click()
+      .fill('Please review the handover @Bo')
     await page
       .getByRole('group', { name: 'Mention a participant' })
-      .getByLabel('Bob Example', { exact: true })
-      .check()
+      .getByRole('button', {name:'Bob Example',exact:true})
+      .click()
     await page.getByRole('button', { name: 'Link record', exact: true }).click()
     await page
       .getByLabel('Record link', { exact: true })
       .fill('https://vimbre.com/app/role-record?section=decision')
     await page.getByRole('button', { name: 'Send', exact: true }).click()
     await page.locator('.chat-messages')
-      .getByText('Please review the handover', { exact: true })
+      .getByText('Please review the handover @Bob Example', { exact: true })
       .waitFor()
     assert.deepEqual(messageMap.get(cid)[0].mentions, [bob])
     assert.equal(
@@ -401,7 +400,7 @@ const assert = require('node:assert/strict')
     assert.equal(await page.getByLabel('Message', { exact: true }).count(), 0)
     assert.equal(
       await page
-        .getByText('Please review the handover', { exact: true })
+        .getByText('Please review the handover @Bob Example', { exact: true })
         .count(),
       0,
     )
