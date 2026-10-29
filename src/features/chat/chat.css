@@ -601,3 +601,7 @@
 .chat-mention-option{display:block;width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
 
 .chat-mention-inline{color:var(--blue-hover,#1e56b4);font-weight:600;white-space:pre-wrap}.chat-receipt{display:block;margin-top:8px;font-size:12px;color:var(--text-muted,#526678);text-align:right}
+
+.chat-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.chat-list-toolbar h2{font-size:17px;margin:0}.chat-new{width:44px;min-width:44px;height:44px;min-height:44px;padding:0!important;flex:none;font-size:26px}.chat-thread-header>div{flex:1;min-width:0}.chat-thread-header .chat-back{width:44px;min-width:44px;min-height:44px;padding:0;font-size:23px}@media(max-width:760px){.chat-composer textarea{min-height:64px;max-height:120px}.chat-thread-header{gap:10px;padding:10px 12px}.chat-composer{padding-bottom:calc(10px + env(safe-area-inset-bottom))}}
+
+.vw-shell .chat-thread-header .chat-new,.vw-shell .chat-list-toolbar .chat-new{font-size:26px}.vw-shell .chat-thread-header .chat-back{font-size:22px}
