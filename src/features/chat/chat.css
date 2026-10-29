@@ -595,3 +595,7 @@
 .vw-shell .chat-launcher,.chat-bell { width: 36px; height: 36px; }
 .vw-shell .chat-launcher svg,.chat-bell svg { width: 16px; height: 16px; }
 @media(pointer:coarse) { .vw-shell .chat-launcher,.chat-bell { width: 44px; height: 44px; min-width: 44px; min-height: 44px; } }
+
+.chat-mention-picker{max-height:220px;overflow:auto;min-width:0}.chat-mention-picker .chat-mention-option{min-height:44px;padding:8px;border-radius:8px;overflow-wrap:anywhere}.chat-mention-picker .chat-mention-option[data-highlighted=true]{background:var(--blue-soft,#eaf2fe)}
+
+.chat-mention-option{display:block;width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}

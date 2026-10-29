@@ -354,3 +354,15 @@
  .rf-mobile-product img{display:block;width:100%;height:auto;max-height:none;object-fit:initial;border-radius:6px}
  .rf-mobile-product a{display:block}
 }
+
+/* The sidebar is hidden on tablets: keep the stage in the full available column. */
+@media(max-width:1023px){.rs-site .rs-signature .rs-demo-layout{grid-template-columns:minmax(0,1fr)}}
+.rs-site .rs-signature .rs-demo-window,.rs-site .rs-signature .rs-demo-layout,.rs-site .rs-signature-viewport{width:100%;min-width:0}
+@media(max-width:767px){
+ .rs-site .rs-signature-label{left:16px;right:16px}
+ .rs-site .rs-signature-actions{left:16px;right:16px;top:108px}
+ .rs-site .rs-signature-actions .rs-demo-product-row .md-slim-row{display:grid!important;grid-template-columns:20px minmax(0,1fr);gap:8px}
+ .rs-site .rs-signature-actions .rs-demo-product-row time{grid-column:2;max-width:none;text-align:left}
+ .rs-site .rs-signature-actions .rs-demo-product-row .md-task-title{overflow-wrap:normal;word-break:normal;font-size:14px;line-height:1.5}
+ .rs-site .rs-signature-viewport{height:580px}
+}

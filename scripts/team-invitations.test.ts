@@ -36,7 +36,7 @@ describe('invitation server boundary', () => {
   it('uses database recipient details and a fixed callback rather than caller redirects', async () => {
     const app = server(); const response = await app.request({ action: 'create', email: 'untrusted@example.invalid', redirectTo: 'https://untrusted.invalid', role: 'hr_admin' })
     expect(response.status).toBe(200); expect(app.sent[0].email).toBe('recipient@example.invalid')
-    expect(app.sent[0].options).toMatchObject({ emailRedirectTo: 'https://vimbre.vercel.app/auth/callback', data: { invitation_id: 'invite-id' } })
+    expect(app.sent[0].options).toMatchObject({ emailRedirectTo: 'https://vimbre.com/auth/callback', data: { invitation_id: 'invite-id' } })
     expect((app.sent[0].options as {data:unknown}).data).toMatchObject({ invitation_company_name: 'Verified Company', invitation_inviter_name: 'Verified Inviter', invitation_role_label: 'Manager', invitation_email_purpose: 'team_invitation' });
     expect(app.logs[0]).toMatchObject({ name: 'complete_invitation_delivery', p_status: 'accepted', p_id: 'log-id' })
   })

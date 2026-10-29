@@ -1,5 +1,5 @@
 import {offlineQueue} from '../../features/my-day/offline'
-import {useMyDaySummary} from '../../features/workspace/useMyDaySummary'
+import {useMyDaySummary,MyDaySummaryProvider} from '../../features/workspace/useMyDaySummary'
 import { useEffect, useRef, useState } from 'react'
 import {
   Link,
@@ -22,6 +22,7 @@ import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 const icons: Record<string, string> = {
   '/app': 'home',
   '/app/capture': 'capture',
+  '/app/chat': 'chat',
   '/app/help': 'support',
   '/app/weekly-summary': 'calendar',
   '/app/role-record': 'record',
@@ -33,7 +34,8 @@ const icons: Record<string, string> = {
 }
 
 export function AppLayout() {
-  return <ChatProvider><WorkspaceLayout /></ChatProvider>
+  const {profile}=useAuth()
+  return <ChatProvider><MyDaySummaryProvider key={profile?.id} owner={profile?.id??''}><WorkspaceLayout /></MyDaySummaryProvider></ChatProvider>
 }
 
 function WorkspaceLayout() {

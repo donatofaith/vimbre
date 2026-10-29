@@ -1,3 +1,4 @@
+import {TimeField} from './TimeField'
 import {supabase} from '../../lib/supabase'
 import type {Json} from '../../lib/database.types'
 import {useAuth} from '../auth/AuthProvider'
@@ -29,10 +30,9 @@ export function TaskPanel({
   saved: () => void;
 }) {
   const {profile}=useAuth();
-  const formRef=useRef<HTMLFormElement>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0),closing=useRef(false);
+  const version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0);
   const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal'),[status,setStatus]=useState(task?.status??'open'),[reminder,setReminder]=useState(task?.reminder_option??'at_time'),[duration,setDuration]=useState(task?.time_needed_minutes?String(task.time_needed_minutes):'');
-  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
-  function schedule(){if(!task)return;changes.current++;setSaveState('Unsaved changes');if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>{if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setSaveState('Complete the required fields to save.');},800)}
+  function schedule(){changes.current++;setSaveState('Unsaved changes')}
   const [date, setDate] = useState(
       task ? task.due_date??"" : (draft ? draft.due_date || "" : today),
     ),
@@ -93,17 +93,17 @@ export function TaskPanel({
         external_contact_id: forValue?.kind === "contact" ? forValue.id : null,
         source_kind: task?.source_kind ?? (draft ? "ai" : "manual"),
       };
-      if(task&&!navigator.onLine){await changeTask(id,'edit',payload);savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(closing.current)saved();}
-      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(closing.current&&changes.current===savingRevision)saved();}
+      if(task&&!navigator.onLine){await changeTask(id,'edit',payload);savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(changes.current===savingRevision)saved();}
+      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(changes.current===savingRevision)saved();else setSaveState('Unsaved changes');}
       else {await changeTask(id,'create',payload);saved();}
     } catch (reason) {
-      setError(taskError(reason));setSaveState('Changes not saved');closing.current=false;
+      setError(taskError(reason));setSaveState('Changes not saved');
     } finally {
       setBusy(false);
-      if(task&&changes.current!==savingRevision){if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>formRef.current?.requestSubmit(),800)}
     }
   }
-  function finish(){if(task&&changes.current!==savedChanges.current){closing.current=true;if(formRef.current?.checkValidity())formRef.current.requestSubmit();else setError('Complete the required fields before closing.');}else close()}
+  function finish(){if(busy)return;if(changes.current!==savedChanges.current&&!window.confirm('Discard your unsaved changes?'))return;close()}
+
   const controlled=JSON.stringify([date,time,forValue,priority,status,reminder,duration]),lastControlled=useRef(controlled);
   useEffect(()=>{if(lastControlled.current!==controlled){lastControlled.current=controlled;schedule()}},[controlled]);
   return (
@@ -120,7 +120,7 @@ export function TaskPanel({
             Draft from Vimbre AI. Check before saving.
           </p>
         )}
-        <form ref={formRef} className="auth-form" onSubmit={save} onInput={schedule} onChange={schedule}>
+        <form className="auth-form" onSubmit={save} onInput={schedule} onChange={schedule}>
           <Input
             autoFocus
             data-autofocus=""
@@ -162,13 +162,7 @@ export function TaskPanel({
           <details className="md-more" open={stepsFirst||undefined}>
             <summary>More options</summary>
             <div className="auth-form">
-          <Input
-            label="Time (optional)"
-            disabled={!date}
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
+          <TimeField value={time} disabled={!date} onChange={setTime}/>
           <ForPicker
             suggestion={draft?.department_name || draft?.external_contact_name}
             value={forValue}
@@ -213,7 +207,9 @@ export function TaskPanel({
             </p>
           )}
           <div className="md-panel-actions">
-            {task?<><span role="status">{busy?'Saving…':saveState||'Saved'}</span>{error&&<><Button variant="secondary" type="submit" disabled={busy}>Retry save</Button><Button variant="secondary" onClick={()=>{if(window.confirm('Discard your unsaved changes?'))close()}}>Discard unsaved changes</Button></>}</>:<><Button type="submit" disabled={busy}>{busy?'Saving…':'Save task'}</Button><Button variant="secondary" onClick={close} disabled={busy}>Cancel</Button></>}
+            <span role="status">{busy?'Saving…':saveState}</span>
+            <Button variant="secondary" onClick={finish} disabled={busy}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy?'Saving…':task?'Save changes':'Save task'}</Button>
           </div>
         </form>
       </section>

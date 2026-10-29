@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
 const origins = new Set(['https://vimbre.com', 'https://www.vimbre.com', 'https://vimbre.vercel.app', 'http://localhost:5173', 'http://127.0.0.1:5173'])
-const redirectTo = 'https://vimbre.vercel.app/auth/callback'
+const redirectTo = 'https://vimbre.com/auth/callback'
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get('origin')
   const headers = {
-    'Access-Control-Allow-Origin': origin && origins.has(origin) ? origin : 'https://vimbre.vercel.app',
+    'Access-Control-Allow-Origin': origin && origins.has(origin) ? origin : 'https://vimbre.com',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',

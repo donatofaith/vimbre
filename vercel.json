@@ -54,6 +54,17 @@
       ],
       "destination": "https://vimbre.com/:path*",
       "statusCode": 301
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "vimbre.vercel.app"
+        }
+      ],
+      "destination": "https://vimbre.com/:path*",
+      "statusCode": 307
     }
   ]
 }
