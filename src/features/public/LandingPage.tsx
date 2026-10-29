@@ -85,7 +85,6 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             <h1 id="hero-title" tabIndex={-1}>Turn conversations into <span>tasks, decisions and handovers.</span></h1>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
-            <p className="rf-hero-microcopy">3 days free · Card required.</p>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
@@ -98,7 +97,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       </div></section>
       <section id="pricing" className="rs-section rs-pricing-section" aria-labelledby="pricing-title">
         <div className="rs-container">
-          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p><p className="rf-pricing-start-note">3 days free. Card required. Cancel before the trial ends to avoid being charged.</p></Reveal>
+          <Reveal><span className="rs-eyebrow">Company plans</span><h2 id="pricing-title">Plans and prices.</h2><p className="rf-pricing-intro">Company bundles shown per month, with the price per person at each plan's maximum team size. Choose the team size and AI allowance that fit your work.</p></Reveal>
           <div className="rs-pricing">{plans.map((plan, i) => <Reveal key={plan.name} className={'rs-plan ' + (i === 1 ? 'rs-plan-featured' : '')} delay={i * 60}>
             {i === 1 && <span className="rf-popular-label">More AI requests</span>}
             <h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount !== null && <span>per company / month</span>}</div>
@@ -112,7 +111,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         </div>
       </section>
       <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
-      <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={to}>{cta}<Arrow/></Link><p>3 days free · Card required.</p></div></section>
+      <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={to}>{cta}<Arrow/></Link></div></section>
       <ContactSection />
     </main>
     <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}{Object.entries(legalDocuments).filter(([, document]) => document !== null).map(([slug]) => <Link key={slug} to={'/' + slug}>{slug === 'privacy' ? 'Privacy' : 'Terms'}</Link>)}</nav></div><p>© 2026 Genade Global Services Ltd, Glasgow, United Kingdom.</p></div></footer>
