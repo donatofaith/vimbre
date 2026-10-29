@@ -426,7 +426,6 @@ function ConversationPanel({
   const [reply, setReply] = useState<Message | null>(null)
   const [showMembers, setShowMembers] = useState(false)
   const [unseen, setUnseen] = useState(0)
-  const [copyStatus, setCopyStatus] = useState('')
   const scroll = useRef<HTMLDivElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
   const lastRead = useRef(0)
@@ -460,10 +459,12 @@ function ConversationPanel({
           !Array.isArray(data.messages)
         ) {
           setError('This conversation could not be opened.')
-          setResult(null)
+          // Preserve loaded messages during a transient refresh failure.
           return
         }
         const detail = data as unknown as ChatDetail
+        const selection = window.getSelection()
+        const selectingMessages = Boolean(selection && !selection.isCollapsed && scroll.current && (scroll.current.contains(selection.anchorNode) || scroll.current.contains(selection.focusNode)))
         const nearBottom =
           !scroll.current ||
           scroll.current.scrollHeight -
@@ -474,6 +475,7 @@ function ConversationPanel({
         const reset = initial.current
         const historyGap = latestSeq.current > 0 && (detail.messages[0]?.seq ?? 0) > latestSeq.current
         setResult((old) => {
+          if (old && selectingMessages) return old
           const overlap = old?.messages.some(message => detail.messages.some(incoming => incoming.id === message.id))
           // Never join disjoint history windows and silently hide the intervening messages.
           if (!old || reset || (!overlap && detail.messages.length > 0)) return detail
@@ -486,7 +488,7 @@ function ConversationPanel({
           (detail.messages.at(-1)?.seq ?? 0) > latestSeq.current
         )
           setUnseen((n) => n + 1)
-        const selecting = !window.getSelection()?.isCollapsed
+        const selecting = selectingMessages
         const shouldScroll = shouldFollowMessages(initial.current, nearBottom, selecting, latestSeq.current, detail.messages.at(-1)?.seq ?? 0)
         latestSeq.current = detail.messages.at(-1)?.seq ?? 0
         initial.current = false
@@ -612,7 +614,6 @@ function ConversationPanel({
           Loading messages…
         </p>
       )}
-      <span className="sr-only" role="status">{copyStatus}</span>
       <div
         className="chat-messages"
         ref={scroll}
@@ -656,7 +657,7 @@ function ConversationPanel({
               <strong>{m.sender_name}</strong>
               <time dateTime={m.created_at}>{chatTime(m.created_at)}</time>
             </div>
-            <div className="chat-bubble" tabIndex={0}>
+            <div className="chat-bubble">
               {m.reply && (
                 <button
                   className="chat-reply-preview"
@@ -681,7 +682,6 @@ function ConversationPanel({
             >
               Reply<span className="sr-only"> to {m.sender_name}</span>
             </button>
-            <button type="button" className="chat-reply-button" aria-label={`Copy message from ${m.sender_name}`} onClick={async()=>{try{await navigator.clipboard.writeText(m.body);setCopyStatus('Message copied.')}catch{setCopyStatus('Select the message text and choose Copy.')}}}>Copy</button>
           </article>
         ))}
         <div ref={bottom} />

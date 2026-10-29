@@ -607,3 +607,9 @@
 .vw-shell .chat-thread-header .chat-new,.vw-shell .chat-list-toolbar .chat-new{font-size:26px}.vw-shell .chat-thread-header .chat-back{font-size:22px}
 
 .chat-new-dialog{height:auto;min-width:0;padding:24px;overflow:auto;font-size:14px}.chat-bubble{user-select:text;-webkit-user-select:text}.chat-bubble:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.chat-composer textarea{font-size:16px;resize:vertical}
+
+/* Native modal insets must not stretch an auto height to the viewport. */
+.vw-shell dialog.chat-new-dialog{position:fixed;inset:0;margin:auto;width:min(480px,calc(100vw - 32px));height:fit-content;min-height:0;max-height:calc(100dvh - 32px);box-sizing:border-box;padding:24px;overflow:auto}
+.vw-shell dialog.chat-new-dialog form{margin:0;display:block;height:auto;min-height:0}
+.chat-new-dialog .chat-label{margin-bottom:14px}.chat-new-dialog .chat-selected:empty{display:none}.chat-new-dialog .chat-people{max-height:200px;padding:8px}.chat-new-dialog form>p{margin:10px 0}.chat-new-dialog .chat-dialog-heading{margin-bottom:20px}.chat-new-dialog form>.button-primary{margin-top:4px}
+@media(max-width:760px){.vw-shell.app-shell[data-chat="true"]{overflow:auto}.vw-shell[data-chat="true"] .chat-workspace{min-height:360px}.chat-thread .chat-messages{min-height:140px}.vw-shell dialog.chat-new-dialog{padding:20px;max-height:calc(100dvh - 24px)}}
