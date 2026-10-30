@@ -1,3 +1,4 @@
+import {useCompanyLogo} from '../../features/team/CompanyLogo'
 import {BillingAccessProvider} from '../../features/billing/BillingAccess'
 import {offlineQueue} from '../../features/my-day/offline'
 import {useMyDaySummary,MyDaySummaryProvider} from '../../features/workspace/useMyDaySummary'
@@ -41,6 +42,7 @@ export function AppLayout() {
 
 function WorkspaceLayout() {
   const { company, profile } = useAuth()
+  const companyLogo=useCompanyLogo(company?.logo_path)
   const { pathname } = useLocation()
   const daySummary=useMyDaySummary(profile?.id??'',0,Boolean(profile));
   const leader = profile?.role === 'hr_admin' || profile?.role === 'manager'
@@ -157,7 +159,7 @@ function WorkspaceLayout() {
         </div>
 
         <p className="vw-company">
-          {company?.name ?? 'Your company'}
+          {companyLogo&&<img className="vw-company-logo" src={companyLogo} alt="" width={28} height={28}/>} {company?.name ?? 'Your company'}
         </p>
 
         <nav
@@ -219,7 +221,7 @@ function WorkspaceLayout() {
         </div>
       </aside>
 
-      <div className="vw-workspace" inert={menuOpen}>
+      <div className="vw-workspace" data-clarity-mask="true" inert={menuOpen}>
         <header className="vw-topbar">
           <button type="button" className="vw-collapse-sidebar" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-controls="workspace-sidebar" aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             <WorkspaceIcon name="sidebar" />
@@ -232,6 +234,7 @@ function WorkspaceLayout() {
           </div>
 
           <div className="vw-topbar-actions">
+            <NavLink to="/app/weekly-summary?tab=stars" className="chat-launcher stars-launcher" aria-label="Stars" title="Stars"><WorkspaceIcon name="star" /></NavLink>
             <ChatLauncher />
             <Notifications />
 

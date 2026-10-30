@@ -513,6 +513,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          logo_path: string | null
           contact_email: string | null
           created_at: string
           created_by: string | null
@@ -522,6 +523,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          logo_path?: string | null
           contact_email?: string | null
           created_at?: string
           created_by?: string | null
@@ -531,6 +533,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          logo_path?: string | null
           contact_email?: string | null
           created_at?: string
           created_by?: string | null
@@ -784,6 +787,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          employment_status: string
           active: boolean
           company_id: string
           created_at: string
@@ -797,6 +801,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          employment_status?: string
           active?: boolean
           company_id: string
           created_at?: string
@@ -810,6 +815,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          employment_status?: string
           active?: boolean
           company_id?: string
           created_at?: string

@@ -10,11 +10,13 @@ export function TaskAlerts({
   zone,
   changed,
   close,
+  read,
 }: {
   alerts: Alert[];
   zone: string;
   changed: () => void;
   close: () => void;
+  read?: (id:string) => void;
 }) {
   const [selected, setSelected] = useState<(Alert & {reschedule?:boolean}) | null>(null),
     [busy, setBusy] = useState(""),
@@ -43,7 +45,7 @@ export function TaskAlerts({
       <ul>
         {alerts.map((a) => (
           <li key={a.id} className="md-alert">
-            <Link to={`/app?task=${a.task_id}`} onClick={close}>
+            <Link to={`/app?task=${a.task_id}`} onClick={()=>{read?.(a.id);close()}}>
               <strong>
                 {a.phase === "due"
                   ? `Due now: ${a.title}`

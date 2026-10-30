@@ -18,5 +18,5 @@ it('publishes the complete supplied legal documents with their effective date an
 it('keeps competition-specific terms separate from the company terms and privacy policy',()=>{
  expect(competitionDocument.title).toBe('Stars and competition terms')
  expect(render('competition')).toContain('They are not a performance score')
- expect(render('privacy')).toContain('We only use these if you accept them through our cookie banner.')
+ expect(render('privacy')).toContain('We only load these tools if you accept optional analytics through our cookie banner.')
 })

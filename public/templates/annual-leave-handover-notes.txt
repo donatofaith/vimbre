@@ -1,0 +1,37 @@
+Annual leave handover notes
+Provided by Vimbre — https://vimbre.com/blog/annual-leave-handover-notes
+
+ANNUAL LEAVE HANDOVER
+Name / role: [ ]
+Away from: [ ]   Return date / time zone: [ ]
+Primary cover: [ ]   Backup: [ ]
+Manager / urgent escalation: [ ]
+Last updated: [ ]
+
+DURING MY LEAVE (repeat)
+Task / recurring duty: [ ]
+Due date: [ ]   Cover owner: [ ]
+Current status: [ ]
+Next action / instructions: [ ]
+Source / file link: [ ]
+If blocked: [ ]
+
+CAN WAIT UNTIL I RETURN
+Item / reason / next review date: [ ]
+
+DECISIONS AND LIMITS
+Cover can decide: [ ]
+Approval needed for: [ ]
+Existing decision / reason / evidence: [ ]
+
+BEFORE LEAVE
+[ ] Cover agreed and capacity confirmed
+[ ] Links and permissions tested
+[ ] Stakeholders told who to contact
+[ ] Routine deadlines checked
+
+COVER RETURN NOTES
+What changed / date / record link: [ ]
+New decision / agreed by / reason: [ ]
+Outstanding task / owner / due date: [ ]
+Ownership returned on: [ ]

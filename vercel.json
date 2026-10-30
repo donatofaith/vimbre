@@ -13,6 +13,18 @@
       "destination": "/robots.txt"
     },
     {
+      "source": "/blog",
+      "destination": "/blog/index.html"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/blog/:slug/index.html"
+    },
+    {
+      "source": "/templates/:path*",
+      "destination": "/templates/:path*"
+    },
+    {
       "source": "/.well-known/microsoft-identity-association.json",
       "destination": "/.well-known/microsoft-identity-association.json"
     },

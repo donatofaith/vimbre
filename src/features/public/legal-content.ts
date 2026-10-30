@@ -259,7 +259,7 @@ export const legalDocuments: Record<'privacy' | 'terms', LegalDocument> = {
             "items": [
               "Strictly necessary: to sign you in, keep your session secure and remember essential settings. These do not need consent.",
               "Preferences: to remember choices such as display settings.",
-              "Analytics: to understand how the website and Service are used. We only use these if you accept them through our cookie banner."
+              "Analytics: Google Analytics helps us understand website and Service usage. Microsoft Clarity provides heatmaps and session insights on our public website and blog, excluding the signed-in workspace and account pages. We only load these tools if you accept optional analytics through our cookie banner."
             ]
           },
           {

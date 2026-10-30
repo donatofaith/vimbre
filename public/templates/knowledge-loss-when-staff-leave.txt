@@ -1,0 +1,36 @@
+Knowledge loss when staff leave
+Provided by Vimbre — https://vimbre.com/blog/knowledge-loss-when-staff-leave
+
+KNOWLEDGE CONTINUITY REGISTER
+Team: [ ]   Register owner: [ ]
+Review date: [ ]
+
+KNOWLEDGE RISK (repeat)
+Responsibility / process: [ ]
+Current knowledge owner: [ ]
+Business impact if unavailable: [ ]
+Next critical date: [ ]
+Risk priority / reason: [ ]
+Existing record / location: [ ]
+Named backup: [ ]
+Last backup walkthrough / result: [ ]
+Gap to close / owner / due date: [ ]
+
+DECISION CAPTURE
+Decision: [ ]   Reason: [ ]
+Agreed by / date: [ ]
+Evidence / source link: [ ]
+When to review: [ ]
+
+PROCESS CAPTURE
+Inputs / location: [ ]
+Steps / approval points: [ ]
+Warning signs / escalation route: [ ]
+Output / completion check: [ ]
+
+CONTINUITY CHECK
+[ ] Backup can find the latest record
+[ ] Access tested through approved channels
+[ ] Representative task completed from instructions
+[ ] Missing context assigned to an owner
+Next review / owner: [ ]

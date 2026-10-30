@@ -1,0 +1,39 @@
+Employee handover template
+Provided by Vimbre — https://vimbre.com/blog/employee-handover-template
+
+EMPLOYEE HANDOVER
+Role / team: [ ]
+Prepared by: [ ]   Cover / successor: [ ]
+Handover dates: [ ]   Last updated: [ ]
+Manager / escalation contact: [ ]
+
+1. START HERE
+Purpose of the role: [ ]
+Three immediate priorities: [ ]
+
+2. OPEN WORK (repeat for each item)
+Item: [ ]
+Status / last completed step: [ ]
+Next action: [ ]   Owner: [ ]   Due date: [ ]
+Source / document link: [ ]
+Blocker and escalation point: [ ]
+
+3. DECISIONS AND GUARDRAILS
+Decision: [ ]   Reason: [ ]
+Agreed by / date: [ ]   Evidence link: [ ]
+What must not change without approval: [ ]
+
+4. ROUTINE WORK
+Activity: [ ]   Frequency / next occurrence: [ ]
+Steps / checklist link: [ ]   Backup owner: [ ]
+
+5. CONTACTS, FILES AND ACCESS
+Contact / purpose / approved contact channel: [ ]
+Record / location / access confirmed: [ ]
+Access requests still needed (no passwords): [ ]
+
+6. ACCEPTANCE
+Recipient reviewed links on: [ ]
+Questions / gaps / owner / resolve by: [ ]
+Manager sign-off if required: [ ]
+Next review: [ ]
