@@ -18,6 +18,7 @@ import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
+import './workspace-refinement.css'
 import { ChatProvider, ChatLauncher } from '../../features/chat/ChatProvider'
 import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 

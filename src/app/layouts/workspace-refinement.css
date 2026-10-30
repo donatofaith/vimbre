@@ -1,0 +1,55 @@
+/* Shared workspace surfaces and control rhythm. Public pages and approved banners
+   keep their own presentation; feature behavior and permission boundaries stay intact. */
+.vw-shell.app-shell {
+ background:#f6f8fb;
+ --workspace-shadow:0 1px 2px rgb(16 42 67 / 3%);
+}
+.vw-shell.app-shell .vw-content :is(.card,.vc-card,.rf-profile,.vr-module,.ho-row,.ho-empty,.support-workspace) {
+ background:#fff; border-color:#dfe6ee; border-radius:12px; box-shadow:none;
+}
+.vw-shell.app-shell .vw-content > .page-heading h1 {font-size:28px;line-height:1.25;margin:0 0 8px}
+.vw-shell.app-shell .vw-content > .page-heading p {font-size:14px;line-height:1.6;margin:0}
+.vw-shell.app-shell .settings-layout > .page-heading h1 {font-size:28px;line-height:1.25;margin:0 0 8px}
+.vw-shell.app-shell .settings-layout > .page-heading p {font-size:14px;line-height:1.6;margin:0;color:var(--muted)}
+.vw-shell.app-shell .settings-content > .card {padding:24px}
+.vw-shell.app-shell .settings-content > .card > h2 {font-size:18px;line-height:1.4;margin:0 0 16px}
+.vw-shell.app-shell .settings-content > .card > p {font-size:14px;line-height:1.6;margin:0 0 20px}
+.vw-shell.app-shell .settings-content .auth-form {gap:20px}
+.vw-shell.app-shell .settings-content .auth-form > .button[type=submit] {justify-self:end;width:auto;min-height:44px;margin-top:4px}
+.vw-shell.app-shell .settings-content .form-actions {gap:12px;align-items:center;flex-wrap:wrap}
+.vw-shell.app-shell .settings-content :is(fieldset, .field) {min-width:0}
+.vw-shell.app-shell .settings-content fieldset {border:1px solid var(--border);border-radius:10px;padding:16px;margin:0}
+.vw-shell.app-shell .settings-content fieldset > fieldset {margin-block:16px}
+.vw-shell.app-shell .settings-content legend {padding-inline:6px;font-weight:600;font-size:14px}
+.vw-shell.app-shell .settings-content :is(.md-check,.ho-choice,.checkbox-line) {line-height:1.6;padding-block:6px;gap:10px}
+.vw-shell.app-shell .settings-content :is(.md-check,.ho-choice,.checkbox-line) input {flex-shrink:0}
+.vw-shell.app-shell .settings-navigation {box-shadow:none;border-radius:12px}
+.vw-shell.app-shell .settings-navigation button {font-size:14px;line-height:1.5}
+/* Keep useful source metadata readable instead of shrinking it to fit. */
+.vw-shell.app-shell .vc-page :is(.vc-counter,.vc-draft-meta,.vc-picker-date,.vc-chip,.vc-channels small,.vc-source-quote footer,.vc-card-footer) {font-size:12px;line-height:1.5}
+.vw-shell.app-shell .vc-page .vc-source-list span {font-size:12px;line-height:1.5}
+.vw-shell.app-shell .vc-page .vc-source-list button {row-gap:8px}
+.vw-shell.app-shell .vc-page .vc-steps li {font-size:12px;line-height:1.5}
+.vw-shell.app-shell .vc-page :is(.vc-section-heading,.vc-drafts .form-actions) .button {font-size:13px}
+@media(max-width:1024px){
+ .vw-shell.app-shell .vw-content :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px}
+}
+@media(max-width:760px){
+ .vw-shell.app-shell .settings-content > .card {padding:20px 16px}
+ .vw-shell.app-shell .settings-layout > .page-heading h1,.vw-shell.app-shell .vw-content > .page-heading h1 {font-size:24px}
+ .vw-shell.app-shell .settings-content .auth-form > .button[type=submit] {width:100%;justify-self:stretch}
+ .vw-shell.app-shell .settings-content fieldset {padding:12px}
+}
+@media(max-width:640px){
+ .vw-shell.app-shell .md-page .md-toolbar-approved {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 8px;align-items:end;
+ }
+ .vw-shell.app-shell .md-toolbar-approved .md-search {grid-column:1/-1;width:100%;min-width:0}
+ .vw-shell.app-shell .md-toolbar-approved .md-menu-label {grid-column:1;grid-row:2;min-width:0;font-size:13px;gap:4px}
+ .vw-shell.app-shell .md-toolbar-approved .md-toolbar-actions {grid-column:2;grid-row:2;margin:0;align-self:end}
+ .vw-shell.app-shell .md-toolbar-approved > .segmented-control {grid-column:1/-1;grid-row:3;justify-self:start;width:auto;max-width:100%;margin:0}
+ .vw-shell.app-shell .md-toolbar-actions :is(.md-add-menu,.md-tools-menu) > summary {width:44px;height:44px;min-height:44px}
+ .vw-shell.app-shell .md-page .md-filter-disclosure {padding-inline:12px;border-radius:8px;background:#fff}
+ .vw-shell.app-shell .md-page .md-filter-disclosure > summary {min-height:44px;padding-block:10px;font-size:13px}
+ .vw-shell.app-shell .md-page .md-slim-row > time {font-size:12px}
+}
