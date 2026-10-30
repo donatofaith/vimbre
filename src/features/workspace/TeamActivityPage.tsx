@@ -10,7 +10,7 @@ import { useTeamOverview } from './useTeamOverview'
 import { WorkPrivacyNotice, WorkVisibilityDetails } from './WorkVisibilityDetails'
 export function TeamActivityPage() {
  const {profile}=useAuth()
- if(profile?.role==='employee')return <><h1 tabIndex={-1}>Team activity</h1><p>This page is for Managers and HR Admins.</p><Link to="/app">Open My day</Link></>
+ if(profile?.role==='employee')return <><h1 tabIndex={-1}>Team activity</h1><p>This page is for Managers and HR Admins.</p></>
  return <TeamActivity key={`${profile!.id}:${profile!.role}:${profile!.department_id}`} />
 }
 function TeamActivity() {
@@ -26,7 +26,7 @@ function TeamActivity() {
  useEffect(()=>{const timer=setTimeout(()=>{setQuery(safeSearch(search));setPage(0)},250);return()=>clearTimeout(timer)},[search])
  function overview(){setParams({});setPage(0);setSearch('')}
  return <div className="vt-page">
-  <header className="page-heading"><h1 tabIndex={-1}>Team activity</h1><p>See what your team has captured, finished and left open.</p><Link to="/app">Back to My day</Link></header>
+  <header className="page-heading"><h1 tabIndex={-1}>Team activity</h1><p>See what your team has captured, finished and left open.</p></header>
   <p className="vt-trust"><button type="button" className="vt-trust-button" aria-haspopup="dialog" aria-controls="vt-visibility" onClick={()=>visibility.current?.showModal()}><WorkPrivacyNotice /></button></p>
   <dialog id="vt-visibility" ref={visibility} className="vw-dialog" aria-labelledby="vt-visibility-title"><h2 id="vt-visibility-title">Team visibility</h2><WorkVisibilityDetails team /><form method="dialog"><Button type="submit">Close access details</Button></form></dialog>
   {missingDepartment?<section className="card"><h2>Your department is not set up yet</h2><p>Ask your HR Admin to assign you to a department.</p></section>:error?<section className="card"><p role="alert">Your team could not be loaded.</p><Button onClick={retry}>Retry team activity</Button></section>:!data?<p role="status">Loading your team…</p>:requested&&!validId?<section className="card"><p role="alert">Team member is not available.</p><Button onClick={overview}>Back to team overview</Button></section>:validId?<>
