@@ -1,3 +1,18 @@
+# Public Vimbre pages may be crawled by search engines and AI search crawlers.
+# All agents in this group share the same private-route exclusions.
 User-agent: *
+User-agent: OAI-SearchBot
+User-agent: Claude-SearchBot
+Disallow: /app
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot
+Disallow: /reset-password
+Disallow: /join
+Disallow: /role-guide
+Disallow: /handover-share
 Allow: /
+
 Sitemap: https://vimbre.com/sitemap.xml
