@@ -17,6 +17,9 @@ export function BlogPage({slug,authenticated=false,loading=false}:{slug?:string;
   const description = post?.description ?? 'Articles on decisions, work context and handovers from Vimbre.'
   const canonical = 'https://vimbre.com/blog'+(post?'/'+post.slug:'')
   useEffect(()=>{
+    if(!window.location.hash)window.scrollTo({top:0,left:0,behavior:'instant'})
+  },[slug])
+  useEffect(()=>{
     document.title=title
     const changes:{element:Element;attribute:string;old:string|null;created:boolean}[]=[]
     function set(selector:string,tag:string,key:string,value:string,attribute:string){let element=document.head.querySelector(selector);const created=!element;if(!element){element=document.createElement(tag);element.setAttribute(key,value);document.head.append(element)}changes.push({element,attribute,old:element.getAttribute(attribute),created});element.setAttribute(attribute,attribute==='href'?canonical:selector.includes('description')?description:selector.includes('robots')?(missing?'noindex':'index,follow'):selector.includes('url')?canonical:selector.includes('type')?(post?'article':'website'):title)}
