@@ -79,6 +79,9 @@
 .vw-mark i + i { background: #84c4ffbb; left: 12px; }
 
 .vw-company {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #b1c4d3;
   padding: 0 12px;
@@ -983,4 +986,47 @@
  .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .vw-content>.vai-allowance{flex-shrink:0}
  .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .chat-page{display:flex;flex-direction:column;flex:1;min-height:0}
  .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .chat-workspace{flex:1;height:auto;min-height:0;border:0;border-radius:0;box-shadow:none;grid-template-columns:clamp(260px,25vw,340px) minmax(0,1fr)}
+}
+
+/* Mobile workspace chrome: compact branding, then page identity and utilities.
+   Keep company/logo styles here so lazy Settings CSS cannot expand the header. */
+.vw-company-logo { object-fit: contain; border-radius: 5px; background: #fff; }
+.vw-menu svg { width: 20px; height: 20px; }
+@media (max-width: 1024px) {
+  .vw-shell.app-shell > .vw-sidebar[data-open="false"] {
+    display: block; position: relative; top: auto; margin: 0;
+    width: 100%; height: 60px; min-height: 60px; padding: 8px 16px;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
+  .vw-sidebar-top { height: 44px; }
+  .vw-shell .vw-brand { padding: 0; }
+  .vw-sidebar .vimbre-logo-full { width: 104px; height: auto; }
+  .vw-shell .vw-menu {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 44px; min-height: 44px; padding: 0 10px;
+    background: transparent; border: 1px solid #ffffff30; border-radius: 8px;
+    color: #fff; font-size: 13px; line-height: 1;
+  }
+  .vw-shell .vw-sidebar[data-open="false"] .vw-company { display: none; }
+  .vw-shell.app-shell .vw-topbar {
+    height: 56px; min-height: 56px; padding: 0 12px 0 16px;
+    margin: 0; gap: 8px; backdrop-filter: none;
+  }
+  .vw-shell .vw-breadcrumb { flex: 1; max-width: none; font-size: 14px; gap: 0; }
+  .vw-breadcrumb-company, .vw-breadcrumb-separator { display: none; }
+  .vw-shell.app-shell .vw-breadcrumb strong {
+    flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600;
+  }
+  .vw-topbar-actions { gap: 2px; flex-shrink: 0; }
+  .vw-shell .vw-topbar :is(.chat-launcher, .chat-bell) {
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+    border: 0; border-radius: 10px; background: transparent; box-shadow: none;
+  }
+  .vw-shell .vw-topbar :is(.chat-launcher, .chat-bell) svg { width: 20px; height: 20px; }
+  .vw-shell .vw-topbar .vw-avatar { width: 32px; height: 32px; margin-left: 6px; font-size: 11px; }
+  .vw-shell .vw-sidebar[data-open="true"] .vw-company { display: flex; margin: 24px 0; }
+}
+@media (max-width: 760px) {
+  .vw-shell[data-chat="true"] .chat-workspace { height: calc(100svh - 116px); }
 }

@@ -154,7 +154,8 @@ function WorkspaceLayout() {
             aria-controls="workspace-navigation"
             onClick={() => setMenuOpen(value => !value)}
           >
-            {menuOpen ? 'Close menu' : 'Menu'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">{menuOpen ? <path d="m6 6 12 12M18 6 6 18" /> : <path d="M4 6h16M4 12h16M4 18h16" />}</svg>
+            <span>{menuOpen ? 'Close menu' : 'Menu'}</span>
           </button>
         </div>
 
@@ -228,8 +229,8 @@ function WorkspaceLayout() {
             <span>{sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>
           </button>
           <div className="vw-breadcrumb">
-            {company?.name}
-            <span aria-hidden="true">/</span>
+            <span className="vw-breadcrumb-company">{company?.name}</span>
+            <span className="vw-breadcrumb-separator" aria-hidden="true">/</span>
             <strong>{pageName}</strong>
           </div>
 
