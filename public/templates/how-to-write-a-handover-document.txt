@@ -1,0 +1,34 @@
+How to write a handover document
+Provided by Vimbre — https://vimbre.com/blog/how-to-write-a-handover-document
+
+HANDOVER DOCUMENT WORKSHEET
+Purpose: [temporary cover / permanent transfer]
+Role / workstream: [ ]   Dates: [ ]
+Document owner: [ ]   Recipient: [ ]
+Last checked: [ ]
+
+OVERVIEW (five lines maximum)
+What this work achieves: [ ]
+Current position: [ ]
+Immediate next step: [ ]
+Most important deadline: [ ]
+Main risk: [ ]
+
+WORK INSTRUCTIONS (repeat)
+Outcome required: [ ]
+Inputs and approved file locations: [ ]
+Steps: 1. [ ]  2. [ ]  3. [ ]
+Owner / reviewer: [ ]
+Deadline / time zone: [ ]
+Completion check: [ ]
+If blocked, contact: [ ]
+
+DECISION RECORD
+Decision / reason / agreed by / date: [ ]
+Evidence: [ ]   Review trigger: [ ]
+
+RECIPIENT CHECK
+Links opened: [ ]   Permissions confirmed: [ ]
+Example task walked through: [ ]
+Unresolved question / owner / due date: [ ]
+Next document review: [ ]

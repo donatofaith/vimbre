@@ -4,6 +4,7 @@ export function WorkspaceIcon({
   name?: string
 }) {
   const paths: Record<string, string> = {
+    star: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z',
     support: 'M4 14v-3a8 8 0 0 1 16 0v3 M4 12H3v6h4v-6H4 M20 12h1v6h-4v-6h3 M19 18c0 3-3 3-7 3 M10 20h4v2h-4z',
     sidebar: 'M3 4h18v16H3z M9 4v16 M14 9l-3 3 3 3',
     chat: 'M4 4h16v12H9l-5 4z M8 8h8 M8 12h5',

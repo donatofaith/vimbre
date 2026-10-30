@@ -33,9 +33,11 @@ export const pricingDisclosure = 'Subscriptions bill monthly per company. AI req
 export const schema = {
   '@context': 'https://schema.org',
   '@graph': [
+    { '@type': 'Organization', '@id': 'https://vimbre.com/#organization', name: 'Vimbre', legalName: 'Genade Global Services Ltd', url: 'https://vimbre.com/', logo: 'https://vimbre.com/favicon-192.png' },
+    { '@type': 'WebSite', '@id': 'https://vimbre.com/#website', name: 'Vimbre', url: 'https://vimbre.com/', publisher: { '@id': 'https://vimbre.com/#organization' } },
     { '@type': 'SoftwareApplication', name: 'Vimbre', url: 'https://vimbre.com/', applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
       description: definition,
-      publisher: { '@type': 'Organization', name: 'Genade Global Services Ltd', url: 'https://vimbre.com/' } },
+      publisher: { '@id': 'https://vimbre.com/#organization' }, offers: plans.filter(plan=>plan.amount!==null).map(plan=>({'@type':'Offer',name:plan.name,price:plan.amount,priceCurrency:'GBP',url:'https://vimbre.com/#pricing'})) },
     { '@type': 'FAQPage', mainEntity: faq.map(([name, text]) => ({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } })) },
   ],
 }

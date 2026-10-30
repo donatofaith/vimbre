@@ -1,0 +1,36 @@
+What to do when an employee leaves suddenly
+Provided by Vimbre — https://vimbre.com/blog/what-to-do-when-an-employee-leaves-suddenly
+
+UNEXPECTED DEPARTURE — CONTINUITY TRIAGE
+Role / team: [ ]   Continuity owner: [ ]
+Date / time prepared: [ ]
+HR contact: [ ]   Authorised IT contact: [ ]
+
+IMMEDIATE COMMITMENTS (repeat)
+Commitment / deadline: [ ]
+Impact if missed: [ ]
+Verified source / person confirming: [ ]
+Temporary owner / backup: [ ]
+Next action / check-in: [ ]
+
+ACCESS AND RECORDS
+System / business record needed: [ ]
+Authorised administrator: [ ]
+Approved access / retention action: [ ]
+Status / completion date: [ ]
+
+CONTEXT GAPS
+Question: [ ]
+Known facts and source: [ ]
+Unverified assumption (label clearly): [ ]
+Who can confirm / by when: [ ]
+
+COVER DECISIONS
+Work continuing / owner: [ ]
+Work paused / stakeholder agreement: [ ]
+Escalation threshold / contact: [ ]
+
+RECOVERY REVIEW
+Next review date: [ ]
+Remaining operational risk: [ ]
+Role records / routine instructions updated by: [ ]

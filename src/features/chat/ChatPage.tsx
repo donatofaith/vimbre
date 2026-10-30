@@ -507,6 +507,11 @@ function ConversationPanel({
       alive = false
     }
   }, [id, anchor, revision, retry])
+  useEffect(()=>{
+    const visible=()=>{if(!document.hidden)setLoadVersion(n=>n+1)}
+    window.addEventListener('focus',visible);document.addEventListener('visibilitychange',visible)
+    return()=>{window.removeEventListener('focus',visible);document.removeEventListener('visibilitychange',visible)}
+  },[])
   // Mark only loaded messages at the visible bottom; an older anchor never clears newer messages.
   useEffect(() => {
     if (!result || document.hidden || !document.hasFocus()) return

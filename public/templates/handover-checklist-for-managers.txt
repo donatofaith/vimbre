@@ -1,0 +1,37 @@
+Handover checklist for managers
+Provided by Vimbre — https://vimbre.com/blog/handover-checklist-for-managers
+
+MANAGER HANDOVER CHECKLIST
+Employee / role: [ ]   Recipient: [ ]
+Manager: [ ]   Transfer date: [ ]
+
+SCOPE AND CAPACITY
+[ ] Coverage dates and responsibilities agreed
+[ ] Recipient capacity checked
+[ ] Work to pause agreed with stakeholders
+[ ] Backup and escalation owner named
+
+WORK AND RISK
+[ ] Critical deadlines have an owner
+[ ] Customer / supplier commitments recorded
+[ ] Recurring duties have instructions and next dates
+[ ] Decision reasons and approval limits documented
+[ ] Known risks have mitigation and escalation steps
+
+ACCESS AND RECORDS
+[ ] Recipient can open the current files
+[ ] Approved access requests completed
+[ ] Sensitive information shared only where needed
+[ ] No passwords or recovery codes in handover notes
+
+ACCEPTANCE
+[ ] Recipient walked through critical items
+[ ] Open question / owner / due date recorded
+[ ] Required approvals completed
+[ ] Relevant stakeholders informed
+
+FOLLOW-UP
+First review date: [ ]
+Temporary cover take-back date: [ ]
+Outstanding gap / owner / resolve by: [ ]
+Manager acceptance / date: [ ]

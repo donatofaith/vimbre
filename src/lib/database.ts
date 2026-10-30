@@ -20,6 +20,8 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
+      set_member_status: {Args:{p_id:string;p_status:string};Returns:undefined}
+      notification_receipt: {Args:{p_kind?:string|null;p_id?:string|null};Returns:Json}
       role_introduction: {Args:{p_role:string;p_text?:string|null};Returns:Json}
       billing_access: {Args:{p_operation:string;p_code?:string|null};Returns:Json}
       myday_competition_settings: {Args:{p_mode?:string|null;p_visible?:boolean|null};Returns:Json}
