@@ -53,7 +53,7 @@ try {
   }
   const urls=['/','/blog','/privacy','/terms',...blogPosts.map(post=>'/blog/'+post.slug)]
   await writeFile('dist/sitemap.xml','<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(path=>'<url><loc>https://vimbre.com'+path+'</loc></url>').join('')+'</urlset>')
-  await writeFile('dist/robots.txt','User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /api/\nSitemap: https://vimbre.com/sitemap.xml\n')
+  // Vite copies public/robots.txt; preserve its AI crawler and private-route rules.
   console.log('Homepage prerendered with full content, FAQs and matching JSON LD.')
 } finally { await server.close() }
 
