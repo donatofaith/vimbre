@@ -101,6 +101,15 @@ export function TaskPanel({
       else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;if(task.status!=='done'&&payload.status==='done')trackTaskCompleted(id,'manual');const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(changes.current===savingRevision)saved();else setSaveState('Unsaved changes');}
       else {await changeTask(id,'create',payload);saved();}
     } catch (reason) {
+      const code = (reason as { code?: string })?.code;
+      if (code === '40001') {
+        // A stale editor must be closed immediately. Keeping it mounted leaves
+        // the old base_updated_at in memory and can cause repeated submissions.
+        window.dispatchEvent(new Event('vimbre:work-changed'));
+        setSaveState('Task changed — reloading.');
+        close();
+        return;
+      }
       setError(taskError(reason));setSaveState('Changes not saved');
     } finally {
       setBusy(false);
