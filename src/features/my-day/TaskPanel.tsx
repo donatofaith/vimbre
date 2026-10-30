@@ -1,4 +1,5 @@
 import {TimeField} from './TimeField'
+import {trackTaskCompleted} from '../../lib/analytics'
 import {supabase} from '../../lib/supabase'
 import type {Json} from '../../lib/database.types'
 import {useAuth} from '../auth/AuthProvider'
@@ -93,8 +94,8 @@ export function TaskPanel({
         external_contact_id: forValue?.kind === "contact" ? forValue.id : null,
         source_kind: task?.source_kind ?? (draft ? "ai" : "manual"),
       };
-      if(task&&!navigator.onLine){await changeTask(id,'edit',payload);savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(changes.current===savingRevision)saved();}
-      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(changes.current===savingRevision)saved();else setSaveState('Unsaved changes');}
+      if(task&&!navigator.onLine){await changeTask(id,'edit',payload,{completed:task.status!=='done'&&payload.status==='done'});savedChanges.current=savingRevision;setSaveState('Saved on this device · waiting to sync');if(changes.current===savingRevision)saved();}
+      else if(task){const result=await supabase.rpc('myday_edit',{p_id:id,p_data:payload as Json});if(result.error)throw result.error;if(task.status!=='done'&&payload.status==='done')trackTaskCompleted(id,'manual');const state=result.data as {updated_at?:string};if(state.updated_at)version.current=state.updated_at;savedChanges.current=savingRevision;setSaveState('Saved');window.dispatchEvent(new Event('vimbre:work-changed'));if(changes.current===savingRevision)saved();else setSaveState('Unsaved changes');}
       else {await changeTask(id,'create',payload);saved();}
     } catch (reason) {
       setError(taskError(reason));setSaveState('Changes not saved');

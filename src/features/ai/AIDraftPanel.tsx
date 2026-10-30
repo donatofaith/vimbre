@@ -1,3 +1,4 @@
+import {trackContextGenerated} from '../../lib/analytics'
 import { useId, useRef, useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { runAI } from '../../lib/ai-gateway'
@@ -30,6 +31,7 @@ export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxAp
       const result = await runAI(task, source, reference.current!.id)
       if (!result.ok) { setError(result.message); setLimited(result.code === 'limit_reached'); return }
       if (!result.text.trim() || result.text.length > 60000) { setError('The draft could not be read. You can continue by hand.'); return }
+      trackContextGenerated(task, result.request_id, 'text')
       reference.current = null
       setOutput(result.text); setReviewing(true); setFromAI(true)
       setMessage('Draft ready. Review names, dates and details.')

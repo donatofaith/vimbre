@@ -1,4 +1,5 @@
 import {supabase} from '../../lib/supabase'
+import {trackTaskCompleted} from '../../lib/analytics'
 import type {Task} from './types'
 export type PlanTask=Task&{covering?:boolean;owner_name?:string;needs_reason?:boolean;decision_reason?:string;duration_source?:string}
 export type PlanItem={id:string;start:string;minutes:number;reason:string;decision_reason?:string}
@@ -13,5 +14,6 @@ export async function loadPlan(syncCalendar=false):Promise<PlanSource>{
 }
 export async function planTaskAction(task:string,operation:'start'|'done',reason?:string){
  const r=await supabase.rpc('myday_plan_action',{p_task:task,p_operation:operation,p_reason:reason??null});if(r.error)throw r.error
+ if(operation==='done')trackTaskCompleted(task,'plan')
  window.dispatchEvent(new Event('vimbre:work-changed'))
 }

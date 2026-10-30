@@ -1,3 +1,4 @@
+import {AnalyticsConsent} from '../features/analytics/AnalyticsConsent'
 import { UIPreview } from '../components/ui/UIPreview'
 import { MenuLifecycle } from '../components/ui/MenuLifecycle'
 const RoleGuidePage = lazy(() => import('../features/records/RoleGuide').then(module => ({default:module.RoleGuidePage})))
@@ -128,6 +129,7 @@ export function App() {
       <PageFocus />
       <MenuLifecycle />
       <AnchorScroll />
+      <AnalyticsConsent />
 
       <Suspense
         fallback={
@@ -144,6 +146,7 @@ export function App() {
           <Route path="/blog/:slug" element={<BlogRoute/>}/>
           <Route path="/privacy" element={<LegalPage page="privacy" />} />
           <Route path="/terms" element={<LegalPage page="terms" />} />
+          <Route path="/competition-terms" element={<LegalPage page="competition" />} />
           <Route path="/contact" element={<Navigate to="/#contact" replace />} />
           <Route
             path="/login"

@@ -1,3 +1,4 @@
+import {trackContextGenerated} from '../../lib/analytics'
 import { useId, useRef, useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { runAI } from '../../lib/ai-gateway'
@@ -35,7 +36,7 @@ export function StructuredAI({kind, choose, cached, onDrafts, loadRecords, refer
    const key=JSON.stringify([kind,text,document?.data]);if(reference.current?.key!==key)reference.current={key,id:crypto.randomUUID()}
    const response=await runAI((kind==='task'?'tasks_extract':`role_${kind}`) as AITask,text,reference.current!.id,document)
    if(!response.ok){setError(response.message);setLimited(response.code==='limit_reached');return}
-   const drafts=parseStructured(response.text,kind);setRows(drafts);onDrafts?.(drafts);reference.current=null
+   const drafts=parseStructured(response.text,kind);trackContextGenerated(kind==='task'?'tasks_extract':`role_${kind}`,response.request_id,document?'document':'text');setRows(drafts);onDrafts?.(drafts);reference.current=null
   }catch(reason){setError(reason instanceof Error?reason.message:'The draft could not be prepared. You can add it manually.')}
   finally{pending.current=false;setBusy(false)}
  }

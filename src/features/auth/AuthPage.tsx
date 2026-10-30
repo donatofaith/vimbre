@@ -1,3 +1,5 @@
+import {trackAccountCreated,trackLogin} from '../../lib/analytics'
+import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import {billingReturnPath,billingSignupCallback} from '../billing/return-path'
 import { myDayReturnPath } from './return-path'
 import { useEffect, useState } from 'react'
@@ -95,7 +97,7 @@ function AccountLayout({
         </section>
       </div>
 
-      <footer className="v-auth-footer">© 2026 Vimbre.</footer>
+      <footer className="v-auth-footer">© 2026 Vimbre. <Link to="/privacy">Privacy policy</Link> · <Link to="/terms">Terms and conditions</Link> · <CookieSettingsLink /></footer>
     </main>
   )
 }
@@ -219,6 +221,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         })
 
         if (result.error) throw result.error
+        trackAccountCreated(result.data.user)
 
         setSignupEmail(email)
         startCooldown()
@@ -234,6 +237,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
         if (result.error) throw result.error
 
+        trackLogin(result.data.session)
         navigate(billingReturnPath(location.search,myDayReturnPath(location.state?.myDayTask)), { replace: true })
       } else if (mode === 'forgot') {
         const result = await supabase.auth.resetPasswordForEmail(
@@ -432,8 +436,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
           {mode === 'signup' && (
             <p className="v-auth-help">
-              Joining an existing team? Use the invitation from
-              your company administrator.
+              By creating a company, you agree to the <Link to="/terms">Terms and conditions</Link> and acknowledge the <Link to="/privacy">Privacy policy</Link>. Joining an existing team? Use your company’s invitation.
             </p>
           )}
 
