@@ -129,7 +129,8 @@ export function TaskPanel({
             Draft from Vimbre AI. Check before saving.
           </p>
         )}
-        <form className="auth-form" onSubmit={save} onInput={schedule} onChange={schedule}>
+        <form className="auth-form md-task-edit-form" onSubmit={save} onInput={schedule} onChange={schedule}>
+          <div className="md-task-fields">
           <Input
             autoFocus
             data-autofocus=""
@@ -215,6 +216,7 @@ export function TaskPanel({
               {error}
             </p>
           )}
+          </div>
           {confirmDelete&&<section className="md-delete-confirm" aria-label="Confirm task deletion"><h3>Delete task?</h3><p>{task?.repeat_rule?'Choose whether to delete this occurrence or this and all future occurrences.':'This task will move to Deleted.'} Linked decisions and sources stay.</p><div className="form-actions"><Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(false)}>{deleting?'Deleting…':task?.repeat_rule?'Delete this one':'Delete task'}</Button>{task?.repeat_rule&&<Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(true)}>Delete this and future ones</Button>}<Button variant="secondary" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep task</Button></div></section>}
           <div className="md-panel-actions">
             <span role="status">{busy?deleting?'Deleting…':'Saving…':saveState}</span>

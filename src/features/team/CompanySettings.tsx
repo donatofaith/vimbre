@@ -16,6 +16,7 @@ import { supabase } from '../../lib/supabase'
 import { Input } from '../../components/ui/Input'
 import { roleLabel } from './team-utils'
 import { Button } from '../../components/ui/Button'
+const categories=[['company','Company'],['notifications','Notifications'],['handovers','Handovers'],['planning','Planning'],['stars','Stars'],['integrations','Integrations'],['privacy','Cookie preferences']]
 export function CompanySettings() {
   const { company, profile, session, refresh } = useAuth()
   const [section,setSection]=useState('company')
@@ -37,7 +38,7 @@ export function CompanySettings() {
     } catch { setError('Could not save your settings. Check your connection and administrator access, then retry.') }
     finally { setBusy(false) }
   }
-  return <div className="settings-layout"><div className="page-heading"><h1 tabIndex={-1}>Company settings</h1><p>Your account: {profile.full_name} · {roleLabel(profile.role, company.created_by === profile.id)}</p></div><div className="settings-shell"><nav className="settings-navigation" aria-label="Settings categories">{[['company','Company'],['notifications','Notifications'],['handovers','Handovers'],['planning','Planning'],['stars','Stars'],['integrations','Integrations'],['privacy','Cookie preferences']].map(([id,label])=><button key={id} type="button" aria-pressed={section===id} onClick={()=>setSection(id)}>{label}</button>)}</nav><div className="settings-content" key={section}>{section==='company'&&<><section className="card settings-card"><h2>{company.name}</h2>{admin ? <form className="auth-form" onSubmit={save} key={company.updated_at}>
+  return <div className="settings-layout"><div className="page-heading"><h1 tabIndex={-1}>Company settings</h1><p>Your account: {profile.full_name} · {roleLabel(profile.role, company.created_by === profile.id)}</p></div><div className="settings-mobile-category"><label htmlFor="settings-category">Settings section</label><select id="settings-category" value={section} onChange={event=>setSection(event.target.value)}>{categories.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></div><div className="settings-shell"><nav className="settings-navigation" aria-label="Settings categories">{categories.map(([id,label])=><button key={id} type="button" aria-pressed={section===id} onClick={()=>setSection(id)}>{label}</button>)}</nav><div className="settings-content" key={section}>{section==='company'&&<><section className="card settings-card"><h2>{company.name}</h2>{admin ? <form className="auth-form settings-company-form" onSubmit={save} key={company.updated_at}>
     <Input label="Company name" name="company" defaultValue={company.name} required maxLength={120} autoComplete="organization" />
     <Input label="Account email" type="email" value={session?.user.email ?? profile.email} readOnly />
     <Input label="Company contact email" type="email" value={company.contact_email ?? ''} readOnly />
