@@ -111,7 +111,7 @@ export function TaskCard({undo,task,zone,busy,now,initialOpen=false,act,edit,rem
  quickContext:(task:Task,outcome:string)=>void;record:(task:Task)=>void;drag:(id:string)=>void;
 }) {
  const format=useTaskFormat();
- const [open,setOpen]=useState(initialOpen),[outcome,setOutcome]=useState(task.completion_note??""),[confirmDelete,setConfirmDelete]=useState(false);
+ const [open,setOpen]=useState(initialOpen),[outcome,setOutcome]=useState(task.completion_note??"");
  const touch=useRef<{x:number;y:number}|null>(null);
  const dueDay=task.due_time?dateInZone(zone,new Date(task.due_at)):task.due_date;
  const rowDate=dueDay===dateInZone(zone,now)?task.due_time?new Intl.DateTimeFormat(format.language,{hour:'2-digit',minute:'2-digit',timeZone:zone}).format(new Date(task.due_at)):'Today':taskDate(task,zone,format.language,format.style);
@@ -134,7 +134,7 @@ export function TaskCard({undo,task,zone,busy,now,initialOpen=false,act,edit,rem
     {!task.deleted_at&&!task.missed_at&&<><label className="field">Status<select aria-label={`Status for ${task.title}`} value={task.status} disabled={busy} onChange={e=>act(task,"status",{status:e.target.value})}>{statuses.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     {task.status!=="done"&&<div className="md-expanded-actions"><button className="md-text-button" disabled={busy} aria-pressed={Boolean(task.pinned_at)} onClick={()=>act(task,"pin",{pinned:!task.pinned_at})}>{task.pinned_at?"Unstar":"Star"}</button><button className="md-text-button" onClick={()=>{setOpen(false);remind(task)}}>Remind me / Snooze</button><button className="md-text-button" disabled={busy} onClick={()=>act(task,"tomorrow",{})}>Tomorrow</button></div>}
     {task.status==="done"&&(task.context_added_at?<span className="md-context-added">Added to the Record</span>:<div className="md-quick-context"><label>Add the outcome to the record? (optional)<textarea maxLength={5000} value={outcome} onChange={e=>setOutcome(e.target.value)}/></label><span className="field-hint">My notes · Private</span><button className="md-text-button" disabled={busy||!outcome.trim()} onClick={()=>quickContext(task,outcome)}>Save outcome</button><button className="md-text-button" onClick={()=>{setOpen(false);context(task)}}>Choose where to save</button></div>)}
-    <button className="md-text-button md-delete" disabled={busy} onClick={()=>{if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else act(task,"archive",{})}}>Delete</button>{confirmDelete&&<div role="alert"><p>{task.repeat_rule?"Delete this one, or this and all future ones?":"This task is part of the record. Delete it anyway?"}</p><p>The decision and source stay.</p><Button disabled={busy} onClick={()=>{act(task,task.repeat_rule?"delete_series":"archive",{confirmed:true,future:false});setConfirmDelete(false)}}>{task.repeat_rule?"Delete this one":"Delete task"}</Button>{task.repeat_rule&&<Button disabled={busy} onClick={()=>{act(task,"delete_series",{confirmed:true,future:true});setConfirmDelete(false)}}>Delete this and all future ones</Button>}<Button variant="secondary" onClick={()=>setConfirmDelete(false)}>Keep task</Button></div>}</>}
+    </>}
     {tools}
     {task.deleted_at&&<><p>Deleted tasks can be restored for 30 days.</p><Button disabled={busy} onClick={()=>act(task,"restore",{})}>Restore</Button></>}
    </div></RoleDrawer>}

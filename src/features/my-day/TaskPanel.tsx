@@ -22,6 +22,7 @@ export function TaskPanel({
   today,
   close,
   saved,
+  remove,
 }: {
   task?: Task;
   stepsFirst?: boolean;
@@ -29,9 +30,11 @@ export function TaskPanel({
   today: string;
   close: () => void;
   saved: () => void;
+  remove?: (future:boolean) => Promise<boolean>;
 }) {
   const {profile}=useAuth();
   const version=useRef(task?.updated_at),changes=useRef(0),savedChanges=useRef(0);
+  const [confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false);
   const [saveState,setSaveState]=useState(''),[priority,setPriority]=useState(task?.priority??'normal'),[status,setStatus]=useState(task?.status??'open'),[reminder,setReminder]=useState(task?.reminder_option??'at_time'),[duration,setDuration]=useState(task?.time_needed_minutes?String(task.time_needed_minutes):'');
   function schedule(){changes.current++;setSaveState('Unsaved changes')}
   const [date, setDate] = useState(
@@ -102,6 +105,11 @@ export function TaskPanel({
     } finally {
       setBusy(false);
     }
+  }
+  async function deleteTask(future=false){
+    if(!task||!remove||busy)return
+    setBusy(true);setDeleting(true);setError('')
+    try{if(!await remove(future))setError('The task could not be deleted. Please try again.')}catch(reason){setError(taskError(reason))}finally{setBusy(false);setDeleting(false)}
   }
   function finish(){if(busy)return;if(changes.current!==savedChanges.current&&!window.confirm('Discard your unsaved changes?'))return;close()}
 
@@ -207,10 +215,12 @@ export function TaskPanel({
               {error}
             </p>
           )}
+          {confirmDelete&&<section className="md-delete-confirm" aria-label="Confirm task deletion"><h3>Delete task?</h3><p>{task?.repeat_rule?'Choose whether to delete this occurrence or this and all future occurrences.':'This task will move to Deleted.'} Linked decisions and sources stay.</p><div className="form-actions"><Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(false)}>{deleting?'Deleting…':task?.repeat_rule?'Delete this one':'Delete task'}</Button>{task?.repeat_rule&&<Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(true)}>Delete this and future ones</Button>}<Button variant="secondary" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep task</Button></div></section>}
           <div className="md-panel-actions">
-            <span role="status">{busy?'Saving…':saveState}</span>
+            <span role="status">{busy?deleting?'Deleting…':'Saving…':saveState}</span>
             <Button variant="secondary" onClick={finish} disabled={busy}>Cancel</Button>
-            <Button type="submit" disabled={busy}>{busy?'Saving…':task?'Save changes':'Save task'}</Button>
+            {task&&!task.deleted_at&&remove&&<Button variant="secondary" className="md-delete" onClick={()=>{if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else void deleteTask(false)}} disabled={busy}>{deleting?'Deleting…':'Delete'}</Button>}
+            <Button type="submit" disabled={busy||confirmDelete}>{busy&&!deleting?'Saving…':task?'Save changes':'Save task'}</Button>
           </div>
         </form>
       </section>

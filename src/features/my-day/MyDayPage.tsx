@@ -1,3 +1,4 @@
+import {withoutDeletedTasks} from './task-deletion'
 import {trackTaskCreated} from '../../lib/analytics'
 import {DecisionReasonPrompt} from './DecisionReasonPrompt'
 import {planTaskAction} from './plan-api'
@@ -61,7 +62,7 @@ export function MyDayPage() {
 }
 function MyDayContent() {
   const { profile } = useAuth(),
-    [params] = useSearchParams(),
+    [params,setParams] = useSearchParams(),
     taskId = params.get("task") ?? "",
     linked = params.get("decision") ?? "";
   const [filter, setFilter] = useState(taskId || linked ? "all" : "today"),
@@ -114,6 +115,7 @@ function MyDayContent() {
   const [coverHandbackReason,setCoverHandbackReason]=useState('');
   const [hasPlan,setHasPlan]=useState(false);
   const [decisionFinish,setDecisionFinish]=useState<Task|null>(null);
+  const deletedTasks=useRef(new Set<string>());
   const [finishing,setFinishing] = useState<(Task & {finishPosition:number;finishFilter:string;finishStatus:string})[]>([]);
   const [finishBatch,setFinishBatch]=useState(0);
   const finishTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -138,11 +140,27 @@ function MyDayContent() {
   const zone =
       data?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     today = data?.today ?? dateInZone(zone);
-  async function undoLast(){if(!undo||Date.now()>=undo.until)return;if(!undo.ids)return act(undo.task,'undo',{});setBusy('bulk');try{await daySuite('batch',null,{ids:undo.ids,operation:'undo'});setUndo(null);setMessage('Changes undone.');refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}
+  async function undoLast(){if(!undo||Date.now()>=undo.until)return;if(!undo.ids)return act(undo.task,'undo',{});setBusy('bulk');try{await daySuite('batch',null,{ids:undo.ids,operation:'undo'});for(const id of undo.ids)deletedTasks.current.delete(id);setUndo(null);setMessage('Changes undone.');refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}
   const refresh = () => {
     setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
+  function dismissTaskViews(deleted:ReadonlySet<string>){
+    setInspected(task=>task&&deleted.has(task.id)?null:task)
+    setEditor(value=>value?.task&&deleted.has(value.task.id)?null:value)
+    setRecord(task=>task&&deleted.has(task.id)?null:task)
+    setContext(task=>task&&deleted.has(task.id)?null:task)
+    setReminder(task=>task&&deleted.has(task.id)?null:task)
+    setComments(id=>id&&deleted.has(id)?null:id)
+  }
+  function clearDeletedTasks(ids:string[]){
+    const deleted=new Set(ids);for(const id of ids)deletedTasks.current.add(id)
+    setResult(previous=>previous?.data?{...previous,data:withoutDeletedTasks(previous.data!,deleted)}:previous)
+    dismissTaskViews(deleted)
+    setSelectedIds(previous=>previous.filter(id=>!deleted.has(id)))
+    setFinishing(previous=>previous.filter(task=>!deleted.has(task.id)))
+    if(ids.includes(taskId??'')){setDismissed(true);setParams(previous=>{const next=new URLSearchParams(previous);next.delete('task');next.delete('task_action');return next},{replace:true})}
+  }
   const coverTaskKey=(handoverId:string,taskId:string)=>handoverId+':'+taskId;
   function beginCoveredTaskEdit(handoverId:string,task:CoverTaskRow){
     const key=coverTaskKey(handoverId,task.id);
@@ -215,7 +233,7 @@ function MyDayContent() {
     const load = async () => {
       const request = ++version;
       try {
-        if(!navigator.onLine){const saved=cachedDay(profile!.id,filter);if(!saved)throw Error();if(live&&request===version)setResult({key,data:saved,error:false});return}
+        if(!navigator.onLine){const saved=cachedDay(profile!.id,filter);if(!saved)throw Error();if(live&&request===version)setResult({key,data:filter==="archived"?saved:withoutDeletedTasks(saved,deletedTasks.current),error:false});return}
         const { data, error } = await supabase.rpc("myday_tasks", {
           p_filter: filter,
           p_query: search,
@@ -230,7 +248,7 @@ function MyDayContent() {
         if (live && request === version)
           setResult({
             key,
-            data: parseDay(data),
+            data: parseDay(data)?filter==="archived"?parseDay(data):withoutDeletedTasks(parseDay(data)!,deletedTasks.current):null,
             error: Boolean(error) || !parseDay(data),
           });
       } catch {
@@ -280,6 +298,12 @@ function MyDayContent() {
     setError("");
     try {
       if(op==="status"&&values.status==="done"&&typeof values.decision_reason==="string"&&values.decision_reason.trim())await planTaskAction(task.id,"done",values.decision_reason);else if(op==="delete_series")await daySuite("delete",task.id,values);else await changeTask(task.id, op, values);
+      if(op==="archive"||op==="delete_series")clearDeletedTasks([task.id]);
+      if(op==="undo"||op==="restore")deletedTasks.current.delete(task.id);
+      if(op==="restore"||op==="tomorrow"){
+        dismissTaskViews(new Set([task.id]));
+        if(op==="restore")setResult(previous=>previous?.data?{...previous,data:withoutDeletedTasks(previous.data!,new Set([task.id]))}:previous)
+      }
       if (op === "archive" || op === "delete_series" || op === "status" && values.status === "done") setUndo({task,until:Date.now()+10000});
       if(op === "status" && values.status === "done") {
         setFinishing(previous=>[...previous.filter(t=>t.id!==task.id),{...task,status:"done",finishFilter:filter,finishStatus:task.status,finishPosition:Math.max(0,(data?.rows??[]).findIndex(t=>t.id===task.id))}]);
@@ -295,7 +319,7 @@ function MyDayContent() {
             : "Task unstarred."
           : op === "context"
             ? "Added to context."
-            : "Task updated.",
+            : op==="archive"||op==="delete_series" ? "Task deleted." : op==="undo" ? "Changes undone." : "Task updated.",
       );
       refresh();
       return true;
@@ -325,7 +349,7 @@ function MyDayContent() {
     if(e.metaKey||e.ctrlKey||e.altKey||e.target instanceof HTMLElement&&e.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
     const k=e.key.toLowerCase(),buttons=Array.from(document.querySelectorAll<HTMLButtonElement>('.md-slim-row>.md-task-title')).filter(b=>b.getClientRects().length),at=buttons.indexOf(document.activeElement as HTMLButtonElement),id=(document.activeElement as HTMLElement)?.closest<HTMLElement>('[data-task-id]')?.dataset.taskId,task=allRows.find(t=>t.id===id);
     if(k==='n'){e.preventDefault();setQuick(true)}else if(k==='/'){e.preventDefault();document.getElementById('md-search')?.focus()}else if(k==='c'){e.preventDefault();window.location.assign('/app/capture')}else if(k==='j'||k==='k'){e.preventDefault();buttons[Math.max(0,Math.min(buttons.length-1,at+(k==='j'?1:-1)))]?.focus()}else if(k==='z'&&undo&&Date.now()<undo.until){e.preventDefault();void undoLast()}else if(task&&!busy){
-      if(k==='e'){e.preventDefault();setInspected(task)}else if(k==='x'&&!task.deleted_at&&!task.missed_at){e.preventDefault();void act(task,'status',{status:task.status==='done'?'open':'done'})}else if(k==='s'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'pin',{pinned:!task.pinned_at})}else if(k==='t'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'tomorrow',{})}else if(k==='delete'&&!task.deleted_at){e.preventDefault();if(task.repeat_rule){setInspected(task);return}if(!(task.capture_id||task.decision_id)||window.confirm('This task is part of the record. Delete it anyway? The decision and source stay.'))void act(task,'archive',{})}
+      if(k==='e'){e.preventDefault();setInspected(task)}else if(k==='x'&&!task.deleted_at&&!task.missed_at){e.preventDefault();void act(task,'status',{status:task.status==='done'?'open':'done'})}else if(k==='s'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'pin',{pinned:!task.pinned_at})}else if(k==='t'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'tomorrow',{})}else if(k==='delete'&&!task.deleted_at){e.preventDefault();if(task.repeat_rule){setInspected(null);setEditor({task});return}if(!(task.capture_id||task.decision_id)||window.confirm('This task is part of the record. Delete it anyway? The decision and source stay.'))void act(task,'archive',{})}
     }
   };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[allRows,undo,busy]);
   function card(task: Task, rank?: number, panelOnly=false) {
@@ -482,7 +506,7 @@ function MyDayContent() {
         {quick && <form className="md-quick-add" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy("quick");setError("");try{const task=parseQuickTask(quickText,today);if(!task.title)throw new Error();await changeTask(crypto.randomUUID(),"create",{...task,reminder_option:"at_time"});setQuickText("");setQuick(false);refresh()}catch(e){setError(taskError(e))}finally{setBusy("")}}}><label>Quick add<input autoFocus value={quickText} onChange={e=>setQuickText(e.target.value)} maxLength={300} placeholder="Send quote Friday 3pm" required/></label><Button type="submit" disabled={Boolean(busy)}>Add task</Button></form>}
         <details className="md-filter-disclosure"><summary>More filters{search||forValue||source ? " · Active":""}</summary><div className="md-filter-row"><ForPicker filter value={forValue} onChange={v=>{setFor(v);setPage(0)}}/><label>From<select value={source} onChange={e=>{setSource(e.target.value);setPage(0)}}><option value="">All sources</option>{Object.entries(sourceLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{(query||forValue||source)&&<button className="md-text-button" onClick={()=>{setQuery("");setSearch("");setFor(null);setSource("");setPage(0)}}>Clear filters</button>}</div></details>
         <SkipReview breakDown={task=>setEditor({task,stepsFirst:true})}/><NextPlannedTask onPlan={setHasPlan} replan={()=>setPlanning(true)}/>
-        {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={()=>setAssignment({ids:selectedIds})}>Assign</Button><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});if(op==='done'||op==='delete'){const first=allRows.find(t=>t.id===selectedIds[0]);if(first)setUndo({task:first,ids:[...selectedIds],until:Date.now()+10000})}setMessage(op==='done'?'Tasks marked done.':op==='delete'?'Tasks deleted.':'Tasks moved to tomorrow.');setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
+        {selecting&&<div className="md-bulk-bar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={()=>setAssignment({ids:selectedIds})}>Assign</Button><button className="md-text-button" onClick={()=>setSelectedIds(todayRows.map(t=>t.id))}>Select visible tasks</button>{['done','tomorrow','delete'].map(op=><Button key={op} variant="secondary" disabled={!selectedIds.length||Boolean(busy)} onClick={async()=>{if(op==='delete'&&!window.confirm('Delete the selected tasks? Sources and decisions stay.'))return;setBusy('bulk');setError('');try{await daySuite('batch',null,{ids:selectedIds,operation:op,confirmed:op==='delete'});if(op==='done'||op==='delete'){const first=allRows.find(t=>t.id===selectedIds[0]);if(first)setUndo({task:first,ids:[...selectedIds],until:Date.now()+10000})}if(op==='delete')clearDeletedTasks(selectedIds);setMessage(op==='done'?'Tasks marked done.':op==='delete'?'Tasks deleted.':'Tasks moved to tomorrow.');setSelectedIds([]);refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}}>{op==='done'?'Done':op==='tomorrow'?'Tomorrow':'Delete'}</Button>)}<button className="md-text-button" onClick={()=>{setSelectedIds([]);setSelecting(false)}}>Cancel selection</button></div>}
         {(taskId || linked) && (
           <Link className="md-text-button" to="/app">
             All tasks
@@ -624,6 +648,7 @@ function MyDayContent() {
           key={editor.task?.id ?? "new"}
           task={editor.task} stepsFirst={editor.stepsFirst}
           today={today}
+          remove={editor.task?async future=>Boolean(await act(editor.task!,editor.task!.repeat_rule?"delete_series":"archive",{confirmed:true,future})):undefined}
           close={() => setEditor(null)}
           saved={() => {
             setEditor(null);
