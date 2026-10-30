@@ -15,6 +15,7 @@ export function LegalDocumentPage({page, authenticated = false, loading = false}
   const content = page === 'competition' ? competitionDocument : legalDocuments[page]
   const path = page === 'competition' ? '/competition-terms' : `/${page}`
   useEffect(() => {
+    if (!window.location.hash) window.scrollTo(0, 0)
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
     const old = canonical?.href
     if (canonical) canonical.href = `https://vimbre.com${path}`
