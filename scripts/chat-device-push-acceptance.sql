@@ -1,0 +1,31 @@
+begin;
+do $$
+declare recipient uuid;sender uuid;tenant uuid;conv uuid:=gen_random_uuid();msg uuid:=gen_random_uuid();nid uuid;jid uuid;s bigint;v jsonb;baseline bigint;
+begin
+ select d.owner_id,d.company_id into recipient,tenant from private.myday_push d join public.profiles p on p.id=d.owner_id and p.company_id=d.company_id and p.active limit 1;
+ select id into sender from public.profiles where company_id=tenant and active and id<>recipient limit 1;
+ if recipient is null or sender is null then raise exception 'Need two existing active participants';end if;
+ update private.myday_personal_options set settings=settings||'{"push":true}'::jsonb where owner_id=recipient;
+ if not private.myday_enabled(tenant,'push') then raise exception 'Company push disabled';end if;
+ insert into public.chat_conversations(id,company_id,kind,title,direct_key,created_by)values(conv,tenant,'direct','Push acceptance',conv::text,sender);
+ insert into public.chat_members(conversation_id,company_id,user_id)values(conv,tenant,recipient),(conv,tenant,sender);
+ insert into public.chat_messages(id,conversation_id,company_id,sender_id,body)values(msg,conv,tenant,sender,'Transactional notification test') returning seq into s;
+ insert into public.chat_notifications(recipient_id,company_id,conversation_id,message_id)values(recipient,tenant,conv,msg) returning id into baseline;
+ if (select count(*) from private.myday_delivery_jobs where unique_key='chat:'||msg::text||':'||recipient::text)<>1 then raise exception 'Missing chat job';end if;
+ insert into public.chat_notifications(recipient_id,company_id,conversation_id,message_id)values(recipient,tenant,conv,msg)on conflict do nothing;
+ if (select count(*) from private.myday_delivery_jobs where unique_key='chat:'||msg::text||':'||recipient::text)<>1 then raise exception 'Duplicate chat job';end if;
+ select id,notification_id into jid,nid from private.myday_delivery_jobs where unique_key='chat:'||msg::text||':'||recipient::text;
+ update private.myday_delivery_jobs set state='claimed',claimed_at=now() where id=jid;
+ v:=public.myday_delivery('source',jid);
+ if v->'notice'->>'path' is distinct from '/app/chat?conversation='||conv::text or v->'notice'->>'body' is distinct from 'Open Vimbre to read your message.' then raise exception 'Incorrect notification payload';end if;
+ update public.chat_members set last_read_seq=s where conversation_id=conv and user_id=recipient;
+ if public.myday_delivery('source',jid) is not null then raise exception 'Already-read message still delivers';end if;
+ update private.myday_personal_options set settings=settings||'{"push":false}'::jsonb where owner_id=recipient;
+ msg:=gen_random_uuid();
+ insert into public.chat_messages(id,conversation_id,company_id,sender_id,body)values(msg,conv,tenant,sender,'Opt out test');
+ insert into public.chat_notifications(recipient_id,company_id,conversation_id,message_id)values(recipient,tenant,conv,msg);
+ if exists(select 1 from private.myday_delivery_jobs where unique_key='chat:'||msg::text||':'||recipient::text)then raise exception 'Opt out ignored';end if;
+ insert into public.chat_notifications(recipient_id,company_id,conversation_id,message_id)values(sender,tenant,conv,msg);
+ if exists(select 1 from private.myday_delivery_jobs where unique_key='chat:'||msg::text||':'||sender::text)then raise exception 'Self notification created';end if;
+end$$;
+rollback;
