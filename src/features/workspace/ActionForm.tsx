@@ -1,3 +1,4 @@
+import {trackTaskCreated,trackTaskCompleted} from '../../lib/analytics'
 import type { StructuredDraft } from '../ai/structured-output'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -28,8 +29,8 @@ export function ActionForm({ action, ownerId, companyId, initialDecision, saved,
     const form = new FormData(event.currentTarget), text = (key: string) => String(form.get(key) ?? '').trim()
     const values = { title: text('title'), details: text('details'), due_date: text('due_date'), status, decision_id: selected || null, source_url: safeRecordUrl(text('source_url')) ?? (text('source_url') || null), completion_note: text('completion_note') }
     try {
-      const { error: failure } = await (action ? supabase.from('actions').update(values).eq('id', action.id).select('id').single() : supabase.from('actions').insert({ ...values, owner_id: ownerId, company_id: companyId }).select('id').single())
-      if (failure) throw failure; saved()
+      const { data: receipt, error: failure } = await (action ? supabase.from('actions').update(values).eq('id', action.id).select('id').single() : supabase.from('actions').insert({ ...values, owner_id: ownerId, company_id: companyId }).select('id').single())
+      if (failure) throw failure;if(!action)trackTaskCreated(receipt?.id,initialDraft?'ai':'manual');if(status==='done'&&action?.status!=='done')trackTaskCompleted(receipt?.id,'manual'); saved()
     } catch (reason) { console.error('Action save failed', reason); setError(actionError(reason)) } finally { setBusy(false) }
   }
   return <section className="card record-editor" aria-label="Task editor"><h2>{action ? 'Edit task' : 'Add a task'}</h2>{initialDraft && <p className="notice">Draft from Vimbre AI. Check before saving.</p>}<form className="auth-form" onSubmit={save}>
@@ -49,7 +50,7 @@ export function CompleteAction({ action, saved, cancel }: { action: Action; save
     const note = String(new FormData(event.currentTarget).get('note') ?? '').trim()
     try {
       const { error: failure } = await supabase.from('actions').update({ status: 'done', completion_note: note }).eq('id', action.id).select('id').single()
-      if (failure) throw failure; saved()
+      if (failure) throw failure;if(action.status!=='done')trackTaskCompleted(action.id,'manual'); saved()
     } catch (reason) { console.error('Complete task failed', reason); setError(actionError(reason)) } finally { setBusy(false) }
   }
   return <section className="card record-editor" aria-label="Complete task"><h2>Finish: {action.title}</h2><form className="auth-form" onSubmit={complete}><div className="field"><label htmlFor="finish-note">Anything the next person should know?</label><textarea autoFocus id="finish-note" name="note" rows={3} maxLength={5000} defaultValue={action.completion_note} placeholder="e.g. Sent the report. Finance will reply on Monday." aria-describedby="finish-note-hint" /><p className="field-hint" id="finish-note-hint">Optional.</p></div>{error && <p role="alert">{error}</p>}<div className="form-actions"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Mark done'}</Button><Button variant="secondary" disabled={busy} onClick={cancel}>Cancel completion</Button></div></form></section>

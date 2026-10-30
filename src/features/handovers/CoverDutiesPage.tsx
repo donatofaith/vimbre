@@ -1,3 +1,4 @@
+import {trackContextGenerated} from '../../lib/analytics'
 import {useCallback,useEffect,useMemo,useState} from 'react'
 import {Link,useLocation} from 'react-router-dom'
 import {Button} from '../../components/ui/Button'
@@ -101,7 +102,7 @@ function CoverDetail({id}:{id:string}){
  async function addQuestion(){if(!question.trim())return;await act('question',{body:question});setQuestion('')}
  async function addNote(){if(!note.trim())return;await act('note',{body:note});setNote('')}
  async function addDecision(){if(!decisionTitle.trim()||!decisionReason.trim())return;await act('decision',{title:decisionTitle,reason:decisionReason});setDecisionTitle('');setDecisionReason('')}
- async function draftSummary(redraft=false){setSummaryBusy(true);setSummaryError('');try{const result=await runAI('handover_return','Saved handover',crypto.randomUUID(),undefined,undefined,{id,redraft});if(!result.ok)throw Error(result.message);setSummary(result.text)}catch(e){setSummaryError(e instanceof Error?e.message:'The summary could not be drafted. Try again.')}finally{setSummaryBusy(false)}}
+ async function draftSummary(redraft=false){setSummaryBusy(true);setSummaryError('');try{const result=await runAI('handover_return','Saved handover',crypto.randomUUID(),undefined,undefined,{id,redraft});if(!result.ok)throw Error(result.message);setSummary(result.text);if(result.text.trim())trackContextGenerated('handover_return',result.request_id,'handover')}catch(e){setSummaryError(e instanceof Error?e.message:'The summary could not be drafted. Try again.')}finally{setSummaryBusy(false)}}
  async function saveSummary(){if(!summary.trim()){setSummaryError('Add a cover summary before saving.');return}setSummaryError('');await act('return_summary',{summary})}
  function jumpToQuestions(){document.getElementById('cd-questions')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});document.getElementById('cd-question-input')?.focus()}
  if(loading)return <div className="ho-page cd-page"><div className="cd-back"><Link to="/app/my-cover-duties">← Cover duties</Link></div><div className="cd-skeleton" role="status"><i/><i/><i/></div></div>

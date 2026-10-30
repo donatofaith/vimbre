@@ -1,3 +1,4 @@
+import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import {HandoverSettings} from '../handovers/HandoverSettings'
 import {PlanningCalendarSettings} from '../my-day/PlanningCalendarSettings'
 import {CompetitionSettings} from '../my-day/CompetitionSettings'
@@ -41,6 +42,6 @@ export function CompanySettings() {
     <p className="settings-plan-link"><Link to="/#pricing">View plans</Link> · <Link to="/app/billing">Manage subscription</Link></p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
-  </form> : <p>Contact your company administrator to change company settings.</p>}</section><HandoverSettings/><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/></div>
+  </form> : <p>Contact your company administrator to change company settings.</p>}</section><HandoverSettings/><WorkPreferences/><SuitePreferences/><CompetitionSettings/><PlanningCalendarSettings/><ConnectionSettings/><section className="card settings-card"><h2>Privacy and terms</h2><p><Link to="/privacy">Privacy policy</Link> · <Link to="/terms">Terms and conditions</Link> · <Link to="/competition-terms">Stars and competition terms</Link></p><CookieSettingsLink /></section></div>
 }
 

@@ -973,3 +973,14 @@
 @media(max-width:760px){.vw-shell.app-shell[data-chat="true"]{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}.vw-shell[data-chat="true"]>.vw-sidebar{flex-shrink:0;width:100%;align-self:stretch}.vw-shell[data-chat="true"] .vw-workspace{flex:1;min-height:0;display:flex;flex-direction:column}.vw-shell[data-chat="true"] .vw-topbar{flex-shrink:0}.vw-shell.app-shell[data-chat="true"] .vw-content{flex:1;min-height:0;display:flex;flex-direction:column;padding:0;max-width:none;width:100%;margin:0}.vw-shell[data-chat="true"] .chat-page{flex:1;min-height:0;display:flex;flex-direction:column}.vw-shell[data-chat="true"] .chat-workspace{flex:1;height:auto;min-height:0;border-radius:0;border-inline:0;border-bottom:0;box-shadow:none}}
 /* Let native Android text selection scroll a normal document instead of a fixed, clipped shell. */
 @media(max-width:760px){.vw-shell.app-shell[data-chat="true"]{display:block;height:auto;min-height:100svh;overflow:visible}.vw-shell[data-chat="true"] .vw-workspace,.vw-shell[data-chat="true"] .vw-content,.vw-shell[data-chat="true"] .chat-page{display:block;min-height:0;height:auto;overflow:visible}.vw-shell[data-chat="true"] .chat-workspace{height:calc(100svh - 128px);min-height:420px;flex:none}.vw-shell[data-chat="true"] .chat-messages{min-height:140px}}
+
+/* Collapsed desktop navigation gives Chat the complete workspace viewport. */
+@media(min-width:1025px){
+ .vw-shell.app-shell[data-chat="true"][data-sidebar-collapsed="true"]{height:100dvh;min-height:0;overflow:hidden}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .vw-workspace{height:100%;min-height:0;display:flex;flex-direction:column}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .vw-topbar{flex-shrink:0}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .vw-content{display:flex;flex-direction:column;flex:1;min-height:0;max-width:none;width:100%;margin:0;padding:0}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .vw-content>.vai-allowance{flex-shrink:0}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .chat-page{display:flex;flex-direction:column;flex:1;min-height:0}
+ .vw-shell[data-chat="true"][data-sidebar-collapsed="true"] .chat-workspace{flex:1;height:auto;min-height:0;border:0;border-radius:0;box-shadow:none;grid-template-columns:clamp(260px,25vw,340px) minmax(0,1fr)}
+}

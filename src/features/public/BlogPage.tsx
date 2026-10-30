@@ -1,3 +1,4 @@
+import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
@@ -30,5 +31,5 @@ export function BlogPage({slug,authenticated=false,loading=false}:{slug?:string;
   return <div className="rs-site" data-theme="light"><LandingHeader authenticated={authenticated} loading={loading}/><main className="rs-section"><div className="rs-container rf-blog">
     {missing?<><h1 tabIndex={-1}>Article not found</h1><Link to="/blog">Back to Blog</Link></>:post?<article><Link className="rs-text-link" to="/blog">← Blog</Link><h1 tabIndex={-1}>{post.title}</h1><p className="rf-blog-meta">{post.author} · <time dateTime={post.published}>{new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(post.published+'T12:00:00Z'))}</time></p><p className="rf-blog-description">{post.description}</p>{post.sections.map(section=><section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs.map((paragraph,i)=><p key={i}>{paragraph}</p>)}</section>)}</article>:<><h1 tabIndex={-1}>Blog</h1><p className="rf-blog-description">Decisions, work context and handovers.</p>{blogPosts.length?<div className="rf-blog-list">{[...blogPosts].sort((a,b)=>b.published.localeCompare(a.published)).map(p=><article key={p.slug}><time dateTime={p.published}>{p.published}</time><h2><Link to={'/blog/'+p.slug}>{p.title}</Link></h2><p>{p.description}</p><Link className="rs-text-link" to={'/blog/'+p.slug}>Read article →</Link></article>)}</div>:<p className="rf-blog-empty">No articles published yet.</p>}</>}
     {!missing&&<script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(schema).replace(/</g,'\\u003c')}}/>}
-  </div></main><footer className="rs-footer"><div className="rs-container"><Link to="/">Back to website</Link></div></footer></div>
+  </div></main><footer className="rs-footer"><div className="rs-container"><Link to="/">Back to website</Link> · <Link to="/privacy">Privacy policy</Link> · <Link to="/terms">Terms and conditions</Link> · <CookieSettingsLink /></div></footer></div>
 }

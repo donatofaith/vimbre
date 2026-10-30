@@ -1,3 +1,4 @@
+import {trackContextGenerated} from '../../lib/analytics'
 import { useRef, useState } from 'react'
 import { runAI } from '../../lib/ai-gateway'
 import { Button } from '../../components/ui/Button'
@@ -18,6 +19,7 @@ export function CaptureAI({ text, choose, rows, setRows, requestId }: { text: st
       const response = await runAI('capture_extract', text, requestId())
       if (!response.ok) { setError(response.message); setLimited(response.code === 'limit_reached'); return }
       setRows(parseExtraction(response.text))
+      trackContextGenerated('capture_extract', response.request_id, 'text')
     } catch { setError('The draft could not be read. You can add a draft manually.') }
     finally { pending.current = false; setBusy(false) }
   }
