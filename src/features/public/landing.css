@@ -403,3 +403,10 @@
  .rs-header .rs-menu{display:grid;place-items:center;min-width:44px;width:44px;height:44px;padding:8px}
  .rs-header .rs-nav{top:68px}
 }
+
+@media(max-width:767px){
+ .rs-site .rf-hero .rs-actions{flex-wrap:nowrap;gap:12px}
+ .rs-site .rf-hero .rs-actions .rs-button{min-width:0;width:auto;flex:none;min-height:44px;padding:10px 12px;font-size:12px;gap:8px}
+ .rs-site .rf-hero .rs-actions .rs-text-link{font-size:12px;gap:6px;min-height:44px;white-space:nowrap}
+ .rs-site .rf-hero .rs-actions svg{display:none}
+}
