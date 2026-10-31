@@ -1,3 +1,4 @@
+import {isWorkProvider,workSearch,workPlaces} from './work-tools.ts'
 import {api} from './providers.ts'
 import type {Provider,Tokens} from './providers.ts'
 export type Filters={query:string;after:string;before:string;person:string;place:string;folder:string;mime:string;unread:boolean;attachment:boolean;likely:boolean;notCaptured:boolean}
@@ -12,6 +13,7 @@ export function likelyAction(s:string){return /\?|\b(please|can you|could you|wi
 function nextGraph(value:unknown){if(!value)return null;const u=new URL(String(value));if(u.origin!=='https://graph.microsoft.com'||!u.pathname.startsWith('/v1.0/')||u.username||u.password)throw Error('invalid_source');return u.pathname.slice('/v1.0/'.length)+u.search}
 async function graphSearch(t:Tokens,body:unknown){const response=await fetch('https://graph.microsoft.com/v1.0/search/query',{method:'POST',headers:{Authorization:'Bearer '+t.access_token,'Content-Type':'application/json',Prefer:'include-unknown-enum-members'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000),redirect:'error'});if(!response.ok)throw Error(response.status===401||response.status===403?'reconnect':'provider_unavailable');const text=await response.text();if(text.length>2_000_000)throw Error('source_too_large');return JSON.parse(text)}
 export async function search(p:Provider,t:Tokens,f:Filters,cursor=''):Promise<SearchPage>{
+ if(isWorkProvider(p)){if(cursor.length>1024)throw Error('invalid_source');return workSearch(p,t,f,cursor)}
  if(cursor.length>8000)throw Error('invalid_source');let rows:SearchRow[]=[],next:string|null=null
  if(p==='gmail'){
   const q=[f.query,f.after&&'after:'+f.after.replaceAll('-','/'),f.before&&'before:'+f.before.replaceAll('-','/'),f.person&&'from:'+quoted(f.person),f.folder&&'label:'+quoted(f.folder),f.unread&&'is:unread',f.attachment&&'has:attachment'].filter(Boolean).join(' ')
@@ -42,6 +44,7 @@ export async function search(p:Provider,t:Tokens,f:Filters,cursor=''):Promise<Se
 
 /** Provider-owned place names and IDs; metadata only, independently paginated. */
 export async function places(p:Provider,t:Tokens,kind='',parent='',cursor=''):Promise<SearchPage>{
+ if(isWorkProvider(p)){if(cursor.length>1024)throw Error('invalid_source');return workPlaces(p,t,parent,cursor)}
  let rows:SearchRow[]=[],next:string|null=null
  const row=(id:string,title:string,container=parent):SearchRow=>({id,reference:id,container,title,sender:'',preview:'',date:'',url:'',kind:'container'})
  if(p==='gmail'){const d=await api(p,t,'labels');rows=(d.labels||[]).filter((r:any)=>r.type==='user'||['INBOX','SENT','STARRED','IMPORTANT'].includes(r.id)).map((r:any)=>row(r.name,r.name));const at=Number(cursor)||0;next=rows.length>at+20?String(at+20):null;rows=rows.slice(at,at+20)}

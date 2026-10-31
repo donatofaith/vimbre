@@ -6,7 +6,7 @@ export function ProductWalkthroughScreen({ step }: { step: number }) {
     <div className="rf-current-heading"><strong>{step === 3 ? 'Handovers' : 'Capture'}</strong><small>Example · Sample data</small></div>
     {step === 0 ? <>
       <h3>Bring in a conversation</h3>
-      <div className="rf-current-tabs"><span>Paste</span>{[['gmail','Gmail'],['drive','Google Drive']].map(([provider,name])=><span key={provider}><CaptureSourceLogo provider={provider}/>{name}</span>)}<span>Upload</span></div>
+      <div className="rf-current-tabs"><span>Paste</span>{[['teams','Teams'],['outlook','Outlook']].map(([provider,name])=><span key={provider}><CaptureSourceLogo provider={provider}/>{name}</span>)}<span>Upload</span></div>
       <p className="rf-current-label">Paste the conversation.</p>
       <blockquote>Alex: I’ll send the revised supplier quote by 12 Nov 2026.<br/><br/>Sam: I’ll arrange the review for 16 Nov 2026. We agreed to review suppliers monthly.</blockquote>
       <div className="rf-current-controls"><span className="rf-current-primary">Draft tasks and decisions</span><span>Add manually</span></div>
