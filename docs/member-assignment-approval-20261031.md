@@ -1,0 +1,7 @@
+# Same-company member assignment requests
+
+On 31 October 2026 the owner explicitly approved allowing every active member to send task-assignment requests to active colleagues within the same company. This supersedes the assignment permission limitation documented in client-workspace-review-20261031.md. No other role permissions are changed.
+
+Migration 20261031124137 removes the manager/report requirement only from assignment recipient selection and request creation in the existing private.myday_suite and private.myday_suite_role_notice_base functions. Active sender/recipient, company, source ownership, private-note boundaries and recipient acceptance checks remain. Public grants, RLS, team visibility and unrelated operations are unchanged. Frontend My day exposes Assign task and the task's Assign action to employees as well as managers/admins. Department and multi-person selection use the existing acceptance flow.
+
+scripts/member-assignment-acceptance.sql passed rollback-only checks using an employee: department expansion and deduplication; retry safety; pending requests before acceptance; sender cannot accept for recipient; accepted task owned by recipient with only explicitly shared instructions; unchanged original private notes; decline; cross-company and invalid-department rejection; unowned-source rejection; inactive sender/recipient rejection. Test data and generated notifications were rolled back, with no production messages sent. Security-advisor findings were unchanged. Full application tests, type checks and build run before publication.
