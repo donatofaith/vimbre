@@ -74,8 +74,6 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     compact.addEventListener('change', start)
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
-  const to = authenticated ? '/app' : '/login'
-  const cta = 'Open workspace'
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
     <LandingHeader authenticated={authenticated} loading={loading} />
@@ -86,7 +84,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             <p className="rs-eyebrow">Work continuity for teams</p>
             <HeroHeadline/>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
-            <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
+            <div className="rs-actions"><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
@@ -114,7 +112,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
         </div>
       </section>
       <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
-      <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={to}>{cta}<Arrow/></Link></div></section>
+      <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={authenticated?'/app/capture':'/#pricing'}>{authenticated?'Capture a conversation':'Get started'}<Arrow/></Link></div></section>
       <ContactSection />
     </main>
     <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}<Link to="/blog">Blog</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><CookieSettingsLink /></nav></div><p>© 2026 Genade Global Service Limited.</p></div></footer>
