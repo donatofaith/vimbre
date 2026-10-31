@@ -86,3 +86,8 @@
  .vw-shell.app-shell .support-chat-header {flex-direction:row;align-items:center;flex-wrap:wrap;gap:12px;padding:16px}
  .vw-shell.app-shell .support-chat-header .support-chat-title {flex:1;min-width:0}
 }
+
+.vw-shell.app-shell .vc-capture-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0}
+.vw-shell.app-shell .vc-capture-actions>.button{min-height:44px;font-size:13px;padding:8px 12px}
+.vw-shell.app-shell .vc-capture-actions>.vc-delete-capture{color:var(--error)}
+@media(max-width:640px){.vw-shell.app-shell .vc-capture-title{flex-wrap:wrap}.vw-shell.app-shell .vc-capture-title>.vc-capture-actions{flex:0 0 auto;margin-left:auto}}
