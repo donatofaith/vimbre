@@ -1,3 +1,4 @@
+import {useMessageSelection} from './useMessageSelection'
 import { shouldFollowMessages } from './chat-scroll'
 import { createPortal } from 'react-dom'
 import {mentionAt,insertMention,bodyMentions,hasMention,mentionParts} from './chat-mentions'
@@ -17,6 +18,7 @@ import type {
 } from './chat-types'
 
 export function ChatPage() {
+  useMessageSelection()
   const { profile, company } = useAuth()
   const { revision, refresh } = useChat()
   const [params, setParams] = useSearchParams()
@@ -674,7 +676,7 @@ function ConversationPanel({
                   <span>{m.reply.body}</span>
                 </button>
               )}
-              <p>{mentionParts(m.body,m.mention_names).map((part,index)=>part.id?<span className="chat-mention-inline" key={index}>{part.text}</span>:part.text)}</p>
+              <p className="chat-message-text" tabIndex={0}>{mentionParts(m.body,m.mention_names).map((part,index)=>part.id?<span className="chat-mention-inline" key={index}>{part.text}</span>:part.text)}</p>
               {m.sender_id===profile?.id&&<span className="chat-receipt" aria-label="Message status">{messageReceipt(m,result.members)}</span>}
               {m.record_path && (
                 <Link to={m.record_path}>Open linked record ↗</Link>

@@ -1,0 +1,2 @@
+export const starLevels=[{name:'Starter',tasks:0},{name:'Steady',tasks:10},{name:'Sharp',tasks:25},{name:'Trusted',tasks:40},{name:'Anchor',tasks:60}] as const
+export function starLevelProgress(completed:number){const total=Number.isFinite(completed)?Math.max(0,Math.floor(completed)):0;const index=starLevels.findLastIndex(level=>total>=level.tasks);const current=starLevels[index],next=starLevels[index+1];return{total,index,current,next,remaining:next?next.tasks-total:0,progress:next?Math.min(100,100*(total-current.tasks)/(next.tasks-current.tasks)):100}}

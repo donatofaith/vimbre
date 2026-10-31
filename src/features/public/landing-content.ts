@@ -33,7 +33,7 @@ export const pricingDisclosure = 'Subscriptions bill monthly per company. AI req
 export const schema = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'Organization', '@id': 'https://vimbre.com/#organization', name: 'Vimbre', legalName: 'Genade Global Services Ltd', url: 'https://vimbre.com/', logo: 'https://vimbre.com/favicon-192.png' },
+    { '@type': 'Organization', '@id': 'https://vimbre.com/#organization', name: 'Vimbre', legalName: 'Genade Global Services Ltd', url: 'https://vimbre.com/', logo: 'https://vimbre.com/favicon-192.png', sameAs: ['https://x.com/Vimbrehq', 'https://www.instagram.com/vimbrehq/', 'https://www.tiktok.com/@vimbrehq'] },
     { '@type': 'WebSite', '@id': 'https://vimbre.com/#website', name: 'Vimbre', url: 'https://vimbre.com/', publisher: { '@id': 'https://vimbre.com/#organization' } },
     { '@type': 'SoftwareApplication', name: 'Vimbre', url: 'https://vimbre.com/', applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
       description: definition,
