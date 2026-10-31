@@ -232,7 +232,7 @@ function WorkspaceLayout() {
           <div className="vw-breadcrumb">
             <span className="vw-breadcrumb-company">{company?.name}</span>
             <span className="vw-breadcrumb-separator" aria-hidden="true">/</span>
-            <strong>{pageName}</strong>
+            <strong className="sr-only">{pageName}</strong>
           </div>
 
           <div className="vw-topbar-actions">
