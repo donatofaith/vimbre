@@ -667,3 +667,15 @@
   .vc-page .vc-review-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; }
   .vc-page .vc-check { border-top: 0; border-left: 1px solid #e1e7ee; padding-top: 0; padding-left: 24px; }
 }
+
+/* Draft editor fields scroll independently of the primary actions. */
+.vr-drawer.vc-draft-dialog[open]{display:flex;flex-direction:column;width:min(680px,calc(100vw - 32px));height:min(780px,calc(100dvh - 48px));max-height:calc(100dvh - 48px);padding:0;overflow:hidden}
+.vc-draft-dialog>.vr-drawer-bar{flex:none;margin:0;padding:16px 24px;border-bottom:1px solid var(--border)}
+.vc-draft-dialog>.vc-draft-form{display:flex;flex-direction:column;flex:1;min-height:0;margin:0;padding:0}
+.vc-draft-dialog .vc-draft-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:20px 24px}
+.vc-draft-dialog .vc-draft-body>.vc-section-heading{margin-bottom:12px}
+.vc-draft-dialog .vc-draft-body>.vc-note{font-size:13px;line-height:1.6;margin:0 0 16px}
+.vc-draft-dialog .vc-draft-body>.vc-fields{border:0;padding:0;margin:16px 0 0;min-width:0}
+.vc-draft-dialog .vc-draft-actions{flex:none;display:flex;justify-content:flex-end;gap:8px;margin:0;padding:16px 24px;border-top:1px solid var(--border);background:#fff}
+.vw-shell.app-shell .vc-draft-dialog .vc-draft-actions>.button{min-height:44px;width:auto;font-size:13px}
+@media(max-width:640px){.vr-drawer.vc-draft-dialog[open]{width:calc(100vw - 20px);max-width:calc(100vw - 20px);height:calc(100dvh - 24px);max-height:calc(100dvh - 24px)}.vc-draft-dialog>.vr-drawer-bar{padding:12px 16px}.vc-draft-dialog .vc-draft-body{padding:16px}.vc-draft-dialog .vc-draft-actions{padding:12px 16px}.vw-shell.app-shell .vc-draft-dialog .vc-draft-actions>.button{flex:1;min-width:0;padding-inline:6px}}

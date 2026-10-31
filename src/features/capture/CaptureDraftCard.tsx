@@ -20,7 +20,8 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
  useEffect(()=>{if(owner===profile!.id)return;let alive=true;void supabase.rpc('capture_pipeline',{p_operation:'options',p_data:{owner_id:owner}}).then(({data,error})=>{if(alive){setChoiceError(Boolean(error));if(!error&&data&&typeof data==='object'&&'today' in data)setChoices(data as unknown as CaptureOptions)}});return()=>{alive=false}},[owner,profile])
  const activeChoices=owner===profile!.id?options:choices
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string,string>;try{await accept({...data,kind,owner_reviewed:'true'});setEditing(false)}catch{setError('This draft could not be updated. Your changes are still here.')}}
- const form=(<form onSubmit={e=>void submit(e)}><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
+ const form=(<form className="vc-draft-form" onSubmit={e=>void submit(e)}><div className="vc-draft-body"><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
+  {!draft&&<p className="vc-note">Add a draft here, then save it from Check drafts.</p>}
   {!v('source_owner')&&draft?.origin==='ai'&&v('owner_reviewed')!=='true'&&!accepted&&<span className="vc-missing">No owner</span>}
   {v('source_excerpt')&&sourceText.includes(v('source_excerpt'))&&<blockquote className="vc-source-quote"><mark>{v('source_excerpt')}</mark><footer>{[sender,sourceDate].filter(Boolean).join(' · ')}</footer></blockquote>}
   {kind==='action'&&!v('due_date')&&<span className="vc-missing">No date</span>}
@@ -36,13 +37,13 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
    <div className="form-grid"><ChoiceField label="Department" name="department_id" rows={options.departments} value={v('department_id')}/><ChoiceField label="External contact" name="external_contact_id" key={'contact:'+owner} rows={activeChoices.contacts} value={owner===(v('owner_id')||profile!.id)?v('external_contact_id'):''}/></div>
    {kind==='contact'&&<><Input label="Contact email" name="contact_email" type="email" defaultValue={v('contact_email')}/><Input label="Contact phone" name="contact_phone" defaultValue={v('contact_phone')}/></>}
    {choiceError&&<p className="field-error" role="alert">This owner’s Records and contacts could not be loaded. Choose the owner again.</p>}{error&&<p className="field-error" role="alert">{error}</p>}
-   <div className="form-actions"><Button type="submit" variant="secondary">Accept</Button><Button variant="secondary" onClick={discard}>Dismiss</Button>{cancel&&<Button variant="secondary" onClick={cancel}>Cancel</Button>}</div>
-  </fieldset></>}
+
+  </fieldset></>}</div>{editing&&<div className="form-actions vc-draft-actions"><Button type="submit" disabled={busy}>{draft?'Accept':'Add draft'}</Button><Button variant="secondary" disabled={busy} onClick={discard}>Dismiss</Button>{cancel&&<Button variant="secondary" disabled={busy} onClick={cancel}>Cancel</Button>}</div>}
   </form>);
  return <li className="vc-review-card" data-accepted={accepted}>
   {draft&&<div className="vc-draft-row"><label className="vc-check-target"><input type="checkbox" checked={accepted} disabled={busy} aria-label={`Accept draft: ${v('title')}`} onChange={e=>{if(!e.target.checked){unaccept?.();return}void accept({...Object.fromEntries(Object.entries(p).map(([key,value])=>[key,value||''])),kind,owner_reviewed:'true'}).catch(()=>setError('This draft could not be accepted. Try again.'))}}/></label><button type="button" className="vc-draft-title" onClick={()=>setExpanded(!expanded)} aria-expanded={expanded}><strong>{v('title')}</strong><span>{v('owner_id')===profile!.id?'Me':people.find(person=>person.id===v('owner_id'))?.title||'Choose owner'} · {v('due_date')||'No date'}{kind==='action'&&<> · <span className="vc-priority-chip">{v('priority')||'normal'}</span></>}</span></button><button type="button" className="vc-draft-expand" aria-label={`${expanded?'Collapse':'Expand'} ${v('title')}`} aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'⌃':'⌄'}</button></div>}
 
- {editing?<RoleDrawer context="Capture" title={draft?'Edit draft':'Add draft'} close={()=>{if(draft)setEditing(false);else cancel?.()}}>{form}</RoleDrawer>:<div hidden={!expanded}>{form}</div>}
+ {editing?<RoleDrawer className="vc-draft-dialog" context="Capture" title={draft?'Edit draft':'Add draft'} close={()=>{if(draft)setEditing(false);else cancel?.()}}>{form}</RoleDrawer>:<div hidden={!expanded}>{form}</div>}
  {!expanded&&!editing&&error&&<p role="alert" className="field-error">{error}</p>}
  </li>
 }
