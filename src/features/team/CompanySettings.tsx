@@ -1,3 +1,4 @@
+import {CompanyStructure} from './CompanyStructure'
 import {CompanyLogo} from './CompanyLogo'
 import './settings.css'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
@@ -42,7 +43,7 @@ export function CompanySettings() {
     <Input label="Company name" name="company" defaultValue={company.name} required maxLength={120} autoComplete="organization" />
     <Input label="Account email" type="email" value={session?.user.email ?? profile.email} readOnly />
     <Input label="Company contact email" type="email" value={company.contact_email ?? ''} readOnly />
-    <div className="field"><label htmlFor="team-mode">Team structure</label><input id="team-mode" value={company.team_mode === 'departments' ? 'Departments' : 'Small team'} readOnly /></div>
+    <CompanyStructure field/>
     <p className="settings-plan-link"><Link to="/app/billing">Manage subscription</Link></p>
     {error && <p role="alert" className="field-error">{error}</p>}{message && <p role="status">{message}</p>}
     <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>

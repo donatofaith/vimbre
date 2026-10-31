@@ -28,7 +28,7 @@ export function LandingHeader({ authenticated = false, loading = false }: { auth
       </nav>
       <div className="rs-header-actions">
         {!authenticated && !loading && <Link className="rs-login" to="/login">Log in</Link>}
-        <Link className="rs-button rs-header-cta" to={authenticated ? '/app' : '/signup'}>{authenticated ? 'Open workspace' : 'Get started'}</Link>
+        <Link className="rs-button rs-header-cta" to={authenticated ? '/app' : '/signup'}>{authenticated ? 'Go to workspace' : 'Get started'}</Link>
         <button ref={menu} className="rs-menu" type="button" aria-label={menuOpen ? 'Close website menu' : 'Open website menu'} aria-expanded={menuOpen} aria-controls="rs-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? 'Close' : 'Menu'}</button>
       </div>
     </div>
