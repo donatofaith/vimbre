@@ -1,9 +1,9 @@
 // Public product copy and pricing. Keep capability claims aligned with the shipped product.
-export const landingTitle = 'Vimbre | Understand the Why'
+export const landingTitle = 'Vimbre | Understand the why'
 export const definition = 'Vimbre turns conversations into reviewed actions, keeps decisions and role records connected, and prepares handovers for the people who cover the work.'
 export const heroCopy = {
-  headline: 'Understand the Why',
-  supporting: 'Vimbre automatically connects decisions, discussions and actions across your existing tools, so anyone can quickly understand what happened, why it happened and what needs attention next.',
+  headline: 'Understand the why',
+  supporting: 'Bring in conversations from your connected tools or paste them into Vimbre. Review suggested tasks and decisions, then keep the work and its context together so your team knows what happened, why and what needs attention next.',
 }
 export const storySummary = 'Example: paste a conversation, request task and decision drafts, accept the details, save the reviewed drafts, then select work for a handover and submit it to a manager.'
 export const record = [

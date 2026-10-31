@@ -74,8 +74,8 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
     compact.addEventListener('change', start)
     return () => { disposed = true; window.removeEventListener('resize', resized); window.clearTimeout(resizeTimer); cancelAnimationFrame(frame); media.removeEventListener('change', start); compact.removeEventListener('change', start); motion.current?.dispose(); motion.current = null }
   }, [])
-  const to = authenticated ? '/app' : '/#pricing'
-  const cta = authenticated ? 'Open workspace' : 'Start free'
+  const to = authenticated ? '/app' : '/login'
+  const cta = 'Open workspace'
   return <div className="rs-site" data-theme="light" ref={root}>
     <a className="skip-link" href="#rs-main">Skip to content</a>
     <LandingHeader authenticated={authenticated} loading={loading} />
@@ -83,6 +83,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       <section className="rs-hero rf-hero" aria-labelledby="hero-title">
         <div className="rs-container rs-hero-grid">
           <div className="rs-hero-copy">
+            <p className="rs-eyebrow">Work continuity for teams</p>
             <HeroHeadline/>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
             <div className="rs-actions"><Link className="rs-button" to={to}>{cta}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
