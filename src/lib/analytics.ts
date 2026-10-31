@@ -2,12 +2,12 @@
 export const GA4_ID = 'G-E599PM5PBE'
 export const GTM_ID = 'GTM-KTXM87CG'
 export type AnalyticsConsent = 'accepted' | 'declined' | null
-export type SourceType = 'manual' | 'ai' | 'capture' | 'role' | 'template' | 'assignment' | 'import' | 'cover' | 'plan' | 'offline_sync' | 'text' | 'document' | 'tasks' | 'handover' | 'gmail' | 'drive' | 'outlook' | 'teams' | 'slack' | 'trello'
+export type SourceType = 'manual' | 'ai' | 'capture' | 'role' | 'template' | 'assignment' | 'import' | 'cover' | 'plan' | 'offline_sync' | 'text' | 'document' | 'tasks' | 'handover' | 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'
 export type ContextType = 'role_summary' | 'day_plan' | 'day_briefing' | 'conversation_summary' | 'capture_extract' | 'tidy_text' | 'weekly_summary' | 'handover_draft' | 'handover_return' | 'role_responsibility' | 'role_workstream' | 'role_external_contact' | 'role_document' | 'role_recurring_deadline' | 'role_decision' | 'tasks_extract' | 'task_context'
 type Events = {
   sign_up: {method: 'password'}
   login: {method: 'password'}
-  integration_connected: {source_type: Extract<SourceType, 'gmail' | 'drive' | 'outlook' | 'teams' | 'slack' | 'trello'>}
+  integration_connected: {source_type: Extract<SourceType, 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'>}
   context_generated: {source_type: SourceType; context_type: ContextType}
   action_created: {source_type: SourceType; action_type: 'task'; action_count: number}
   action_completed: {source_type: SourceType; action_type: 'task'}
@@ -19,9 +19,9 @@ declare global {
     vimbreAnalytics?: {readonly consent: AnalyticsConsent; choose: (choice: Exclude<AnalyticsConsent, null>) => void}
   }
 }
-const sources = new Set<unknown>(['manual','ai','capture','role','template','assignment','import','cover','plan','offline_sync','text','document','tasks','handover','gmail','drive','outlook','teams','slack','trello'])
+const sources = new Set<unknown>(['manual','ai','capture','role','template','assignment','import','cover','plan','offline_sync','text','document','tasks','handover','gmail','drive','github','notion','asana','outlook','teams','slack','trello'])
 const contexts = new Set<unknown>(['role_summary','day_plan','day_briefing','conversation_summary','capture_extract','tidy_text','weekly_summary','handover_draft','handover_return','role_responsibility','role_workstream','role_external_contact','role_document','role_recurring_deadline','role_decision','tasks_extract','task_context'])
-const tools = new Set<unknown>(['gmail','drive','outlook','teams','slack','trello'])
+const tools = new Set<unknown>(['gmail','drive','github','notion','asana','outlook','teams','slack','trello'])
 const seen = new Set<string>()
 const dedupeStorage = 'vimbre:analytics-seen:v1'
 export function analyticsConsent(): AnalyticsConsent {
