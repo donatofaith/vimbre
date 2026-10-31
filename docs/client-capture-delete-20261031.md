@@ -1,0 +1,9 @@
+# Recoverable Capture Delete — 31 October 2026
+
+Owner approved adding Delete alongside Archive. Delete moves an owned capture to Deleted with a confirmation prompt; Restore keeps it open for editing. This is recoverable deletion, not a permanent erasure feature or an automatic retention/purge job. No recovery deadline is advertised. Source text, draft history and uploaded originals are retained for restoration; already-created tasks and decisions are not deleted.
+
+Migration 20261031095425_recoverable_capture_delete adds captures.trashed_at, distinct from the existing archived/deleted_at timestamp. The existing checked capture_workspace API gains delete/restore_deleted actions. capture_state distinguishes Deleted from Archived and existing listing filters exclude trash from All/Archived. capture_change rejects mutations of trashed sources. Delete waits for in-flight drafting; restore clears trash and uses the existing status reconstruction. No new public endpoint/grant, RLS bypass, changed owner scope, cascade deletion, paid AI call or load test.
+
+Frontend: red Delete next to Archive, confirmation states record preservation, a Deleted history tab, read-only deleted source and Restore capture. Uploaded original removal is hidden while trashed. Deleted captures cannot invoke draft/manual editing. Archive retains its independent behavior.
+
+Validation: rollback-only SQL acceptance scripts/capture-delete-acceptance.sql passed delete/list/restore, edit guard, other-owner rejection and saved-task preservation. Test rows and generated tasks were rolled back. Security advisors have no new findings compared with before the migration. Browser preview with actual CapturePage and disposable service adapters passed confirmation -> Deleted list -> open -> Restore -> editable source at 360px; desktop layout rendered at 1366px. Preview-only files/config removed before release. Existing tests and production build run before publication.
