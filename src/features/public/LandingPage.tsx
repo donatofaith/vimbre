@@ -84,7 +84,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
             <p className="rs-eyebrow">Work continuity for teams</p>
             <HeroHeadline/>
             <p className="rs-hero-subhead">{heroCopy.supporting}</p>
-            <div className="rs-actions"><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
+            <div className="rs-actions"><Link className="rs-button" to={authenticated?'/app':'/signup'}>{authenticated?'Go to workspace':'Get started'}<Arrow /></Link><a className="rs-text-link" href="#product-demo">See the walkthrough<Arrow /></a></div>
           </div>
           <div className="rf-wide-demo" id="product-demo"><HeroStory rootRef={stage} paused={story.paused} ready={story.ready} toggle={() => motion.current?.toggle()} /></div>
         </div>
