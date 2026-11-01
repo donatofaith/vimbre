@@ -13,12 +13,13 @@ const {randomUUID}=require('node:crypto');
   await page.route('**/rest/v1/rpc/myday_edit',r=>{const a=r.request().postDataJSON();assert.equal(a.p_id,task.id);assert(a.p_data.base_updated_at);Object.assign(task,a.p_data,{updated_at:new Date().toISOString()});saved++;return r.fulfill({json:{updated_at:task.updated_at}})});
   await page.route('**/rest/v1/rpc/myday_action',r=>{const a=r.request().postDataJSON();if(a.p_operation==='archive'){task.deleted_at=new Date().toISOString();deleted++}return r.fulfill({json:task.id})});
   await page.goto('http://127.0.0.1:5173/app');
+  await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   await page.getByRole('button',{name:task.title,exact:true}).click();
   await page.getByRole('button',{name:'Edit task',exact:true}).click();
   let panel=page.getByRole('dialog');await panel.waitFor();
   const remove=panel.getByRole('button',{name:'Delete',exact:true}),save=panel.getByRole('button',{name:'Save changes',exact:true});
   for(const width of [320,360,768,1024,1440]){
-   await page.setViewportSize({width,height:1000});
+   await page.setViewportSize({width,height:1000});await page.mouse.move(0,0);
    assert.equal(await remove.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(180, 35, 24)');
    assert.equal(await save.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(37, 99, 217)');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Horizontal overflow '+width);
