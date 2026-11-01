@@ -17,7 +17,7 @@ export const faq = [
   ['Is Vimbre a chat or project management tool?', 'No. Vimbre is designed to work alongside your existing tools. It keeps the decisions, actions, role information and handover context behind the work connected.'],
   ['Does Vimbre confirm work automatically?', 'No. Drafts are stored privately for review; only you can confirm them. Optional Watch rules must be set up and enabled by you; they can prepare drafts, not confirmed tasks.'],
   ['What happens when I hit my AI limit?', 'AI drafting pauses until the allowance resets or your company upgrades. Your saved records, tasks and manual entry remain available.'],
-  ['Which tools can I connect?', 'Pasting email text, conversations or notes is available now. You can connect Microsoft Teams, Trello, Slack and Outlook when your company allows the tool. GitHub, Notion and Asana are being prepared; Yahoo Mail requires provider approval. You choose the account and approve access. Some organisations require approval from their IT administrator.'],
+  ['Which tools can I connect?', 'Pasting email text, conversations or notes is available now. You can connect Microsoft Teams, Trello, Slack and Outlook when your company allows the tool. You choose the account and approve access. Some organisations require approval from their IT administrator.'],
   ['How is company information protected?', 'Access follows company roles and permissions. Capture sources and pending drafts remain private to their owner; confirmed records follow the company access rules. Contact support@vimbre.com for specific privacy or retention questions.'],
 ]
 // Request ceilings checked against the live ai_limits configuration on 28 October 2026.
