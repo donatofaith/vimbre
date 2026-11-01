@@ -33,6 +33,7 @@ const {randomUUID}=require('node:crypto');
   await page.waitForFunction(()=>!document.querySelector('dialog[open]'));assert.equal(deleted,1);
   const colleague={...profile,id:randomUUID(),full_name:'Casey Colleague',email:'casey@example.invalid',role:'employee',employment_status:'active',department:null};let suspended=0;
   await page.route('**/rest/v1/profiles?*',r=>{const single=r.request().headers().accept?.includes('vnd.pgrst.object');return r.fulfill({json:single?profile:[{...profile,department:null},colleague],headers:{'content-range':'0-1/2'}})});
+  await page.route('**/rest/v1/departments?*',r=>r.fulfill({json:[]}));
   await page.route('**/rest/v1/invitations?*',r=>r.fulfill({json:[],headers:{'content-range':'*/0'}}));
   await page.route('**/rest/v1/rpc/set_member_status',r=>{const a=r.request().postDataJSON();assert.equal(a.p_id,colleague.id);assert.equal(a.p_status,'suspended');suspended++;colleague.active=false;colleague.employment_status='suspended';return r.fulfill({json:null})});
   await page.goto('http://127.0.0.1:5173/app/team');
