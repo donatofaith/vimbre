@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
-import './support.css'
+import './support-layout.css'
 import {SupportApproval}from './SupportApproval'
 import {WorkspaceIcon} from '../../components/ui/WorkspaceIcon'
 
@@ -142,7 +142,7 @@ export function HelpPage() {
       </aside>
       <div className="support-chat">
         {newRequestOpen ?           <form className="support-request-form" onSubmit={submit}>
-            <div className="support-form-heading"><span className="eyebrow">New request</span><h2>Contact Vimbre Support</h2></div>
+            <div className="support-request-fields"><div className="support-form-heading"><span className="eyebrow">New request</span><h2>Contact Vimbre Support</h2></div>
             <Input label="Subject" name="subject" disabled={busy} value={requestDraft.subject} onChange={event => setRequestDraft(current => ({...current, subject: event.target.value}))} required maxLength={200} placeholder="What do you need help with?" />
             <div className="field">
               <label htmlFor="support-category">Category</label>
@@ -155,9 +155,9 @@ export function HelpPage() {
               <textarea id="support-message" name="message" disabled={busy} value={requestDraft.message} onChange={event => setRequestDraft(current => ({...current, message: event.target.value}))} required maxLength={10000} rows={5} placeholder="Describe the problem and what you expected to happen…" />
             </div>
             <p className="muted">Do not include passwords or sensitive personal information. Up to three tickets per day.</p>
-            <div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>Back to messages</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
+            </div><div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>Back to messages</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
           </form> : !selected ? <div className="support-empty-thread"><span className="support-empty-icon" aria-hidden="true"><WorkspaceIcon name="support"/></span><h2>Support messages</h2><p>Select a request to read replies, or start a new request.</p></div> : <>
-          <header className="support-chat-header"><div className="support-chat-title"><span className="eyebrow">Request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span><h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Support conversation'}</h2>{detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}</div><Button variant="secondary" disabled={busy} onClick={() => { setSelected(''); setDetail(null); setError(''); setNotice('') }}>Back to messages</Button></header>
+          <header className="support-chat-header"><div className="support-chat-title"><span className="eyebrow">Request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span><h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Support conversation'}</h2>{detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}</div><Button variant="secondary" disabled={busy} aria-label="Back to messages" onClick={() => { setSelected(''); setDetail(null); setError(''); setNotice('') }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></Button></header>
           {detailError ? <div className="support-empty-thread"><p className="field-error" role="alert">{detailError}</p><Button variant="secondary" onClick={() => setRefresh(n => n + 1)}>Retry conversation</Button></div> : !detail ? <p className="support-loading" role="status">Loading conversation…</p> : <>
             <SupportApproval key={selected} ticket={selected}/><div className="support-chat-thread" role="region" aria-label="Support conversation" tabIndex={0}>
               {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}><div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div><p>{message.body}</p></article>)}
