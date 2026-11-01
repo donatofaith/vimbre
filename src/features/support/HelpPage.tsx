@@ -21,7 +21,7 @@ const errors: Record<string, string> = {
   workspace_unavailable: 'Your workspace could not be matched. Please contact support another way.',
   not_found: 'That support ticket could not be found.',
 }
-const statusLabel = (status: string) => ({ new: 'New', open: 'Open', in_progress: 'In progress', waiting_customer: 'Awaiting your reply', resolved: 'Resolved', closed: 'Closed' }[status] ?? status.replaceAll('_', ' '))
+const statusLabel = (status: string) => ({ new: 'Open', open: 'Open', in_progress: 'Open', waiting_customer: 'Support replied', resolved: 'Closed', closed: 'Closed' }[status] ?? status.replaceAll('_', ' '))
 const formatDate = (value: string) => new Date(value).toLocaleString()
 
 export function HelpPage() {
@@ -115,6 +115,19 @@ export function HelpPage() {
     finally { sending.current=false;setBusy(false) }
   }
 
+  async function changeState(close: boolean) {
+    if (!selected || sending.current) return
+    sending.current=true; setBusy(true); setError(''); setNotice('')
+    try {
+      const {data,error:failure}=await supabase.rpc('customer_support_state',{p_ticket:selected,p_close:close})
+      const result=data as unknown as Result
+      if(failure || !result?.ok){setError('Could not update this conversation. Please retry.');return}
+      setNotice(close?'Conversation closed.':'Conversation reopened.')
+      setRefresh(n=>n+1)
+    } catch {setError('Could not update this conversation. Please retry.')}
+    finally {sending.current=false;setBusy(false)}
+  }
+
   useEffect(()=>{messagesEnd.current?.scrollIntoView({block:'nearest'})},[detail?.messages.length,selected])
   const activeTicket = tickets.find(ticket => ticket.id === selected)
   const visibleTickets=tickets.filter(t=>t.subject.toLowerCase().includes(search.toLowerCase())&&(view==='all'||view==='active'&&!['resolved','closed'].includes(t.status)||view==='resolved'&&['resolved','closed'].includes(t.status)))
@@ -131,7 +144,7 @@ export function HelpPage() {
       <aside className="support-sidebar" aria-label="Support requests">
         <div className="support-list-heading"><h2>Messages</h2><Button variant="secondary" disabled={busy || loading} onClick={() => setRefresh(n => n + 1)}>{loading ? 'Refreshing…' : 'Refresh'}</Button></div>
         <Button className="support-new-request" disabled={busy} onClick={() => { setNewRequestOpen(true); setSelected(''); setError(''); setNotice(''); setTicketNumber(null) }}>New request</Button>
-        <div className="support-request-filters"><label className="sr-only" htmlFor="request-search">Search requests</label><input id="request-search" placeholder="Search requests" value={search} onChange={e=>setSearch(e.target.value)}/><label className="sr-only" htmlFor="request-view">Request status</label><select id="request-view" value={view} onChange={e=>setView(e.target.value)}><option value="all">All requests</option><option value="active">Active requests</option><option value="resolved">Resolved requests</option></select></div>
+        <div className="support-request-filters"><label className="sr-only" htmlFor="request-search">Search requests</label><input id="request-search" placeholder="Search requests" value={search} onChange={e=>setSearch(e.target.value)}/><label className="sr-only" htmlFor="request-view">Request status</label><select id="request-view" value={view} onChange={e=>setView(e.target.value)}><option value="all">All requests</option><option value="active">Active requests</option><option value="resolved">Closed conversations</option></select></div>
         <div className="support-ticket-list" aria-busy={loading}>
           {!tickets.length ? <p className="support-list-empty" role="status">{loading ? 'Loading requests…' : error ? 'Requests could not be loaded.' : 'No requests yet. Contact support to start a conversation.'}</p> : visibleTickets.map(ticket => <button type="button" key={ticket.id} className={'ticket-row' + (selected === ticket.id ? ' ticket-row-active' : '')} aria-current={selected === ticket.id ? 'true' : undefined} disabled={busy} onClick={() => { setSelected(ticket.id); setError(''); setNotice(''); setTicketNumber(null); setNewRequestOpen(false) }}>
             <span className="ticket-row-top"><span>#{ticket.ticket_number}</span><span className={'ticket-status status-' + ticket.status}>{statusLabel(ticket.status)}</span></span>
@@ -157,14 +170,14 @@ export function HelpPage() {
             <p className="muted">Do not include passwords or sensitive personal information. Up to three tickets per day.</p>
             </div><div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>Back to messages</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
           </form> : !selected ? <div className="support-empty-thread"><span className="support-empty-icon" aria-hidden="true"><WorkspaceIcon name="support"/></span><h2>Support messages</h2><p>Select a request to read replies, or start a new request.</p></div> : <>
-          <header className="support-chat-header"><div className="support-chat-title"><span className="eyebrow">Request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span><h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Support conversation'}</h2>{detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}</div><Button variant="secondary" disabled={busy} aria-label="Back to messages" onClick={() => { setSelected(''); setDetail(null); setError(''); setNotice('') }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></Button></header>
+          <header className="support-chat-header"><div className="support-chat-title"><span className="eyebrow">Request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span><h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Support conversation'}</h2>{detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}</div><div className="support-chat-actions"><Button variant="secondary" disabled={busy} aria-label="Back to messages" onClick={() => { setSelected(''); setDetail(null); setError(''); setNotice('') }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></Button></div></header>
           {detailError ? <div className="support-empty-thread"><p className="field-error" role="alert">{detailError}</p><Button variant="secondary" onClick={() => setRefresh(n => n + 1)}>Retry conversation</Button></div> : !detail ? <p className="support-loading" role="status">Loading conversation…</p> : <>
             <SupportApproval key={selected} ticket={selected}/><div className="support-chat-thread" role="region" aria-label="Support conversation" tabIndex={0}>
               {detail.messages.map(message => <article key={message.id} className={'thread-message ' + message.sender_kind}><div className="thread-message-meta"><strong>{message.sender_kind === 'staff' ? 'Vimbre Support' : 'You'}</strong><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div><p>{message.body}</p></article>)}
               <div ref={messagesEnd}/>
               {!detail.messages.length && <p className="muted">Your request is in the support queue. Replies will appear here.</p>}
             </div>
-            <form className="support-reply-form" onSubmit={sendReply}><div className="field"><label htmlFor="support-reply">Reply to Vimbre Support</label><textarea id="support-reply" disabled={busy} value={reply} onChange={event => setReplies(current => ({...current, [selected]: event.target.value}))} required maxLength={10000} rows={3} placeholder="Write your reply…" /></div><div className="support-reply-actions"><Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div></form>
+            <form className="support-reply-form" onSubmit={sendReply}><div className="field"><label htmlFor="support-reply">Reply to Vimbre Support</label><textarea id="support-reply" disabled={busy} value={reply} onChange={event => setReplies(current => ({...current, [selected]: event.target.value}))} required maxLength={10000} rows={3} placeholder="Write your reply…" /></div><div className="support-reply-actions">{detail&&<Button variant="secondary" disabled={busy} onClick={()=>void changeState(detail.ticket.status!=='resolved')}>{detail.ticket.status==='resolved'?'Reopen':'This solved it'}</Button>}<Button type="submit" disabled={busy || !reply.trim()}>{busy ? 'Sending…' : 'Send message'}</Button></div></form>
           </>}
         </>}
       </div>

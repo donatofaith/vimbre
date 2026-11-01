@@ -2,6 +2,7 @@ import Stripe from 'stripe'
 import {createClient} from '@supabase/supabase-js'
 import {plans as sandboxPlans,PORTAL_CONFIGURATION as sandboxPortal,STRIPE_ACCOUNT as sandboxAccount,remainingTrial,type Plan} from './catalog.ts'
 import {livePlans,LIVE_ACCOUNT,LIVE_PORTAL,LIVE_CHECKOUT_ENABLED} from './live-catalog.ts'
+import {consoleProjection} from './console-projection.ts'
 const origins=new Set(['https://vimbre.com','https://www.vimbre.com','https://vimbre.co.uk','https://www.vimbre.co.uk','http://localhost:5173'])
 const service=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}})
 function makeHandler(sandbox:boolean){
@@ -17,13 +18,18 @@ const stripe=key.startsWith(sandbox?'rk_test_':'rk_live_')?new Stripe(key,{apiVe
 type BillingAccount={company_id:string;company_name:string;customer_id:string|null;subscription_id:string|null;trial_ends_at:string;members:number;checkout_token:string;trial_consumed?:boolean}
 async function backend(operation:string,data:Record<string,unknown>){const r=await service.rpc(backendName,{p_operation:operation,p_data:data});if(r.error)throw r.error;return r.data}
 const acceptedEvents=new Set(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed','invoice.paid','invoice.payment_failed'])
-async function syncSubscription(subscriptionId:string,event:{id:string;type:string}){
+async function syncSubscription(subscriptionId:string,event:{id:string;type:string;created?:number},invoice?:Stripe.Invoice){
  if(!stripe)throw Error('not_configured')
  const syncedAt=new Date().toISOString()
  const sub=await stripe.subscriptions.retrieve(subscriptionId)
  if(sub.livemode===sandbox||sub.items.data.length!==1||!planForPrice(sub.items.data[0].price.id)||sub.items.data[0].quantity!==1)throw Error('subscription_mismatch')
  const item=sub.items.data[0]
- return backend('event',{stripe_account:STRIPE_ACCOUNT,livemode:!sandbox,event_id:event.id,event_type:event.type,customer_id:typeof sub.customer==='string'?sub.customer:sub.customer.id,subscription_id:sub.id,price_id:item.price.id,status:sub.status,period_ends_at:item.current_period_end?new Date(item.current_period_end*1000).toISOString():null,cancel_at_period_end:sub.cancel_at_period_end,synced_at:syncedAt,...(!sandbox?{trial_started_at:sub.trial_start?new Date(sub.trial_start*1000).toISOString():null,trial_ends_at:sub.trial_end?new Date(sub.trial_end*1000).toISOString():null}:{})})
+ const result=await backend('event',{stripe_account:STRIPE_ACCOUNT,livemode:!sandbox,event_id:event.id,event_type:event.type,customer_id:typeof sub.customer==='string'?sub.customer:sub.customer.id,subscription_id:sub.id,price_id:item.price.id,status:sub.status,period_ends_at:item.current_period_end?new Date(item.current_period_end*1000).toISOString():null,cancel_at_period_end:sub.cancel_at_period_end,synced_at:syncedAt,...(!sandbox?{trial_started_at:sub.trial_start?new Date(sub.trial_start*1000).toISOString():null,trial_ends_at:sub.trial_end?new Date(sub.trial_end*1000).toISOString():null}:{})})
+ if(!sandbox&&event.created!==undefined){
+  const {error}=await service.rpc('console_billing_sync',{p_payload:consoleProjection(sub,{id:event.id,created:event.created},invoice)})
+  if(error)throw error // A retry repairs the staff copy; customer sync is idempotent.
+ }
+ return result
 }
 async function webhook(req:Request){
  const secret=Deno.env.get(secretName)
@@ -49,7 +55,7 @@ async function webhook(req:Request){
    else if(event.type.startsWith('checkout.session.')){const session=event.data.object as Stripe.Checkout.Session;if(session.mode!=='subscription')return Response.json({ignored:true});id=typeof session.subscription==='string'?session.subscription:session.subscription?.id}
    else{const invoice=event.data.object as Stripe.Invoice;const sub=invoice.parent?.subscription_details?.subscription;id=typeof sub==='string'?sub:sub?.id}
    if(!id)return Response.json({ignored:true})
-   return Response.json(await syncSubscription(id,event))
+   return Response.json(await syncSubscription(id,event,event.type.startsWith('invoice.')?event.data.object as Stripe.Invoice:undefined))
  }catch{return Response.json({error:'Subscription update could not be processed.'},{status:503})}
 }
 return async(req:Request)=>{

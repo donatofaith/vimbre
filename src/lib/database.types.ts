@@ -1064,6 +1064,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      customer_support_state: { Args: { p_ticket: string; p_close: boolean }; Returns: Json }
+
       capture_workspace: {Args:{p_action:string;p_id?:string|null;p_data?:Json};Returns:Json}
       customer_support: { Args: { p_action: string; p_payload?: Json }; Returns: Json }
       accept_invitation: { Args: { p_id: string }; Returns: undefined }
