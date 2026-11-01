@@ -1,0 +1,7 @@
+/* Action meanings are explicit at each control; labels and permissions stay intact. */
+.button.button-primary,.vw-shell.app-shell button.button-primary {background:#2563d9;color:#fff;border-color:#2563d9}
+.button.button-primary:hover:not(:disabled),.vw-shell.app-shell button.button-primary:hover:not(:disabled) {background:#184fb3;border-color:#184fb3}
+button.button.button-danger,.vw-shell.app-shell button.button.button-danger,button.danger {background:#b42318;color:#fff;border:1px solid #b42318}
+button.button.button-danger:hover:not(:disabled),.vw-shell.app-shell button.button.button-danger:hover:not(:disabled),button.danger:hover:not(:disabled) {background:#912018;border-color:#912018;color:#fff}
+button.button.button-warning,.vw-shell.app-shell button.button.button-warning,button.warning {background:#fff4d6;color:#784500;border:1px solid #b7791f}
+button.button.button-warning:hover:not(:disabled),.vw-shell.app-shell button.button.button-warning:hover:not(:disabled),button.warning:hover:not(:disabled) {background:#ffe7ad;color:#623900}
