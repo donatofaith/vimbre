@@ -19,6 +19,7 @@ import { useAuth } from '../../features/auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import './workspace.css'
 import './workspace-refinement.css'
+import './workspace-product.css'
 import { ChatProvider, ChatLauncher } from '../../features/chat/ChatProvider'
 import { useCompanyMemberCount } from '../../features/workspace/useTeamOverview'
 
@@ -68,10 +69,11 @@ function WorkspaceLayout() {
     const media=window.matchMedia('(max-width: 1024px)')
     if(!media.matches){setMenuOpen(false);return}
     const previous=document.body.style.overflow;document.body.style.overflow='hidden'
+    const focusFrame=requestAnimationFrame(()=>sidebarRef.current?.querySelector<HTMLButtonElement>('.vw-menu')?.focus())
     function trap(event:KeyboardEvent){if(event.key!=='Tab')return;const nodes=Array.from(sidebarRef.current?.querySelectorAll<HTMLElement>('a[href],button:not(:disabled)')??[]).filter(el=>el.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}}
     const resize=()=>{if(!media.matches)setMenuOpen(false)}
     document.addEventListener('keydown',trap);media.addEventListener('change',resize)
-    return()=>{document.body.style.overflow=previous;document.removeEventListener('keydown',trap);media.removeEventListener('change',resize)}
+    return()=>{cancelAnimationFrame(focusFrame);document.body.style.overflow=previous;document.removeEventListener('keydown',trap);media.removeEventListener('change',resize)}
   },[menuOpen])
 
   const initials =
@@ -105,7 +107,7 @@ function WorkspaceLayout() {
     function close(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setMenuOpen(false)
-        menuButton.current?.focus()
+        requestAnimationFrame(()=>menuButton.current?.focus())
       }
     }
 
@@ -148,12 +150,11 @@ function WorkspaceLayout() {
           </Link>
 
           <button
-            ref={menuButton}
             className="vw-menu"
             type="button"
             aria-expanded={menuOpen}
             aria-controls="workspace-navigation"
-            onClick={() => setMenuOpen(value => !value)}
+            onClick={() => {setMenuOpen(false);requestAnimationFrame(()=>menuButton.current?.focus())}}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">{menuOpen ? <path d="m6 6 12 12M18 6 6 18" /> : <path d="M4 6h16M4 12h16M4 18h16" />}</svg>
             <span>{menuOpen ? 'Close menu' : 'Menu'}</span>
@@ -194,12 +195,12 @@ function WorkspaceLayout() {
             onClick={() => setMenuOpen(false)}
           >
             <WorkspaceIcon name="settings" />
-            Settings
+            <span>Settings</span>
           </NavLink>
 
           <Link to="/" onClick={()=>setMenuOpen(false)}>
             <WorkspaceIcon name="home" />
-            Back to website
+            <span>Back to website</span>
           </Link>
 
           <button
@@ -210,7 +211,7 @@ function WorkspaceLayout() {
             }}
           >
             <WorkspaceIcon name="exit" />
-            {loggingOut ? 'Signing out…' : 'Sign out'}
+            <span>{loggingOut ? 'Signing out…' : 'Sign out'}</span>
           </button>
         </div>
 
@@ -225,6 +226,10 @@ function WorkspaceLayout() {
 
       <div className="vw-workspace" data-clarity-mask="true" inert={menuOpen}>
         <header className="vw-topbar">
+          <button ref={menuButton} type="button" className="vw-mobile-menu" aria-label="Open workspace menu" aria-expanded={menuOpen} aria-controls="workspace-sidebar" onClick={()=>setMenuOpen(true)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <Link className="vw-mobile-brand" to="/" aria-label="Vimbre home"><BrandLogo variant="symbol" decorative/></Link>
           <button type="button" className="vw-collapse-sidebar" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-controls="workspace-sidebar" aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             <WorkspaceIcon name="sidebar" />
             <span>{sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>

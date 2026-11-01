@@ -5,40 +5,7 @@
   --finish-panel: linear-gradient(145deg, rgb(255 253 248 / 98%), rgb(251 249 244 / 94%));
 }
 
-/* Static light behind the glass avoids a continuously repainting blurred background. */
-.vw-shell.app-shell {
-  background: radial-gradient(ellipse at 90% 0, #e5efff 0, transparent 48%),
-    radial-gradient(ellipse at 25% 90%, #eaf4f8 0, transparent 44%), #f7f6f2;
-}
-.vw-shell.app-shell .vw-sidebar {
-  background: linear-gradient(165deg, #1c354a, #102a43 58%, #132c40);
-  border: 1px solid rgb(255 255 255 / 12%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%), 0 16px 40px rgb(16 42 67 / 12%);
-}
-.vw-shell.app-shell .vw-navigation a.active,
-.vw-shell.app-shell .vw-utilities a.active {
-  background: linear-gradient(135deg, #316fd8, #2156b8);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 24%), 0 4px 16px rgb(0 0 0 / 12%);
-  color: #fff;
-}
-.vw-shell.app-shell .vw-topbar {
-  background: #f8fbff;
-  border-bottom: 1px solid var(--finish-edge);
-  box-shadow: 0 4px 18px rgb(16 42 67 / 2%);
-}
-.vw-shell.app-shell .card,
-.vw-shell.app-shell .vc-card,
-.vw-shell.app-shell .md-task-card,
-.vw-shell.app-shell .vr-module,
-.vw-shell.app-shell .support-workspace,
-.vw-shell.app-shell .rf-profile,
-.vw-shell.app-shell .ho-row,
-.vw-shell.app-shell .ho-empty {
-  background: var(--finish-panel);
-  border-color: var(--finish-edge);
-  box-shadow: inset 0 1px 0 #fff, var(--finish-shadow);
-}
-.vw-shell.app-shell .md-task-card { box-shadow: inset 0 1px 0 #fff, 0 3px 12px rgb(16 42 67 / 4%); }
+/* Workspace chrome and surfaces are defined in layouts/workspace-product.css. */
 .vw-shell.app-shell .md-filters,
 .vw-shell.app-shell .md-view-toggle {
   background: rgb(255 255 255 / 92%);
@@ -229,7 +196,6 @@
 }
 
 /* Client UI standard, 27 October: shared workspace controls and surfaces. */
-.vw-shell.app-shell .vw-content { max-width: 1120px; padding: 24px; width: 100%; }
 .vw-shell.app-shell .vw-content .button {
   min-height: 36px; padding: 0 14px; border-radius: 8px;
   font-size: 14px; font-weight: 500; gap: 8px;
@@ -241,9 +207,6 @@
 .vw-shell.app-shell .vw-content .button:disabled { opacity: .5; cursor: default; }
 .vw-shell.app-shell .vw-content .card { padding: 16px; border-radius: 12px; box-shadow: none; }
 .vw-shell.app-shell .vw-content .page-heading { margin-bottom: 24px; }
-@media (max-width: 640px) {
-  .vw-shell.app-shell .vw-content { padding: 16px; }
-}
 @media (pointer: coarse) {
   .vw-shell.app-shell .vw-content .button { min-height: 44px; }
 }

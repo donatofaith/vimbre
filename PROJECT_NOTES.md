@@ -431,3 +431,8 @@ Owner approved sandbox migration/deployment. Migration 20261028103031 installed,
 ## 31 October 2026: replacement Capture providers
 
 Owner removes Gmail and keeps Teams, Trello, Slack and Outlook; Google Drive is also removed from the offered Google connection family. GitHub App, Notion public connection and Asana OAuth adapters now support selected read-only imports; registrations/secrets and live consent remain operator setup. Yahoo mailbox access requires Yahoo approval and its IMAP adapter is not enabled or implemented. See docs/capture-tools-setup-20261031.md. Historical captures and disconnect remain available; Google Watch is paused. New providers do not expose source writes or Watch. Migration 20261031221009 keeps private storage and existing ownership/state/lease checks.
+
+
+## 1 November 2026: Asana-inspired workspace styling
+
+Owner requests a more professional sidebar and dashboard using the supplied Asana screen as reference. Compact full-height navy sidebar, restrained active states, one-row mobile header, aligned task controls and clean surfaces are implemented in workspace-product.css. Mobile menu keeps full-screen navigation, focus trap/Escape return and role-filtered links. The approved My Day banner, workflows and section order remain. Removed competing global workspace gradients in polish.css. See docs/workspace-asana-style-20261101.md for device and interaction checks. No backend or data changes.
