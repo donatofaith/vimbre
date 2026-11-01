@@ -92,13 +92,10 @@
 .vw-shell.app-shell .vc-capture-actions>.vc-delete-capture{color:var(--error)}
 @media(max-width:640px){.vw-shell.app-shell .vc-capture-title{flex-wrap:wrap}.vw-shell.app-shell .vc-capture-title>.vc-capture-actions{flex:0 0 auto;margin-left:auto}}
 
-/* Page names stay in navigation; preserve a screen-reader heading on each route. */
-.vw-shell.app-shell .vw-content h1:not(.md-page-heading h1){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* Route headings remain visible in the content as well as in navigation. */
 .vw-shell.app-shell .vw-breadcrumb-company{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13px}
 .vw-shell.app-shell .vw-breadcrumb-separator{display:none}
 .vw-shell.app-shell .department-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px}
-.vw-shell.app-shell .vw-content>.page-heading:has(>h1):not(:has(p)){margin:0}
-.vw-shell.app-shell .ho-heading--workspace,.vw-shell.app-shell .rf-page .vr-page-heading{min-height:0}
 .vw-shell.app-shell .chat-page .chat-message-text{user-select:text;-webkit-user-select:text;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text}
 .vw-shell.app-shell .chat-page :is(.chat-list,.chat-thread-header,.chat-message-meta,.chat-receipt,.chat-reply-button),.vw-shell.app-shell :is(.vw-topbar,.vw-sidebar){user-select:none;-webkit-user-select:none}
 .vw-shell.app-shell .chat-composer :is(textarea,input){user-select:text;-webkit-user-select:text}
