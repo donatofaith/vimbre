@@ -226,11 +226,11 @@ export function TaskPanel({
             </p>
           )}
           </div>
-          {confirmDelete&&<section className="md-delete-confirm" aria-label="Confirm task deletion"><h3>Delete task?</h3><p>{task?.repeat_rule?'Choose whether to delete this occurrence or this and all future occurrences.':'This task will move to Deleted.'} Linked decisions and sources stay.</p><div className="form-actions"><Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(false)}>{deleting?'Deleting…':task?.repeat_rule?'Delete this one':'Delete task'}</Button>{task?.repeat_rule&&<Button variant="secondary" className="md-delete" disabled={busy} onClick={()=>void deleteTask(true)}>Delete this and future ones</Button>}<Button variant="secondary" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep task</Button></div></section>}
+          {confirmDelete&&<section className="md-delete-confirm" aria-label="Confirm task deletion"><h3>Delete task?</h3><p>{task?.repeat_rule?'Choose whether to delete this occurrence or this and all future occurrences.':'This task will move to Deleted.'} Linked decisions and sources stay.</p><div className="form-actions"><Button variant="danger" className="md-delete" disabled={busy} onClick={()=>void deleteTask(false)}>{deleting?'Deleting…':task?.repeat_rule?'Delete this one':'Delete task'}</Button>{task?.repeat_rule&&<Button variant="danger" className="md-delete" disabled={busy} onClick={()=>void deleteTask(true)}>Delete this and future ones</Button>}<Button variant="secondary" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep task</Button></div></section>}
           <div className="md-panel-actions">
             <span role="status">{busy?deleting?'Deleting…':'Saving…':saveState}</span>
             <Button variant="secondary" onClick={finish} disabled={busy}>Cancel</Button>
-            {task&&!task.deleted_at&&remove&&<Button variant="secondary" className="md-delete" onClick={()=>{if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else void deleteTask(false)}} disabled={busy}>{deleting?'Deleting…':'Delete'}</Button>}
+            {task&&!task.deleted_at&&remove&&<Button variant="danger" className="md-delete" onClick={()=>{if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else void deleteTask(false)}} disabled={busy}>{deleting?'Deleting…':'Delete'}</Button>}
             <Button type="submit" disabled={busy||confirmDelete}>{busy&&!deleting?'Saving…':task?'Save changes':'Save task'}</Button>
           </div>
         </form>

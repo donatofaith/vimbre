@@ -1,0 +1,28 @@
+name: Action colour acceptance
+on:
+  push:
+    branches: ['draft/navigation-action-colours-20261101']
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://action-fixture.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_fixture_only_key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/check-action-colours-browser.cjs
+      - run: VIMBRE_BROWSER=webkit node scripts/check-action-colours-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-colour-review
+          path: /tmp/vimbre-action-colours-*.png
+          retention-days: 3
