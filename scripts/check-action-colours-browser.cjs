@@ -37,10 +37,10 @@ const {randomUUID}=require('node:crypto');
   await page.route('**/rest/v1/departments?*',r=>r.fulfill({json:[]}));
   await page.route('**/rest/v1/invitations?*',r=>r.fulfill({json:[],headers:{'content-range':'*/0'}}));
   await page.route('**/rest/v1/rpc/set_member_status',r=>{const a=r.request().postDataJSON();assert.equal(a.p_id,colleague.id);assert.equal(a.p_status,'suspended');suspended++;colleague.active=false;colleague.employment_status='suspended';return r.fulfill({json:null})});
-  await page.goto('http://127.0.0.1:5173/app/team');
+  await page.goto('http://127.0.0.1:5173/app/team');await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   const row=page.getByRole('row').filter({hasText:'Casey Colleague'});await row.locator('summary').click();
   const suspend=row.getByRole('button',{name:'Suspend',exact:true});
-  for(const width of [320,360,768,1440]){await page.setViewportSize({width,height:1000});assert.equal(await suspend.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 244, 214)');assert.equal(await row.getByRole('button',{name:'Dismiss',exact:true}).evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(180, 35, 24)');assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+  for(const width of [320,360,768,1440]){await page.setViewportSize({width,height:1000});await page.mouse.move(0,0);assert.equal(await suspend.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 244, 214)');assert.equal(await row.getByRole('button',{name:'Dismiss',exact:true}).evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(180, 35, 24)');assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
   page.once('dialog',dialog=>dialog.accept());await suspend.click();await page.getByText('Member status updated.',{exact:true}).waitFor();assert.equal(suspended,1);
   assert.equal(state.calls.filter(c=>c.path.endsWith('/ai-run')).length,0);assert.deepEqual(state.errors,[]);
   console.log('Task save/delete, guarded team suspension, action colours and responsive layouts passed. All backend calls intercepted.');
