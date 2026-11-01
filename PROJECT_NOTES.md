@@ -436,3 +436,7 @@ Owner removes Gmail and keeps Teams, Trello, Slack and Outlook; Google Drive is 
 ## 1 November 2026: Asana-inspired workspace styling
 
 Owner requests a more professional sidebar and dashboard using the supplied Asana screen as reference. Compact full-height navy sidebar, restrained active states, one-row mobile header, aligned task controls and clean surfaces are implemented in workspace-product.css. Mobile menu keeps full-screen navigation, focus trap/Escape return and role-filtered links. The approved My Day banner, workflows and section order remain. Removed competing global workspace gradients in polish.css. See docs/workspace-asana-style-20261101.md for device and interaction checks. No backend or data changes.
+
+## 1 November 2026: restore heading visibility and centered forms
+
+Owner approves compact styling but requests the glass sidebar restored, visible content headings and centered popup forms. This supersedes the earlier route-heading hiding rule. Restored glass surfaces on desktop/mobile; removed shared heading hiding/spacing suppression and Departments' explicit hidden heading class. Shared drawer and workspace dialogs use fixed viewport insets with auto margins; feature scrollers/action footers remain. Ten dialog variants passed geometry checks at 360/768/1440px, and Weekly summary/Handovers headings are visible. See docs/workspace-visibility-forms-20261101.md. No business behavior or backend/data changes.

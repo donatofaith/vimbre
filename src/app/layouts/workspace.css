@@ -586,6 +586,12 @@
 .vw-readonly-note { font-size: 13px; color: #64748b; }
 
 .vw-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  transform: none;
+  height: fit-content;
+  box-sizing: border-box;
   width: min(540px, calc(100% - 36px));
   max-height: 85dvh;
   overflow: auto;

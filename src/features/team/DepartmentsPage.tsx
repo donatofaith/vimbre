@@ -85,7 +85,7 @@ export function DepartmentsPage() {
     finally { setBusy(false) }
   }
   const current = result?.key === key ? result : null
-  return <><div className="page-heading"><span className="eyebrow">{company?.name}</span><h1 className="sr-only" tabIndex={-1}>Departments</h1><CompanyStructure/><p>Organize your team and assign a manager to each department.</p></div>{message && <p role="status" className="notice">{message}</p>}{error && <p role="alert" className="field-error">{error}</p>}
+  return <><div className="page-heading"><span className="eyebrow">{company?.name}</span><h1 tabIndex={-1}>Departments</h1><CompanyStructure/><p>Organize your team and assign a manager to each department.</p></div>{message && <p role="status" className="notice">{message}</p>}{error && <p role="alert" className="field-error">{error}</p>}
     {!admin&&params.get('member')&&<p>Ask your company administrator to assign your department or manager.</p>}{admin&&params.get('member')&&<MemberDepartmentTarget id={params.get('member')!} focus={params.get('focus')}/>}
     {admin&&!adding&&<div className="department-toolbar"><Button aria-label="Add department" onClick={()=>setAdding(true)}>+ Add</Button></div>}{admin && adding&&<section className="card settings-card"><h2>New department</h2><form className="auth-form" onSubmit={create}><Input label="Name" name="name" required maxLength={120} /><Button type="submit" disabled={busy}>{busy ? 'Creating…' : 'Save'}</Button><Button variant="secondary" disabled={busy} onClick={()=>setAdding(false)}>Cancel</Button></form></section>}
     {admin && editing && <DepartmentEditor key={editing.id} department={editing} saved={() => { setEditing(null); setMessage('Department updated.'); reload() }} cancel={() => setEditing(null)} />}

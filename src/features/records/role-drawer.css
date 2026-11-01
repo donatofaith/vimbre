@@ -1,6 +1,6 @@
 .vr-drawer {
-  position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%);
-  margin: 0; width: min(680px, calc(100vw - 32px)); height: auto;
+  position: fixed; inset: 0; transform: none;
+  margin: auto; width: min(680px, calc(100vw - 32px)); height: fit-content;
   max-height: 88dvh; max-width: calc(100vw - 32px); border: 1px solid #e2e8f0;
   border-radius: 18px; padding: 24px 28px 32px; background: white; color: #102a43;
   overflow-y: auto; box-shadow: 0 24px 80px rgb(16 42 67 / 22%); box-sizing: border-box;
@@ -17,7 +17,7 @@
 .vr-drawer { font-size:14px; }
 .vr-drawer .field-hint { font-size:13px; }
 @media(max-width:640px) {
- .vr-drawer { width:calc(100vw - 20px); max-width:calc(100vw - 20px); height:auto; max-height:90dvh; padding:18px 16px 24px; border-radius:16px; }
+ .vr-drawer { width:calc(100vw - 20px); max-width:calc(100vw - 20px); height:fit-content; max-height:90dvh; padding:18px 16px 24px; border-radius:16px; }
  .vr-drawer .vr-drawer-bar { align-items:flex-start; }
  .vr-drawer h2,.vr-drawer .record-editor h2 { font-size:21px; }
  .vr-drawer .md-panel-actions { position:sticky; bottom:-24px; flex-wrap:wrap; }
