@@ -1,0 +1,134 @@
+/* Product workspace, 1 November: quiet navigation and one compact header.
+   Feature layouts and all action/permission behavior remain owned by their modules. */
+.vw-shell.app-shell {
+  --vw-product-border:#e2e6ec;
+  --vw-product-muted:#647080;
+  background:#f7f8fa;
+  grid-template-columns:232px minmax(0,1fr);
+}
+.vw-shell.app-shell > .vw-sidebar {
+  top:0; margin:0; height:100dvh; border-radius:0; padding:20px 12px 12px;
+  border-right:1px solid #21394e; background:#132b40; box-shadow:none;
+  scrollbar-width:thin; scrollbar-color:#4f6375 transparent;
+}
+.vw-shell.app-shell .vw-sidebar-top {min-height:36px;padding-inline:10px;flex-shrink:0}
+.vw-shell.app-shell .vw-brand {padding:0}
+.vw-shell.app-shell .vw-sidebar .vimbre-logo-full {width:112px}
+.vw-shell.app-shell .vw-company {
+  flex:none; min-height:40px; margin:16px 0 18px; padding:10px;
+  border-block:1px solid #ffffff12; color:#c0cbd5; font-size:12px; line-height:1.5;
+}
+.vw-shell.app-shell .vw-company-logo {width:24px;height:24px;flex:none}
+.vw-shell.app-shell .vw-navigation {display:flex;flex-direction:column;gap:3px;margin:0 0 20px;padding:0}
+.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) :is(a,button) {
+  gap:10px; min-height:38px; padding:8px 11px; border-radius:6px;
+  color:#d1dbe4; font-size:13px; line-height:20px; font-weight:450;
+  box-shadow:none; transition:background-color .15s,color .15s;
+}
+.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) :is(a,button)>svg {width:18px;height:18px;color:#94a9bc}
+.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) :is(a,button):hover {background:#ffffff0b;color:#fff}
+.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) a.active {background:#ffffff14;color:#fff;box-shadow:inset 2px 0 #6aa7ff;font-weight:600}
+.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) a.active>svg {color:#8dbbff}
+.vw-shell.app-shell .vw-task-count {padding:0 6px;min-width:22px;line-height:21px;border-radius:5px;background:#ffffff16;font-size:11px;color:#eaf2ff}
+.vw-shell.app-shell .vw-manage-group {display:grid;gap:3px;margin-top:16px}
+.vw-shell.app-shell .vw-nav-heading {padding:0 11px 6px;color:#8da2b5;font-size:11px;letter-spacing:.03em;font-weight:500}
+.vw-shell.app-shell .vw-utilities {flex:none;margin-top:auto;padding-top:10px;border-top:1px solid #ffffff12}
+.vw-shell.app-shell .vw-account {flex:none;gap:9px;margin-top:12px;padding:12px 8px 0;border-top:1px solid #ffffff12;border-radius:0;background:none}
+.vw-shell.app-shell .vw-account strong {font-size:12px;line-height:18px;color:#edf3f9}
+.vw-shell.app-shell .vw-account>div>span {font-size:11px;line-height:18px;color:#9eb0c0}
+.vw-shell.app-shell .vw-account .vw-avatar {width:30px;height:30px;border-radius:8px;font-size:11px;background:#29455e;color:#dcecff}
+.vw-shell.app-shell .vw-topbar {
+  height:56px;min-height:56px;margin:0;padding:0 24px;gap:12px;
+  background:#fff;border-bottom:1px solid var(--vw-product-border);backdrop-filter:none;
+}
+.vw-shell.app-shell .vw-breadcrumb {flex:1;max-width:none;min-width:0}
+.vw-shell.app-shell .vw-breadcrumb-company {font-size:13px;font-weight:500;color:#566273}
+.vw-shell.app-shell .vw-collapse-sidebar {width:32px;height:32px;min-height:32px;padding:6px;border:0;border-radius:6px;background:transparent;color:#647080}
+.vw-shell.app-shell .vw-collapse-sidebar:hover {background:#f0f3f7}
+.vw-shell.app-shell .vw-topbar-actions {gap:4px}
+.vw-shell.app-shell .vw-topbar :is(.chat-launcher,.chat-bell) {width:36px;height:36px;min-width:36px;min-height:36px;border:0;border-radius:7px;box-shadow:none;background:transparent;color:#647080}
+.vw-shell.app-shell .vw-topbar :is(.chat-launcher,.chat-bell):hover {background:#f0f3f7;color:#245db8}
+.vw-shell.app-shell .vw-topbar .chat-launcher.active {background:#edf3ff;color:#245db8}
+.vw-shell.app-shell .vw-topbar :is(.chat-launcher,.chat-bell)>svg {width:19px;height:19px}
+.vw-shell.app-shell .vw-topbar .vw-avatar {width:30px;height:30px;margin-left:8px;background:#e9eef6;color:#335679;font-size:11px}
+.vw-mobile-menu,.vw-mobile-brand {display:none}
+.vw-shell.app-shell .vw-content {width:100%;max-width:1120px;padding:24px 24px 48px;margin-inline:auto}
+/* Keep the approved greeting banner, with restrained cards and table-like rows below. */
+.vw-shell.app-shell .vw-content .md-page {gap:24px;max-width:none}
+.vw-shell.app-shell .vw-content .md-work-section {background:#fff;border:1px solid var(--vw-product-border);border-radius:12px;padding:24px;gap:18px;box-shadow:0 1px 2px #102a4303}
+.vw-shell.app-shell .vw-content .md-section-heading h2 {font-size:18px;font-weight:600;line-height:26px}
+.vw-shell.app-shell .vw-content .md-toolbar-approved {gap:12px;align-items:end}
+.vw-shell.app-shell .vw-content .md-toolbar-approved .md-search {flex:1 1 220px}
+.vw-shell.app-shell .vw-content .md-toolbar-approved .md-search input {background:#fff;border:1px solid #dce2ea;border-radius:7px;min-height:36px;height:36px;padding:7px 12px;font-size:13px}
+.vw-shell.app-shell .vw-content .md-toolbar-approved .md-menu-label {flex:0 1 150px;gap:4px;font-size:11px;color:#647080;line-height:16px}
+.vw-shell.app-shell .vw-content .md-toolbar-approved .md-menu-label select {min-height:36px;height:36px;padding:6px 28px 6px 10px;background-color:#fff;border-radius:7px;font-size:13px;color:#25394d}
+.vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control {padding:3px;gap:2px;border:1px solid #e1e6ed;border-radius:7px;background:#f7f9fb}
+.vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control button {min-height:28px;padding:4px 10px;border-radius:4px;font-size:12px;box-shadow:none}
+.vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control button[aria-pressed=true] {background:#fff;color:#245db8;box-shadow:0 1px 3px #102a4310}
+.vw-shell.app-shell .vw-content .md-toolbar-actions {gap:6px;margin-left:auto}
+.vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>summary {width:36px;height:36px;min-height:36px;padding:6px;border:1px solid #dce2ea;border-radius:7px;background:#fff;color:#3e536a;box-shadow:none}
+.vw-shell.app-shell .vw-content .md-toolbar-actions .md-add-menu>summary {background:#2563d9;border-color:#2563d9;color:#fff}
+.vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>div {top:calc(100% + 8px);padding:6px;background:#fff;border:1px solid #e2e6ec;border-radius:8px;box-shadow:0 8px 24px #102a4312}
+.vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>div>:is(button,a) {min-height:36px;padding:8px 10px;border-radius:5px;font-size:13px;color:#25394d}
+.vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>div>:is(button,a):hover {background:#f2f5f9}
+.vw-shell.app-shell .vw-content .md-filter-disclosure {margin:0;padding:0;border:0;border-bottom:1px solid #e9edf2;border-radius:0;background:none}
+.vw-shell.app-shell .vw-content .md-filter-disclosure>summary {padding:8px 0 12px;min-height:36px;font-size:12px;color:#647080}
+.vw-shell.app-shell .vw-content .md-slim-row {box-shadow:none;background:#fff;border-bottom-color:#edf0f4;min-height:52px;padding:8px 4px!important}
+.vw-shell.app-shell .vw-content .md-slim-row:hover {background:#f8faff}
+.vw-shell.app-shell .vw-content .md-slim-row .md-task-title {font-size:14px;line-height:22px;font-weight:450;color:#25394d}
+.vw-shell.app-shell .vw-content .md-slim-row>time {font-size:12px;color:#697687}
+.vw-shell.app-shell .vw-content :is(.md-group-title,.md-day-group>summary) {font-size:13px;font-weight:600;line-height:22px}
+.vw-shell.app-shell .vw-content .md-group-title span {font-size:11px;color:#788393;font-weight:500}
+.vw-shell.app-shell .vw-content .md-board>section {border-radius:8px;background:#f8f9fb;border-color:#e6eaf0}
+@media(min-width:1025px) {
+  .vw-shell.app-shell > .vw-sidebar {position:sticky;overflow-y:auto}
+  .vw-shell.app-shell[data-sidebar-collapsed=true] {grid-template-columns:minmax(0,1fr)}
+  .vw-shell.app-shell[data-sidebar-collapsed=true]>.vw-sidebar {display:none}
+}
+@media(max-width:1024px) {
+  .vw-shell.app-shell,.vw-shell.app-shell[data-sidebar-collapsed=true] {display:block}
+  .vw-shell.app-shell>.vw-sidebar[data-open=false] {display:none}
+  .vw-shell.app-shell .vw-mobile-menu {display:inline-grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:10px;border:0;border-radius:7px;background:transparent;color:#4d6073;cursor:pointer}
+  .vw-shell.app-shell .vw-mobile-brand {display:flex;align-items:center;flex:none;padding:4px;margin-right:2px}
+  .vw-shell.app-shell .vw-mobile-brand img {width:28px;height:28px}
+  .vw-shell.app-shell .vw-topbar {height:64px;min-height:64px;padding:0 16px;gap:8px}
+  .vw-shell.app-shell .vw-breadcrumb-company {display:block;font-size:12px}
+  .vw-shell.app-shell .vw-collapse-sidebar {display:none}
+  .vw-shell.app-shell .vw-topbar-actions {gap:0}
+  .vw-shell.app-shell .vw-topbar :is(.chat-launcher,.chat-bell) {width:44px;height:44px;min-width:44px;min-height:44px}
+  .vw-shell.app-shell .vw-topbar .vw-avatar {margin-left:4px;width:28px;height:28px}
+  .vw-shell.app-shell>.vw-sidebar[data-open=true] {position:fixed;inset:0;z-index:1000;width:100%;height:100dvh;margin:0;border-radius:0;padding:16px 20px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;background:#132b40}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] .vw-sidebar-top {height:44px;min-height:44px;padding:0}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] .vw-company {display:flex;margin:20px 0}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] .vw-account {display:flex;margin-top:20px}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] .vw-navigation {display:flex;margin-bottom:20px;padding:0}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] .vw-utilities {display:grid;margin-top:auto}
+  .vw-shell.app-shell .vw-sidebar[data-open=true] :is(.vw-navigation,.vw-utilities) :is(a,button) {min-height:44px}
+  .vw-shell.app-shell .vw-content {padding:24px 24px 40px}
+  .vw-shell.app-shell[data-chat=true] .chat-workspace {height:calc(100svh - 64px)}
+  .vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>div>:is(button,a) {min-height:44px}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved .md-search input,
+  .vw-shell.app-shell .vw-content .md-toolbar-approved .md-menu-label select {min-height:44px;height:44px;font-size:16px}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control button {min-height:36px;font-size:13px}
+  .vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>summary {width:44px;height:44px;min-height:44px}
+}
+@media(max-width:640px) {
+  .vw-shell.app-shell .vw-topbar {padding-inline:8px;gap:4px}
+  .vw-shell.app-shell .vw-breadcrumb-company {max-width:100%;font-size:11px}
+  .vw-shell.app-shell .vw-content {padding:20px 16px 32px}
+  .vw-shell.app-shell .vw-content .md-work-section {padding:18px 16px;gap:16px}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 8px}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved .md-search {grid-column:1/-1;width:100%;min-width:0}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved .md-menu-label {grid-column:1;grid-row:2;min-width:0;font-size:12px}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved .md-toolbar-actions {grid-column:2;grid-row:2;align-self:end}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control {grid-column:1/-1;grid-row:3;justify-self:start;width:auto;max-width:100%;margin:0}
+  .vw-shell.app-shell .vw-content .md-toolbar-approved>.segmented-control button {min-height:38px;padding:5px 16px}
+  .vw-shell.app-shell .vw-content .md-slim-row {min-height:56px;gap:8px;padding:8px 0!important}
+  .vw-shell.app-shell .vw-content .md-slim-row>time {font-size:12px;max-width:30%}
+}
+@media(pointer:coarse) {
+  .vw-shell.app-shell .vw-collapse-sidebar {width:44px;height:44px;min-height:44px}
+  .vw-shell.app-shell :is(.vw-navigation,.vw-utilities) :is(a,button),
+  .vw-shell.app-shell .vw-content .md-toolbar-actions :is(.md-add-menu,.md-tools-menu)>summary {min-height:44px}
+}
+@media(prefers-reduced-motion:reduce) {.vw-shell.app-shell :is(.vw-navigation,.vw-utilities) :is(a,button) {transition:none}}
