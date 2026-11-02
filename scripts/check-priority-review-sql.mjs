@@ -1,0 +1,26 @@
+import {PGlite}from '@electric-sql/pglite';import fs from 'node:fs';import assert from 'node:assert/strict';
+const db=new PGlite();
+await db.exec(`create schema private;create schema auth;create schema cron;create function cron.schedule(text,text,text)returns bigint language sql as $$select 1::bigint$$;create role anon;create role authenticated;create role service_role;create role console_backend;create function auth.uid()returns uuid language sql stable as $$select nullif(current_setting('request.uid',true),'')::uuid$$;grant usage on schema auth,private to authenticated;`);
+await db.exec(fs.readFileSync('scripts/daily-schema-fixture.sql','utf8'));
+await db.exec(`create function private.current_company_id()returns uuid language sql stable as $$select company_id from public.profiles where id=auth.uid()and active$$;create function private.myday_quiet(uuid,timestamptz)returns boolean language sql as $$select false$$;`);
+await db.exec(fs.readFileSync('supabase/proposals/daily_priorities_and_wrapup.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/proposals/ai_daily_priority_review.sql','utf8'));
+const u=crypto.randomUUID(),colleague=crypto.randomUUID(),other=crypto.randomUUID(),c=crypto.randomUUID(),oc=crypto.randomUUID(),task=crypto.randomUUID(),secret=crypto.randomUUID(),task2=crypto.randomUUID();
+await db.query("insert into public.companies(id,name)values($1,'Test'),($2,'Other')",[c,oc]);await db.query("insert into public.profiles(id,company_id,full_name,active)values($1,$2,'Me',true),($3,$2,'Colleague',true),($4,$5,'Other',true)",[u,c,colleague,other,oc]);
+await db.query("insert into public.work_preferences(owner_id,timezone)values($1,'Africa/Lagos')",[u]);await db.query("select set_config('request.uid',$1,false)",[u]);
+await db.query("insert into public.actions(id,owner_id,company_id,title,status,priority,due_date)values($1,$2,$3,'Own work','open','normal',current_date),($4,$5,$6,'Other company secret','open','high',current_date),($7,$8,$3,'Same company secret','open','high',current_date)",[task,u,c,secret,other,oc,task2,colleague]);
+async function call(action='get',id=null,data={}){await db.exec('set role authenticated');try{return(await db.query('select public.myday_priority_review($1,$2,$3)v',[action,id,data])).rows[0].v}finally{await db.exec('reset role')}}
+let r=await call();assert.equal(r.items.length,0);assert.equal(r.reviewed_at,null);const today=r.today;
+r=await call('source');assert.deepEqual(r.tasks.map(t=>t.id),[task]);assert(!JSON.stringify(r).includes('secret'));
+await assert.rejects(()=>call('save',null,{day:today,items:[{id:secret,reason:'Leak'}]}));
+await assert.rejects(()=>call('save',null,{day:'2001-01-01',items:[]}));
+await assert.rejects(()=>call('save',null,{day:today,items:Array.from({length:4},()=>({id:task,reason:'All'}))}));
+await assert.rejects(()=>call('save',null,{day:today,items:[{id:task,reason:'A'},{id:task,reason:'B'}]}));
+r=await call('save',null,{day:today,items:[{id:task,reason:'Due today'}]});assert.equal(r.items.length,1);assert(r.reviewed_at);assert.equal(r.items[0].accepted,false);
+await db.query('insert into private.myday_daily_choices values($1,$2,$3,$4)',[u,c,today,task]);assert.equal((await call()).items[0].accepted,true);
+r=await call('reject',task,{day:today});assert.equal(r.items.length,0);assert.equal((await call('source')).tasks.length,0);
+r=await call('save',null,{day:today,items:[{id:task,reason:'Still due'}]});assert.equal(r.items.length,0);assert.equal((await db.query('select status from public.actions where id=$1',[task])).rows[0].status,'open');
+await db.query("select set_config('request.uid',$1,false)",[colleague]);assert.equal((await call()).items.length,0);
+await db.exec('set role anon');await assert.rejects(()=>db.query('select public.myday_priority_review()'));await db.exec('reset role');
+assert.equal((await db.query("select has_table_privilege('authenticated','private.myday_priority_reviews','select')v")).rows[0].v,false);
+await db.close();console.log('Priority SQL passed: explicit empty state, selective source, saved review, rejection persistence, no task deletion, owner/company isolation, stale-day and malformed output guards.');

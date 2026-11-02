@@ -27,3 +27,5 @@
 @media(max-width:600px){.weekly-summary-page{padding:16px}.weekly-summary-page>h1{font-size:24px}.stars-week-filter{grid-template-columns:44px minmax(0,1fr) 44px}.stars-period-heading h3{font-size:14px}.md-stars-panel .stars-level-card{padding:16px;gap:12px;grid-template-columns:48px minmax(0,1fr)}.md-stars-panel .stars-level-badge{width:48px;height:60px}.md-stars-panel .stars-level-badge svg{width:36px;height:36px}.md-stars-panel .stars-metrics{gap:8px}.md-stars-panel .stars-metrics strong{font-size:22px}.md-stars-panel .stars-badges{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-list form,.daily-list form label{min-width:0}.daily-list input[type=date]{box-sizing:border-box;width:100%}}
 
 .md-stars-panel .stars-level-card h3{margin-bottom:8px}
+
+.daily-priority-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:340px}.daily-priority-actions>a{font-size:13px;white-space:nowrap}.daily-priorities .daily-list>li>div:first-child{flex:1}@media(max-width:600px){.daily-priority-actions{max-width:100%;justify-content:flex-start}.daily-priorities .daily-heading{align-items:stretch;flex-direction:column}}
