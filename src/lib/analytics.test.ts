@@ -85,3 +85,11 @@ it('redacts private paths, titles, query strings and callback tokens from SPA pa
     {event:'page_view',page_path:'/other',page_location:'https://vimbre.com/other',page_title:'Vimbre /other',page_referrer:''},
   ])
 })
+
+it('reports the Ads conversion once for successful new signup, never an existing account',()=>{
+ const conversion=vi.fn();Object.assign(browser,{gtag_report_conversion:conversion})
+ analytics.trackAccountCreated({id:'new-user',identities:[{}]})
+ analytics.trackAccountCreated({id:'new-user',identities:[{}]})
+ analytics.trackAccountCreated({id:'existing',identities:[]})
+ expect(conversion).toHaveBeenCalledTimes(1)
+})

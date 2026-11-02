@@ -15,6 +15,8 @@ type Events = {
 }
 declare global {
   interface Window {
+    gtag?: (...args: unknown[]) => void
+    gtag_report_conversion?: (url?: string) => boolean
     dataLayer?: unknown[]
     vimbreAnalytics?: {readonly consent: AnalyticsConsent; choose: (choice: Exclude<AnalyticsConsent, null>) => void}
   }
@@ -34,7 +36,7 @@ export function analyticsConsent(): AnalyticsConsent {
 }
 function push(payload: Record<string, unknown>): boolean {
   if (typeof window === 'undefined' || analyticsConsent() !== 'accepted') return false
-  try { (window.dataLayer ??= []).push(payload); return true } catch { return false }
+  try { if (window.gtag) { const {event, ...params} = payload; window.gtag('event', event, params) } else (window.dataLayer ??= []).push(payload); return true } catch { return false }
 }
 function alreadySent(key: string): boolean {
   if (seen.has(key)) return true
@@ -88,7 +90,9 @@ export function trackTaskCreated(id: unknown, source_type: SourceType) {
 }
 export function trackAccountCreated(user: {id: string; identities?: unknown[]} | null) {
   // Existing-email signup responses can be deliberately obfuscated by Supabase.
-  if (user?.identities?.length) trackEvent('sign_up', {method: 'password'}, user.id)
+  if (user?.identities?.length && trackEvent('sign_up', {method: 'password'}, user.id)) {
+    try { window.gtag_report_conversion?.() } catch { /* Signup succeeds even if tracking is blocked. */ }
+  }
 }
 export function trackLogin(session: {user: {id: string}; expires_at?: number} | null) {
   if (session) trackEvent('login', {method: 'password'}, `${session.user.id}:${session.expires_at ?? 'current'}`)

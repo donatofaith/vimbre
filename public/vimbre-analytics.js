@@ -1,10 +1,10 @@
-/* One consent-gated GTM container. Configure GA4 G-E599PM5PBE inside this container. */
+/* One consent-gated Google tag, shared by GA4 and Google Ads. */
 (function (w, d) {
   if (w.vimbreAnalytics) return;
   var choice = null, loaded = false;
   var storageKey = 'vimbre:analytics-consent:v1';
   var measurement = 'G-E599PM5PBE';
-  var container = 'GTM-KTXM87CG';
+  var ads = 'AW-18551891096';
   w.dataLayer = w.dataLayer || [];
   function command() { try { w.dataLayer.push(arguments); } catch (_) {} }
   // Safe defaults also prevent callback URLs, tokens and document titles being measured.
@@ -13,16 +13,35 @@
   function load() {
     if (loaded || choice !== 'accepted') return;
     loaded = true;
-    if (d.querySelector('script[src*="googletagmanager.com/gtm.js?id=' + container + '"]')) return;
-    // Google's standard GTM initialization; no parallel gtag.js installation.
     try {
-      w.dataLayer.push({'gtm.start': Date.now(), event: 'gtm.js'});
+      command('js', new Date());
+      command('config', measurement, {send_page_view: false});
+      command('config', ads, {send_page_view: false});
       var script = d.createElement('script');
       script.async = true; script.referrerPolicy = 'origin';
-      script.src = 'https://www.googletagmanager.com/gtm.js?id=' + container;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurement;
       d.head.appendChild(script);
     } catch (_) { loaded = false; }
   }
+  w.gtag = command;
+  w.gtag_report_conversion = function (url) {
+    var finished = false;
+    var callback = function () {
+      if (finished) return; finished = true;
+      // Only same-origin destinations are allowed for optional click redirects.
+      if (typeof url === 'string') {
+        try { var target = new URL(url, w.location.href); if (target.origin === w.location.origin) w.location.assign(target.href); } catch (_) {}
+      }
+    };
+    if (choice !== 'accepted') { callback(); return false; }
+    command('event', 'conversion', {
+      send_to: 'AW-18551891096/l-20CPe7zLAdEJjJnY5F', value: 1.0, currency: 'GBP',
+      event_callback: callback, event_timeout: 1500
+    });
+    if (typeof url === 'string') w.setTimeout(callback, 1600);
+    return false;
+  };
+
   function clearCookies() {
     try {
       var domains = ['', w.location.hostname, '.' + w.location.hostname, '.vimbre.com'];
