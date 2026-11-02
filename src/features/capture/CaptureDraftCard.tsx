@@ -18,6 +18,7 @@ export function CaptureDraftCard({draft,options,people,busy,accepted,duplicate,a
  const [priority,setPriority]=useState(v('priority')||'normal')
  const [owner,setOwner]=useState(v('owner_id')||profile!.id),[choices,setChoices]=useState(options),[choiceError,setChoiceError]=useState(false)
  useEffect(()=>{if(owner===profile!.id)return;let alive=true;void supabase.rpc('capture_pipeline',{p_operation:'options',p_data:{owner_id:owner}}).then(({data,error})=>{if(alive){setChoiceError(Boolean(error));if(!error&&data&&typeof data==='object'&&'today' in data)setChoices(data as unknown as CaptureOptions)}});return()=>{alive=false}},[owner,profile])
+ useEffect(()=>{if(!draft)return;setKind(draft.kind);setOwner(draft.payload.owner_id||profile!.id);setPriority(draft.payload.priority||'normal');setEditing(false);setError('')},[draft?.id,draft?.version])
  const activeChoices=owner===profile!.id?options:choices
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const data=Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string,string>;try{await accept({...data,kind,owner_reviewed:'true'});setEditing(false)}catch{setError('This draft could not be updated. Your changes are still here.')}}
  const form=(<form className="vc-draft-form" onSubmit={e=>void submit(e)}><div className="vc-draft-body"><div className="vc-section-heading"><span className="vc-chip">{draftLabels[kind]}</span>{accepted&&<span className="vc-accepted">Accepted</span>}</div>
