@@ -5,3 +5,10 @@
 .website-chat header p{color:#e0edf8}.website-chat form button{min-height:44px}
 
 @media(max-width:600px){.website-chat input,.website-chat textarea{font-size:16px}}
+
+/* Compact mobile launcher; keep the existing accessible support-chat name. */
+@media(max-width:600px){
+ .rs-site .website-chat-launcher{width:48px;height:48px;min-width:48px;min-height:48px;padding:0;gap:0;justify-content:center;border-radius:50%;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));box-shadow:0 4px 14px #102a4326}
+ .rs-site .website-chat-launcher>span{display:none}
+ .rs-site .website-chat-launcher svg{width:22px;height:22px;flex:none}
+}
