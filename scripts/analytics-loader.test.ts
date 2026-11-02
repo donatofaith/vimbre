@@ -15,12 +15,13 @@ it('does not load Google scripts before consent or after rejection',()=>{
  b.w.vimbreAnalytics.choose('declined');expect(b.scripts).toEqual([])
  expect(b.w.dataLayer.some((v:unknown)=>(v as {event?:string}).event==='gtm.js')).toBe(false)
 })
-it('loads one canonical GTM container after acceptance and never a second direct GA4 tag',()=>{
+it('loads one shared Google tag after acceptance and configures both supplied destinations',()=>{
  const b=boot();b.w.vimbreAnalytics.choose('accepted');b.w.vimbreAnalytics.choose('accepted')
  runInNewContext(source,{window:b.w,document:b.d,Event,Date})
  expect(b.scripts).toHaveLength(1)
- expect(b.scripts[0]).toEqual({async:true,referrerPolicy:'origin',src:'https://www.googletagmanager.com/gtm.js?id=GTM-KTXM87CG'})
- expect(b.w.dataLayer.filter((v:unknown)=>(v as {event?:string}).event==='gtm.js')).toHaveLength(1)
+ expect(b.scripts[0]).toEqual({async:true,referrerPolicy:'origin',src:'https://www.googletagmanager.com/gtag/js?id=G-E599PM5PBE'})
+ const commands=b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>))
+ expect(commands.filter(v=>v[0]==='config').map(v=>v[1])).toEqual(['G-E599PM5PBE','AW-18551891096'])
 })
 it('restores consent and disables GA4 plus its cookies on withdrawal without touching auth cookies',()=>{
  const b=boot('accepted');expect(b.scripts).toHaveLength(1)
@@ -28,4 +29,12 @@ it('restores consent and disables GA4 plus its cookies on withdrawal without tou
  expect((b.w as unknown as Record<string,unknown>)['ga-disable-G-E599PM5PBE']).toBe(true)
  expect(b.removed.length).toBeGreaterThan(0)
  expect(b.removed.every(cookie=>cookie.startsWith('_ga='))).toBe(true)
+})
+
+it('queues the exact GBP conversion only with consent',()=>{
+ const b=boot();const report=(b.w as unknown as {gtag_report_conversion:()=>boolean}).gtag_report_conversion
+ report();expect(b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).filter(v=>v[1]==='conversion')).toHaveLength(0)
+ b.w.vimbreAnalytics.choose('accepted');report()
+ const conversion=b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).find(v=>v[1]==='conversion')
+ expect(conversion?.[2]).toMatchObject({send_to:'AW-18551891096/l-20CPe7zLAdEJjJnY5F',value:1,currency:'GBP'})
 })

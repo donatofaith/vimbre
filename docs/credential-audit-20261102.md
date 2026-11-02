@@ -6,10 +6,10 @@ No private API key, provider credential, privileged Supabase token, private sign
 
 | Repository | Audited current source | Reachable commits | References checked |
 | --- | --- | ---: | --- |
-| donatofaith/vimbre | development at fba467a00297054348e296b660e40271ac7b8e3a; main and other branches through history | 613 | 99 branches and 56 pull request refs |
+| donatofaith/vimbre | development at a135fd75b70c54db5f55fbf09620db39fc119f52; main and other branches through history | 614 | 99 branches and 56 pull request refs |
 | donatofaith/vimbre-console | main at a008aec607066a4e99f451b74fc23a567f07c5f6 | 95 | 13 branches and 8 pull request refs |
 
-All listed ref tips and commit parents are covered. No tag refs were advertised. Vimbre history contains 4,248 file changes: 4,214 patches plus 76 full text blobs used to supplement large or omitted patches. Console history contains 481 complete patches. Patch addition/deletion counts were checked against API metadata; no uncovered partial text patches remain. History dates begin on 13 October for Vimbre. These counts precede the audit commits themselves.
+All listed ref tips and commit parents are covered. No tag refs were advertised. Vimbre history contains 4,253 file changes: 4,219 patches plus 76 full text blobs used to supplement large or omitted patches. Console history contains 481 complete patches. Patch addition/deletion counts were checked against API metadata; no uncovered partial text patches remain. History dates begin on 13 October for Vimbre. These counts precede the audit commits themselves.
 
 Scans checked provider key formats, privileged JWT roles, private key headers, credential-bearing URLs, literal secret assignments, and credential filenames. Matches were reviewed in context: they were synthetic browser/worker credentials, deliberately invalid URL/key tests, and public configuration. Only `.env.example` appears among environment/credential filenames in this history; it contains blank public configuration fields.
 
@@ -40,7 +40,7 @@ Direct browser Supabase Auth/data calls use public client configuration and user
 
 ## Verification
 
-- Vimbre: 344 unit tests passed; TypeScript/production build, prerendering and offline asset generation passed.
+- Vimbre: 346 unit tests passed; TypeScript/production build, prerendering and offline asset generation passed.
 - Console: 103 unit tests passed; TypeScript/production build passed.
 - Lint exited successfully for both; Vimbre retains pre-existing warnings outside this change.
 - Six actual negative builds rejected an unknown public credential variable, a privileged Supabase key, and a credential-bearing URL in both apps. Supplied canary values were absent from error output.
