@@ -1,3 +1,4 @@
+import {loadDailyTask} from './open-daily-task'
 import {DailyFocus} from './DailyFocus'
 import {refreshQueue} from './refresh-queue'
 import {ReviewDecisionCard} from './ReviewDecisionCard'
@@ -354,6 +355,10 @@ function MyDayContent() {
       if(k==='e'){e.preventDefault();setInspected(task)}else if(k==='x'&&!task.deleted_at&&!task.missed_at){e.preventDefault();void act(task,'status',{status:task.status==='done'?'open':'done'})}else if(k==='s'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'pin',{pinned:!task.pinned_at})}else if(k==='t'&&!task.deleted_at&&task.status!=='done'&&!task.missed_at){e.preventDefault();void act(task,'tomorrow',{})}else if(k==='delete'&&!task.deleted_at){e.preventDefault();if(task.repeat_rule){setInspected(null);setEditor({task});return}if(!(task.capture_id||task.decision_id)||window.confirm('This task is part of the record. Delete it anyway? The decision and source stay.'))void act(task,'archive',{})}
     }
   };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[allRows,undo,busy]);
+  async function openDailyTask(id:string,edit=false){
+    const task=await loadDailyTask(id);
+    if(edit){setInspected(null);setEditor({task})}else setInspected(task);
+  }
   function card(task: Task, rank?: number, panelOnly=false) {
     return (
       <TaskCard
@@ -494,7 +499,7 @@ function MyDayContent() {
           {error}
         </p>
       )}
-      {!search&&!forValue&&!source&&filter==='today'&&<DailyFocus owner={profile!.id}day={params.get('review_day')}/>}
+      {!search&&!forValue&&!source&&filter==='today'&&<DailyFocus owner={profile!.id}day={params.get('review_day')}openTask={openDailyTask}/>}
       <section className="md-work-section" aria-labelledby="md-tasks-heading">
         <div className="md-section-heading">
           <h2 id="md-tasks-heading">Your tasks</h2>
