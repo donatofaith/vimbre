@@ -67,6 +67,8 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       chat_inbox: { Args: Record<PropertyKey, never>; Returns: Json }
       company_active_member_count: { Args: Record<PropertyKey, never>; Returns: number }
       team_activity_overview: { Args: { p_search: string; p_page: number; p_timezone: string; p_member: string | null }; Returns: Json }
+      myday_stars_week: { Args: {p_week?:string|null}; Returns: Json };
+      myday_daily: { Args: {p_action?:string;p_task?:string|null;p_day?:string|null;p_data?:Json}; Returns: Json };
       my_day_summary: { Args: Record<PropertyKey, never>; Returns: Json }
 
       capture_list: {

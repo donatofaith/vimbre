@@ -1,3 +1,4 @@
+import {refreshQueue} from '../my-day/refresh-queue'
 import { createContext,createElement,useContext,useEffect,useState } from 'react'
 import type {ReactNode} from 'react'
 import { supabase } from '../../lib/supabase'
@@ -31,13 +32,13 @@ export function useMyDaySummary(owner: string, revision: number, enabled: boolea
       const parsed = error ? null : parseMyDaySummary(data)
       if (!cancelled) setResult({ owner, data: parsed, error: Boolean(error) || !parsed })
     }
-    void load()
-    const onReturn = () => { if (!document.hidden) void load() }
+    const queued=refreshQueue(load);void queued.run()
+    const onReturn = () => { if (!document.hidden) queued.schedule() }
     window.addEventListener('focus', onReturn)
     document.addEventListener('visibilitychange', onReturn)
     window.addEventListener('vimbre:work-changed',onReturn)
     const interval = setInterval(onReturn, 60000)
-    return () => { cancelled = true; clearInterval(interval); window.removeEventListener('focus', onReturn); document.removeEventListener('visibilitychange', onReturn); window.removeEventListener('vimbre:work-changed',onReturn) }
+    return () => { cancelled = true;queued.dispose(); clearInterval(interval); window.removeEventListener('focus', onReturn); document.removeEventListener('visibilitychange', onReturn); window.removeEventListener('vimbre:work-changed',onReturn) }
   }, [owner, revision, refresh, enabled, hasShared])
   if(shared)return shared
   return { data: result?.owner === owner ? result.data : null, error: result?.owner === owner && result.error, retry: () => setRefresh(value => value + 1) }

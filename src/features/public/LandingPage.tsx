@@ -1,3 +1,4 @@
+import {WebsiteSupport} from './WebsiteSupport'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode, CSSProperties } from 'react'
@@ -113,7 +114,7 @@ export function LandingPage({ authenticated = false, loading = false }: { authen
       </section>
       <section id="questions" className="rs-section" aria-labelledby="faq-title"><div className="rs-container rs-faq"><Reveal><span className="rs-eyebrow">Straight answers</span><h2 id="faq-title">Questions people ask.</h2></Reveal><FAQ /></div></section>
       <section className="rs-section rf-final-cta" aria-labelledby="final-title"><div className="rs-container"><h2 id="final-title">Try it with your next conversation.</h2><Link className="rs-button" to={authenticated?'/app/capture':'/#pricing'}>{authenticated?'Capture a conversation':'Get started'}<Arrow/></Link></div></section>
-      <ContactSection />
+      <ContactSection /><WebsiteSupport/>
     </main>
     <footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link><nav aria-label="Footer">{[['Product', '#product-demo'], ['How it works', '#how-it-works'], ['Pricing', '#pricing'], ['FAQ', '#questions'], ['Contact', '#contact']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}<Link to="/blog">Blog</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><CookieSettingsLink /></nav></div><p>© 2026 Genade Global Service Limited.</p></div></footer>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />

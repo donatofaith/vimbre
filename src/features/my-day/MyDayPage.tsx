@@ -1,3 +1,5 @@
+import {DailyFocus} from './DailyFocus'
+import {refreshQueue} from './refresh-queue'
 import {ReviewDecisionCard} from './ReviewDecisionCard'
 import {withoutDeletedTasks} from './task-deletion'
 import {trackTaskCreated} from '../../lib/analytics'
@@ -73,7 +75,7 @@ function MyDayContent() {
     [source, setSource] = useState(""),
     [priority] = useState(""),
     [page, setPage] = useState(0),
-    [revision, setRevision] = useState(0),
+    [revision] = useState(0),
     [clock, setClock] = useState(() => new Date());
   const [layout, setLayout] = useState<"list" | "board" | "week">(() => {
     try {
@@ -143,7 +145,6 @@ function MyDayContent() {
     today = data?.today ?? dateInZone(zone);
   async function undoLast(){if(!undo||Date.now()>=undo.until)return;if(!undo.ids)return act(undo.task,'undo',{});setBusy('bulk');try{await daySuite('batch',null,{ids:undo.ids,operation:'undo'});for(const id of undo.ids)deletedTasks.current.delete(id);setUndo(null);setMessage('Changes undone.');refresh()}catch(e){setError(suiteError(e))}finally{setBusy('')}}
   const refresh = () => {
-    setRevision((v) => v + 1);
     window.dispatchEvent(new Event("vimbre:work-changed"));
   };
   function dismissTaskViews(deleted:ReadonlySet<string>){
@@ -257,11 +258,11 @@ function MyDayContent() {
           setResult({ key, data: null, error: true });
       }
     };
-    void load();
+    const queued=refreshQueue(load);void queued.run();
     const onReturn = () => {
       if (!document.hidden) {
         setClock(new Date());
-        void load();
+        queued.schedule();
       }
     };
     const t = setInterval(onReturn, 60000);
@@ -270,7 +271,7 @@ function MyDayContent() {
     document.addEventListener("visibilitychange", onReturn);
     return () => {
       live = false;
-      clearInterval(t);
+      clearInterval(t);queued.dispose();
       window.removeEventListener("focus", onReturn);
       window.removeEventListener("vimbre:work-changed", onReturn);
       document.removeEventListener("visibilitychange", onReturn);
@@ -493,6 +494,7 @@ function MyDayContent() {
           {error}
         </p>
       )}
+      {!search&&!forValue&&!source&&filter==='today'&&<DailyFocus owner={profile!.id}day={params.get('review_day')}/>}
       <section className="md-work-section" aria-labelledby="md-tasks-heading">
         <div className="md-section-heading">
           <h2 id="md-tasks-heading">Your tasks</h2>
