@@ -1,9 +1,18 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+import { assertClientModule, assertPublicEnvironment } from './scripts/public-env.ts'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: { allowedHosts: ['terminal.local'] },
-  build: { manifest: true },
+export default defineConfig(({ mode }) => {
+  const root = process.cwd()
+  assertPublicEnvironment(loadEnv(mode, root, 'VITE_'))
+  return {
+    plugins: [react(), {
+      name: 'vimbre-client-secret-boundary',
+      enforce: 'pre',
+      apply: 'build',
+      transform(_code, id) { assertClientModule(id, root) },
+    }],
+    server: { allowedHosts: ['terminal.local'] },
+    build: { manifest: true },
+  }
 })
