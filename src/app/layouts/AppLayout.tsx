@@ -1,3 +1,4 @@
+import {WorkspaceThemeToggle} from '../../features/appearance/WorkspaceTheme'
 import {useCompanyLogo} from '../../features/team/CompanyLogo'
 import {BillingAccessProvider} from '../../features/billing/BillingAccess'
 import {offlineQueue} from '../../features/my-day/offline'
@@ -244,6 +245,7 @@ function WorkspaceLayout() {
             <NavLink to="/app/weekly-summary?tab=stars" className="chat-launcher stars-launcher" aria-label="Stars" title="Stars"><WorkspaceIcon name="star" /></NavLink>
             <ChatLauncher />
             <Notifications />
+            <WorkspaceThemeToggle />
 
 
             <span

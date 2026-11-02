@@ -1,0 +1,34 @@
+/* Vimbre's blue/navy workspace themes. Public marketing keeps its light palette. */
+html[data-workspace-theme=dark]{
+ color-scheme:dark;
+ --background:#0b1624;--surface:#142438;--surface-raised:#1b3048;
+ --text:#e0e9f4;--navy:#edf3fc;--muted:#a2b3c8;--border:#30455e;
+ --blue:#83b7ff;--blue-hover:#a1c8ff;--blue-soft:#1a3657;
+ --brand-navy:#102a43;--action-blue:#2563d9;--on-accent:#fff;
+ --success:#76dba9;--error:#ffaca3;--warning:#ffd18a;
+ --theme-success-surface:#153b33;--theme-danger-surface:#48292e;--theme-warning-surface:#40351e;
+ --glass-surface:rgb(20 36 56 / 94%);--glass-border:#30455e;--glass-edge:#30455e;
+ --glass-shadow:0 16px 48px #0004;--shadow-small:0 2px 8px #0003;
+ --workspace-shadow:0 4px 16px #0002;
+}
+html[data-workspace-theme=light]{color-scheme:light}
+html[data-workspace-theme=dark] body{background:var(--background);color:var(--text)}
+html[data-workspace-theme=dark] .vw-shell.app-shell{background:var(--background);--vw-ink:var(--text);--vw-muted:var(--muted);--vw-line:var(--border);--vw-product-border:var(--border);--vw-product-muted:var(--muted);--vw-sidebar-surface:linear-gradient(155deg,#152b41,#0d1d30)}
+html[data-workspace-theme=dark] :is(input,textarea,select){color-scheme:dark;accent-color:var(--blue)}
+html[data-workspace-theme=dark] ::placeholder{color:#94a8c0;opacity:1}
+html[data-workspace-theme=dark] ::selection{background:#315c8d;color:#fff}
+html[data-workspace-theme=dark] :is(dialog,.card){color:var(--text);background:var(--surface)}
+html[data-workspace-theme=dark] dialog::backdrop{background:rgb(2 8 16 / 70%)}
+html[data-workspace-theme=dark] .button-primary{background:var(--action-blue);color:#fff}
+html[data-workspace-theme=dark] .button-primary:hover:not(:disabled){background:#1e55bd;color:#fff}
+html[data-workspace-theme=dark] .vw-shell.app-shell .vw-topbar .workspace-theme-toggle{color:var(--muted)}
+html[data-workspace-theme=dark] .vw-shell.app-shell .vw-topbar .workspace-theme-toggle:hover{color:var(--blue);background:var(--surface-raised)}
+/* Keep the added control in the same header row even at 360px. */
+.vw-shell.app-shell .workspace-theme-toggle{flex:none}
+@media(max-width:640px){.vw-shell.app-shell .vw-topbar-actions{flex:none;gap:0}.vw-shell.app-shell .vw-breadcrumb{flex:1;min-width:0}.vw-shell.app-shell .vw-breadcrumb-company{overflow:hidden;text-overflow:ellipsis}.vw-shell.app-shell .vw-topbar .vw-avatar{margin-left:2px}}
+@media(prefers-reduced-motion:reduce){.workspace-theme-toggle{transition:none}}
+
+html[data-workspace-theme=dark] progress{accent-color:var(--blue);background:var(--border);border:0}
+html[data-workspace-theme=dark] progress::-webkit-progress-bar{background:var(--border);border-radius:8px}
+html[data-workspace-theme=dark] progress::-webkit-progress-value{background:var(--blue);border-radius:8px}
+html[data-workspace-theme=dark] progress::-moz-progress-bar{background:var(--blue)}

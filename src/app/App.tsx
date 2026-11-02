@@ -1,3 +1,4 @@
+import {WorkspaceThemeRoute} from '../features/appearance/WorkspaceTheme'
 import {AnalyticsConsent} from '../features/analytics/AnalyticsConsent'
 import { UIPreview } from '../components/ui/UIPreview'
 import { MenuLifecycle } from '../components/ui/MenuLifecycle'
@@ -126,6 +127,7 @@ function AnchorScroll() {
 export function App() {
   return (
     <>
+      <WorkspaceThemeRoute />
       <PageFocus />
       <MenuLifecycle />
       <AnchorScroll />
