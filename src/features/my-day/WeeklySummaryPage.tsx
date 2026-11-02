@@ -8,7 +8,7 @@ export function WeeklySummaryPage() {
   const { profile, company } = useAuth();
   const [tab,setTab]=useState(new URLSearchParams(window.location.search).get("tab")==="stars"?"stars":"summary");
   return (
-    <section className="md-work-section">
+    <section className="md-work-section weekly-summary-page">
       <h1 tabIndex={-1}>Weekly summary</h1>
       <SegmentedControl label="Weekly view" value={tab} onChange={setTab} options={[{value:"summary",label:"Summary"},{value:"stars",label:"Stars"}]}/>
       {tab==="stars"?<StarsPanel/>:<AIDraftPanel
