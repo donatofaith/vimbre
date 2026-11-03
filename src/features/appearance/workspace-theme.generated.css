@@ -2518,3 +2518,9 @@ html[data-workspace-theme=dark] .company-logo-row img,html[data-workspace-theme=
     border: 1px solid var(--border);
     background: var(--surface)
 }
+html[data-workspace-theme=dark] .team-presence[data-presence=active] {
+    color: var(--success,var(--success))
+}
+html[data-workspace-theme=dark] .team-presence[data-presence=away] {
+    color: var(--warning,var(--error))
+}

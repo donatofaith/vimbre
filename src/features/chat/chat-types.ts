@@ -1,4 +1,6 @@
-export type ChatPerson = {
+import type {Member} from '../people/member'
+export type ChatPerson = Member & {
+  person?:Member
   id: string
   full_name: string
   role?: string
@@ -13,6 +15,7 @@ export type Conversation = {
   preview: string | null
   updated_at: string
   unread: number
+  person?:Member
 }
 export type Message = {
   id: string
@@ -28,6 +31,7 @@ export type Message = {
   created_at: string
 }
 export type ChatDetail = {
+  can_rename?:boolean
   messages: Message[]
   members: ChatPerson[]
   kind: 'direct' | 'group'

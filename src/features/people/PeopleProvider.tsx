@@ -1,0 +1,12 @@
+import {createContext,useCallback,useContext,useEffect,useRef,useState,type ReactNode}from 'react'
+import {supabase}from '../../lib/supabase'
+import {useAuth}from '../auth/AuthProvider'
+import {clearAvatarUrls}from './avatar-urls'
+import type {Member}from './member'
+type ContextValue={me:Member|null;refresh:()=>void}
+const Context=createContext<ContextValue>({me:null,refresh:()=>{}})
+export function PeopleProvider({children}:{children:ReactNode}){const {profile}=useAuth();const [me,setMe]=useState<Member|null>(null);const owner=profile?.id,lastInput=useRef(0);const refresh=useCallback(()=>{if(owner&&profile?.company_id)void supabase.rpc('member_profile',{}).then(({data,error})=>{if(!error)setMe(data as unknown as Member)})},[owner,profile?.company_id]);
+ useEffect(()=>{clearAvatarUrls();if(!owner)return;lastInput.current=Date.now();let live=true,pending=false;const activity=()=>{lastInput.current=Date.now()};async function ping(){if(document.hidden||!navigator.onLine||pending)return;pending=true;try{const {data,error}=await supabase.rpc('member_heartbeat',{p_active:Date.now()-lastInput.current<5*60000});if(live&&!error)setMe(data as unknown as Member)}finally{pending=false}}refresh();void ping();const timer=setInterval(()=>void ping(),45000);const returned=()=>{activity();void ping()};const visible=()=>{if(!document.hidden)returned()};const updated=()=>{refresh();void ping()};window.addEventListener('pointerdown',activity,{passive:true});window.addEventListener('keydown',activity);window.addEventListener('focus',returned);window.addEventListener('online',returned);document.addEventListener('visibilitychange',visible);window.addEventListener('vimbre:profile-updated',updated);return()=>{live=false;clearInterval(timer);window.removeEventListener('pointerdown',activity);window.removeEventListener('keydown',activity);window.removeEventListener('focus',returned);window.removeEventListener('online',returned);document.removeEventListener('visibilitychange',visible);window.removeEventListener('vimbre:profile-updated',updated);clearAvatarUrls()}},[owner,refresh]);
+ const fallback=profile?{id:profile.id,full_name:profile.full_name}:null;return <Context.Provider value={{me:me&&me.id===owner&&(!me.company_id||me.company_id===profile?.company_id)?me:fallback,refresh}}>{children}</Context.Provider>}
+// oxlint-disable-next-line react/only-export-components
+export function usePeople(){return useContext(Context)}

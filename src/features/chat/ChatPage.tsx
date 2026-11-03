@@ -1,3 +1,4 @@
+import {MemberAvatar} from '../people/MemberAvatar'
 import {AskVimbreAI} from './AskVimbreAI'
 import {useMessageSelection} from './useMessageSelection'
 import { shouldFollowMessages } from './chat-scroll'
@@ -31,14 +32,15 @@ export function ChatPage() {
   const [listError, setListError] = useState('')
   const [listLoading, setListLoading] = useState(true)
   const [listRetry, setListRetry] = useState(0)
+  const ensuredTeam=useRef('')
+  useEffect(()=>{const refresh=()=>{if(!document.hidden)setListRetry(n=>n+1)};const timer=setInterval(refresh,60000);window.addEventListener('vimbre:profile-updated',refresh);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('vimbre:profile-updated',refresh);window.removeEventListener('focus',refresh)}},[])
   const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
   const [detailReload, setDetailReload] = useState(0)
   useEffect(() => {
     let alive = true
     void (async () => {
-      const team = await supabase.rpc('chat_team')
-      if (team.error) return { data: null, error: team.error }
+      if(ensuredTeam.current!==profile?.id){const team=await supabase.rpc('chat_team');if(team.error)return {data:null,error:team.error};ensuredTeam.current=profile?.id??''}
       return supabase.rpc('chat_list', { p_page: page })
     })().then(({ data, error }) => {
       if (!alive) return
@@ -101,11 +103,7 @@ export function ChatPage() {
                     aria-current={selected === c.id ? 'page' : undefined}
                     onClick={() => open(c.id)}
                   >
-                    <span className="chat-avatar" aria-hidden="true">
-                      {c.kind === 'group'
-                        ? '#'
-                        : c.title.slice(0, 1).toUpperCase()}
-                    </span>
+                    {c.kind==='direct'&&c.person?<MemberAvatar member={c.person}size={40}/>:<span className="chat-avatar"aria-hidden="true">#</span>}
                     <span className="chat-conversation-copy">
                       <strong>{c.title}</strong>
                       <span>{c.preview || 'No messages yet'}</span>
@@ -150,7 +148,7 @@ export function ChatPage() {
             key={`${selected}:${profile?.id}`}
             id={selected}
             anchor={anchor}
-            revision={revision + detailReload}
+            revision={revision + detailReload+listRetry}
             onNew={()=>setCreating(true)}
             onBack={() => setParams({})}
             onLatest={() => setParams({ conversation: selected })}
@@ -205,6 +203,7 @@ export function NewChat({
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [kind, setKind] = useState<'direct' | 'group'>('direct')
+  const [groupName,setGroupName]=useState(''),[everyone,setEveryone]=useState(true)
     const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [people, setPeople] = useState<ChatPerson[]>([])
@@ -220,7 +219,7 @@ export function NewChat({
     if(node&&!node.open)node.showModal()
   }, [])
   useEffect(() => {
-    if (kind !== 'direct') return
+    if (kind==='group'&&everyone) return
     let alive = true
     const timer = setTimeout(() => {
       void supabase
@@ -240,7 +239,7 @@ export function NewChat({
       alive = false
       clearTimeout(timer)
     }
-  }, [search, page, retry, kind])
+  }, [search, page, retry, kind,everyone])
   async function create(event: FormEvent) {
     event.preventDefault()
     if (busy) return
@@ -248,7 +247,7 @@ export function NewChat({
     setBusy(true)
     try {
       const { data, error } = kind === 'group'
-        ? await supabase.rpc('chat_team')
+        ? await supabase.rpc('chat_group_create',{p_title:groupName,p_members:everyone?null:selected.map(p=>p.id)})
         : await supabase.rpc('chat_create', {
             p_kind: 'direct',
             p_title: '',
@@ -256,10 +255,10 @@ export function NewChat({
           })
       if (error || !data) throw error
       onCreated(data)
-    } catch {
+    } catch(reason) {
       setError(
         kind === 'group'
-          ? 'Team chat could not be opened. Please try again.'
+          ? ((reason as {message?:string})?.message?.startsWith('Choose up to')?'Choose up to 49 teammates for this chat.':'The team chat could not be created. Check the name and teammates.')
           : 'The chat could not be created. Choose a teammate and try again.',
       )
     } finally {
@@ -305,8 +304,8 @@ export function NewChat({
             <option value="group">Team chat</option>
           </select>
         </label>
-        {kind === 'group' && <p>Everyone in your company.</p>}
-        {kind === 'direct' && (
+        {kind==='group'&&<><label className="chat-label">Chat name<input value={groupName}maxLength={80}required onChange={e=>setGroupName(e.target.value)}placeholder="e.g. Product launch"/></label><label className="chat-group-everyone"><input type="checkbox"checked={everyone}onChange={e=>{setEveryone(e.target.checked);setSelected([])}}/>All current teammates</label></>}
+        {(kind === 'direct'||!everyone) && (
           <>
             <label className="chat-label">
               Find teammates
@@ -360,12 +359,12 @@ export function NewChat({
               {people.map((p) => (
                 <label key={p.id}>
                   <input
-                    type="radio"
+                    type={kind==='direct'?'radio':'checkbox'}
                     name="chat-member"
                     checked={selected.some((s) => s.id === p.id)}
-                    onChange={() => setSelected([p])}
+                    onChange={()=>setSelected(old=>kind==='direct'?[p]:old.some(s=>s.id===p.id)?old.filter(s=>s.id!==p.id):[...old,p])}
                   />
-                  <span>{p.full_name}</span>
+                  <MemberAvatar member={p.person??p}size={32}/><span>{p.full_name}{(p.person?.job_title||p.job_title)&&<small>{p.person?.job_title||p.job_title}</small>}</span>
                   <small>
                     {roleLabel(p.role ?? 'employee', p.id === companyCreator)}
                   </small>
@@ -391,9 +390,9 @@ export function NewChat({
         )}
         <button
           className="button button-primary"
-          disabled={busy || (kind === 'direct' && selected.length !== 1)}
+          disabled={busy||(kind==='direct'?selected.length!==1:!groupName.trim()||!everyone&&!selected.length)}
         >
-          {busy ? 'Opening…' : kind === 'group' ? 'Open Team chat' : 'Create chat'}
+          {busy ? 'Opening…' : kind === 'group' ? 'Create team chat' : 'Create chat'}
         </button>
       </form>
     </dialog>, document.body
@@ -428,6 +427,7 @@ function ConversationPanel({
   const [more, setMore] = useState(false)
   const [reply, setReply] = useState<Message | null>(null)
   const [showMembers, setShowMembers] = useState(false)
+  const [renaming,setRenaming]=useState(false),[chatName,setChatName]=useState(''),[renameBusy,setRenameBusy]=useState(false),[renameError,setRenameError]=useState('')
   const [unseen, setUnseen] = useState(0)
   const scroll = useRef<HTMLDivElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
@@ -576,7 +576,7 @@ function ConversationPanel({
           <span aria-hidden="true">←</span>
         </button>
         <div>
-          <h2>{title}</h2>
+          <h2>{title}</h2>{result?.kind==='direct'&&<small>{result.members.find(m=>m.id!==profile?.id)?.job_title}</small>}
           {result && (
             <button
               className="chat-members-button"
@@ -587,13 +587,15 @@ function ConversationPanel({
             </button>
           )}
         </div>
+        {result?.can_rename&&<button className="button button-secondary chat-rename"onClick={()=>{setChatName(result.title);setRenaming(v=>!v);setRenameError('')}}aria-label="Rename chat"title="Rename chat"><svg viewBox="0 0 24 24"width="18"height="18"fill="none"stroke="currentColor"strokeWidth="1.7"aria-hidden="true"><path d="m16 3 5 5-12 12H4v-5ZM14 5l5 5"/></svg></button>}
         <button className="button button-secondary chat-new" aria-label="New chat" title="New chat" onClick={onNew}><span aria-hidden="true">+</span></button>
       </header>
+      {renaming&&<form className="chat-rename-form"onSubmit={e=>{e.preventDefault();if(!chatName.trim()||renameBusy)return;setRenameBusy(true);setRenameError('');void Promise.resolve(supabase.rpc('chat_rename',{p_conversation:id,p_title:chatName.trim()})).then(({error})=>{if(error){setRenameError('The chat name could not be changed.');return}setResult(r=>r?{...r,title:chatName.trim()}:r);setRenaming(false);refresh()}).finally(()=>setRenameBusy(false))}}><label>Chat name<input value={chatName}maxLength={80}required onChange={e=>setChatName(e.target.value)}disabled={renameBusy}/></label><button className="button button-primary"disabled={renameBusy}>Save name</button><button className="button button-secondary"type="button"disabled={renameBusy}onClick={()=>setRenaming(false)}>Cancel</button>{renameError&&<p role="alert">{renameError}</p>}</form>}
       {showMembers && result && (
         <ul className="chat-member-list" aria-label="Participants">
           {result.members.map((p) => (
             <li key={p.id}>
-              {p.full_name}
+              <MemberAvatar member={p}size={30}/><span>{p.full_name}{p.job_title&&<small>{p.job_title}</small>}</span>
               {p.active === false ? ' · Inactive' : ''}
             </li>
           ))}
@@ -662,7 +664,7 @@ function ConversationPanel({
             aria-label={`Message from ${m.sender_name}`}
           >
             <div className="chat-message-meta">
-              <strong>{m.sender_name}</strong>
+              <MemberAvatar member={result.members.find(p=>p.id===m.sender_id)??{id:m.sender_id,full_name:m.sender_name}}size={26}/><strong>{m.sender_name}</strong>
               <time dateTime={m.created_at}>{chatTime(m.created_at)}</time>
             </div>
             <div className="chat-bubble">

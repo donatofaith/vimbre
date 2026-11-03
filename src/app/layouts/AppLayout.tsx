@@ -1,3 +1,6 @@
+import {PeopleProvider,usePeople} from '../../features/people/PeopleProvider'
+import {ProfileButton} from '../../features/people/ProfileEditor'
+import {MemberAvatar} from '../../features/people/MemberAvatar'
 import {WorkspaceThemeToggle} from '../../features/appearance/WorkspaceTheme'
 import {useCompanyLogo} from '../../features/team/CompanyLogo'
 import {BillingAccessProvider} from '../../features/billing/BillingAccess'
@@ -40,11 +43,12 @@ const icons: Record<string, string> = {
 
 export function AppLayout() {
   const {profile}=useAuth()
-  return <BillingAccessProvider><ChatProvider><MyDaySummaryProvider key={profile?.id} owner={profile?.id??''}><WorkspaceLayout /></MyDaySummaryProvider></ChatProvider></BillingAccessProvider>
+  return <BillingAccessProvider><PeopleProvider><ChatProvider><MyDaySummaryProvider key={profile?.id} owner={profile?.id??''}><WorkspaceLayout /></MyDaySummaryProvider></ChatProvider></PeopleProvider></BillingAccessProvider>
 }
 
 function WorkspaceLayout() {
   const { company, profile } = useAuth()
+  const {me}=usePeople()
   const companyLogo=useCompanyLogo(company?.logo_path)
   const { pathname } = useLocation()
   const daySummary=useMyDaySummary(profile?.id??'',0,Boolean(profile));
@@ -217,9 +221,9 @@ function WorkspaceLayout() {
         </div>
 
         <div className="vw-account">
-          <span className="vw-avatar">{initials}</span>
+          {me?<MemberAvatar member={me}/>:<span className="vw-avatar">{initials}</span>}
           <div>
-            <strong>{profile?.full_name ?? 'Your account'}</strong>
+            <strong>{me?.full_name??profile?.full_name??'Your account'}</strong>
             <span>{role}</span>
           </div>
         </div>
@@ -248,12 +252,7 @@ function WorkspaceLayout() {
             <WorkspaceThemeToggle />
 
 
-            <span
-              className="vw-avatar"
-              aria-label={profile?.full_name ?? 'Your account'}
-            >
-              {initials}
-            </span>
+            <ProfileButton />
           </div>
         </header>
 

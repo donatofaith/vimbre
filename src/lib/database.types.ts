@@ -1064,6 +1064,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      member_profile:{Args:{p_data?:Json|null};Returns:Json}
+      member_heartbeat:{Args:{p_active?:boolean};Returns:Json}
+      chat_rename:{Args:{p_conversation:string;p_title:string};Returns:undefined}
+      chat_group_create:{Args:{p_title:string;p_members?:string[]|null};Returns:string}
+
       workspace_evidence:{Args:{p_from?:string|null;p_to?:string|null;p_query?:string};Returns:Json}
       myday_stars_period:{Args:{p_day?:string|null;p_period?:string};Returns:Json}
       claim_signup_analytics:{Args:{p_receipt?:string|null};Returns:boolean}

@@ -1,0 +1,4 @@
+export type Member={id:string;company_id?:string;full_name:string;display_name?:string;job_title?:string;avatar_path?:string|null;availability?:'active'|'away'|'offline';presence?:'active'|'away'|'offline';last_active?:string|null}
+export function memberInitials(name:string){return name.trim().split(/\s+/).slice(0,2).map(s=>s[0]).join('').toUpperCase()||'?'}
+export function activeDuration(seconds:number|null|undefined){if(seconds==null)return '—';if(seconds<60)return '<1 min';const m=Math.floor(seconds/60);return m<60?`${m} min`:`${Math.floor(m/60)}h ${m%60}m`}
+export function lastActive(value:string|null|undefined){if(!value)return '—';const d=new Date(value);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(d):'—'}

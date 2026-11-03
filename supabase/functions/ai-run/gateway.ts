@@ -66,10 +66,10 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
       if(deps.authorizeAI&&!await deps.authorizeAI(identity))return fail(403,'Vimbre AI is switched off for this company. You can continue by hand.');
-      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean;report?:{start:string;end:string}}
+      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean;report?:{start:string;end:string};conversation?:{question:string;answer:string}[]}
       try {
         const data=await boundedBody(request)
-        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft'&&k!=='handover_id'&&k!=='report')||
+        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft'&&k!=='handover_id'&&k!=='report'&&k!=='conversation')||
           typeof data.task!=='string'||!Object.hasOwn(tasks,data.task)||typeof data.text!=='string'||!data.text.trim()||new TextEncoder().encode(data.text).byteLength>16000)throw new Error('Invalid input')
         if(data.document!==undefined) {
           const doc=data.document
@@ -83,6 +83,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         if(data.redraft!==undefined&&typeof data.redraft!=='boolean')throw new Error('Invalid redraft')
         if(data.task==='capture_extract'&&!data.capture_id)throw new Error('Capture required')
         if(data.report!==undefined){const r=data.report;if(data.task!=='weekly_summary'||!r||typeof r!=='object'||Array.isArray(r)||Object.keys(r).some(k=>k!=='start'&&k!=='end')||!/^\d{4}-\d{2}-\d{2}$/.test(r.start)||!/^\d{4}-\d{2}-\d{2}$/.test(r.end)||!Number.isFinite(Date.parse(r.start))||!Number.isFinite(Date.parse(r.end))||r.start>r.end||Date.parse(r.end)-Date.parse(r.start)>31*86400000)throw Error('Invalid report')}
+        if(data.conversation!==undefined&&(data.task!=='workspace_answer'||!Array.isArray(data.conversation)||data.conversation.length>3||JSON.stringify(data.conversation).length>12000||data.conversation.some((v:unknown)=>!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).some(k=>k!=='question'&&k!=='answer')||typeof(v as {question:unknown}).question!=='string'||typeof(v as {answer:unknown}).answer!=='string')))throw Error('Invalid conversation')
         if(data.task==='workspace_answer'&&data.text.length>2000)throw Error('Question too long')
         body=data
       } catch {return fail(400,'Choose a valid AI task and add up to 16 KB of text. You can continue by hand.')}
@@ -91,8 +92,9 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       let evidence:{sources:{ref:string;title:string;path:string;[key:string]:unknown}[];truncated?:boolean;[key:string]:unknown}|undefined
       if(body.task==='workspace_answer'||body.task==='weekly_summary'&&body.report){
         if(!deps.workspaceSource)return fail(503)
-        evidence=await deps.workspaceSource(token,body.task==='workspace_answer'?body.text:'',body.report)
-        const supplied=JSON.stringify({question:body.task==='workspace_answer'?body.text:undefined,additional_notes:body.task==='weekly_summary'?body.text:undefined,evidence})
+        const previousQuestion=body.conversation?.at(-1)?.question??'';const query=body.task==='workspace_answer'&&previousQuestion&&body.text.length<80&&/\b(it|that|this|they|them|those|who|why)\b/i.test(body.text)&&!/\b(month|week|today|yesterday)\b/i.test(body.text)?previousQuestion+' '+body.text:body.text
+        evidence=await deps.workspaceSource(token,body.task==='workspace_answer'?query:'',body.report)
+        const supplied=JSON.stringify({conversation:body.conversation,question:body.task==='workspace_answer'?body.text:undefined,additional_notes:body.task==='weekly_summary'?body.text:undefined,evidence})
         if(new TextEncoder().encode(supplied).byteLength>90000)return fail(400,'Too many matching records. Narrow the question or select a shorter period.')
         body.text=supplied
       }

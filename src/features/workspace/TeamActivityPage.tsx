@@ -1,47 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
-import { Input } from '../../components/ui/Input'
-import { Button } from '../../components/ui/Button'
-import { safeSearch } from '../team/team-utils'
-import { TeamMemberActions } from './WorkspacePage'
-import { TeamMemberDecisions } from './TeamMemberDecisions'
-import { useTeamOverview } from './useTeamOverview'
-import { WorkPrivacyNotice, WorkVisibilityDetails } from './WorkVisibilityDetails'
-export function TeamActivityPage() {
- const {profile}=useAuth()
- if(profile?.role==='employee')return <><h1 tabIndex={-1}>Team activity</h1><p>This page is for Managers and HR Admins.</p></>
- return <TeamActivity key={`${profile!.id}:${profile!.role}:${profile!.department_id}`} />
-}
-function TeamActivity() {
- const {profile}=useAuth()
- const visibility=useRef<HTMLDialogElement>(null)
- const [params,setParams]=useSearchParams()
- const requested=params.get('member')
- const validId=requested && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requested)?requested:null
- const [search,setSearch]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(0)
- const missingDepartment=profile?.role==='manager'&&!profile.department_id
- const {data,error,retry}=useTeamOverview(profile!.id,validId?'':query,validId?0:page,validId)
- const member=validId?data?.rows.find(row=>row.id===validId):null
- useEffect(()=>{const timer=setTimeout(()=>{setQuery(safeSearch(search));setPage(0)},250);return()=>clearTimeout(timer)},[search])
- function overview(){setParams({});setPage(0);setSearch('')}
- return <div className="vt-page">
-  <header className="page-heading"><h1 tabIndex={-1}>Team activity</h1><p>See what your team has captured, finished and left open.</p></header>
-  <p className="vt-trust"><button type="button" className="vt-trust-button" aria-haspopup="dialog" aria-controls="vt-visibility" onClick={()=>visibility.current?.showModal()}><WorkPrivacyNotice /></button></p>
-  <dialog id="vt-visibility" ref={visibility} className="vw-dialog" aria-labelledby="vt-visibility-title"><h2 id="vt-visibility-title">Team visibility</h2><WorkVisibilityDetails team /><form method="dialog"><Button type="submit">Close access details</Button></form></dialog>
-  {missingDepartment?<section className="card"><h2>Your department is not set up yet</h2><p>Ask your HR Admin to assign you to a department.</p></section>:error?<section className="card"><p role="alert">Your team could not be loaded.</p><Button onClick={retry}>Retry team activity</Button></section>:!data?<p role="status">Loading your team…</p>:requested&&!validId?<section className="card"><p role="alert">Team member is not available.</p><Button onClick={overview}>Back to team overview</Button></section>:validId?<>
-   <Button variant="secondary" onClick={overview}>Back to team overview</Button>
-   {member?<><h2>{member.full_name}</h2><TeamMemberActions member={member}/><TeamMemberDecisions key={member.id} owner={member.id}/></>:<p role="alert">Team member is not available.</p>}
-  </>:<>
-   <section aria-label={data.scope==='company'?'Company flags':'Department flags'}>
-    <div className="vt-section-heading"><h2>{data.scope==='company'?'Company overview':'Department overview'}</h2><p>Week of <time dateTime={data.week_start}>{data.week_start}</time></p></div>
-    <dl className="vt-flags"><div><dt>Overdue tasks</dt><dd>{data.flags.overdue_tasks}</dd></div><div><dt>Handovers not started</dt><dd aria-label={data.flags.handovers_not_started===null?'Unavailable':undefined}>{data.flags.handovers_not_started??'—'}</dd></div><div><dt>People with no role record</dt><dd>{data.flags.people_without_role_record}</dd></div></dl>
-   </section>
-   <section className="card vt-overview"><h2>Pick a person to see their tasks and decisions.</h2>
-    {data.total_active_count>=5&&<Input label="Search team members" type="search" placeholder="Search by name" maxLength={100} value={search} onChange={e=>setSearch(e.target.value)}/>}
-    {data.total_active_count===1?<div className="empty-state"><p>It’s just you so far. Invite a teammate to see their work here.</p>{profile?.role==='hr_admin'&&<Link className="button button-primary" to="/app/team#invite-teammate">Invite a teammate</Link>}</div>:data.rows.length===0?<div className="empty-state"><h3>{query?'No names match your search':page>0?'No more people on this page':'No active team members'}</h3>{query&&<Button variant="secondary" onClick={()=>setSearch('')}>Clear search</Button>}</div>:<div className="table-scroll"><table className="vt-members"><thead><tr><th scope="col">Team member</th><th scope="col">Tasks done this week</th><th scope="col">Tasks overdue</th><th scope="col">Drafts waiting</th><th scope="col">Handover status</th></tr></thead><tbody>{data.rows.map(row=><tr key={row.id} onClick={e=>{if(!(e.target as HTMLElement).closest('a'))setParams({member:row.id})}}><td data-label="Team member"><Link to={`?member=${row.id}`}>{row.full_name}</Link></td><td data-label="Tasks done this week">{row.tasks_done}</td><td data-label="Tasks overdue">{row.tasks_overdue}</td><td data-label="Drafts waiting">{row.drafts_waiting}</td><td data-label="Handover status">{row.handover_status??<span aria-label="Handover status unavailable">—</span>}</td></tr>)}</tbody></table></div>}
-    {(data.count>20||page>0)&&data.total_active_count>1&&<div className="pagination"><Button variant="secondary" disabled={page===0} onClick={()=>setPage(n=>n-1)}>Previous people</Button><span>Page {page+1}</span><Button variant="secondary" disabled={(page+1)*20>=data.count} onClick={()=>setPage(n=>n+1)}>Next people</Button></div>}
-   </section>
-  </>}
- </div>
+import {useEffect,useRef,useState}from 'react'
+import {Link,useSearchParams}from 'react-router-dom'
+import {useAuth}from '../auth/AuthProvider'
+import {Input}from '../../components/ui/Input'
+import {Button}from '../../components/ui/Button'
+import {safeSearch}from '../team/team-utils'
+import {TeamMemberActions}from './WorkspacePage'
+import {TeamMemberDecisions}from './TeamMemberDecisions'
+import {useTeamOverview}from './useTeamOverview'
+import {WorkVisibilityDetails}from './WorkVisibilityDetails'
+import {MemberAvatar}from '../people/MemberAvatar'
+import {activeDuration,lastActive}from '../people/member'
+import './team-activity.css'
+export function TeamActivityPage(){const {profile}=useAuth();if(profile?.role==='employee')return <><h1 tabIndex={-1}>Team activity</h1><p>This page is for Managers and HR Admins.</p></>;return <TeamActivity key={`${profile!.id}:${profile!.role}:${profile!.department_id}`}/>}
+function TeamActivity(){const {profile}=useAuth(),visibility=useRef<HTMLDialogElement>(null);const [params,setParams]=useSearchParams();const requested=params.get('member'),validId=requested&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requested)?requested:null;const [search,setSearch]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(0);const {data,error,retry}=useTeamOverview(profile!.id,validId?'':query,validId?0:page,validId),member=validId?data?.rows.find(r=>r.id===validId):null;
+ useEffect(()=>{const timer=setTimeout(()=>{setQuery(safeSearch(search));setPage(0)},250);return()=>clearTimeout(timer)},[search]);function overview(){setParams({});setPage(0);setSearch('')}
+ return <div className="team-activity"><header className="team-activity-heading"><div><h1 tabIndex={-1}>Team activity</h1>{data&&<span>{new Intl.DateTimeFormat(undefined,{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(data.week_start+'T12:00:00Z'))} · {data.scope==='company'?'Company':'Department'}</span>}</div><button type="button"className="button button-secondary"aria-haspopup="dialog"onClick={()=>visibility.current?.showModal()}>Visibility</button></header><dialog ref={visibility}className="vw-dialog"aria-labelledby="team-visibility-title"><h2 id="team-visibility-title">Team visibility</h2><WorkVisibilityDetails team/><h3>Availability and activity</h3><p>Active time counts foreground use of Vimbre. It is not a record of hours worked. Appear offline hides availability, last active and active time.</p><form method="dialog"><Button type="submit">Close</Button></form></dialog>{profile?.role==='manager'&&!profile.department_id?<p>Ask your HR Admin to assign your department.</p>:error?<div className="card"><p role="alert">Your team could not be loaded.</p><Button onClick={retry}>Retry</Button></div>:!data?<p role="status">Loading your team…</p>:requested&&!validId?<><p role="alert">Team member is not available.</p><Button onClick={overview}>Back to team overview</Button></>:validId?<><Button variant="secondary"onClick={overview}>Back to team overview</Button>{member?<><div className="member-line"><MemberAvatar member={member}size={48}/><div><h2>{member.full_name}</h2><span>{member.job_title}</span></div></div><TeamMemberActions member={member}/><TeamMemberDecisions key={member.id}owner={member.id}/></>:<p role="alert">Team member is not available.</p>}</>:<><dl className="team-activity-metrics"><div><dt>In progress</dt><dd>{data.flags.tasks_in_progress??data.rows.reduce((n,r)=>n+(r.working_on?.length??0),0)}</dd></div><div><dt>Completed this week</dt><dd>{data.flags.tasks_done??data.rows.reduce((n,r)=>n+r.tasks_done,0)}</dd></div><div><dt>Overdue</dt><dd>{data.flags.overdue_tasks}</dd></div></dl>{data.total_active_count>=5&&<Input label="Search team members"hint=""type="search"placeholder="Search by name"maxLength={100}value={search}onChange={e=>setSearch(e.target.value)}/>}<section className="team-work-list"aria-label="Team work">{!data.rows.length?<p>{query?'No names match your search.':'No active teammates.'}</p>:data.rows.map(row=><article className="team-work-row"key={row.id}><div className="member-line"><MemberAvatar member={row}size={40}/><div><Link className="team-member-link"to={`?member=${row.id}`}>{row.full_name}</Link>{row.job_title&&<small>{row.job_title}</small>}<span className="team-presence"data-presence={row.presence??'offline'}>{row.presence==='active'?'Active':row.presence==='away'?'Away':'Offline'}</span></div></div><div className="team-current-work"><span className="team-field-label">Working on</span>{row.working_on?.length?<ul>{row.working_on.map((task,i)=><li key={i}>{task.title}</li>)}</ul>:<p>No tasks in progress.</p>}<small>{row.open_tasks??0} open · {row.tasks_overdue} overdue</small></div><div className="team-work-fact"><span className="team-field-label">Done this week</span><strong>{row.tasks_done}</strong></div><div className="team-work-fact"><span className="team-field-label">Active today</span><strong>{activeDuration(row.active_seconds)}</strong></div><div className="team-work-fact"><span className="team-field-label">Last active</span><span>{lastActive(row.last_active)}</span></div></article>)}</section>{data.total_active_count===1&&profile?.role==='hr_admin'&&<Link className="button button-primary"to="/app/team#invite-teammate">Invite a teammate</Link>}{(data.count>20||page>0)&&<div className="pagination"><Button variant="secondary"disabled={page===0}onClick={()=>setPage(n=>n-1)}>Previous people</Button><span>Page {page+1}</span><Button variant="secondary"disabled={(page+1)*20>=data.count}onClick={()=>setPage(n=>n+1)}>Next people</Button></div>}</>}</div>
 }

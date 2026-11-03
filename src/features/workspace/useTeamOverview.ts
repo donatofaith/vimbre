@@ -1,7 +1,8 @@
+import type {Member} from '../people/member'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-export type TeamMetric = { id: string; full_name: string; tasks_done: number; tasks_overdue: number; drafts_waiting: number; handover_status: string | null; no_role_record: boolean }
-export type TeamOverview = { rows: TeamMetric[]; count: number; total_active_count: number; scope: 'company' | 'department'; today: string; week_start: string; flags: { overdue_tasks: number; handovers_not_started: number | null; people_without_role_record: number }; handovers_available: boolean }
+export type TeamMetric = Member & { active_seconds?:number|null;open_tasks?:number;working_on?:{title:string;status:string;due_date:string|null}[]; id: string; full_name: string; tasks_done: number; tasks_overdue: number; drafts_waiting: number; handover_status: string | null; no_role_record: boolean }
+export type TeamOverview = { rows: TeamMetric[]; count: number; total_active_count: number; scope: 'company' | 'department'; today: string; week_start: string; flags: { tasks_done?:number;tasks_in_progress?:number;overdue_tasks: number; handovers_not_started: number | null; people_without_role_record: number }; handovers_available: boolean }
 const count = (n: unknown) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0
 export function parseTeamOverview(value: unknown): TeamOverview | null {
  if (!value || typeof value !== 'object') return null
@@ -26,9 +27,9 @@ export function useTeamOverview(owner: string, search: string, page: number, mem
   }
   void load()
   const onReturn=()=>{if(!document.hidden)void load()}
-  window.addEventListener('focus',onReturn);document.addEventListener('visibilitychange',onReturn)
+  window.addEventListener('vimbre:profile-updated',onReturn);window.addEventListener('focus',onReturn);document.addEventListener('visibilitychange',onReturn)
   const interval=setInterval(onReturn,60000)
-  return()=>{cancelled=true;clearInterval(interval);window.removeEventListener('focus',onReturn);document.removeEventListener('visibilitychange',onReturn)}
+  return()=>{cancelled=true;clearInterval(interval);window.removeEventListener('vimbre:profile-updated',onReturn);window.removeEventListener('focus',onReturn);document.removeEventListener('visibilitychange',onReturn)}
  },[key,search,page,member,refresh])
  return {data:result?.key===key?result.data:null,error:result?.key===key && result.error,retry:()=>setRefresh(n=>n+1)}
 }
