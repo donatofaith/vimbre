@@ -5,6 +5,86 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/login",
+      "destination": "/login/index.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/signup/index.html"
+    },
+    {
+      "source": "/forgot",
+      "destination": "/forgot/index.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password/index.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing/index.html"
+    },
+    {
+      "source": "/faq",
+      "destination": "/faq/index.html"
+    },
+    {
+      "source": "/how-it-works",
+      "destination": "/how-it-works/index.html"
+    },
+    {
+      "source": "/integrations",
+      "destination": "/integrations/index.html"
+    },
+    {
+      "source": "/use-cases/handover",
+      "destination": "/use-cases/handover/index.html"
+    },
+    {
+      "source": "/use-cases/decisions",
+      "destination": "/use-cases/decisions/index.html"
+    },
+    {
+      "source": "/use-cases/workday-planner",
+      "destination": "/use-cases/workday-planner/index.html"
+    },
+    {
+      "source": "/for-individuals",
+      "destination": "/for-individuals/index.html"
+    },
+    {
+      "source": "/for-founders",
+      "destination": "/for-founders/index.html"
+    },
+    {
+      "source": "/for-companies",
+      "destination": "/for-companies/index.html"
+    },
+    {
+      "source": "/tour",
+      "destination": "/tour/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
+      "source": "/competition-terms",
+      "destination": "/competition-terms/index.html"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/llms.txt"
+    },
+    {
+      "source": "/walkthrough/:path*",
+      "destination": "/walkthrough/:path*"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/sitemap.xml"
     },

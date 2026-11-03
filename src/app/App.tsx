@@ -1,7 +1,9 @@
+import {publicPages,metaFor} from '../features/public/public-content'
 import {WorkspaceThemeRoute} from '../features/appearance/WorkspaceTheme'
 import {AnalyticsConsent} from '../features/analytics/AnalyticsConsent'
 import { UIPreview } from '../components/ui/UIPreview'
 import { MenuLifecycle } from '../components/ui/MenuLifecycle'
+const PublicPage=lazy(()=>import('../features/public/PublicPage').then(module=>({default:module.PublicPage})))
 const RoleGuidePage = lazy(() => import('../features/records/RoleGuide').then(module => ({default:module.RoleGuidePage})))
 import { lazy, Suspense, useEffect } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -78,10 +80,9 @@ function PageFocus() {
       }
 
       document.title =
-        pathname === '/'
-          ? 'Vimbre | Understand the Why'
-          : `${heading.textContent} | Vimbre`
+        pathname==='/'||publicPages[pathname]||['/tour','/login','/signup'].includes(pathname)?metaFor(pathname).title:`${heading.textContent} | Vimbre`
 
+      if(pathname==='/'||publicPages[pathname]||['/tour','/login','/signup'].includes(pathname)){const meta=metaFor(pathname);for(const selector of ['meta[name=description]','meta[property="og:description"]','meta[name="twitter:description"]'])document.querySelector(selector)?.setAttribute('content',meta.description);document.querySelector('link[rel=canonical]')?.setAttribute('href','https://vimbre.com'+(pathname==='/'?'/':pathname));for(const selector of ['meta[property="og:title"]','meta[name="twitter:title"]'])document.querySelector(selector)?.setAttribute('content',meta.title);document.querySelector('meta[property="og:url"]')?.setAttribute('content','https://vimbre.com'+pathname)}
       window.dispatchEvent(new Event('vimbre:ready'))
       heading.focus({ preventScroll: true })
       return true
@@ -144,6 +145,7 @@ export function App() {
       <Route path="/role-guide" element={<RoleGuidePage/>}/>
       <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
+          {[...Object.keys(publicPages),'/tour'].map(path=><Route key={path} path={path} element={<PublicPage/>}/>)}
           <Route path="/blog" element={<BlogRoute/>}/>
           <Route path="/blog/:slug" element={<BlogRoute/>}/>
           <Route path="/privacy" element={<LegalPage page="privacy" />} />
