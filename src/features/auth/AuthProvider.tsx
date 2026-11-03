@@ -1,3 +1,4 @@
+import {trackVerifiedSignup} from './signup-analytics'
 import {clearDevicePush} from '../my-day/device-push'
 import {setOfflineOwner,clearOfflineAccount,offlineOwner} from '../my-day/offline'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
@@ -28,6 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     return () => subscription.unsubscribe()
   }, [])
+  const signupUserId=session?.user.id,signupConfirmedAt=session?.user.email_confirmed_at
+  useEffect(()=>{const track=()=>{if(signupUserId)void trackVerifiedSignup({id:signupUserId,email_confirmed_at:signupConfirmedAt})};track();window.addEventListener('vimbre:analytics-consent',track);return()=>window.removeEventListener('vimbre:analytics-consent',track)},[signupUserId,signupConfirmedAt])
   const userId=session?.user.id
   useEffect(() => {
     let cancelled = false
@@ -82,4 +85,5 @@ export function RequireAuth() {
   if (account.error || !account.profile) return <main className="standalone"><h1 tabIndex={-1}>Workspace unavailable</h1><p role="alert">{account.error}</p><Button onClick={account.refresh}>Retry</Button> <Button variant="secondary" onClick={() => { void supabase.auth.signOut() }}>Sign out</Button></main>
   return <Outlet />
 }
+
 

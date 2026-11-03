@@ -6,7 +6,7 @@ import type { AITask } from '../../lib/ai-gateway'
 import { validateAIInput } from './ai-output'
 import './ai.css'
 
-type Props = { showHeading?: boolean; task: Exclude<AITask, 'capture_extract'>; initialText?: string; onUse?: (text: string) => void; loadRecords?: () => Promise<string>; maxApplyLength?: number }
+type Props = { showHeading?: boolean; task: Exclude<AITask, 'capture_extract'|'workspace_answer'>; initialText?: string; onUse?: (text: string) => void; loadRecords?: () => Promise<string>; maxApplyLength?: number }
 /** Source and draft stay in this mounted panel. Only the user's explicit action applies a revision. */
 export function AIDraftPanel({ task, initialText = '', onUse, loadRecords, maxApplyLength, showHeading = true }: Props) {
   const sourceId = useId(), draftId = useId()

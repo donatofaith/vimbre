@@ -1,3 +1,4 @@
+import {AskVimbreAI} from './AskVimbreAI'
 import {useMessageSelection} from './useMessageSelection'
 import { shouldFollowMessages } from './chat-scroll'
 import { createPortal } from 'react-dom'
@@ -23,7 +24,7 @@ export function ChatPage() {
   const { revision, refresh } = useChat()
   const [params, setParams] = useSearchParams()
   const selected = params.get('conversation') ?? ''
-  const anchor = params.get('message')
+  const asking=params.get('ask')==='vimbre'; const anchor = params.get('message')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -62,8 +63,9 @@ export function ChatPage() {
   return (
     <section className="chat-page">
       <h1 className="sr-only" tabIndex={-1}>Messages</h1>
-      <div className="chat-workspace" data-conversation={Boolean(selected)}>
+      <div className="chat-workspace" data-conversation={Boolean(selected)||asking}>
         <aside className="chat-list" aria-label="Conversations"><div className="chat-list-toolbar"><h2>Conversations</h2>{!selected&&<button className="button button-secondary chat-new" aria-label="New chat" title="New chat" onClick={()=>setCreating(true)}><span aria-hidden="true">+</span></button>}</div>
+          <button className="chat-ask-entry"onClick={()=>{setParams({ask:'vimbre'});setCreating(false)}}aria-current={asking?'page':undefined}><svg viewBox="0 0 24 24"fill="none"stroke="currentColor"strokeWidth="1.7"aria-hidden="true"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></svg>Ask VimbreAI</button>
           <label className="chat-search">
             Find a conversation
             <input
@@ -83,10 +85,7 @@ export function ChatPage() {
             <p role="status">Loading conversations…</p>
           )}
           {!listLoading && !listError && conversations.length === 0 && (
-            <div className="chat-empty">
-              <h2>Start a conversation</h2>
-              <p>Message a teammate or open Team chat.</p>
-            </div>
+            <p className="chat-empty-note">No conversations yet.</p>
           )}
           <ul>
             {conversations
@@ -146,7 +145,7 @@ export function ChatPage() {
             </button>
           )}
         </aside>
-        {selected ? (
+        {asking?<AskVimbreAI back={()=>setParams({})}/>:selected ? (
           <ConversationPanel
             key={`${selected}:${profile?.id}`}
             id={selected}

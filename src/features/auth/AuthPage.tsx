@@ -1,4 +1,5 @@
-import {trackAccountCreated,trackLogin} from '../../lib/analytics'
+import {trackNewSignup} from './signup-analytics'
+import {trackLogin} from '../../lib/analytics'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import {billingReturnPath,billingSignupCallback} from '../billing/return-path'
 import { myDayReturnPath } from './return-path'
@@ -17,7 +18,7 @@ type Mode = 'login' | 'signup' | 'forgot' | 'reset'
 
 const titles: Record<Mode, string> = {
   login: 'Welcome back',
-  signup: 'Create your company',
+  signup: 'Create your account',
   forgot: 'Forgot your password?',
   reset: 'Choose a new password',
 }
@@ -86,7 +87,7 @@ function AccountLayout({
           aria-labelledby="v-auth-title"
         >
           <span className="v-auth-eyebrow">
-            Your company workspace
+            Your workspace
           </span>
 
           <h1 id="v-auth-title" tabIndex={-1}>
@@ -107,6 +108,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
+  const [signupMode,setSignupMode]=useState<'individual'|'sole_founder'|'company'>('individual')
   const [resendAt, setResendAt] = useState(0)
   const [clock, setClock] = useState(Date.now)
 
@@ -200,11 +202,11 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
     try {
       if (mode === 'signup') {
-        const company = String(form.get('company')).trim()
+        const company = signupMode==='individual'?'Personal workspace':String(form.get('company')??'').trim() || (signupMode==='sole_founder'?'Founder workspace':'')
         const name = String(form.get('name')).trim()
 
         if (!company || !name) {
-          setError('Enter your name and company name.')
+          setError('Enter your name and workspace name.')
           return
         }
 
@@ -215,19 +217,20 @@ export function AuthPage({ mode }: { mode: Mode }) {
             data: {
               full_name: name,
               company_name: company,
+              workspace_type: signupMode,
             },
             emailRedirectTo: billingSignupCallback(window.location.origin,location.search),
           },
         })
 
         if (result.error) throw result.error
-        trackAccountCreated(result.data.user)
+        void trackNewSignup(result.data.user)
 
         setSignupEmail(email)
         startCooldown()
 
         setMessage(
-          'Check your inbox for a confirmation link. After confirming your email, you can access your company. If you already have an account, try signing in or resetting your password.',
+          'Check your inbox for a confirmation link. After confirming your email, you can open your workspace. If you already have an account, try signing in or resetting your password.',
         )
       } else if (mode === 'login') {
         const result = await supabase.auth.signInWithPassword({
@@ -286,9 +289,9 @@ export function AuthPage({ mode }: { mode: Mode }) {
       {!message && (
         <p className="v-auth-description">
           {mode === 'signup'
-            ? 'Create your account and company workspace. You’ll be its Super admin.'
+            ? 'Choose how you’ll use Vimbre.'
             : mode === 'login'
-              ? 'Sign in to your company workspace.'
+              ? 'Sign in to your workspace.'
               : mode === 'forgot'
                 ? 'Enter your work email to request a password reset link.'
                 : 'Choose a unique password for your account.'}
@@ -360,6 +363,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           <fieldset disabled={busy} className="v-auth-fields">
             {mode === 'signup' && (
               <>
+                <fieldset className="signup-mode"><legend>Sign up</legend>{([['individual','As an individual'],['sole_founder','As a sole founder'],['company','As a company']] as const).map(([value,label])=><label key={value} data-selected={signupMode===value}><input type="radio"name="signup_mode"value={value}checked={signupMode===value}onChange={()=>setSignupMode(value)}/><span>{label}</span></label>)}</fieldset>
                 <Input
                   label="Full name"
                   name="name"
@@ -369,24 +373,25 @@ export function AuthPage({ mode }: { mode: Mode }) {
                   maxLength={100}
                 />
 
-                <Input
-                  label="Company name"
+                {signupMode!=='individual'&&<Input
+                  label={signupMode==='company'?'Company name':'Business name (optional)'}
                   name="company"
                   autoComplete="organization"
                   placeholder="e.g. Acme Operations"
-                  required
                   maxLength={120}
-                />
+                  required={signupMode==='company'}
+                />}
               </>
             )}
 
             {mode !== 'reset' && (
               <Input
-                label="Work email"
+                label="Email address"
+                hint=""
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="you@company.com"
+                placeholder="you@example.com"
                 required
                 maxLength={320}
               />
@@ -436,7 +441,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
           {mode === 'signup' && (
             <p className="v-auth-help">
-              By creating a company, you agree to the <Link to="/terms">Terms and conditions</Link> and acknowledge the <Link to="/privacy">Privacy policy</Link>. Joining an existing team? Use your company’s invitation.
+              By creating an account, you agree to the <Link to="/terms">Terms and conditions</Link> and acknowledge the <Link to="/privacy">Privacy policy</Link>. Joining an existing team? Use your company’s invitation.
             </p>
           )}
 
@@ -450,7 +455,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
             {busy
               ? 'Please wait…'
               : mode === 'signup'
-                ? 'Create company'
+                ? 'Create account'
                 : mode === 'login'
                   ? 'Log in'
                   : mode === 'forgot'

@@ -1,0 +1,12 @@
+import {useRef,useState} from 'react'
+import {Link} from 'react-router-dom'
+import {runAI} from '../../lib/ai-gateway'
+import {readAnswer,type EvidenceSource} from '../ai/workspace-evidence'
+import {Button} from '../../components/ui/Button'
+import './ask-vimbre-ai.css'
+type Answer={question:string;answer:string;sources:EvidenceSource[];limited?:boolean}
+export function AskVimbreAI({back}:{back:()=>void}){
+ const [question,setQuestion]=useState(''),[answers,setAnswers]=useState<Answer[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState('');const pending=useRef(false)
+ async function ask(){const q=question.trim();if(!q||pending.current)return;pending.current=true;setBusy(true);setError('');try{const result=await runAI('workspace_answer',q);if(!result.ok)throw Error(result.message);const parsed=readAnswer(result.text,result.sources??[]);setAnswers(rows=>[...rows,{question:q,...parsed,limited:result.truncated}]);setQuestion('')}catch(e){setError((e as Error).message)}finally{pending.current=false;setBusy(false)}}
+ return <section className="ask-vimbre"aria-label="Ask VimbreAI"><header><button className="button button-secondary"onClick={back}aria-label="Back to conversations">←</button><h2>Ask VimbreAI</h2><span>Private</span></header><div className="ask-vimbre-results"aria-live="polite">{!answers.length&&<div className="ask-vimbre-start"><h3>Find the answer in your work.</h3>{['Who made the supplier decision?','What is still waiting for approval?','What did I finish this month?'].map(q=><button type="button"key={q}onClick={()=>setQuestion(q)}>{q}</button>)}</div>}{answers.map((a,i)=><article key={i}><h3>{a.question}</h3><p className="record-text">{a.answer}</p>{a.limited&&<p className="muted">Some matches were omitted. Add a project name or date to narrow the search.</p>}{a.sources.length>0&&<ul>{a.sources.map(s=><li key={s.ref}><Link to={s.path}>{s.title}</Link></li>)}</ul>}</article>)}</div><form onSubmit={e=>{e.preventDefault();void ask()}}><label htmlFor="ask-vimbre-question">Ask about your work</label><textarea id="ask-vimbre-question"rows={3}maxLength={2000}value={question}disabled={busy}onChange={e=>setQuestion(e.target.value)}placeholder="Who decided this, and why?"/>{error&&<p role="alert"className="field-error">{error}</p>}<Button type="submit"disabled={busy||!question.trim()}>{busy?'Looking through your records…':'Ask VimbreAI'}</Button></form></section>
+}

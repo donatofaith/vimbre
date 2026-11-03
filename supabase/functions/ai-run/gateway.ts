@@ -4,6 +4,7 @@ import type { Adapter, Attempt, Reservation, Usage, AIDocument } from './types.t
 import { ProviderError, zeroUsage } from './types.ts'
 export type Identity = { userId: string; companyId: string }
 export type GatewayDependencies = {
+  workspaceSource?:(token:string,query:string,report?:{start:string;end:string})=>Promise<{sources:{ref:string;title:string;path:string;[key:string]:unknown}[];truncated?:boolean;[key:string]:unknown}>
   authorizeAI?: (identity:Identity)=>Promise<boolean>
   handoverSource?: (user:string,id:string,kind:string)=>Promise<string>
   handoverClaim?: (user:string,id:string,request:string,kind:string,fingerprint:string,redraft:boolean)=>Promise<{cached?:string|null;blocked?:string}>
@@ -65,10 +66,10 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
       const identity=await deps.identify(token)
       if(!identity)return fail(401,'Sign in with an active account to use AI. You can continue by hand.')
       if(deps.authorizeAI&&!await deps.authorizeAI(identity))return fail(403,'Vimbre AI is switched off for this company. You can continue by hand.');
-      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean}
+      let body: {task: string; text: string; document?: AIDocument; capture_id?:string; handover_id?:string; redraft?:boolean;report?:{start:string;end:string}}
       try {
         const data=await boundedBody(request)
-        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft'&&k!=='handover_id')||
+        if(!data||Array.isArray(data)||typeof data!=='object'||Object.keys(data).some(k=>k!=='task'&&k!=='text'&&k!=='document'&&k!=='capture_id'&&k!=='redraft'&&k!=='handover_id'&&k!=='report')||
           typeof data.task!=='string'||!Object.hasOwn(tasks,data.task)||typeof data.text!=='string'||!data.text.trim()||new TextEncoder().encode(data.text).byteLength>16000)throw new Error('Invalid input')
         if(data.document!==undefined) {
           const doc=data.document
@@ -81,10 +82,20 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         if(['handover_draft','handover_return'].includes(data.task)&&!data.handover_id)throw new Error('Handover required')
         if(data.redraft!==undefined&&typeof data.redraft!=='boolean')throw new Error('Invalid redraft')
         if(data.task==='capture_extract'&&!data.capture_id)throw new Error('Capture required')
+        if(data.report!==undefined){const r=data.report;if(data.task!=='weekly_summary'||!r||typeof r!=='object'||Array.isArray(r)||Object.keys(r).some(k=>k!=='start'&&k!=='end')||!/^\d{4}-\d{2}-\d{2}$/.test(r.start)||!/^\d{4}-\d{2}-\d{2}$/.test(r.end)||!Number.isFinite(Date.parse(r.start))||!Number.isFinite(Date.parse(r.end))||r.start>r.end||Date.parse(r.end)-Date.parse(r.start)>31*86400000)throw Error('Invalid report')}
+        if(data.task==='workspace_answer'&&data.text.length>2000)throw Error('Question too long')
         body=data
       } catch {return fail(400,'Choose a valid AI task and add up to 16 KB of text. You can continue by hand.')}
       const requestId=request.headers.get('idempotency-key')??crypto.randomUUID()
       if(!uuid.test(requestId))return fail(400,'Use a valid request reference. You can continue by hand.')
+      let evidence:{sources:{ref:string;title:string;path:string;[key:string]:unknown}[];truncated?:boolean;[key:string]:unknown}|undefined
+      if(body.task==='workspace_answer'||body.task==='weekly_summary'&&body.report){
+        if(!deps.workspaceSource)return fail(503)
+        evidence=await deps.workspaceSource(token,body.task==='workspace_answer'?body.text:'',body.report)
+        const supplied=JSON.stringify({question:body.task==='workspace_answer'?body.text:undefined,additional_notes:body.task==='weekly_summary'?body.text:undefined,evidence})
+        if(new TextEncoder().encode(supplied).byteLength>90000)return fail(400,'Too many matching records. Narrow the question or select a shorter period.')
+        body.text=supplied
+      }
       let claimed = false
       if(body.capture_id) {
         if(!deps.captureSource||!deps.captureClaim||!deps.captureComplete)return fail(503)
@@ -140,7 +151,7 @@ export function createGateway(deps: GatewayDependencies, timeoutMs = 30000) {
         catch {await markFailed();return fail(502,'The draft could not be read. Your text is still here. You can add a task by hand.')}
       }
       if(handoverClaimed)await deps.handoverComplete!(identity.userId,requestId,answer,false)
-      return new Response(JSON.stringify({ok:true,text:answer,request_id:requestId}),{status:200,headers})
+      return new Response(JSON.stringify({ok:true,text:answer,request_id:requestId,...(evidence?{sources:evidence.sources.map(({ref,title,path,kind})=>({ref,title,path,kind})),truncated:evidence.truncated===true}:{})}),{status:200,headers})
     } catch {return fail(503)}
   }
 }

@@ -165,3 +165,9 @@ it('logs a safe provider failure category without exposing provider text or cred
   expect(JSON.stringify(warn.mock.calls)).not.toMatch(/private|sk-secret/)
  } finally {warn.mockRestore()}
 })
+
+describe('server-owned workspace evidence',()=>{
+ it('builds answers from authenticated evidence and returns authoritative source links',async()=>{const app=fixture();app.deps.workspaceSource=vi.fn(async()=>({sources:[{ref:'decision:1',title:'Supplier decision',path:'/app/role-record?record=1',kind:'decision',body:'Alex decided'}]}));const response=await app.call({task:'workspace_answer',text:'Who chose the supplier?'});expect(response.status).toBe(200);expect(app.deps.workspaceSource).toHaveBeenCalledWith('valid','Who chose the supplier?',undefined);expect(app.generate.mock.calls[0][0].text).toContain('Alex decided');expect((await response.json()).sources).toEqual([{ref:'decision:1',title:'Supplier decision',path:'/app/role-record?record=1',kind:'decision'}])})
+ it('uses selected report dates and rejects mismatched period input',async()=>{const app=fixture();app.deps.workspaceSource=vi.fn(async()=>({sources:[]}));expect((await app.call({task:'weekly_summary',text:'Summary',report:{start:'2026-10-01',end:'2026-10-31'}})).status).toBe(200);expect(app.deps.workspaceSource).toHaveBeenCalledWith('valid','',{start:'2026-10-01',end:'2026-10-31'});for(const report of [{start:'2026-11-10',end:'2026-11-01'},{start:'2026-01-01',end:'2026-12-31'},{start:'bad',end:'bad'}])expect((await app.call({task:'weekly_summary',text:'Summary',report})).status).toBe(400)})
+ it('does not call a model when evidence retrieval fails',async()=>{const app=fixture();app.deps.workspaceSource=vi.fn(async()=>{throw Error('Denied')});expect((await app.call({task:'workspace_answer',text:'Private records'})).status).toBe(503);expect(app.generate).not.toHaveBeenCalled();expect(app.deps.begin).not.toHaveBeenCalled()})
+})

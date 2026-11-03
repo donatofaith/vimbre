@@ -93,3 +93,7 @@
 .ho-wizard-footer .button{width:auto;min-height:48px}
 .ho-wizard-footer .ho-helper{padding:0;background:transparent}
 .ho-wizard-footer .field-error button{margin-left:8px;min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface,#fffdf8);font:inherit;cursor:pointer}
+
+.ho-ai-review{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px;border:1px solid var(--border);border-radius:10px}.ho-ai-review>strong{width:100%}.ho-ai-suggestion{padding:16px;border:1px solid var(--blue);border-radius:8px;background:var(--blue-soft);margin-top:16px}.ho-ai-suggestion .ho-actions{margin-top:12px}@media(max-width:600px){.ho-ai-review>.button{width:100%}}
+
+.ho-send{gap:20px}.ho-send>p{margin:0}.ho-send>.ho-choice{margin:0;padding:8px 0;min-height:44px;border:0}.ho-send>.ho-actions{display:flex;flex-wrap:wrap;gap:8px}.ho-send>.ho-text{justify-self:start}@media(max-width:600px){.ho-send>.ho-actions>.button{width:100%}}

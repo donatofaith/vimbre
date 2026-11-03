@@ -1064,6 +1064,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      workspace_evidence:{Args:{p_from?:string|null;p_to?:string|null;p_query?:string};Returns:Json}
+      myday_stars_period:{Args:{p_day?:string|null;p_period?:string};Returns:Json}
+      claim_signup_analytics:{Args:{p_receipt?:string|null};Returns:boolean}
+
       customer_support_state: { Args: { p_ticket: string; p_close: boolean }; Returns: Json }
 
       capture_workspace: {Args:{p_action:string;p_id?:string|null;p_data?:Json};Returns:Json}

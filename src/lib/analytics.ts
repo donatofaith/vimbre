@@ -5,7 +5,7 @@ export type AnalyticsConsent = 'accepted' | 'declined' | null
 export type SourceType = 'manual' | 'ai' | 'capture' | 'role' | 'template' | 'assignment' | 'import' | 'cover' | 'plan' | 'offline_sync' | 'text' | 'document' | 'tasks' | 'handover' | 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'
 export type ContextType = 'role_summary' | 'day_plan' | 'day_briefing' | 'conversation_summary' | 'capture_extract' | 'tidy_text' | 'weekly_summary' | 'handover_draft' | 'handover_return' | 'role_responsibility' | 'role_workstream' | 'role_external_contact' | 'role_document' | 'role_recurring_deadline' | 'role_decision' | 'tasks_extract' | 'task_context'
 type Events = {
-  sign_up: {method: 'password'}
+  sign_up: {method: 'email'}
   login: {method: 'password'}
   integration_connected: {source_type: Extract<SourceType, 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'>}
   context_generated: {source_type: SourceType; context_type: ContextType}
@@ -36,10 +36,11 @@ export function analyticsConsent(): AnalyticsConsent {
 }
 function push(payload: Record<string, unknown>): boolean {
   if (typeof window === 'undefined' || analyticsConsent() !== 'accepted') return false
-  try { if (window.gtag) { const {event, ...params} = payload; window.gtag('event', event, params) } else (window.dataLayer ??= []).push(payload); return true } catch { return false }
+  try { if(payload.event==='sign_up'){(window.dataLayer??=[]).push(payload);return true} if (window.gtag) { const {event, ...params} = payload; window.gtag('event', event, params) } else (window.dataLayer ??= []).push(payload); return true } catch { return false }
 }
 function alreadySent(key: string): boolean {
   if (seen.has(key)) return true
+  if(key.startsWith('sign_up:'))try{if(window.localStorage.getItem(key)==='sent')return true}catch{}
   try {
     const stored: unknown = JSON.parse(window.sessionStorage.getItem(dedupeStorage) ?? '[]')
     if (Array.isArray(stored) && stored.includes(key)) return true
@@ -48,6 +49,7 @@ function alreadySent(key: string): boolean {
 }
 function remember(key: string) {
   seen.add(key)
+  if(key.startsWith('sign_up:'))try{window.localStorage.setItem(key,'sent')}catch{}
   try {
     const stored: unknown = JSON.parse(window.sessionStorage.getItem(dedupeStorage) ?? '[]')
     const keys = Array.isArray(stored) ? stored.filter((v): v is string => typeof v === 'string') : []
@@ -61,8 +63,9 @@ export function trackEvent<E extends keyof Events>(event: E, params: Events[E], 
   const payload: Record<string, unknown> = {event, success: true}
   // Rebuild from an allowlist even if an untyped caller passes extra fields.
   if (event === 'sign_up' || event === 'login') {
-    if (p.method !== 'password') return false
-    payload.method = 'password'
+    if (p.method !== (event==='sign_up'?'email':'password')) return false
+    payload.method = p.method
+    if(event==='sign_up')delete payload.success
   } else if (event === 'integration_connected') {
     if (!tools.has(p.source_type)) return false
     payload.source_type = p.source_type
@@ -90,7 +93,7 @@ export function trackTaskCreated(id: unknown, source_type: SourceType) {
 }
 export function trackAccountCreated(user: {id: string; identities?: unknown[]} | null) {
   // Existing-email signup responses can be deliberately obfuscated by Supabase.
-  if (user?.identities?.length && trackEvent('sign_up', {method: 'password'}, user.id)) {
+  if (user?.identities?.length && trackEvent('sign_up', {method: 'email'}, user.id)) {
     try { window.gtag_report_conversion?.() } catch { /* Signup succeeds even if tracking is blocked. */ }
   }
 }
