@@ -318,8 +318,8 @@ function MyDayContent() {
       setMessage(
         op === "pin"
           ? values.pinned
-            ? "Task starred."
-            : "Task unstarred."
+            ? "Task pinned."
+            : "Task unpinned."
           : op === "context"
             ? "Added to context."
             : op==="archive"||op==="delete_series" ? "Task deleted." : op==="undo" ? "Changes undone." : "Task updated.",
@@ -329,7 +329,7 @@ function MyDayContent() {
     } catch (e) {
       setError(
         op === "pin" && (e as { code?: string }).code === "22023"
-          ? "This task could not be starred. Refresh and try again."
+          ? "This task could not be pinned. Refresh and try again."
           : taskError(e),
       );
       return false;

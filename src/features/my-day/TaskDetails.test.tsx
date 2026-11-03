@@ -1,0 +1,12 @@
+import {renderToStaticMarkup}from 'react-dom/server'
+import {MemoryRouter}from 'react-router-dom'
+import {expect,it}from 'vitest'
+import {TaskDetails,type TaskDetailsProps}from './TaskDetails'
+import type {Task}from './types'
+const noop=()=>{}
+const task={id:'one',title:'Confirm supplier delivery',status:'open',priority:'high',due_date:'2026-11-03',due_time:null,due_at:'2026-11-03T23:59:00Z',details:'Check delivery access with the supplier.',source_kind:'email',source_excerpt:'Please confirm the delivery slot.',source_url:'https://example.com/thread',steps:['Check access','Confirm the slot'],links:['javascript:alert(1)','https://example.com/order']}as Task
+function render(patch:Partial<Task>={}){const props:TaskDetailsProps={task:{...task,...patch},zone:'Africa/Lagos',busy:false,act:noop,edit:noop,remind:noop,context:noop,record:noop,quickContext:noop,tools:<div>Secondary task tools</div>};return renderToStaticMarkup(<MemoryRouter><TaskDetails {...props}/></MemoryRouter>)}
+it('presents essentials and checklist ahead of collapsed supporting sections',()=>{const html=render();expect(html).toContain('aria-label="Task"');expect(html.indexOf('Checklist')).toBeLessThan(html.indexOf('<summary>Context</summary>'));for(const title of ['Context','More options','Record'])expect(html).toContain(`<summary>${title}</summary>`);expect(html).not.toContain('<details open');expect(html).not.toContain('Secondary task tools');expect(html).toContain('Edit task')})
+it('keeps source evidence and safe links while rejecting unsafe URLs',()=>{const html=render();expect(html).toContain('Please confirm the delivery slot.');expect(html).toContain('https://example.com/order');expect(html).not.toContain('javascript:')})
+it('uses Pin and Unpin for task controls and keeps completed outcomes inside Record',()=>{expect(render()).toContain('>Pin</button>');expect(render({pinned_at:'2026-11-03T08:00Z'})).toContain('>Unpin</button>');const html=render({status:'done'});expect(html).not.toContain('>Pin</button>');expect(html.indexOf('Completion outcome')).toBeGreaterThan(html.indexOf('<summary>Record</summary>'));expect(html).toContain('View activity history')})
+it('retains restoration and read-only status for deleted tasks',()=>{const html=render({deleted_at:'2026-11-03T08:00Z'});expect(html).toContain('Restore task');expect(html).not.toContain('<select');expect(html).not.toContain('>Pin</button>')})

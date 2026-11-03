@@ -1,3 +1,4 @@
+import './task-details.css'
 import {TimeField} from './TimeField'
 import {trackTaskCompleted} from '../../lib/analytics'
 import {supabase} from '../../lib/supabase'
@@ -150,6 +151,10 @@ export function TaskPanel({
             defaultValue={task?.title ?? draft?.title}
             placeholder="e.g. Share the supplier review notes"
           />
+              <div className="field">
+                <span>Status</span>
+                <input type="hidden" name="status" value={status}/><SegmentedControl label="Status" value={status} onChange={setStatus} options={[{value:'open',label:'To do'},{value:'in_progress',label:'In progress'},{value:'done',label:'Done'}]}/>
+              </div>
           <div className="field">
             <label htmlFor="md-date">Due date</label>
             <div className="md-date-chips">
@@ -175,22 +180,20 @@ export function TaskPanel({
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
-          <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
+          
           <div className="field"><span>Priority</span><SegmentedControl label="Priority" value={priority} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'}]} onChange={setPriority}/></div>
           <div className="field"><label htmlFor={`md-notes-${id}`}>Notes</label><textarea id={`md-notes-${id}`} name="details" rows={3} maxLength={5000} spellCheck defaultValue={task?.details??draft?.details}/></div>
           <details className="md-more" open={stepsFirst||undefined}>
             <summary>More options</summary>
             <div className="auth-form">
+          <Input label="Owner" value={profile?.full_name??'Me'} readOnly/>
           <TimeField value={time} disabled={!date} onChange={setTime}/>
           <ForPicker
             suggestion={draft?.department_name || draft?.external_contact_name}
             value={forValue}
             onChange={setFor}
           />
-              <div className="field">
-                <span>Status</span>
-                <input type="hidden" name="status" value={status}/><SegmentedControl label="Status" value={status} onChange={setStatus} options={[{value:'open',label:'To do'},{value:'in_progress',label:'In progress'},{value:'done',label:'Done'}]}/>
-              </div>
+
               <div className="field">
                 <span>Remind me</span>
                 <input type="hidden" name="reminder_option" value={reminder}/><SegmentedControl label="Remind me" value={reminder} onChange={setReminder} options={[{value:'at_time',label:'At due time'},{value:'30_minutes',label:'30 minutes before'},{value:'1_hour',label:'1 hour before'},{value:'day_before',label:'The day before at 9:00'}]}/>
@@ -230,7 +233,7 @@ export function TaskPanel({
           <div className="md-panel-actions">
             <span role="status">{busy?deleting?'Deleting…':'Saving…':saveState}</span>
             <Button variant="secondary" onClick={finish} disabled={busy}>Cancel</Button>
-            {task&&!task.deleted_at&&remove&&<Button variant="danger" className="md-delete" onClick={()=>{if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else void deleteTask(false)}} disabled={busy}>{deleting?'Deleting…':'Delete'}</Button>}
+            {task&&!task.deleted_at&&remove&&<details className="md-task-action-menu"><summary>More actions</summary><div><Button variant="danger" className="md-delete" onClick={e=>{e.currentTarget.closest("details")?.removeAttribute("open");if(task.capture_id||task.decision_id||task.repeat_rule)setConfirmDelete(true);else void deleteTask(false)}} disabled={busy}>{deleting?'Deleting…':'Delete task'}</Button></div></details>}
             <Button type="submit" disabled={busy||confirmDelete}>{busy&&!deleting?'Saving…':task?'Save changes':'Save task'}</Button>
           </div>
         </form>

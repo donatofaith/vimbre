@@ -1,0 +1,32 @@
+/* Task overview first. Supporting actions remain available through disclosure sections. */
+.vr-drawer.md-task-drawer .task-detail-panel .md-task-fields{display:grid;align-content:start;gap:24px}
+.task-detail-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.task-detail-heading h2{font-size:22px;line-height:1.35;margin:0;min-width:0;overflow-wrap:anywhere}
+.task-pin-action{display:inline-flex;align-items:center;gap:6px;flex:none;min-height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;cursor:pointer}
+.task-pin-action[aria-pressed=true]{color:var(--blue-hover);background:var(--blue-soft);border-color:var(--blue)}
+.task-pin-action svg,.md-pin-mark svg{width:18px;height:18px;flex:none}
+.md-pin-mark{display:inline-flex;color:var(--blue-hover);vertical-align:middle}
+.task-detail-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;padding:18px;background:var(--background);border:1px solid var(--border);border-radius:10px}
+.task-detail-fact{display:grid;align-content:start;gap:6px;min-width:0}
+.task-detail-fact>span,.task-detail-source>span{font-size:12px;color:var(--muted)}
+.task-detail-fact strong{font-weight:500;font-size:14px;overflow-wrap:anywhere}
+.task-detail-fact select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);padding:6px 8px;font:inherit}
+.task-detail-panel h3{font-size:14px;font-weight:650;line-height:1.5;margin:0 0 8px}
+.task-detail-notes p{margin:0;line-height:1.75}
+.task-detail-checklist ol{padding-left:20px;margin:0;display:grid;gap:10px}
+.task-detail-section{border-top:1px solid var(--border);padding-top:4px;min-width:0}
+.task-detail-section>summary{min-height:48px;cursor:pointer;font-weight:600;align-content:center;padding:12px 0}
+.task-detail-section-body{display:grid;gap:16px;padding:8px 0 4px;min-width:0}
+.task-detail-section-body>p{margin:0}
+.task-detail-section-body :is(a,blockquote){overflow-wrap:anywhere}
+.task-detail-source{display:grid;gap:4px}
+.task-detail-source strong{font-weight:500}
+.task-detail-section blockquote{border-left:2px solid var(--border);margin:0;padding:4px 0 4px 14px;color:var(--muted)}
+.task-detail-shortcuts{display:flex;flex-wrap:wrap;gap:8px}
+.task-detail-outcome{display:grid;gap:10px}
+.task-detail-panel .md-tool-section{padding:12px 0}
+.md-task-action-menu{position:relative;margin-right:auto}
+.md-task-action-menu>summary{display:inline-flex;min-height:44px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;list-style:none;font-size:13px}
+.md-task-action-menu>summary::-webkit-details-marker{display:none}
+.md-task-action-menu>div{position:absolute;bottom:calc(100% + 8px);right:0;z-index:5;padding:6px;border:1px solid var(--border);border-radius:9px;background:var(--surface);box-shadow:0 8px 24px #102a4320;min-width:150px}
+@media(max-width:600px){.task-detail-heading h2{font-size:20px}.task-pin-action{min-height:44px}.task-detail-overview{gap:16px;padding:14px}.task-detail-fact select{font-size:16px;min-height:44px}.task-detail-shortcuts>.button{flex:1 1 auto}.task-detail-panel .md-panel-actions>.button{width:100%}}
