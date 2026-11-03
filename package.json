@@ -15,7 +15,9 @@
     "test:landing": "node scripts/check-landing-browser.cjs",
     "typecheck:ai": "tsc -p scripts/tsconfig.ai.json",
     "typecheck:billing": "tsc -p scripts/tsconfig.billing.json",
-    "test:daily-sql": "node scripts/check-daily-release-sql.mjs"
+    "test:daily-sql": "node scripts/check-daily-release-sql.mjs",
+    "walkthrough:capture": "node scripts/walkthrough-capture.mjs",
+    "test:public": "node scripts/check-public-preview.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

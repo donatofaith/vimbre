@@ -5,7 +5,7 @@ export type AnalyticsConsent = 'accepted' | 'declined' | null
 export type SourceType = 'manual' | 'ai' | 'capture' | 'role' | 'template' | 'assignment' | 'import' | 'cover' | 'plan' | 'offline_sync' | 'text' | 'document' | 'tasks' | 'handover' | 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'
 export type ContextType = 'role_summary' | 'day_plan' | 'day_briefing' | 'conversation_summary' | 'capture_extract' | 'tidy_text' | 'weekly_summary' | 'handover_draft' | 'handover_return' | 'role_responsibility' | 'role_workstream' | 'role_external_contact' | 'role_document' | 'role_recurring_deadline' | 'role_decision' | 'tasks_extract' | 'task_context'
 type Events = {
-  sign_up: {method: 'email'}
+  sign_up: {method: 'email';account_type?:'individual'|'sole_founder'|'company'}
   login: {method: 'password'}
   integration_connected: {source_type: Extract<SourceType, 'gmail' | 'drive' | 'github' | 'notion' | 'asana' | 'outlook' | 'teams' | 'slack' | 'trello'>}
   context_generated: {source_type: SourceType; context_type: ContextType}
@@ -36,7 +36,7 @@ export function analyticsConsent(): AnalyticsConsent {
 }
 function push(payload: Record<string, unknown>): boolean {
   if (typeof window === 'undefined' || analyticsConsent() !== 'accepted') return false
-  try { if(payload.event==='sign_up'){(window.dataLayer??=[]).push(payload);return true} if (window.gtag) { const {event, ...params} = payload; window.gtag('event', event, params) } else (window.dataLayer ??= []).push(payload); return true } catch { return false }
+  try { (window.dataLayer??=[]).push(payload);return true } catch { return false }
 }
 function alreadySent(key: string): boolean {
   if (seen.has(key)) return true
@@ -65,7 +65,7 @@ export function trackEvent<E extends keyof Events>(event: E, params: Events[E], 
   if (event === 'sign_up' || event === 'login') {
     if (p.method !== (event==='sign_up'?'email':'password')) return false
     payload.method = p.method
-    if(event==='sign_up')delete payload.success
+    if(event==='sign_up'){delete payload.success;const type=p.account_type??'company';if(!['individual','sole_founder','company'].includes(String(type)))return false;payload.account_type=type}
   } else if (event === 'integration_connected') {
     if (!tools.has(p.source_type)) return false
     payload.source_type = p.source_type
@@ -91,11 +91,9 @@ export function trackEvent<E extends keyof Events>(event: E, params: Events[E], 
 export function trackTaskCreated(id: unknown, source_type: SourceType) {
   if (typeof id === 'string' && id) trackEvent('action_created', {source_type, action_type: 'task', action_count: 1}, id)
 }
-export function trackAccountCreated(user: {id: string; identities?: unknown[]} | null) {
+export function trackAccountCreated(user: {id: string; identities?: unknown[];user_metadata?:Record<string,unknown>} | null) {
   // Existing-email signup responses can be deliberately obfuscated by Supabase.
-  if (user?.identities?.length && trackEvent('sign_up', {method: 'email'}, user.id)) {
-    try { window.gtag_report_conversion?.() } catch { /* Signup succeeds even if tracking is blocked. */ }
-  }
+  if(user?.identities?.length)trackEvent('sign_up',{method:'email',account_type:user.user_metadata?.workspace_type==='individual'?'individual':user.user_metadata?.workspace_type==='sole_founder'?'sole_founder':'company'},user.id)
 }
 export function trackLogin(session: {user: {id: string}; expires_at?: number} | null) {
   if (session) trackEvent('login', {method: 'password'}, `${session.user.id}:${session.expires_at ?? 'current'}`)
@@ -122,7 +120,7 @@ export function trackConnectedIntegration(state: string) {
     if (remembered?.state === state && provider) trackEvent('integration_connected', {source_type: provider}, state)
   } catch { /* Connection success must never depend on telemetry. */ }
 }
-const routes = new Set(['/', '/login','/signup','/forgot','/reset-password','/auth/callback','/join','/privacy','/terms','/competition-terms','/blog','/app','/app/capture','/app/chat','/app/role-record','/app/team-activity','/app/team','/app/departments','/app/settings','/app/billing','/app/help','/app/weekly-summary','/role-guide','/handover-share'])
+const routes = new Set(['/pricing','/faq','/how-it-works','/integrations','/tour','/use-cases/handover','/use-cases/decisions','/use-cases/workday-planner','/for-individuals','/for-founders','/for-companies','/', '/login','/signup','/forgot','/reset-password','/auth/callback','/join','/privacy','/terms','/competition-terms','/blog','/app','/app/capture','/app/chat','/app/role-record','/app/team-activity','/app/team','/app/departments','/app/settings','/app/billing','/app/help','/app/weekly-summary','/role-guide','/handover-share'])
 export function analyticsPath(pathname: string): string {
   const path = pathname.split(/[?#]/, 1)[0].replace(/\/$/, '') || '/'
   if (routes.has(path)) return path

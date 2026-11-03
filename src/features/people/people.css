@@ -2,3 +2,5 @@
 
 .member-profile-form input[type=file]{width:1px;height:1px;min-height:0;max-width:1px;padding:0;border:0}
 @media(max-width:360px){.vw-shell.app-shell .vw-topbar{padding-inline:8px;gap:4px}.vw-shell.app-shell .vw-mobile-brand{display:none}}
+
+@media(max-width:360px){html .vw-shell.app-shell .vw-topbar{padding-inline:8px;gap:4px}html .vw-shell.app-shell .vw-topbar .vw-mobile-brand{display:none}html .vw-shell.app-shell .vw-topbar .vw-breadcrumb{min-width:0;flex:1}}

@@ -59,7 +59,7 @@ it('does not count obfuscated existing-email signup responses or absent login se
   analytics.trackAccountCreated({id:'new-user',identities:[{provider:'email'}]})
   analytics.trackAccountCreated({id:'new-user',identities:[{provider:'email'}]})
   analytics.trackLogin({user:{id:'new-user'},expires_at:123})
-  expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email'},{event:'login',success:true,method:'password'}])
+  expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email',account_type:'company'},{event:'login',success:true,method:'password'}])
 })
 it('reports only the verified integration type after callback success, without OAuth state',()=>{
   const state='a'.repeat(64)
@@ -86,13 +86,15 @@ it('redacts private paths, titles, query strings and callback tokens from SPA pa
   ])
 })
 
-it('reports the Ads conversion once for successful new signup, never an existing account',()=>{
+it('leaves conversion delivery to GTM and emits only a completed signup event',()=>{
  const conversion=vi.fn();Object.assign(browser,{gtag_report_conversion:conversion})
  analytics.trackAccountCreated({id:'new-user',identities:[{}]})
  analytics.trackAccountCreated({id:'new-user',identities:[{}]})
  analytics.trackAccountCreated({id:'existing',identities:[]})
- expect(conversion).toHaveBeenCalledTimes(1)
+ expect(conversion).not.toHaveBeenCalled();expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email',account_type:'company'}])
 })
 
-it('pushes the exact signup object to dataLayer even when gtag exists',()=>{const gtag=vi.fn();Object.assign(browser,{gtag});analytics.trackAccountCreated({id:'new-email-account',identities:[{}]});expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email'}]);expect(gtag).not.toHaveBeenCalled()})
-it('keeps signup deduplication after a new browser session',async()=>{analytics.trackAccountCreated({id:'once',identities:[{}]});browser.sessionStorage=storage();vi.resetModules();const fresh=await import('./analytics');fresh.trackAccountCreated({id:'once',identities:[{}]});expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email'}])})
+it('pushes the exact signup object to dataLayer even when gtag exists',()=>{const gtag=vi.fn();Object.assign(browser,{gtag});analytics.trackAccountCreated({id:'new-email-account',identities:[{}]});expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email',account_type:'company'}]);expect(gtag).not.toHaveBeenCalled()})
+it('keeps signup deduplication after a new browser session',async()=>{analytics.trackAccountCreated({id:'once',identities:[{}]});browser.sessionStorage=storage();vi.resetModules();const fresh=await import('./analytics');fresh.trackAccountCreated({id:'once',identities:[{}]});expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email',account_type:'company'}])})
+
+it('includes the chosen account type and never sends account metadata',()=>{analytics.trackAccountCreated({id:'personal',identities:[{}],user_metadata:{workspace_type:'individual',email:'private@example.com'}});expect(browser.dataLayer).toEqual([{event:'sign_up',method:'email',account_type:'individual'}])})
