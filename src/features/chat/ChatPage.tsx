@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import {MemberAvatar} from '../people/MemberAvatar'
 import {AskVimbreAI} from './AskVimbreAI'
 import {useMessageSelection} from './useMessageSelection'
@@ -33,7 +34,7 @@ export function ChatPage() {
   const [listLoading, setListLoading] = useState(true)
   const [listRetry, setListRetry] = useState(0)
   const ensuredTeam=useRef('')
-  useEffect(()=>{const refresh=()=>{if(!document.hidden)setListRetry(n=>n+1)};const timer=setInterval(refresh,60000);window.addEventListener('vimbre:profile-updated',refresh);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('vimbre:profile-updated',refresh);window.removeEventListener('focus',refresh)}},[])
+  useEffect(()=>{const refresh=()=>{if(!document.hidden)setListRetry(n=>n+1)};const unsubscribe=subscribeWorkspaceRefresh(refresh);return unsubscribe},[])
   const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
   const [detailReload, setDetailReload] = useState(0)
@@ -576,7 +577,7 @@ function ConversationPanel({
           <span aria-hidden="true">←</span>
         </button>
         <div>
-          <h2>{title}</h2>{result?.kind==='direct'&&<small>{result.members.find(m=>m.id!==profile?.id)?.job_title}</small>}
+          <h2>{title}</h2><div className="chat-thread-details">{result?.kind==='direct'&&<small>{result.members.find(m=>m.id!==profile?.id)?.job_title}</small>}
           {result && (
             <button
               className="chat-members-button"
@@ -585,7 +586,7 @@ function ConversationPanel({
             >
               {result.members.length} participants
             </button>
-          )}
+          )}</div>
         </div>
         {result?.can_rename&&<button className="button button-secondary chat-rename"onClick={()=>{setChatName(result.title);setRenaming(v=>!v);setRenameError('')}}aria-label="Rename chat"title="Rename chat"><svg viewBox="0 0 24 24"width="18"height="18"fill="none"stroke="currentColor"strokeWidth="1.7"aria-hidden="true"><path d="m16 3 5 5-12 12H4v-5ZM14 5l5 5"/></svg></button>}
         <button className="button button-secondary chat-new" aria-label="New chat" title="New chat" onClick={onNew}><span aria-hidden="true">+</span></button>
