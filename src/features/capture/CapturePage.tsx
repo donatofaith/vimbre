@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import {trackConnectedIntegration, trackContextGenerated} from '../../lib/analytics'
 import {captureCall,confirmCapture} from './capture-api'
 import {reviewCaptureDraft} from './capture-review'
@@ -49,6 +50,7 @@ function CaptureWorkspace(){
  useEffect(()=>{if(profile!.role==='employee')return;let alive=true;void supabase.rpc('myday_people',{p_query:'',p_page:0}).then(({data})=>{const v=data as unknown as {id:string;full_name:string;role:string;department_id:string|null}[];if(alive&&Array.isArray(v))setPeople(v.filter(r=>profile!.role==='hr_admin'||r.department_id===profile!.department_id).map(r=>({id:r.id,title:r.full_name}))) });return()=>{alive=false}},[profile])
  useEffect(()=>{let alive=true;void supabase.rpc('capture_workspace',{p_action:'list',p_data:{page,filter:historyFilter}}).then(({data,error})=>{if(alive){setListError(Boolean(error));setListing(error?null:data as unknown as {rows:CaptureSource[];count:number})}});return()=>{alive=false}},[page,historyFilter,revision])
  useEffect(()=>{if(!selected)return;let alive=true;void Promise.all([supabase.rpc('capture_workspace',{p_action:'detail',p_id:selected}),supabase.rpc('capture_pipeline',{p_operation:'duplicates',p_id:selected})]).then(([r,d])=>{if(alive){const value=r.data as unknown as CaptureDetail|null;setLoaded(previous=>({capture:selected,data:r.error&&previous?.capture===selected?previous.data:value,error:Boolean(r.error)}));if(value&&loadedSource.current!==selected){loadedSource.current=selected;setSourceText(value.source.source_text);}setDuplicates(Array.isArray(d.data)?d.data as string[]:[])}});return()=>{alive=false}},[selected,key])
+ useEffect(()=>subscribeWorkspaceRefresh(()=>{if(!busy&&!sourceSaving&&!manual)setRevision(n=>n+1)}),[busy,sourceSaving,manual]);
  useEffect(()=>{if(!queueBusy||busy)return;const timer=setInterval(refresh,4000);return()=>clearInterval(timer)},[queueBusy,busy])
  useEffect(()=>{if(selected)window.scrollTo({top:0,left:0,behavior:'instant'})},[selected])
  useEffect(()=>{if(selected)void supabase.rpc('capture_notifications',{p_seen:selected}).then(()=>window.dispatchEvent(new Event('vimbre:work-changed')))},[selected])

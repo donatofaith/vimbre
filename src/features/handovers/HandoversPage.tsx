@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import {printHandover} from './handover-export'
 import {trackContextGenerated} from '../../lib/analytics'
 import {useCallback,useEffect,useState,useRef} from 'react'
@@ -30,7 +31,7 @@ function HandoverPage({id}:{id:string}){const navigate=useNavigate();const [flag
 function Handovers({cover=false}:{cover?:boolean}){
  const {profile}=useAuth();const navigate=useNavigate();const [params]=useSearchParams();const [rows,setRows]=useState<Handover[]|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[page,setPage]=useState(0),[scope,setScope]=useState('mine'),[overview,setOverview]=useState<{upcoming:number;unapproved:number;missing_cover:number}|null>(null),[deleted,setDeleted]=useState('');
  useEffect(()=>{if(params.get('new')==='1')navigate('/app/handovers/start?draft='+crypto.randomUUID()+'&new=1');else if(params.get('handover'))navigate('/app/handovers/'+params.get('handover'))},[params,navigate]);
- useEffect(()=>{let live=true;const load=()=>void handoverRpc('list',null,{page}).then(r=>{if(live){setRows((r as unknown as {rows:Handover[]}).rows);setError('')}}).catch(()=>{if(live)setError('Handovers could not be loaded. Try again.')});load();const timer=setInterval(load,60000);window.addEventListener('focus',load);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',load)}},[page,revision]);
+ useEffect(()=>{let live=true;const load=()=>void handoverRpc('list',null,{page}).then(r=>{if(live){setRows((r as unknown as {rows:Handover[]}).rows);setError('')}}).catch(()=>{if(live)setError('Handovers could not be loaded. Try again.')});load();const unsubscribe=subscribeWorkspaceRefresh(load);return()=>{live=false;unsubscribe()}},[page,revision]);
  useEffect(()=>{let live=true;if(profile!.role==='hr_admin')void handoverRpc('overview').then(r=>{if(live)setOverview(r as typeof overview)}).catch(()=>{});return()=>{live=false}},[profile,revision]);
  function refresh(){setRevision(v=>v+1);window.dispatchEvent(new Event('vimbre:work-changed'))}
  function start(type='leave'){navigate('/app/handovers/start?draft='+crypto.randomUUID()+'&new=1&type='+type)}

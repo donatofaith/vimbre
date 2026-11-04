@@ -94,7 +94,7 @@ function WorkspaceLayout() {
 
   const items = navigation.filter(
     item =>
-      item.path !== '/app/settings' &&
+      item.path !== '/app/settings' && item.path !== '/app/help' &&
       (item.path !== '/app/team-activity' || memberCount !== null && memberCount >= 2) &&
       (!('leaders' in item) || profile?.role !== 'employee'),
   )
@@ -201,6 +201,11 @@ function WorkspaceLayout() {
           >
             <WorkspaceIcon name="settings" />
             <span>Settings</span>
+          </NavLink>
+
+          <NavLink to="/app/help" onClick={()=>setMenuOpen(false)}>
+            <WorkspaceIcon name="support" />
+            <span>Help &amp; Support</span>
           </NavLink>
 
           <Link to="/" onClick={()=>setMenuOpen(false)}>

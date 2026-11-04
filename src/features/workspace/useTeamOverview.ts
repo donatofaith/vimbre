@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from './workspace-refresh'
 import type {Member} from '../people/member'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -26,10 +27,8 @@ export function useTeamOverview(owner: string, search: string, page: number, mem
    if(!cancelled && request===sequence) setResult({key,data:parsed,error:Boolean(error)||!parsed})
   }
   void load()
-  const onReturn=()=>{if(!document.hidden)void load()}
-  window.addEventListener('vimbre:profile-updated',onReturn);window.addEventListener('focus',onReturn);document.addEventListener('visibilitychange',onReturn)
-  const interval=setInterval(onReturn,60000)
-  return()=>{cancelled=true;clearInterval(interval);window.removeEventListener('vimbre:profile-updated',onReturn);window.removeEventListener('focus',onReturn);document.removeEventListener('visibilitychange',onReturn)}
+  const unsubscribe=subscribeWorkspaceRefresh(load)
+  return()=>{cancelled=true;unsubscribe()}
  },[key,search,page,member,refresh])
  return {data:result?.key===key?result.data:null,error:result?.key===key && result.error,retry:()=>setRefresh(n=>n+1)}
 }
@@ -39,9 +38,8 @@ export function useCompanyMemberCount(owner: string, enabled: boolean) {
   if(!enabled)return
   let cancelled=false
   const load=async()=>{const {data,error}=await supabase.rpc('company_active_member_count');if(!cancelled && !error && count(data))setResult({owner,count:data!})}
-  void load();const onReturn=()=>{if(!document.hidden)void load()}
-  window.addEventListener('focus',onReturn);const interval=setInterval(onReturn,60000)
-  return()=>{cancelled=true;clearInterval(interval);window.removeEventListener('focus',onReturn)}
+  void load();const unsubscribe=subscribeWorkspaceRefresh(load)
+  return()=>{cancelled=true;unsubscribe()}
  },[owner,enabled])
  return result?.owner===owner?result.count:null
 }
