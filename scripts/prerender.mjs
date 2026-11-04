@@ -33,7 +33,7 @@ try {
     slugs.add(post.slug)
   }
   const template = await readFile('dist/index.html','utf8')
-  for(const path of [...Object.keys(publicPages),'/tour','/login','/signup','/forgot','/reset-password']){
+  for(const path of [...Object.keys(publicPages),'/login','/signup','/forgot','/reset-password']){
     const meta=metaFor(path),canonical='https://vimbre.com'+path
     let page=template.replace('<div id="root">'+rendered+'</div>','<div id="root">'+(['/login','/signup','/forgot','/reset-password'].includes(path)?renderAccount(path):renderPublic(path))+'</div>')
     page=page.replace(/<title>.*?<\/title>/,()=>'<title>'+escape(meta.title)+'</title>').replace(/<link rel="canonical"[^>]*>/,'<link rel="canonical" href="'+canonical+'" />').replace(/(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*/g,(_,prefix)=>prefix+escape(meta.description)).replace(/(<meta (?:name|property)="(?:og:title|twitter:title)" content=")[^"]*/g,(_,prefix)=>prefix+escape(meta.title)).replace(/(<meta property="og:url" content=")[^"]*/,'$1'+canonical)
@@ -60,7 +60,7 @@ try {
     page=page.replace('</head>',legalStyles+'</head>').replace(/<title>.*?<\/title>/,()=>'<title>'+escape(title)+'</title>').replace(/<link rel="canonical"[^>]*>/,'<link rel="canonical" href="'+canonical+'" />').replace(/(<meta property="og:url" content=")[^"]*/,'$1'+canonical).replace(/(<meta (?:name|property)="(?:og:title|twitter:title)" content=")[^"]*/g,(_,prefix)=>prefix+escape(title)).replace(/(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*/g,(_,prefix)=>prefix+escape(title+' for the Vimbre service.'))
     await mkdir('dist'+path,{recursive:true});await writeFile('dist'+path+'/index.html',page)
   }
-  const urls=['/',...Object.keys(publicPages),'/tour','/blog','/privacy','/terms',...blogPosts.map(post=>'/blog/'+post.slug)]
+  const urls=['/',...Object.keys(publicPages),'/blog','/privacy','/terms',...blogPosts.map(post=>'/blog/'+post.slug)]
   await writeFile('dist/sitemap.xml','<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(path=>'<url><loc>https://vimbre.com'+path+'</loc></url>').join('')+'</urlset>')
   // Vite copies public/robots.txt; preserve its AI crawler and private-route rules.
   console.log('Homepage prerendered with full content, FAQs and matching JSON LD.')
