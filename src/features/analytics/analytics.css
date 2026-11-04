@@ -9,3 +9,4 @@
 .cookie-banner .cookie-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .cookie-banner .cookie-actions button{font-size:14px;line-height:1.4;padding:10px 16px;min-height:44px}
 @media(max-width:700px){.cookie-banner{inset:auto 12px 12px;width:calc(100% - 24px);max-width:420px;padding:16px;max-height:calc(100svh - 24px)}.cookie-banner .cookie-actions{margin-top:12px}}
+.cookie-choice{display:flex;align-items:flex-start;gap:12px;margin:20px 0;cursor:pointer}.cookie-choice input{flex:none;width:20px;height:20px;min-height:20px;margin-top:3px;accent-color:#245fc8}.cookie-choice>span{display:grid;gap:5px}.cookie-choice small{font-size:14px;line-height:1.5;color:#52677d}.cookie-banner .cookie-actions{gap:8px}.cookie-banner .cookie-actions button{padding:9px 12px;font-size:12px;flex:1 1 auto}

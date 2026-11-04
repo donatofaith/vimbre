@@ -18,6 +18,7 @@ declare global {
     gtag?: (...args: unknown[]) => void
     gtag_report_conversion?: (url?: string) => boolean
     dataLayer?: unknown[]
+    vimbreMeta?: {readonly consent: AnalyticsConsent; choose: (choice: Exclude<AnalyticsConsent, null>) => void; pageView: (path: string) => void}
     vimbreAnalytics?: {readonly consent: AnalyticsConsent; choose: (choice: Exclude<AnalyticsConsent, null>) => void}
   }
 }

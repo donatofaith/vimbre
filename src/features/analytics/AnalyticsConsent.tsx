@@ -1,39 +1,21 @@
-import {useEffect, useRef, useState} from 'react'
-import {Link, useLocation} from 'react-router-dom'
-import {analyticsConsent, resetAnalyticsPage, trackPageView} from '../../lib/analytics'
+import {useEffect,useRef,useState} from 'react'
+import {Link,useLocation} from 'react-router-dom'
+import {analyticsConsent,resetAnalyticsPage,trackPageView} from '../../lib/analytics'
 import type {AnalyticsConsent as Consent} from '../../lib/analytics'
 import './analytics.css'
-
-export function CookieSettingsLink() {
-  return <button type="button" className="cookie-settings-link" onClick={() => window.dispatchEvent(new Event('vimbre:cookie-settings'))}>Cookie settings</button>
-}
-export function AnalyticsConsent() {
-  const {pathname} = useLocation()
-  const [consent, setConsent] = useState<Consent>(analyticsConsent)
-  const [settings, setSettings] = useState(false)
-  const [error, setError] = useState('')
-  const dialog = useRef<HTMLDialogElement>(null)
-  const previousFocus = useRef<HTMLElement | null>(null)
-  useEffect(() => {
-    const update = () => setConsent(analyticsConsent())
-    const open = () => { previousFocus.current = document.activeElement as HTMLElement; setSettings(true) }
-    window.addEventListener('vimbre:analytics-consent', update)
-    window.addEventListener('vimbre:cookie-settings', open)
-    return () => { window.removeEventListener('vimbre:analytics-consent', update); window.removeEventListener('vimbre:cookie-settings', open) }
-  }, [])
-  useEffect(() => {
-    if (consent !== 'accepted') { resetAnalyticsPage(); return }
-    trackPageView(pathname)
-  }, [pathname, consent])
-  useEffect(() => { if (settings && dialog.current && !dialog.current.open) dialog.current.showModal() }, [settings])
-  function close() { setSettings(false); previousFocus.current?.focus() }
-  function choose(value: Exclude<Consent, null>) {
-    if (!window.vimbreAnalytics) { setError('Cookie settings could not be saved. Reload this page and try again.'); return }
-    window.vimbreAnalytics.choose(value); setConsent(value); setError(''); close()
-  }
-  const controls = <div className="cookie-actions"><button type="button" onClick={() => choose('declined')}>Reject</button><button type="button" onClick={() => choose('accepted')}>Accept</button></div>
-  return <>
-    {consent === null && !settings && <aside className="cookie-banner" aria-label="Cookie choices"><div><strong>We use cookies</strong><p>We use essential cookies to keep Vimbre working and optional analytics cookies to improve your experience. <Link to="/privacy">Privacy policy</Link></p>{error && <p role="alert">{error}</p>}</div>{controls}</aside>}
-    {settings && <dialog className="cookie-dialog" ref={dialog} aria-labelledby="cookie-title" onCancel={close} onClose={close}><h2 id="cookie-title">Cookie settings</h2><p>Essential cookies are always on. Google Analytics measures usage; Microsoft Clarity helps us understand visits to our public pages. Optional analytics cookies are {consent === 'accepted' ? 'on' : 'off'}.</p><p>You can accept or reject optional analytics cookies. You can change your choice here at any time. <Link to="/privacy" onClick={close}>Read our privacy policy</Link>.</p>{error && <p role="alert">{error}</p>}{controls}<button className="cookie-settings-link" type="button" onClick={close}>Close</button></dialog>}
-  </>
+function marketingConsent():Consent{return typeof window==='undefined'?null:window.vimbreMeta?.consent??null}
+export function CookieSettingsLink(){return <button type="button"className="cookie-settings-link"onClick={()=>window.dispatchEvent(new Event('vimbre:cookie-settings'))}>Cookie settings</button>}
+export function AnalyticsConsent(){
+ const {pathname}=useLocation(),[consent,setConsent]=useState<Consent>(analyticsConsent),[marketing,setMarketing]=useState<Consent>(marketingConsent),[settings,setSettings]=useState(false),[analyticsChoice,setAnalyticsChoice]=useState(false),[marketingChoice,setMarketingChoice]=useState(false),[error,setError]=useState('')
+ const dialog=useRef<HTMLDialogElement>(null),previousFocus=useRef<HTMLElement|null>(null)
+ useEffect(()=>{const update=()=>{setConsent(analyticsConsent());setMarketing(marketingConsent())};const open=()=>{previousFocus.current=document.activeElement as HTMLElement;setAnalyticsChoice(analyticsConsent()==='accepted');setMarketingChoice(marketingConsent()==='accepted');setSettings(true)};window.addEventListener('vimbre:analytics-consent',update);window.addEventListener('vimbre:marketing-consent',update);window.addEventListener('vimbre:cookie-settings',open);return()=>{window.removeEventListener('vimbre:analytics-consent',update);window.removeEventListener('vimbre:marketing-consent',update);window.removeEventListener('vimbre:cookie-settings',open)}},[])
+ useEffect(()=>{if(consent!=='accepted'){resetAnalyticsPage();return}trackPageView(pathname)},[pathname,consent])
+ useEffect(()=>{window.vimbreMeta?.pageView(pathname)},[pathname,marketing])
+ useEffect(()=>{if(settings&&dialog.current&&!dialog.current.open)dialog.current.showModal()},[settings])
+ function close(){setSettings(false);previousFocus.current?.focus()}
+ function save(analytics:boolean,ads:boolean){if(!window.vimbreAnalytics||!window.vimbreMeta){setError('Cookie settings could not be saved. Reload this page and try again.');return}window.vimbreAnalytics.choose(analytics?'accepted':'declined');window.vimbreMeta.choose(ads?'accepted':'declined');setError('');close()}
+ const controls=<div className="cookie-actions"><button type="button"onClick={()=>save(false,false)}>Reject optional</button><button type="button"onClick={()=>window.dispatchEvent(new Event('vimbre:cookie-settings'))}>Choose cookies</button><button type="button"onClick={()=>save(true,true)}>Accept all</button></div>
+ // Existing analytics acceptance does not silently opt anyone into advertising.
+ const publicPage=!pathname.startsWith('/app')&&!['/auth/callback','/reset-password','/join'].includes(pathname)
+ return <>{(consent===null||(publicPage&&marketing===null))&&!settings&&<aside className="cookie-banner"aria-label="Cookie choices"><div><strong>Your cookie choices</strong><p>Essential cookies keep Vimbre working. Optional analytics help us improve it; advertising cookies measure our campaigns. <Link to="/privacy">Privacy policy</Link></p>{error&&<p role="alert">{error}</p>}</div>{controls}</aside>}{settings&&<dialog className="cookie-dialog"ref={dialog}aria-labelledby="cookie-title"onCancel={close}onClose={close}><h2 id="cookie-title">Cookie settings</h2><p>Essential cookies are always on. You can change your optional choices at any time.</p><label className="cookie-choice"><input type="checkbox"checked={analyticsChoice}onChange={e=>setAnalyticsChoice(e.target.checked)}/><span><strong>Analytics</strong><small>Google Analytics and Microsoft Clarity help us understand how Vimbre is used.</small></span></label><label className="cookie-choice"><input type="checkbox"checked={marketingChoice}onChange={e=>setMarketingChoice(e.target.checked)}/><span><strong>Advertising</strong><small>Meta Pixel measures visits to our public pages and the effectiveness of our ads.</small></span></label><p><Link to="/privacy"onClick={close}>Read our privacy policy</Link>.</p>{error&&<p role="alert">{error}</p>}<div className="cookie-actions"><button type="button"onClick={()=>save(false,false)}>Reject optional</button><button type="button"onClick={()=>save(analyticsChoice,marketingChoice)}>Save choices</button></div><button className="cookie-settings-link"type="button"onClick={close}>Close</button></dialog>}</>
 }
