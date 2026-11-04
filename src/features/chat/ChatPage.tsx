@@ -802,9 +802,11 @@ function MessageComposer({
       attempt.current = { fingerprint, id: crypto.randomUUID() }
     setBusy(true)
     setError('')
+    let sendingMessage=false
     try {
       const attachmentIds:string[]=[]
       for(const file of files){let upload=uploads.current.find(u=>u.file===file);if(!upload){const prepared=await supabase.rpc('chat_attachment_prepare',{p_conversation:conversation,p_name:file.name,p_size:file.size,p_mime:file.type||'application/octet-stream'});if(prepared.error)throw prepared.error;const entry=prepared.data as {id:string;path:string};upload={file,...entry,uploaded:false};uploads.current.push(upload)}if(!upload.uploaded){const r=await supabase.storage.from('chat-attachments').upload(upload.path,file,{contentType:file.type||'application/octet-stream',upsert:false});if(r.error&&r.error.statusCode!=='409')throw r.error;upload.uploaded=true}attachmentIds.push(upload.id)}
+      sendingMessage=true
       const { error } = await supabase.rpc('chat_send_files', {
         ...payload,
         p_id: attempt.current!.id,
@@ -821,7 +823,7 @@ function MessageComposer({
       onSent()
     } catch (reason) {
       setError(
-        (reason as {message?:string})?.message?.includes('storage limit') ? 'Your workspace has reached its attachment storage limit. Remove unused files or ask your administrator for help.' : (reason as {message?:string})?.message?.includes('100 chat messages') ? 'Your company has reached the Free plan’s 100 chat messages this month. Ask your company owner to upgrade in Plans and billing.' : 'Your message was not confirmed as sent. Retry to check or send it safely.',
+        (reason as {message?:string})?.message?.includes('storage limit') ? 'Your workspace has reached its attachment storage limit. Remove unused files or ask your administrator for help.' : (reason as {message?:string})?.message?.includes('100 chat messages') ? 'Your company has reached the Free plan’s 100 chat messages this month. Ask your company owner to upgrade in Plans and billing.' : !sendingMessage&&files.length ? 'Your attachment could not be uploaded. Your message and files are still here. Try again.' : 'Your message was not confirmed as sent. Retry to check or send it safely.',
       )
     } finally {
       setBusy(false)
