@@ -1,0 +1,4 @@
+import {it,expect} from 'vitest'
+import {parseTaskDraft} from './task-draft'
+it('rejects incomplete or multiple AI tasks instead of silently filling a form',()=>{expect(()=>parseTaskDraft('{"items":[]}')).toThrow();expect(()=>parseTaskDraft('{"items":[{"title":"One","details":""},{"title":"Two","details":""}]}')).toThrow()})
+it('keeps valid dates, steps and recurrence but discards impossible dates and durations',()=>{const v=parseTaskDraft(JSON.stringify({items:[{title:' Review quote ',details:'Check the supplier quote.',due_date:'2026-02-30',due_time:'25:00',priority:'urgent',time_needed_minutes:999,steps:['Check price',42],repeat:'weekly'}]}));expect(v).toEqual({title:'Review quote',details:'Check the supplier quote.',due_date:'',due_time:'',priority:'normal',time_needed_minutes:null,steps:['Check price'],repeat:'weekly'})})

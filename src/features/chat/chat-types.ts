@@ -18,6 +18,7 @@ export type Conversation = {
   person?:Member
 }
 export type Message = {
+  attachments?:import('./ChatAttachment').ChatFile[]
   id: string
   seq: number
   sender_id: string
@@ -31,6 +32,9 @@ export type Message = {
   created_at: string
 }
 export type ChatDetail = {
+  latest_seq?:number
+  has_older?:boolean
+  has_newer?:boolean
   can_rename?:boolean
   messages: Message[]
   members: ChatPerson[]

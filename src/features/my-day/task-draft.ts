@@ -1,0 +1,6 @@
+export type TaskDraft={title:string;details:string;priority:'low'|'normal'|'high';due_date:string;due_time:string;time_needed_minutes:number|null;steps:string[];repeat:string}
+export function parseTaskDraft(raw:string):TaskDraft{
+ const v=JSON.parse(raw.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,''));const r=v?.items?.[0];if(!r||v.items.length!==1||typeof r.title!=='string'||!r.title.trim()||r.title.length>300||typeof r.details!=='string'||r.details.length>5000)throw Error('The task draft could not be read. Try again.');
+ const date=typeof r.due_date==='string'?r.due_date:'';const validDate=/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date;
+ return {title:r.title.trim(),details:r.details.trim(),priority:['low','normal','high'].includes(r.priority)?r.priority:'normal',due_date:validDate?date:'',due_time:typeof r.due_time==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.due_time)?r.due_time:'',time_needed_minutes:Number.isInteger(r.time_needed_minutes)&&r.time_needed_minutes>=10&&r.time_needed_minutes<=480?r.time_needed_minutes:null,steps:Array.isArray(r.steps)?r.steps.filter((v:unknown)=>typeof v==='string'&&v.length<=500).slice(0,12):[],repeat:['daily','weekdays','weekly','monthly'].includes(r.repeat)?r.repeat:'none'}
+}

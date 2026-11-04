@@ -20,6 +20,10 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       Functions,
       'manage_department' | 'manage_member' | 'work_notification_inbox' | 'work_notification_read' | 'chat_team' | 'chat_people' | 'chat_create' | 'chat_list' | 'chat_detail' | 'chat_send' | 'chat_read' | 'chat_inbox' | 'company_active_member_count' | 'team_activity_overview' | 'my_day_summary' | 'capture_list' | 'capture_detail' | 'capture_change' | 'manage_member_context'
     > & {
+      myday_save_task:{Args:{p_id:string;p_data:Json;p_create:boolean};Returns:Json}
+      chat_attachment_prepare:{Args:{p_conversation:string;p_name:string;p_size:number;p_mime:string};Returns:Json}
+      chat_send_files:{Args:{p_conversation:string;p_id:string;p_body:string;p_reply:string|null;p_mentions:string[];p_record_path:string|null;p_attachments:string[]};Returns:string}
+      chat_after:{Args:{p_conversation:string;p_after:number};Returns:Json}
       myday_priority_review: {Args:{p_action?:string;p_task?:string|null;p_data?:Json};Returns:Json}
       company_workspace_structure: {Args:Record<PropertyKey,never>;Returns:Json}
       set_member_status: {Args:{p_id:string;p_status:string};Returns:undefined}

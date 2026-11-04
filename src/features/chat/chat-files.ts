@@ -1,0 +1,14 @@
+import {prepareImage} from '../../lib/prepare-image'
+export const MAX_ATTACHMENT_BYTES=5*1024*1024
+export const MAX_MESSAGE_BYTES=10*1024*1024
+export const chatFileAccept='.jpg,.jpeg,.png,.webp,.avif,.pdf,.txt,.csv,.docx,.xlsx,.pptx,.zip'
+const extensions=new Set(['jpg','jpeg','png','webp','avif','pdf','txt','csv','docx','xlsx','pptx','zip'])
+export function safeAttachmentName(path:string){const parts=path.replaceAll('\\','/').split('/');if(parts.some(p=>!p||p==='.'||p==='..'||p.startsWith('.')||Array.from(p).some(char=>char.charCodeAt(0)<32)))throw Error('Choose files without hidden or invalid folder names.');if(path.length>240)throw Error('Shorten this file or folder name.');return parts.join('/')}
+export function validateChatFile(file:{name:string;size:number}){safeAttachmentName(file.name);if(!extensions.has(file.name.split('.').at(-1)?.toLowerCase()??''))throw Error('Choose an image, PDF, text, Office file or ZIP.');if(file.size<=0)throw Error('This file is empty.');if(file.size>20*1024*1024)throw Error('Choose files under 20 MB before compression.')}
+export async function prepareChatFile(file:File):Promise<File>{validateChatFile(file);if(/^image\//.test(file.type)||/\.(jpe?g|png|webp|avif)$/i.test(file.name)){const blob=await prepareImage(file,{maxDimension:1600,maxBytes:1024*1024});return new File([blob],file.name.replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'})}if(file.size>MAX_ATTACHMENT_BYTES)throw Error('Choose a file under 5 MB.');return file}
+export async function prepareChatFolder(files:File[]):Promise<File>{
+ if(!files.length||files.length>100)throw Error('Choose a folder with 1–100 files.');if(files.reduce((n,f)=>n+f.size,0)>20*1024*1024)throw Error('Choose a folder under 20 MB before compression.');
+ const {Zip,ZipDeflate}=await import('fflate');const chunks:Uint8Array<ArrayBuffer>[]=[];let bytes=0;const zip=new Zip((error,data)=>{if(error)throw error;bytes+=data.length;if(bytes>MAX_ATTACHMENT_BYTES)throw Error('This folder is over 5 MB after compression. Choose fewer files.');chunks.push(new Uint8Array(data))});
+ const seen=new Set<string>();for(const file of files){const path=safeAttachmentName(file.webkitRelativePath||file.name);validateChatFile({name:path,size:file.size});const prepared=await prepareChatFile(file);const name=path.replace(/[^/]+$/,prepared.name);if(seen.has(name))throw Error('Two files have the same name after resizing. Rename one and try again.');seen.add(name);const entry=new ZipDeflate(name,{level:6});zip.add(entry);entry.push(new Uint8Array(await prepared.arrayBuffer()),true);await new Promise<void>(resolve=>setTimeout(resolve,0))}zip.end();const root=(files[0].webkitRelativePath||'Folder').split('/')[0];return new File(chunks,root+'.zip',{type:'application/zip'})
+}
+export function fileSize(size:number){return size>=1024*1024?`${(size/1024/1024).toFixed(1)} MB`:`${Math.max(1,Math.round(size/1024))} KB`}

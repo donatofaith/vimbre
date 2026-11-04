@@ -1,0 +1,5 @@
+import {it,expect} from 'vitest'
+import {unzipSync,strFromU8} from 'fflate'
+import {prepareChatFile,prepareChatFolder,safeAttachmentName,validateChatFile} from './chat-files'
+it('rejects hidden files, traversal, executables and oversized inputs',()=>{for(const path of ['../secret.txt','folder/.env','folder/../note.txt','/absolute.txt'])expect(()=>safeAttachmentName(path)).toThrow();expect(()=>validateChatFile({name:'run.exe',size:10})).toThrow();expect(()=>validateChatFile({name:'archive.zip',size:21*1024*1024})).toThrow()})
+it('keeps original documents and compresses folders while preserving relative paths',async()=>{const file=new File(['Supplier notes '.repeat(1000)],'notes.txt',{type:'text/plain'});Object.defineProperty(file,'webkitRelativePath',{value:'Work/notes.txt'});expect(await prepareChatFile(file)).toBe(file);const zipped=await prepareChatFolder([file]);expect(zipped.name).toBe('Work.zip');expect(zipped.size).toBeLessThan(file.size);const entries=unzipSync(new Uint8Array(await zipped.arrayBuffer()));expect(strFromU8(entries['Work/notes.txt'])).toBe(await file.text())})
