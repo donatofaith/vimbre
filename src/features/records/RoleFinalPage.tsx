@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import {trackContextGenerated} from '../../lib/analytics'
 import {useCallback,useEffect,useId,useRef,useState} from 'react'
 import type {FormEvent} from 'react'
@@ -28,6 +29,7 @@ export function RoleFinalPage(){
  const visibility=useRef<HTMLDialogElement>(null);const refresh=useCallback(()=>setRevision(v=>v+1),[]);
  useEffect(()=>{let live=true;setError('');setData(null);setEditor(null);setGuide(null);setSuggestions(null);void Promise.all([roleRpc<Snapshot>('get',requested),roleRpc<typeof roles>('list',null)]).then(([snapshot,list])=>{if(live){setData(snapshot);setRoles(list)}}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[requested]);
  useEffect(()=>{if(!revision)return;let live=true;void roleRpc<Snapshot>('get',requested).then(s=>{if(live)setData(s)}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[revision,requested]);
+ useEffect(()=>subscribeWorkspaceRefresh(()=>{if(!busy&&!aiBusy&&!editor&&!panel&&!target)setRevision(n=>n+1)}),[busy,aiBusy,editor,panel,target]);
  useEffect(()=>{if(target)setEditor(null)},[target]);
  const role=data?.role.id??null;
  useEffect(()=>{let live=true;void supabase.rpc('ai_allowance_summary',{}).then(({data:a})=>{const x=a as {enabled?:boolean;daily_request_limit?:number;daily_requests?:number};if(live)setAllowance(x?.enabled?`${Math.max(0,(x.daily_request_limit??0)-(x.daily_requests??0))} AI requests remaining today`:'AI allowance unavailable')});return()=>{live=false}},[role,aiBusy]);

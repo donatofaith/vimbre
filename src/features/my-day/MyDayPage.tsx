@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import {loadDailyTask} from './open-daily-task'
 import {DailyFocus} from './DailyFocus'
 import {refreshQueue} from './refresh-queue'
@@ -266,17 +267,8 @@ function MyDayContent() {
         queued.schedule();
       }
     };
-    const t = setInterval(onReturn, 60000);
-    window.addEventListener("focus", onReturn);
-    window.addEventListener("vimbre:work-changed", onReturn);
-    document.addEventListener("visibilitychange", onReturn);
-    return () => {
-      live = false;
-      clearInterval(t);queued.dispose();
-      window.removeEventListener("focus", onReturn);
-      window.removeEventListener("vimbre:work-changed", onReturn);
-      document.removeEventListener("visibilitychange", onReturn);
-    };
+    const unsubscribe=subscribeWorkspaceRefresh(onReturn);
+    return () => {live=false;queued.dispose();unsubscribe()};
   }, [
     key,
     filter,
@@ -507,7 +499,7 @@ function MyDayContent() {
         <div className="md-toolbar md-toolbar-approved">
           <label className="md-search"><span className="sr-only">Search tasks</span><input id="md-search" type="search" placeholder="Search tasks" maxLength={100} value={query} onChange={e=>setQuery(e.target.value)}/></label>
           <label className="md-menu-label">Filter<select aria-label="Task filter" value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{filters.map(([v,l])=><option key={v} value={v}>{l} ({data?.tab_counts?.[v]??0})</option>)}</select></label>
-          <SegmentedControl label="Task view" value={layout} options={[{value:"list",label:"List"},{value:"board",label:"Board"},{value:"week",label:"Week"}]} onChange={value=>{setLayout(value);if(value==="week")setFilter("week");else if(value==="board"&&filter==="today")setFilter("all");try{localStorage.setItem("vimbre:myday-view",value)}catch{}}}/>
+          <SegmentedControl label="Task view" value={layout} options={[{value:"list",label:"List"},{value:"board",label:"Board"},{value:"week",label:"Week"}]} onChange={value=>{setLayout(value);if(value==="week")setFilter("week");try{localStorage.setItem("vimbre:myday-view",value)}catch{}}}/>
           <div className="md-toolbar-actions"><details className="md-add-menu" onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="Add" aria-describedby="myday-add-hint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg><span id="myday-add-hint" className="md-add-hint" role="tooltip">Add a task or capture a conversation</span></summary><div><button onClick={()=>setEditor({})}>Add task</button><Link to="/app/capture">Capture</Link>{extras.data?.flags.templates&&<button onClick={()=>setTemplates(true)}>Add from template</button>}<button onClick={()=>setRolePicker(true)}>Add from My role</button><button onClick={()=>setAssignment({})}>Assign task</button><button onClick={()=>{setSelecting(v=>!v);setSelectedIds([])}}>{selecting?"Finish selecting":"Select several"}</button></div></details>
           <details className="md-tools-menu" data-menu onClick={e=>{if(e.target instanceof Element&&e.target.closest("button,a"))e.currentTarget.open=false}}><summary aria-label="More task tools" title="Rules, calendar, import and export"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary><div>{extras.data?.flags.rules&&<button className="md-text-button" onClick={()=>setRules(true)}>Rules</button>}{extras.data?.flags.calendar&&<button className="md-text-button" onClick={()=>setCalendar(true)}>Calendar feed</button>}<button className="md-text-button" onClick={()=>setTransfers(true)}>Import and export</button>{profile!.role!=='employee'&&extras.data?.flags.team&&<button className="md-text-button" aria-expanded={teamOpen} onClick={()=>setTeamOpen(v=>!v)}>Team</button>}</div></details></div>
         </div>

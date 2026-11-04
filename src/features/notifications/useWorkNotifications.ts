@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
@@ -27,11 +28,8 @@ export function useWorkNotifications(page: number) {
    }finally{running=false}
   }
   void load()
-  const onReturn=()=>{if(!document.hidden)void load()}
-  const timer=setInterval(onReturn,60000)
-  window.addEventListener('focus',onReturn);document.addEventListener('visibilitychange',onReturn)
-  window.addEventListener('vimbre:work-changed',onReturn)
-  return()=>{alive=false;clearInterval(timer);window.removeEventListener('focus',onReturn);document.removeEventListener('visibilitychange',onReturn);window.removeEventListener('vimbre:work-changed',onReturn)}
+  const unsubscribe=subscribeWorkspaceRefresh(load)
+  return()=>{alive=false;unsubscribe()}
  },[key,owner,page,revision])
  async function markRead(notificationKey:string){
   if(marking.current)return

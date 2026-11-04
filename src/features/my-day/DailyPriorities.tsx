@@ -1,3 +1,4 @@
+import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
 import type {Json} from '../../lib/database.types'
 import {useEffect, useRef, useState} from 'react'
 import {DailySection} from './DailySection'
@@ -23,7 +24,7 @@ async function review(action='get', task:string|null=null, data:Record<string,un
 export function DailyPriorities({owner,openTask}:{owner:string;openTask:(id:string,edit?:boolean)=>Promise<void>}) {
  const [data,setData]=useState<Review|null>(null),[busy,setBusy]=useState(''),[error,setError]=useState(''),[revision,setRevision]=useState(0)
  const acting=useRef(false)
- useEffect(()=>{let live=true;setError('');const queue=refreshQueue(async()=>{try{const value=await review();if(live){setData(value);setError('')}}catch{if(live)setError('Priorities could not be refreshed. Try again.')}});void queue.run();const refresh=()=>{if(!document.hidden)queue.schedule()};window.addEventListener('vimbre:work-changed',refresh);window.addEventListener('focus',refresh);const timer=setInterval(refresh,60000);return()=>{live=false;queue.dispose();clearInterval(timer);window.removeEventListener('vimbre:work-changed',refresh);window.removeEventListener('focus',refresh)}},[owner,revision])
+ useEffect(()=>{let live=true;setError('');const queue=refreshQueue(async()=>{try{const value=await review();if(live){setData(value);setError('')}}catch{if(live)setError('Priorities could not be refreshed. Try again.')}});void queue.run();const refresh=()=>{if(!document.hidden)queue.schedule()};const unsubscribe=subscribeWorkspaceRefresh(refresh);return()=>{live=false;queue.dispose();unsubscribe()}},[owner,revision])
  async function act(id:string,action:()=>Promise<void>){if(acting.current)return;acting.current=true;setBusy(id);setError('');try{await action()}catch(e){setError((e as {message?:string})?.message||'Your choice could not be saved. Try again.')}finally{acting.current=false;setBusy('')}}
  async function suggest(){
   const source=await review('source')
