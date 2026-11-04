@@ -1,17 +1,3 @@
-import { useEffect, useState } from 'react'
-const words = ['the why', 'the decisions', 'the full picture', 'the work']
-export function HeroHeadline() {
-  const [index, setIndex] = useState(0)
-  const [paused, setPaused] = useState(false)
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    let timer: ReturnType<typeof setInterval> | undefined
-    function sync() {
-      clearInterval(timer)
-      if (!paused && !media.matches && !document.hidden) timer = setInterval(() => setIndex(i => (i + 1) % words.length), 3000)
-    }
-    sync(); media.addEventListener('change', sync); document.addEventListener('visibilitychange', sync)
-    return () => { clearInterval(timer); media.removeEventListener('change', sync); document.removeEventListener('visibilitychange', sync) }
-  }, [paused])
-  return <div className="rf-headline-wrap"><h1 id="hero-title" tabIndex={-1}><span className="sr-only">Understand the why</span><span aria-hidden="true" className="rf-headline-fixed">Understand</span><span aria-hidden="true" className="rf-rotating-word"><span key={index}>{words[index]}</span></span></h1><button type="button" className="rf-word-pause sr-only" aria-label={paused?'Resume rotating headline':'Pause rotating headline'} aria-pressed={paused} onClick={()=>setPaused(p=>!p)}>{paused?'▶':'Ⅱ'}</button></div>
-}
+import {headline} from './public-content'
+import {walkthrough} from './walkthrough.config'
+export function HeroHeadline({index=0}:{index?:number}){return <h1 id="hero-title" tabIndex={-1}><span className="sr-only">{headline}</span><span aria-hidden="true" className="rf-headline-fixed">Declutter your</span><span aria-hidden="true" className="rf-rotating-word"><span key={index}>{walkthrough[index].title.toLowerCase()}.</span></span></h1>}

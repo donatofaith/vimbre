@@ -1,3 +1,5 @@
+import {definition} from '../public/public-content'
+import {trackMarketing,type AccountType} from '../public/marketing-analytics'
 import {trackNewSignup} from './signup-analytics'
 import {trackLogin} from '../../lib/analytics'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
@@ -47,17 +49,17 @@ function AccountLayout({
       <div className="v-auth-grid">
         <aside className="v-auth-story" aria-label="About Vimbre">
           <span className="v-auth-eyebrow">
-            The record your other tools miss
+            Work continuity for teams
           </span>
 
           <h2>
-            Good work leaves
+            Declutter your
             <br />
-            a clear <span>record.</span>
+            <span>work.</span>
           </h2>
 
           <p>
-            Keep decisions, role knowledge and handovers in one place.
+            {definition}
           </p>
 
           <div className="v-auth-record">
@@ -86,9 +88,6 @@ function AccountLayout({
           className="v-auth-panel auth-card"
           aria-labelledby="v-auth-title"
         >
-          <span className="v-auth-eyebrow">
-            Your workspace
-          </span>
 
           <h1 id="v-auth-title" tabIndex={-1}>
             {title}
@@ -108,7 +107,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
-  const [signupMode,setSignupMode]=useState<'individual'|'sole_founder'|'company'>('individual')
+  const [signupMode,setSignupMode]=useState<AccountType>(()=>{const type=new URLSearchParams(typeof window==='undefined'?'':window.location.search).get('account_type');return type==='company'||type==='sole_founder'?type:'individual'})
   const [resendAt, setResendAt] = useState(0)
   const [clock, setClock] = useState(Date.now)
 
@@ -291,7 +290,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           {mode === 'signup'
             ? 'Choose how you’ll use Vimbre.'
             : mode === 'login'
-              ? 'Sign in to your workspace.'
+              ? 'Enter your email and password.'
               : mode === 'forgot'
                 ? 'Enter your work email to request a password reset link.'
                 : 'Choose a unique password for your account.'}
@@ -363,7 +362,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           <fieldset disabled={busy} className="v-auth-fields">
             {mode === 'signup' && (
               <>
-                <fieldset className="signup-mode"><legend>Sign up</legend>{([['individual','As an individual'],['sole_founder','As a sole founder'],['company','As a company']] as const).map(([value,label])=><label key={value} data-selected={signupMode===value}><input type="radio"name="signup_mode"value={value}checked={signupMode===value}onChange={()=>setSignupMode(value)}/><span>{label}</span></label>)}</fieldset>
+                <fieldset className="signup-mode"><legend>Sign up</legend>{([['individual','As an individual'],['sole_founder','As a sole founder'],['company','As a company']] as const).map(([value,label])=><label key={value} data-selected={signupMode===value}><input type="radio"name="signup_mode"value={value}checked={signupMode===value}onChange={()=>{setSignupMode(value);trackMarketing('account_type_selected',{account_type:value})}}/><span>{label}</span></label>)}</fieldset>
                 <Input
                   label="Full name"
                   name="name"
@@ -469,7 +468,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         {mode === 'login' ? (
           <>
             <span>New to Vimbre?</span>
-            <Link to="/signup">Create a company</Link>
+            <Link to="/signup">Create an account</Link>
           </>
         ) : (
           <Link to="/login">Back to login</Link>

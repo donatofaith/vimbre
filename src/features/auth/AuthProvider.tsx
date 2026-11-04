@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
   const signupUserId=session?.user.id,signupConfirmedAt=session?.user.email_confirmed_at
-  useEffect(()=>{const track=()=>{if(signupUserId)void trackVerifiedSignup({id:signupUserId,email_confirmed_at:signupConfirmedAt})};track();window.addEventListener('vimbre:analytics-consent',track);return()=>window.removeEventListener('vimbre:analytics-consent',track)},[signupUserId,signupConfirmedAt])
+  useEffect(()=>{const track=()=>{if(signupUserId)void trackVerifiedSignup({id:signupUserId,email_confirmed_at:signupConfirmedAt,user_metadata:session?.user.user_metadata})};track();window.addEventListener('vimbre:analytics-consent',track);return()=>window.removeEventListener('vimbre:analytics-consent',track)},[signupUserId,signupConfirmedAt,session?.user.user_metadata])
   const userId=session?.user.id
   useEffect(() => {
     let cancelled = false
