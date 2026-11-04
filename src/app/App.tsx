@@ -145,7 +145,7 @@ export function App() {
       <Route path="/role-guide" element={<RoleGuidePage/>}/>
       <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
-          {[...Object.keys(publicPages),'/tour'].map(path=><Route key={path} path={path} element={<PublicPage/>}/>)}
+          <Route path="/tour" element={<Navigate replace to="/#product-demo"/>}/>{Object.keys(publicPages).map(path=><Route key={path} path={path} element={<PublicPage/>}/>)}
           <Route path="/blog" element={<BlogRoute/>}/>
           <Route path="/blog/:slug" element={<BlogRoute/>}/>
           <Route path="/privacy" element={<LegalPage page="privacy" />} />

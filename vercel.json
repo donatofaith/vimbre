@@ -138,6 +138,11 @@
   ],
   "redirects": [
     {
+      "source": "/tour",
+      "destination": "/#product-demo",
+      "statusCode": 307
+    },
+    {
       "source": "/:path*",
       "has": [
         {

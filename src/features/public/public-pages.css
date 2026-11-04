@@ -59,3 +59,5 @@
 /* Native app rendering remains sharp at each device pixel density. */
 .public-live-demo{width:100%;background:#f5f7fb}.public-live-demo iframe{display:block;width:100%;height:680px;border:0;background:#f5f7fb}.public-hero-card .public-live-demo iframe{height:560px}.public-screen .public-live-demo{aspect-ratio:auto}.public-tour-screen .public-hotspot{z-index:1}
 @media(max-width:767px){.public-live-demo iframe,.public-hero-card .public-live-demo iframe{height:580px}.rs-site .public-hero-card picture{max-height:none}.public-screen{border-radius:12px}.public-tour-screen .public-hotspot{display:none}}
+
+#product-demo{scroll-margin-top:0}.public-tour-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;color:#637487;font-size:13px}.public-tour-controls button{font:inherit;font-weight:600;min-height:44px;padding:8px 18px;border:1px solid #cddcef;border-radius:8px;color:#245db8;background:#fff;cursor:pointer}.public-tour-controls+.public-step-tabs{margin-top:12px}@media(max-width:767px){#product-demo{scroll-margin-top:0}}
