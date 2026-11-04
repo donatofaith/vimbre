@@ -55,3 +55,7 @@
  .rs-site .public-hero .rs-hero-subhead{font-size:14px!important}
  .rs-site .public-role-picker button{font-size:12px}
 }
+
+/* Native app rendering remains sharp at each device pixel density. */
+.public-live-demo{width:100%;background:#f5f7fb}.public-live-demo iframe{display:block;width:100%;height:680px;border:0;background:#f5f7fb}.public-hero-card .public-live-demo iframe{height:560px}.public-screen .public-live-demo{aspect-ratio:auto}.public-tour-screen .public-hotspot{z-index:1}
+@media(max-width:767px){.public-live-demo iframe,.public-hero-card .public-live-demo iframe{height:580px}.rs-site .public-hero-card picture{max-height:none}.public-screen{border-radius:12px}.public-tour-screen .public-hotspot{display:none}}

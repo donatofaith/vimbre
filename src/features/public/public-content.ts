@@ -1,3 +1,4 @@
+export const heroDescription='Bring in conversations from your connected tools or paste them into Vimbre. Review suggested tasks and decisions, then keep the work and its context together so your team knows what happened, why and what needs attention next.'
 export const definition='Vimbre is a work continuity platform for teams. It plans your day, keeps your decisions and writes your handovers, using AI that drafts and people approve.'
 export const headline='Declutter your conversations, tasks, decisions, contacts, handovers and week.'
 export const integrations=[

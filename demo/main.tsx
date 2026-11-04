@@ -1,6 +1,6 @@
-/** Local-only seeded adapter. Production entry points never import this file. */
+/** Isolated, fictional public demo. All data operations use the in-memory adapter. */
 import {createRoot} from 'react-dom/client'
-import {BrowserRouter,Routes,Route,Navigate} from 'react-router-dom'
+import {MemoryRouter,Routes,Route,Navigate} from 'react-router-dom'
 import {AuthProvider,RequireAuth} from '../src/features/auth/AuthProvider'
 import {AuthPage} from '../src/features/auth/AuthPage'
 import {AppLayout} from '../src/app/layouts/AppLayout'
@@ -9,7 +9,7 @@ import {CapturePage} from '../src/features/capture/CapturePage'
 import {RoleRecordPage} from '../src/features/records/RoleRecordPage'
 import {HandoversPage} from '../src/features/handovers/HandoversPage'
 import {WeeklySummaryPage} from '../src/features/my-day/WeeklySummaryPage'
-import {supabase} from '../src/lib/supabase'
+import {supabase} from './client'
 import '../src/styles/fonts.css'
 import '../src/styles/tokens.css'
 import '../src/styles/global.css'
@@ -23,7 +23,7 @@ const id='22222222-2222-4222-8222-222222222222',companyId='33333333-3333-4333-83
 const user={id,email:'alex@demo.invalid',email_confirmed_at:at,user_metadata:{full_name:'Alex Morgan',workspace_type:'company'}}
 const profile={id,company_id:companyId,full_name:'Alex Morgan',role:'employee',active:true,email:user.email}
 const company={id:companyId,name:'Demo workspace',created_by:'other',logo_path:null}
-let session:any=sessionStorage.getItem('vimbre-demo-session')?{user,access_token:'demo-only'}:null
+let session:any={user,access_token:'demo-only'}
 const listeners=new Set<any>();const emit=()=>listeners.forEach(fn=>fn(session?'SIGNED_IN':'SIGNED_OUT',session))
 supabase.auth.onAuthStateChange=((fn:any)=>{listeners.add(fn);queueMicrotask(()=>fn('INITIAL_SESSION',session));return{data:{subscription:{unsubscribe(){listeners.delete(fn)}}}}})as any
 supabase.auth.getSession=async()=>({data:{session},error:null})as any
@@ -66,8 +66,21 @@ supabase.rpc=((name:string,args:any={})=>{let data:any={rows:[],items:[],unread:
  else if(name==='handover_workspace')data=op==='options'?{role:role.role,people:[{id,name:profile.full_name,reviewer:false},{id:'cover',name:'Jordan Ellis',reviewer:false},{id:'manager',name:'Sam Taylor',reviewer:true}],roles:[],records:role.items.map(r=>({id:r.id,title:r.title,group:r.kind==='external_contact'?'contacts':'work'})),notes:[],tasks,decisions:[decision],policy:{approval_required:true,allow_top_no_approval:false,external_sharing:false,link_expiry_days:7},last_return:null}:op==='list'?{rows:[handover],count:1,flags:{pdf:true}}:op==='get'||op==='detail'?{...handover,handover,items:[],tasks,history:[],comments:[],shares:[],manager_notes:[],notifications:[]}:[];
  return response(data)})as any
 Object.defineProperty(supabase,'functions',{configurable:true,value:{invoke:async(name:string,args:any)=>name==='ai-run'?{data:{ok:true,text:args.body.task==='weekly_summary'?summary:JSON.stringify({answer:'Alex Morgan agreed to monthly supplier reviews to reduce meetings and keep delivery risks visible.',citations:[]}),sources:[],request_id:crypto.randomUUID()},error:null}:name==='capture-connect'?{data:{ok:true,providers:[],connections:[]},error:null}:{data:{},error:null}}})
+document.addEventListener('click',event=>{if((event.target as Element).closest('a')){event.preventDefault();event.stopPropagation()}},true)
 const selected=new URLSearchParams(location.search).get('step')||'tasks';const initial=selected==='conversations'?'/app/capture?capture='+sourceId:selected==='decisions'?'/app/role-record?section=decision':selected==='contacts'?'/app/role-record?section=external_contact':selected==='handovers'?'/app/handovers/'+handoverId:selected==='week'?'/app/weekly-summary':'/app'
 function DemoApp(){return <AuthProvider><Routes><Route path="/demo/index.html" element={session?<Navigate to={initial}/>:<AuthPage mode="login"/>}/><Route path="/login" element={<AuthPage mode="login"/>}/><Route element={<RequireAuth/>}><Route path="/app" element={<AppLayout/>}><Route index element={<MyDayPage/>}/><Route path="capture" element={<CapturePage/>}/><Route path="role-record" element={<RoleRecordPage/>}/><Route path="handovers/*" element={<HandoversPage/>}/><Route path="weekly-summary" element={<WeeklySummaryPage/>}/></Route></Route></Routes></AuthProvider>}
 // Keep the demo entry loaded across direct page visits using the capture script's app links.
 if(!session){const button=document.createElement('button');button.textContent='Sign in to Demo workspace';button.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;padding:12px;background:#2867ce;color:white;border:0;border-radius:8px';button.onclick=()=>{session={user,access_token:'demo-only'};sessionStorage.setItem('vimbre-demo-session','yes');emit();button.remove()};document.body.append(button)}
-createRoot(document.getElementById('root')!).render(<BrowserRouter><DemoApp/></BrowserRouter>)
+createRoot(document.getElementById('root')!).render(<MemoryRouter initialEntries={[initial]}><DemoApp/></MemoryRouter>)
+
+// Open the relevant saved example once its actual app page is ready.
+const observer=new MutationObserver(()=>{
+ if(selected==='decisions'||selected==='contacts'){
+  const label=selected==='decisions'?'Decisions':'Contacts';
+  const heading=[...document.querySelectorAll<HTMLElement>('.rc-section summary')].find(node=>node.textContent?.startsWith(label));
+  if(heading){observer.disconnect();if(!heading.parentElement?.hasAttribute('open'))heading.click();window.scrollTo({top:heading.getBoundingClientRect().top+window.scrollY-80})}
+ }else if(selected==='week'){
+  const button=[...document.querySelectorAll<HTMLButtonElement>('button')].find(node=>node.textContent==='Use my records');
+  if(button){observer.disconnect();button.click()}
+ }else if(document.querySelector('#main h1'))observer.disconnect();
+});observer.observe(document.getElementById('root')!,{childList:true,subtree:true});
