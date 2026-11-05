@@ -7,7 +7,7 @@ export function careersEmail(kind: 'staff' | 'applicant', applicantEmail?: strin
   const subject = applicant ? 'We received your application | Vimbre' : 'New application | Vimbre Careers'
   const heading = applicant ? 'Application received' : 'New careers application'
   const message = applicant
-    ? 'Thank you for applying to Vimbre. We’ve received your application.'
+    ? 'Thank you for applying to Vimbre. We’ve received your application and will be in touch if a suitable opportunity comes up.'
     : 'A new application is ready for you to review in the Console.'
   const action = applicant ? '' : `<p style="margin:24px 0 0"><a href="${consoleUrl}" style="display:inline-block;background:#2058be;color:#ffffff;text-decoration:none;border-radius:8px;padding:13px 20px;font-weight:bold">Review application</a></p>`
   const htmlContent = `<!doctype html>

@@ -35,7 +35,7 @@ it('sends separate branded emails and retries only the job that failed', async (
   expect(sent.map(mail => mail.to[0].email)).toEqual(['hellovimbre@gmail.com','alex@example.invalid'])
   expect(sent[0].htmlContent).toContain('Review application')
   expect(sent[0].textContent).not.toContain('advertised role')
-  expect(sent[1].textContent).toContain('We’ve received your application.')
+  expect(sent[1].textContent).toContain('will be in touch if a suitable opportunity comes up.')
   expect(sent[1].htmlContent).not.toContain('admin.vimbre.com')
   expect(sent[1].headers.idempotencyKey).toBe('applicant-job')
   expect(finished.map(job => [job.p_id,job.p_data.accepted])).toEqual([['staff-job',true],['applicant-job',false]])
