@@ -1,6 +1,7 @@
 # Public Vimbre pages may be crawled by search engines and AI search crawlers.
 # All agents in this group share the same private-route exclusions.
 User-agent: *
+User-agent: Bingbot
 User-agent: OAI-SearchBot
 User-agent: Claude-SearchBot
 Disallow: /app

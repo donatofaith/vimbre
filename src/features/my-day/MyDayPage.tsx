@@ -248,12 +248,13 @@ function MyDayContent() {
           p_task: taskId || null,
           p_decision: linked || null,
         });
-        if(!error&&parseDay(data)&&!search&&!forValue&&!source&&!page)cacheDay(profile!.id,filter,parseDay(data)!);
+        const day = error ? null : parseDay(data);
+        if (day && !search && !forValue && !source && !page) cacheDay(profile!.id, filter, day);
         if (live && request === version)
           setResult({
             key,
-            data: parseDay(data)?filter==="archived"?parseDay(data):withoutDeletedTasks(parseDay(data)!,deletedTasks.current):null,
-            error: Boolean(error) || !parseDay(data),
+            data: day && filter !== "archived" ? withoutDeletedTasks(day, deletedTasks.current) : day,
+            error: !day,
           });
       } catch {
         if (live && request === version)
