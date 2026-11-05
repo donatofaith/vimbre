@@ -63,3 +63,33 @@
 #product-demo{scroll-margin-top:0}.public-tour-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;color:#637487;font-size:13px}.public-tour-controls button{font:inherit;font-weight:600;min-height:44px;padding:8px 18px;border:1px solid #cddcef;border-radius:8px;color:#245db8;background:#fff;cursor:pointer}.public-tour-controls+.public-step-tabs{margin-top:12px}@media(max-width:767px){#product-demo{scroll-margin-top:0}}
 
 .public-signup-cta{display:grid;justify-items:center;gap:7px}.rs-site .public-signup-cta>small{font-size:12px;line-height:1.4;color:#637487;font-weight:400}.rs-site .public-hero .rs-actions{align-items:start}.rs-site .public-hero .rs-actions>.rs-text-link{align-self:start;min-height:44px;display:inline-flex;align-items:center}@media(max-width:767px){.rs-site .public-hero .rs-actions{align-items:stretch}.public-signup-cta{width:100%}.rs-site .public-hero .rs-actions>.rs-text-link{align-self:stretch}}
+
+.rs-site .careers-invitation {
+  padding-block: clamp(32px, 5vw, 60px);
+  background: #f0f5fc;
+  border-top: 1px solid #dbe4ef;
+}
+
+.careers-invitation-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+}
+
+.rs-site .careers-invitation h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.rs-site .careers-invitation p {
+  margin: 8px 0 0;
+  color: #40566b;
+}
+
+.rs-site .careers-invitation .rs-button {
+  min-height: 44px;
+  color: #164fa9;
+  background: #fff;
+}
