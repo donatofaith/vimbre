@@ -11,3 +11,32 @@ it('rejects an unrelated origin and missing consent before accessing the databas
 it('returns a rate limit response without starting delivery',async()=>{const r=await handler(request(body),env,async()=>Response.json({ok:false,code:'rate_limited'}));expect(r.status).toBe(429)})
 it('rejects forged dispatch credentials without sending mail',async()=>{const r=await handler(request({action:'dispatch',token:'a'.repeat(64)},''),env,async()=>Response.json({ok:false,code:'access_denied'}));expect(r.status).toBe(403);expect((await r.json()).ok).toBe(false)})
 it('limits request size before parsing or storing it',async()=>{expect((await handler(request({...body,padding:'a'.repeat(17000)}),env)).status).toBe(413)})
+
+it('sends separate branded emails and retries only the job that failed', async () => {
+  const work: Promise<unknown>[] = []
+  const finished: {p_id:string;p_data:{accepted:boolean}}[] = []
+  const sent: {to:{email:string}[];subject:string;textContent:string;htmlContent:string;headers:{idempotencyKey:string}}[] = []
+  const fetcher: typeof fetch = async (input, init) => {
+    const payload = JSON.parse(String(init?.body))
+    if (String(input).includes('brevo')) {
+      sent.push(payload)
+      return Response.json({}, {status: sent.length === 1 ? 200 : 503})
+    }
+    if (payload.p_action === 'claim') return Response.json({ok:true,jobs:[
+      {id:'staff-job',lease:'staff-lease',kind:'staff'},
+      {id:'applicant-job',lease:'applicant-lease',kind:'applicant',recipient:'alex@example.invalid'},
+    ]})
+    if (payload.p_action === 'finish') finished.push(payload)
+    return Response.json({ok:true})
+  }
+  const response = await handler(request(body), env, fetcher, job => work.push(job))
+  expect(response.status).toBe(200)
+  await Promise.all(work)
+  expect(sent.map(mail => mail.to[0].email)).toEqual(['hellovimbre@gmail.com','alex@example.invalid'])
+  expect(sent[0].htmlContent).toContain('Review application')
+  expect(sent[0].textContent).not.toContain('advertised role')
+  expect(sent[1].textContent).toContain('We’ve received your application.')
+  expect(sent[1].htmlContent).not.toContain('admin.vimbre.com')
+  expect(sent[1].headers.idempotencyKey).toBe('applicant-job')
+  expect(finished.map(job => [job.p_id,job.p_data.accepted])).toEqual([['staff-job',true],['applicant-job',false]])
+})
