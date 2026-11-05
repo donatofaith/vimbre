@@ -16,7 +16,7 @@
  .rs-site .public-hero h1{font-size:clamp(30px,8.5vw,38px);line-height:1.12;letter-spacing:-.025em;margin:0 auto 18px;max-width:none}
  .rs-site .public-hero .rf-headline-fixed{color:#102a43}
  .rs-site .public-hero .rf-rotating-word{min-height:1.15em;white-space:nowrap}
- .rs-site .public-hero .rs-hero-subhead{font-size:15px!important;line-height:1.65;max-width:38ch;margin:0 auto;color:#596b7e}
+ .rs-site .public-hero .rs-hero-subhead{line-height:1.65;max-width:38ch;margin:0 auto;color:#596b7e}
  .rs-site .public-role-picker{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:2px;padding:4px;border:1px solid #dde5ef;border-radius:12px;background:#eef3f9;margin:22px auto 18px;max-width:360px}
  .rs-site .public-role-picker button{min-width:0;min-height:44px;border:0;border-radius:8px;padding:8px 4px;font-size:13px;font-weight:500;white-space:nowrap;background:transparent;color:#617086;box-shadow:none}
  .rs-site .public-role-picker button[aria-pressed=true]{color:#245db8;background:#fff;box-shadow:0 1px 4px #102a4312}

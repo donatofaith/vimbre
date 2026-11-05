@@ -11,9 +11,9 @@ export function renderBlog(slug?:string) { return renderToString(<StaticRouter l
 import {LegalDocumentPage} from './LegalPage'
 export function renderLegal(page:'privacy'|'terms'|'competition') {return renderToString(<StaticRouter location={page==='competition'?'/competition-terms':'/'+page}><LegalDocumentPage page={page}/></StaticRouter>)}
 
-import {PublicPage} from './PublicPage'
+import {PublicPageContent} from './PublicPage'
 export {publicPages,metaFor,definition} from './public-content'
-export function renderPublic(path:string){return renderToString(<StaticRouter location={path}><PublicPage path={path}/></StaticRouter>)}
+export function renderPublic(path:string){return renderToString(<StaticRouter location={path}><PublicPageContent path={path}/></StaticRouter>)}
 
 import {AuthProvider} from '../auth/AuthProvider'
 import {AuthPage} from '../auth/AuthPage'

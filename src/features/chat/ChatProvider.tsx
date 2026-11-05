@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import { emptyInbox } from './chat-types'
-import type { ChatInbox } from './chat-types'
+import type { ChatInbox, ChatNotification } from './chat-types'
 import { WorkspaceIcon } from '../../components/ui/WorkspaceIcon'
 import './chat.css'
 import { ChatContext, useChat } from './chat-context'
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth()
   const owner = profile?.id
+  const location = useLocation()
+  const [arrival, setArrival] = useState<{ owner: string; notice: ChatNotification } | null>(null)
   const [state, setState] = useState<{
     owner: string
     inbox: ChatInbox
@@ -24,6 +26,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     let alive = true,
       busy = false,
       queued = false
+    let latestId: number | undefined
     const load = async () => {
       if (busy) {
         queued = true
@@ -41,6 +44,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             Array.isArray(data.items) &&
             'unread' in data &&
             typeof data.unread === 'number'
+          if (valid) {
+            const items = (data as unknown as ChatInbox).items
+            const newest = items.reduce<ChatNotification | undefined>((latest, item) =>
+              !latest || item.id > latest.id ? item : latest, undefined)
+            if (newest && latestId !== undefined && newest.id > latestId && !document.hidden) {
+              setArrival({ owner, notice: newest })
+            }
+            latestId = Math.max(latestId ?? 0, newest?.id ?? 0)
+          }
           setState((old) => ({
             owner,
             inbox: valid
@@ -98,6 +110,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       void supabase.removeChannel(channel)
     }
   }, [owner])
+  useEffect(() => {
+    if (!arrival) return
+    const timeout = setTimeout(() => setArrival(null), 10000)
+    return () => clearTimeout(timeout)
+  }, [arrival])
+
+  const activeConversation = location.pathname === '/app/chat'
+    ? new URLSearchParams(location.search).get('conversation') : null
+  const notice = arrival && arrival.owner === owner && arrival.notice.conversation_id !== activeConversation ? arrival.notice : null
   const current =
     state.owner === owner
       ? state
@@ -105,6 +126,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   return (
     <ChatContext.Provider value={{ ...current, refresh }}>
       {children}
+      {notice && <div className="chat-arrival">
+        <Link to={`/app/chat?conversation=${notice.conversation_id}&message=${notice.message_id}`} onClick={() => setArrival(null)}>
+          <span role="status">{notice.mentioned ? `${notice.sender_name} mentioned you` : `New message from ${notice.sender_name}`}</span>
+          <small>Open chat</small>
+        </Link>
+        <button type="button" className="button button-secondary" aria-label="Dismiss message notification" onClick={() => setArrival(null)}>Dismiss</button>
+      </div>}
     </ChatContext.Provider>
   )
 }

@@ -1,5 +1,6 @@
 import {useNotificationReceipts} from './useNotificationReceipts'
 import {useRoleNotices} from '../records/useRoleNotices'
+import {registerPush} from '../my-day/device-push'
 import {useSuiteNotifications} from '../my-day/useSuiteNotifications'
 import {useServiceNotifications} from './useServiceNotifications'
 import {useHandoverNotifications} from '../handovers/useHandoverNotifications'
@@ -16,6 +17,20 @@ import { reminderDate, reminderLabel, reminderPath } from './notification-utils'
 export function Notifications() {
  const {inbox,error:chatError,refresh:refreshChat}=useChat()
  const [page,setPage]=useState(0)
+ const [pushStatus,setPushStatus]=useState('')
+ const [pushBusy,setPushBusy]=useState(false)
+ async function enableDeviceNotifications() {
+   setPushBusy(true)
+   setPushStatus('')
+   try {
+     await registerPush()
+     setPushStatus('This device can receive chat and task notifications.')
+   } catch (error) {
+     setPushStatus(error instanceof Error ? error.message : 'Device notifications could not be enabled. Try again.')
+   } finally {
+     setPushBusy(false)
+   }
+ }
  const receipts=useNotificationReceipts()
  const roleNotices=useRoleNotices()
  const suite=useSuiteNotifications()
@@ -31,6 +46,9 @@ export function Notifications() {
  const unread=roleNotices.rows.filter(n=>!receipts.has('role',n.id)).length+Math.max(0,suite.unread-hiddenTaskNotices)+service.unread+inbox.unread+work.data.unread+taskRows.filter(n=>!receipts.has('task',n.id)).length+Math.max(0,captures.count-captures.rows.filter(n=>receipts.has('capture',n.id)).length)+Math.max(0,handovers.count-handovers.rows.filter(n=>receipts.has('handover',n.id)).length)
  return <><button className="chat-bell" type="button" aria-label={`Notifications${unread?`, ${unread} unread`:''}`} onClick={()=>{void receipts.refresh();roleNotices.refresh();suite.refresh();service.refresh();work.refresh();refreshChat();tasks.refresh();captures.refresh();handovers.refresh();dialog.current?.showModal()}}><WorkspaceIcon name="bell"/>{unread>0&&<span className="chat-count">{unread>99?'99+':unread}</span>}</button>
  <dialog ref={dialog} className="vw-dialog chat-notifications" aria-labelledby="workspace-notifications-title"><div className="chat-dialog-heading"><h2 id="workspace-notifications-title">Notifications</h2><button className="button button-secondary" onClick={()=>dialog.current?.close()}>Close</button></div>
+ <p>Enable device alerts for new messages when Vimbre is closed.</p>
+ <button type="button" className="button button-secondary" disabled={pushBusy} onClick={() => void enableDeviceNotifications()}>{pushBusy ? 'Enabling…' : 'Enable notifications on this device'}</button>
+ {pushStatus && <p role="status">{pushStatus}</p>}
  {receipts.error&&<p role="alert">Read status could not be saved. <button onClick={()=>void receipts.refresh()}>Retry</button></p>}
  {work.error&&<p role="alert" className="field-error">Deadline reminders could not be loaded. <button type="button" onClick={work.refresh}>Retry</button></p>}
  {work.readError&&<p role="alert" className="field-error">The notification could not be marked as read. Please retry.</p>}

@@ -1,0 +1,154 @@
+/* Public website only. Workspace and account forms use their own styles. */
+.rs-site[data-theme] {
+  --public-display: clamp(40px, 5vw, 60px);
+  --public-heading: clamp(28px, 3.2vw, 40px);
+  --public-card-heading: 18px;
+  --public-body: 17px;
+  --public-card-body: 15px;
+  --public-small: 14px;
+  --public-control: 15px;
+  --public-section-space: 96px;
+  --public-gutter: 40px;
+  --public-card-border: #dce4ee;
+  --public-card-ink: #475569;
+  font: 400 var(--public-body)/1.6 'Geist Variable', sans-serif;
+}
+@media (max-width: 1023px) {
+  .rs-site[data-theme] { --public-section-space: 64px; }
+}
+@media (max-width: 767px) {
+  .rs-site[data-theme] { --public-section-space: 48px; --public-gutter: 24px; --public-body: 16px; }
+}
+.rs-site[data-theme] .rs-container,
+.rs-site[data-theme] .rs-header .rs-header-inner,
+.rs-site[data-theme] .public-hero > .rs-container {
+  width: min(1200px, calc(100% - var(--public-gutter) * 2));
+  max-width: none;
+}
+.rs-site[data-theme] :is(.rs-section, .public-hero, .contact-section) {
+  padding-block: var(--public-section-space);
+}
+.rs-site[data-theme] :is(h1, h2, h3) {
+  font-family: 'Plus Jakarta Sans Variable', sans-serif;
+  overflow-wrap: anywhere;
+}
+.rs-site[data-theme] :is(main, .public-hero, .public-page-intro, .careers-intro, .public-tour) h1 {
+  font-size: var(--public-display);
+  line-height: 1.08;
+  letter-spacing: -.03em;
+  font-weight: 700;
+}
+.rs-site[data-theme] :is(main, .rs-section, .contact-section, .website-chat) h2 {
+  font-size: var(--public-heading);
+  line-height: 1.15;
+  letter-spacing: -.025em;
+  font-weight: 700;
+}
+.rs-site[data-theme] :is(main, .rs-section, .contact-section) h3 {
+  font-size: var(--public-card-heading);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.rs-site[data-theme] :is(.rs-hero-subhead, .public-lead, .rs-container > p, .careers-invitation p, .careers-intro p, .vimbre-cta-copy p, .public-page-sections p, .public-faq details p) {
+  font-size: var(--public-body);
+  font-weight: 400;
+  line-height: 1.6;
+  max-width: 62ch;
+}
+.rs-site[data-theme] :is(.rs-container, .vimbre-cta-copy, .careers-invitation-inner > div, .public-page-sections > section) > h2 + p {
+  margin-block-start: 16px;
+}
+.rs-site[data-theme] .public-intro > .rs-container > p { max-width: 60ch; text-wrap: pretty; }
+.rs-site[data-theme] .public-hero > .rs-container,
+.rs-site[data-theme] .public-hero h1 { text-align: start; }
+.rs-site[data-theme] .public-hero h1 { margin: 16px 0; }
+.rs-site[data-theme] .public-hero .rf-rotating-word { white-space: normal; }
+.rs-site[data-theme] .public-hero .rf-rotating-word > span { animation: none; }
+.rs-site[data-theme] .public-hero .rs-hero-subhead { margin: 0; max-width: 62ch; line-height: 1.6; font-size: var(--public-body); }
+.rs-site[data-theme] .public-hero .public-role-picker { justify-content: start; margin: 24px 0; }
+.rs-site[data-theme] .public-hero .rs-actions { justify-content: start; margin-inline: 0; }
+.rs-site[data-theme] :is(.public-link-grid, .public-integrations, .rs-pricing, .public-page-sections, .contact-grid) { gap: 24px; align-items: stretch; }
+.rs-site[data-theme] :is(.public-link-grid, .public-integrations, .rs-pricing, .public-page-sections, .public-walkthrough) { margin-top: 40px; }
+.rs-site[data-theme] .public-tour-controls { margin-top: 0; }
+.rs-site[data-theme] :is(.public-link-grid > a, .public-integrations > article, .rs-plan, .public-page-sections > section, .contact-card) {
+  padding: 28px;
+  min-width: 0;
+  border: 1px solid var(--public-card-border);
+  border-radius: 16px;
+}
+.rs-site[data-theme] :is(.public-link-grid, .public-integrations, .contact-card, .rs-plan, .public-hero-caption) p {
+  color: var(--public-card-ink);
+  font-size: var(--public-card-body);
+  line-height: 1.55;
+}
+.rs-site[data-theme] :is(.public-link-grid, .public-integrations) h3 { margin-bottom: 8px; }
+.rs-site[data-theme] :is(small, .rs-eyebrow, .careers-eyebrow, .public-card-bar, .public-tour-controls, .public-step-caption > span, .vimbre-cta-example, .vimbre-cta-avatar, .vimbre-cta-message span, .vimbre-cta-message strong, .vimbre-cta-result span, .vimbre-cta-result strong, .vimbre-cta-source p, .website-chat label, .website-chat time, .rf-blog-meta, .rs-plan-price span, .public-tour-controls button) {
+  font-size: var(--public-small);
+}
+.rs-site[data-theme] :is(.rs-button, .rs-nav a, .rs-login, .rs-text-link, .public-role-picker button, .public-step-tabs button, .public-card-bar button, .public-tour-controls button, .website-chat-launcher, .public-faq summary) {
+  font-size: var(--public-control);
+  font-weight: 600;
+}
+.rs-site[data-theme] .rs-header-scrolled { box-shadow: 0 4px 16px rgb(16 42 67 / 8%); }
+.rs-site[data-theme] .rs-nav a { position: relative; text-decoration: none; }
+.rs-site[data-theme] .rs-nav a::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 120ms ease-out;
+}
+.rs-site[data-theme] .rs-nav a:is(:hover, :focus-visible)::after { transform: scaleX(1); }
+.rs-site[data-theme] :is(.rs-button, .website-chat-launcher) { transition: transform 120ms ease-out; }
+.rs-site[data-theme] :is(.rs-button, .website-chat-launcher):active { transform: scale(.98); }
+.rs-site[data-theme] .rs-button:not(.rs-button-outline):hover { background-color: var(--blue-hover); }
+.rs-site[data-theme] .website-chat-launcher:hover { background: #153e61; }
+.rs-site[data-theme]:has(.website-chat-launcher) { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.rs-site[data-theme] .public-link-grid h3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rs-site[data-theme] :is(.public-card-chevron, .public-faq-icon, .vimbre-cta-result > svg) { width: 20px; height: 20px; flex: none; }
+.rs-site[data-theme] .vimbre-cta-result > svg { stroke-width: 1.5; }
+.rs-site[data-theme] .public-card-chevron { opacity: 0; transform: translateX(-3px); transition: transform 180ms ease-out, opacity 180ms ease-out; }
+.rs-site[data-theme] .public-link-grid a:is(:hover, :focus-visible) .public-card-chevron { opacity: 1; transform: none; }
+.rs-site[data-theme] .public-link-grid a { transition: transform 180ms ease-out; }
+@media (hover: hover) {
+  .rs-site[data-theme] .public-link-grid a:hover { transform: translateY(-2px); border-color: #bbcbe0; box-shadow: 0 6px 16px rgb(16 42 67 / 8%); }
+}
+.rs-site[data-theme] .public-integration-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--public-card-border);
+  border-radius: 6px;
+  color: var(--public-card-ink);
+  font-size: var(--public-small);
+}
+.rs-site[data-theme] .public-faq summary { align-items: center; }
+.rs-site[data-theme] .public-faq-icon { transition: transform 250ms ease-out; }
+.rs-site[data-theme] .public-faq details[open] .public-faq-icon { transform: rotate(45deg); }
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+  .rs-site[data-theme] .public-faq details { interpolate-size: allow-keywords; }
+  .rs-site[data-theme] .public-faq details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size 250ms ease-out, content-visibility 250ms allow-discrete;
+  }
+  .rs-site[data-theme] .public-faq details[open]::details-content { block-size: auto; }
+}
+@media (max-width: 420px) {
+  .rs-site[data-theme] .rs-header .rs-header-inner { gap: 4px; }
+  .rs-site[data-theme] .rs-header .rs-header-actions { gap: 4px; }
+  .rs-site[data-theme] .rs-header .rs-header-cta { padding-inline: 6px; }
+  .rs-site[data-theme] .rs-header .rs-menu { width: 32px; min-width: 32px; padding-inline: 4px; }
+  .rs-site[data-theme] .public-step-tabs button { white-space: normal; overflow-wrap: anywhere; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rs-site[data-theme] *, .rs-site[data-theme] *::before, .rs-site[data-theme] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .rs-site[data-theme] :is(.public-link-grid a:hover, .rs-button:active, .website-chat-launcher:active) { transform: none; }
+}

@@ -1,9 +1,9 @@
-.contact-section { padding-block: clamp(44px, 6vw, 76px); border-bottom: 1px solid #e2e8f0; background: radial-gradient(ellipse at 90% 0%, #eaf2fe90, transparent 65%), #f8fafc; scroll-margin-top: 92px; }
+.contact-section { padding-block: clamp(44px, 6vw, 76px); border-bottom: 1px solid #e2e8f0; background: #f8fafc; scroll-margin-top: 92px; }
 .contact-layout { display: grid; grid-template-columns: minmax(200px, .8fr) minmax(0, 2fr); gap: 48px; align-items: start; }
 .contact-intro .rs-eyebrow { color: #2563d9; margin-bottom: 16px; }
 .contact-intro h2 { font-size: clamp(28px, 3vw, 38px); max-width: 10ch; }
 .contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
-.contact-card { min-width: 0; padding: 24px; background: #ffffffb8; backdrop-filter: blur(16px); border: 1px solid #dce6f1; border-radius: 16px; box-shadow: 0 12px 30px #102a4305; }
+.contact-card { min-width: 0; padding: 24px; background: #fff; border: 1px solid #dce6f1; border-radius: 16px; box-shadow: 0 12px 30px #102a4305; }
 .contact-card h3 { font-size: 19px; }
 .contact-card p { margin-top: 12px; color: #52677c; font-size: 14px; line-height: 1.65; }
 .contact-card a { display: inline-block; margin-top: 22px; color: #2563d9; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }

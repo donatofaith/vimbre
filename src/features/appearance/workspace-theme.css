@@ -22,7 +22,7 @@ html[data-workspace-theme=dark] dialog::backdrop{background:rgb(2 8 16 / 70%)}
 html[data-workspace-theme=dark] .button-primary{background:var(--action-blue);color:#fff}
 html[data-workspace-theme=dark] .button-primary:hover:not(:disabled){background:#1e55bd;color:#fff}
 html[data-workspace-theme=dark] .vw-shell.app-shell .vw-topbar .workspace-theme-toggle{color:var(--muted)}
-html[data-workspace-theme=dark] .vw-shell.app-shell .vw-topbar .workspace-theme-toggle:hover{color:var(--blue);background:var(--surface-raised)}
+
 /* Keep the added control in the same header row even at 360px. */
 .vw-shell.app-shell .workspace-theme-toggle{flex:none}
 @media(max-width:640px){.vw-shell.app-shell .vw-topbar-actions{flex:none;gap:0}.vw-shell.app-shell .vw-breadcrumb{flex:1;min-width:0}.vw-shell.app-shell .vw-breadcrumb-company{overflow:hidden;text-overflow:ellipsis}.vw-shell.app-shell .vw-topbar .vw-avatar{margin-left:2px}}
@@ -34,3 +34,29 @@ html[data-workspace-theme=dark] progress::-webkit-progress-value{background:var(
 html[data-workspace-theme=dark] progress::-moz-progress-bar{background:var(--blue)}
 
 .vw-shell.app-shell .vw-topbar .workspace-theme-toggle,.vw-shell.app-shell .vw-topbar .workspace-theme-toggle:is(:hover,:focus,:active){display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:36px;height:36px;min-width:36px;min-height:36px;max-width:36px;max-height:36px;flex:0 0 36px;padding:0;border:0;box-shadow:none;transform:none;background:transparent;border-radius:7px}.vw-shell.app-shell .vw-topbar .workspace-theme-toggle>svg{display:block;width:19px;height:19px;min-width:19px;min-height:19px;flex:none}.workspace-theme-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:1px}@media(max-width:640px){.vw-shell.app-shell .vw-topbar .workspace-theme-toggle,.vw-shell.app-shell .vw-topbar .workspace-theme-toggle:is(:hover,:focus,:active){width:44px;height:44px;min-width:44px;min-height:44px;max-width:44px;max-height:44px;flex-basis:44px}}
+
+/* Mouse hover feedback stays off touch screens where :hover can stick after a tap. */
+.vw-shell.app-shell .vw-topbar .workspace-theme-toggle:hover {
+  background: transparent;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .vw-shell.app-shell .vw-topbar .workspace-theme-toggle:hover {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+}
+.vw-shell.app-shell .vw-topbar :is(.chat-launcher, .chat-bell) .chat-count {
+  top: 0;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 4px;
+}
+
+@media (hover: none) {
+  html .vw-shell.app-shell .vw-topbar :is(.chat-launcher:not(.active), .chat-bell):hover {
+    background: transparent;
+    color: var(--muted);
+  }
+}
