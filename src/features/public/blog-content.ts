@@ -1,6 +1,9 @@
+import type {BlogImage} from '../../../server/blog-image.mjs'
+
 export type BlogPost = {
  slug: string; title: string; description: string; published: string; author: string
- sections: {heading:string; paragraphs:string[]}[]
+ featuredImage?: BlogImage
+ sections: {heading:string; paragraphs:string[];image?:BlogImage}[]
  modified?:string
  template?: string
  faq?: {question:string;answer:string}[]

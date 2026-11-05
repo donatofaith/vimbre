@@ -257,3 +257,20 @@
 @media (max-width: 370px) {
   .rs-site[data-theme] .public-hero h1 { font-size: clamp(30px, 10vw, 40px); }
 }
+
+.rs-site[data-theme] :is(#product, #product-demo, #pricing, #questions, #integrations, #contact) {
+  scroll-margin-top: 0;
+}
+.rf-blog .blog-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-block: 16px;
+  border-radius: 12px;
+}
+.rf-blog .rf-blog-list .blog-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  margin-block: 0 16px;
+}

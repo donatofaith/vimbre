@@ -1,3 +1,4 @@
+import {homeSections} from './public-navigation'
 import {useEffect,useRef} from 'react'
 import type {ReactNode} from 'react'
 import {Link,useLocation} from 'react-router-dom'
@@ -34,7 +35,7 @@ export function PublicFrame({children,authenticated=false,loading=false}:{childr
 }
 
 const footerGroups = [
-  { label: 'Explore', links: [['Product', '/how-it-works'], ['Pricing', '/pricing'], ['FAQ', '/faq'], ['Integrations', '/integrations']] },
+  { label: 'Explore', links: [['Product', homeSections.product], ['How it works', homeSections.howItWorks], ['Pricing', homeSections.pricing], ['FAQ', homeSections.faq], ['Integrations', homeSections.integrations]] },
   { label: 'Vimbre for', links: [['Individuals', '/for-individuals'], ['Founders', '/for-founders'], ['Companies', '/for-companies']] },
   { label: 'Company', links: [['Blog', '/blog'], ['Careers', '/careers'], ['Contact', '/#contact']] },
 ]

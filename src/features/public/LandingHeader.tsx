@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {trackMarketing} from './marketing-analytics'
 import './public-polish.css'
+import {homeSections} from './public-navigation'
 import { BrandLogo } from '../../components/ui/BrandLogo'
 
 export function LandingHeader({ authenticated = false, loading = false }: { authenticated?: boolean; loading?: boolean }) {
@@ -25,7 +26,7 @@ export function LandingHeader({ authenticated = false, loading = false }: { auth
     <div className="rs-container rs-header-inner">
       <Link className="rs-brand" to="/" aria-label="Vimbre home"><BrandLogo /></Link>
       <nav id="rs-navigation" className={`rs-nav${menuOpen ? ' rs-nav-open' : ''}`} aria-label="Public">
-        {[['Product', '#product-demo'], ['How it works', 'how-it-works'], ['Pricing', 'pricing'], ['FAQ', 'faq'], ['Integrations', 'integrations']].map(([label, href]) => <Link key={label} to={`/${href}`} onClick={() => setMenuOpen(false)}>{label}</Link>)}
+        {[['Product', homeSections.product], ['How it works', homeSections.howItWorks], ['Pricing', homeSections.pricing], ['FAQ', homeSections.faq], ['Integrations', homeSections.integrations]].map(([label, href]) => <Link key={label} to={href} onClick={() => setMenuOpen(false)}>{label}</Link>)}
         <Link to="/blog" onClick={()=>setMenuOpen(false)}>Blog</Link>
       </nav>
       <div className="rs-header-actions">
