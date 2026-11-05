@@ -12,4 +12,30 @@ supabase/.temp/
 supabase/.branches/
 landing-review/
 
+
+# Credentials and local deployment state
+.envrc
+.dev.vars
+.dev.vars.*
+.vercel/
+.wrangler/
+.npmrc
+.netrc
+.pgpass
+secrets/
+credentials/
+credentials*.json
+*-credentials.json
+service-account*.json
+*-service-account.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+*.tfstate
+*.tfstate.*
+
 api/generated/

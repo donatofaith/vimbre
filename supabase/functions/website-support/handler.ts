@@ -2,7 +2,15 @@ const origins=new Set(['https://vimbre.com','https://www.vimbre.com','https://vi
 const hex=(b:ArrayBuffer)=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')
 export async function handle(request:Request,env:(name:string)=>string|undefined,fetcher:typeof fetch=fetch){const origin=request.headers.get('origin')??'';const headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS','Cache-Control':'no-store','Vary':'Origin','Content-Type':'application/json'};const reply=(status:number,data:unknown)=>Response.json(data,{status,headers})
  if(!origins.has(origin))return Response.json({ok:false,code:'access_denied'},{status:403});if(request.method==='OPTIONS')return new Response(null,{status:204,headers});if(request.method!=='POST')return reply(405,{ok:false,code:'invalid_input'});
- try{const raw=await request.text();if(raw.length>5000)return reply(413,{ok:false,code:'invalid_input'});const input=JSON.parse(raw);if(!['start','read','reply'].includes(input.action)||typeof input.token!=='string'||!/^[a-f0-9]{64}$/.test(input.token)||typeof(input.body??'')!=='string'||(input.body??'').length>2000||typeof(input.name??'')!=='string'||(input.name??'').length>80)return reply(400,{ok:false,code:'invalid_input'});
+ try{
+ const reader=request.body?.getReader();if(!reader)return reply(400,{ok:false,code:'invalid_input'});
+ const decoder=new TextDecoder('utf-8',{fatal:true});let raw='',size=0;
+ try{
+  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>15000){await reader.cancel();return reply(413,{ok:false,code:'invalid_input'})}raw+=decoder.decode(value,{stream:true})}
+  raw+=decoder.decode()
+ }finally{reader.releaseLock()}
+ if(raw.length>5000)return reply(413,{ok:false,code:'invalid_input'});
+ const input=JSON.parse(raw);if(!input||typeof input!=='object'||Array.isArray(input)||!['start','read','reply'].includes(input.action)||typeof input.token!=='string'||!/^[a-f0-9]{64}$/.test(input.token)||typeof(input.body??'')!=='string'||(input.body??'').length>2000||typeof(input.name??'')!=='string'||(input.name??'').length>80)return reply(400,{ok:false,code:'invalid_input'});
  const key=env('SUPABASE_SERVICE_ROLE_KEY'),url=env('SUPABASE_URL');if(!key||!url)return reply(503,{ok:false,code:'unavailable'});
  const ip=request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()??request.headers.get('cf-connecting-ip');if(!ip)return reply(503,{ok:false,code:'unavailable'});
  const hash=hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input.token)));const hmac=await crypto.subtle.importKey('raw',new TextEncoder().encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign']);const ipHash=hex(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode('website-support:'+ip)));

@@ -47,3 +47,8 @@ import_map = "./functions/billing-mail/deno.json"
 [functions.website-careers]
 verify_jwt = false
 entrypoint = "./functions/website-careers/index.ts"
+
+[functions.validated-upload]
+# The handler authenticates the caller and checks the existing per-bucket ownership rules.
+verify_jwt = false
+entrypoint = "./functions/validated-upload/index.ts"

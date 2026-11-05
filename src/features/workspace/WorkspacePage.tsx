@@ -190,7 +190,7 @@ function ActionWorkspace({
         .range(page * 20, page * 20 + 19)
 
       if (!cancelled) {
-        if (failure) console.error('Actions load failed', failure)
+        if (failure && import.meta.env.DEV) console.error('Actions load failed', failure)
 
         setResult({
           key,
@@ -212,7 +212,7 @@ function ActionWorkspace({
     void supabase
       .rpc('log_action_view', { p_owner: ownerId })
       .then(({ error }) => {
-        if (error) console.error('Actions view audit failed', error)
+        if (error && import.meta.env.DEV) console.error('Actions view audit failed', error)
       })
   }, [ownerId])
 
@@ -279,7 +279,7 @@ function ActionWorkspace({
             : 'Task archived.',
       )
     } catch (reason) {
-      console.error('Action change failed', reason)
+      if (import.meta.env.DEV) console.error('Action change failed', reason)
       setError(actionError(reason))
     } finally {
       setBusy(false)

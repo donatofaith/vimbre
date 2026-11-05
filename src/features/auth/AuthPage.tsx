@@ -5,15 +5,16 @@ import {trackLogin} from '../../lib/analytics'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import {billingReturnPath,billingSignupCallback} from '../billing/return-path'
 import { myDayReturnPath } from './return-path'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useAuth } from './AuthProvider'
-import { authMessage, passwordProblem } from './validation'
+import { authMessage, isSignupDuplicate, passwordProblem } from './validation'
 import { BrandLogo } from '../../components/ui/BrandLogo'
+import { AuthChallenge } from './AuthChallenge'
 import './account.css'
 
 type Mode = 'login' | 'signup' | 'forgot' | 'reset'
@@ -110,6 +111,24 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [signupMode,setSignupMode]=useState<AccountType>(()=>{const type=new URLSearchParams(typeof window==='undefined'?'':window.location.search).get('account_type');return type==='company'||type==='sole_founder'?type:'individual'})
   const [resendAt, setResendAt] = useState(0)
   const [clock, setClock] = useState(Date.now)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaAttempt, setCaptchaAttempt] = useState(0)
+  const pending = useRef(false)
+  const siteKey = mode === 'reset' ? '' : import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim()
+  const challenge = siteKey
+    ? <AuthChallenge key={captchaAttempt} siteKey={siteKey} onToken={setCaptchaToken} />
+    : null
+  const captchaOptions = captchaToken ? { captchaToken } : {}
+  const captchaPrompt = 'Complete the security check and try again.'
+
+  function finishRequest() {
+    pending.current = false
+    setBusy(false)
+    if (siteKey) {
+      setCaptchaToken('')
+      setCaptchaAttempt(value => value + 1)
+    }
+  }
 
   const account = useAuth()
   const navigate = useNavigate()
@@ -149,7 +168,9 @@ export function AuthPage({ mode }: { mode: Mode }) {
   }
 
   async function resend() {
-    if (busy || resendSeconds > 0) return
+    if (pending.current || resendSeconds > 0) return
+    if (siteKey && !captchaToken) { setError(captchaPrompt); return }
+    pending.current = true
 
     setBusy(true)
     setError('')
@@ -160,11 +181,12 @@ export function AuthPage({ mode }: { mode: Mode }) {
         type: 'signup',
         email: signupEmail,
         options: {
+          ...captchaOptions,
           emailRedirectTo: billingSignupCallback(window.location.origin,location.search),
         },
       })
 
-      if (failure) throw failure
+      if (failure && !isSignupDuplicate(failure.code) && failure.code !== 'user_not_found') throw failure
 
       setMessage(
         'If your email still needs confirmation, a new link has been requested. Check your inbox and spam folder. If you already opened a confirmation link, your email may be confirmed—try logging in.',
@@ -172,12 +194,13 @@ export function AuthPage({ mode }: { mode: Mode }) {
     } catch (reason) {
       setError(authMessage((reason as { code?: string }).code))
     } finally {
-      setBusy(false)
+      finishRequest()
     }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (pending.current) return
     setError('')
     setMessage('')
 
@@ -197,6 +220,8 @@ export function AuthPage({ mode }: { mode: Mode }) {
       }
     }
 
+    if (siteKey && !captchaToken) { setError(captchaPrompt); return }
+    pending.current = true
     setBusy(true)
 
     try {
@@ -213,6 +238,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           email,
           password,
           options: {
+            ...captchaOptions,
             data: {
               full_name: name,
               company_name: company,
@@ -222,19 +248,20 @@ export function AuthPage({ mode }: { mode: Mode }) {
           },
         })
 
-        if (result.error) throw result.error
-        void trackNewSignup(result.data.user)
+        if (result.error && !isSignupDuplicate(result.error.code)) throw result.error
+        if (!result.error) void trackNewSignup(result.data.user)
 
         setSignupEmail(email)
         startCooldown()
 
         setMessage(
-          'Check your inbox for a confirmation link. After confirming your email, you can open your workspace. If you already have an account, try signing in or resetting your password.',
+          'If this address can be used for signup, you’ll receive a confirmation link. If you already have an account, try signing in or resetting your password.',
         )
       } else if (mode === 'login') {
         const result = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: captchaOptions,
         })
 
         if (result.error) throw result.error
@@ -245,6 +272,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         const result = await supabase.auth.resetPasswordForEmail(
           email,
           {
+            ...captchaOptions,
             redirectTo: `${window.location.origin}/auth/callback?flow=recovery`,
           },
         )
@@ -277,7 +305,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
     } catch (reason) {
       setError(authMessage((reason as { code?: string }).code))
     } finally {
-      setBusy(false)
+      finishRequest()
     }
   }
 
@@ -327,6 +355,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
                 Requested for <strong>{signupEmail}</strong>
               </p>
 
+              {resendSeconds === 0 && challenge}
               <Button
                 variant="secondary"
                 disabled={busy || resendSeconds > 0}
@@ -450,6 +479,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
             </p>
           )}
 
+          {challenge}
           <Button type="submit" disabled={busy}>
             {busy
               ? 'Please wait…'

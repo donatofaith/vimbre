@@ -1,3 +1,4 @@
+import { uploadValidated } from '../../lib/validated-upload'
 import {useEffect,useState} from 'react'
 import {useAuth} from '../auth/AuthProvider'
 import {supabase} from '../../lib/supabase'
@@ -21,7 +22,7 @@ export function CompanyLogo(){
    const scale=Math.min(1,256/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));const ctx=canvas.getContext('2d');if(!ctx){bitmap.close();throw Error('Image upload is unavailable in this browser.')};ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close()
    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/webp',.85));if(!blob||blob.type!=='image/webp'||blob.size>262144)throw Error('This image could not be resized. Try a smaller image.')
    const path=company.id+'/'+crypto.randomUUID()+'.webp'
-   const result=await supabase.storage.from('company-logos').upload(path,blob,{contentType:'image/webp',upsert:false});if(result.error)throw Error('The logo could not be uploaded. Please retry.');uploaded=path
+   const result=await uploadValidated('company-logos',path,blob,'logo.webp');if(result.error)throw Error('The logo could not be uploaded. Please retry.');uploaded=path
    const saved=await supabase.from('companies').update({logo_path:path}).eq('id',company.id).select('id').single();if(saved.error||!saved.data)throw Error('The logo could not be saved. Please retry.')
    uploaded=null
    if(company.logo_path)void supabase.storage.from('company-logos').remove([company.logo_path])

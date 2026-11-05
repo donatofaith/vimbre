@@ -1,4 +1,4 @@
-import type {BlogImage} from '../../../server/blog-image.mjs'
+import type {BlogImage} from '../../lib/blog-image.mjs'
 
 export type BlogPost = {
  slug: string; title: string; description: string; published: string; author: string

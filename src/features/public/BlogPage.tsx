@@ -1,4 +1,4 @@
-import {blogImage} from '../../../server/blog-image.mjs'
+import {blogImage} from '../../lib/blog-image.mjs'
 import {CookieSettingsLink} from '../analytics/AnalyticsConsent'
 import { useEffect,useState } from 'react'
 import { Link, useParams } from 'react-router-dom'

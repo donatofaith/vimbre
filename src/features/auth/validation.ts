@@ -3,8 +3,12 @@ export function passwordProblem(password: string, confirmation: string) {
   if (password !== confirmation) return 'Your passwords do not match.'
   return ''
 }
+export function isSignupDuplicate(code?: string) {
+  return code === 'user_already_exists' || code === 'email_exists'
+}
+
 export function authMessage(code?: string) {
-  if (code === 'user_already_exists' || code === 'email_exists') return 'An account already exists for this email. Log in or reset your password.'
+  if (code === 'captcha_failed') return 'Complete the security check and try again.'
   if (code === 'invalid_credentials') return 'The email or password is incorrect.'
   if (code === 'email_not_confirmed') return 'Confirm your email before signing in.'
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return 'Too many attempts. Please wait a few minutes and try again.'

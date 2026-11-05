@@ -1,3 +1,4 @@
+import { uploadValidated } from '../../lib/validated-upload'
 import type { StructuredDraft } from '../ai/structured-output'
 import { AIDraftPanel } from '../ai/AIDraftPanel'
 import { useRef, useState } from 'react'
@@ -44,7 +45,7 @@ export function ItemForm({ item, kind, companyId, ownerId, saved, cancel, people
           const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
           if (!['pdf','txt','png','jpg','jpeg','docx','xlsx'].includes(extension)) throw new Error('Choose a PDF, text, image, Word or Excel file.')
           const path = `${ownerId}/${crypto.randomUUID()}.${extension}`
-          const { error: failure } = await supabase.storage.from('role-documents').upload(path, file, { upsert: false })
+          const { error: failure } = await uploadValidated('role-documents',path,file,file.name)
           if (failure) throw new Error('Could not upload the file. Check the file type and try again.')
           filePath = path; setUploaded({file, path})
         }

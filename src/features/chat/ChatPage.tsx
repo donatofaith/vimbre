@@ -1,3 +1,4 @@
+import { uploadValidated } from '../../lib/validated-upload'
 import {ChatAttachment} from './ChatAttachment'
 import {prepareChatFile,prepareChatFolder,chatFileAccept,fileSize,MAX_MESSAGE_BYTES} from './chat-files'
 import {subscribeWorkspaceRefresh} from '../workspace/workspace-refresh'
@@ -812,7 +813,7 @@ function MessageComposer({
     let sendingMessage=false
     try {
       const attachmentIds:string[]=[]
-      for(const file of files){let upload=uploads.current.find(u=>u.file===file);if(!upload){const prepared=await supabase.rpc('chat_attachment_prepare',{p_conversation:conversation,p_name:file.name,p_size:file.size,p_mime:file.type||'application/octet-stream'});if(prepared.error)throw prepared.error;const entry=prepared.data as {id:string;path:string};upload={file,...entry,uploaded:false};uploads.current.push(upload)}if(!upload.uploaded){const r=await supabase.storage.from('chat-attachments').upload(upload.path,file,{contentType:file.type||'application/octet-stream',upsert:false});if(r.error&&r.error.statusCode!=='409')throw r.error;upload.uploaded=true}attachmentIds.push(upload.id)}
+      for(const file of files){let upload=uploads.current.find(u=>u.file===file);if(!upload){const prepared=await supabase.rpc('chat_attachment_prepare',{p_conversation:conversation,p_name:file.name,p_size:file.size,p_mime:file.type||'application/octet-stream'});if(prepared.error)throw prepared.error;const entry=prepared.data as {id:string;path:string};upload={file,...entry,uploaded:false};uploads.current.push(upload)}if(!upload.uploaded){const r=await uploadValidated('chat-attachments',upload.path,file,file.name);if(r.error&&r.error.statusCode!=='409')throw r.error;upload.uploaded=true}attachmentIds.push(upload.id)}
       sendingMessage=true
       const { error } = await supabase.rpc('chat_send_files', {
         ...payload,

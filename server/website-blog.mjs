@@ -1,4 +1,4 @@
-import {blogImage} from './blog-image.mjs'
+import {blogImage} from '../src/lib/blog-image.mjs'
 export async function publishedPosts(){const url=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,key=process.env.SUPABASE_PUBLISHABLE_KEY||process.env.VITE_SUPABASE_PUBLISHABLE_KEY;if(!url||!key)throw Error('Blog unavailable');const r=await fetch(url+'/rest/v1/rpc/website_blog',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_slug:null}),signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Blog unavailable');const posts=await r.json();if(!Array.isArray(posts))throw Error('Blog unavailable');return posts}
 export const escape=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')
 function imageHtml(value, featured = false) {

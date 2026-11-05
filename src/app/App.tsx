@@ -175,7 +175,7 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<WorkspacePage />} />
-              <Route path="ui" element={<UIPreview />} />
+              {import.meta.env.DEV && <Route path="ui" element={<UIPreview />} />}
               <Route path="weekly-summary" element={<WeeklySummaryPage />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="capture" element={<CapturePage />} />
