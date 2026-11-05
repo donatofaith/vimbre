@@ -43,3 +43,7 @@ import_map = "./functions/stripe-billing/deno.json"
 verify_jwt = false
 entrypoint = "./functions/billing-mail/index.ts"
 import_map = "./functions/billing-mail/deno.json"
+
+[functions.website-careers]
+verify_jwt = false
+entrypoint = "./functions/website-careers/index.ts"
