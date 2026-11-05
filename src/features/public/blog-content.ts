@@ -1,6 +1,7 @@
 export type BlogPost = {
  slug: string; title: string; description: string; published: string; author: string
  sections: {heading:string; paragraphs:string[]}[]
+ modified?:string
  template?: string
  faq?: {question:string;answer:string}[]
 }

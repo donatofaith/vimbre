@@ -18,3 +18,7 @@ export function renderPublic(path:string){return renderToString(<StaticRouter lo
 import {AuthProvider} from '../auth/AuthProvider'
 import {AuthPage} from '../auth/AuthPage'
 export function renderAccount(path:string){const mode=path==='/signup'?'signup':path==='/forgot'?'forgot':path==='/reset-password'?'reset':'login';return renderToString(<StaticRouter location={path}><AuthProvider><AuthPage mode={mode}/></AuthProvider></StaticRouter>)}
+
+import {CareersContent}from './CareersPage'
+import {PublicFrame}from './PublicFrame'
+export function renderCareers(){return renderToString(<StaticRouter location="/careers"><PublicFrame><CareersContent/></PublicFrame></StaticRouter>)}

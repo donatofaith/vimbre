@@ -5,6 +5,22 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/blog",
+      "destination": "/api/blog-page"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/api/blog-page?slug=:slug"
+    },
+    {
+      "source": "/careers",
+      "destination": "/careers/index.html"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/demo/index.html",
       "destination": "/demo/index.html"
     },
@@ -89,20 +105,8 @@
       "destination": "/walkthrough/:path*"
     },
     {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
-    },
-    {
       "source": "/robots.txt",
       "destination": "/robots.txt"
-    },
-    {
-      "source": "/blog",
-      "destination": "/blog/index.html"
-    },
-    {
-      "source": "/blog/:slug",
-      "destination": "/blog/:slug/index.html"
     },
     {
       "source": "/templates/:path*",
@@ -175,5 +179,13 @@
       "destination": "https://vimbre.com/:path*",
       "statusCode": 307
     }
-  ]
+  ],
+  "functions": {
+    "api/blog-page.mjs": {
+      "includeFiles": "api/generated/blog-shell.html"
+    },
+    "api/sitemap.mjs": {
+      "includeFiles": "api/generated/sitemap-base.json"
+    }
+  }
 }

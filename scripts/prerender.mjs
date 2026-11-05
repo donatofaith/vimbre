@@ -2,7 +2,7 @@ import { createServer } from 'vite'
 import { readFile, writeFile, readdir, mkdir } from 'node:fs/promises'
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
 try {
-  const { renderLanding, renderBlog, renderLegal, blogPosts,renderPublic,renderAccount,publicPages,metaFor,definition } = await server.ssrLoadModule('/src/features/public/prerender.tsx')
+  const { renderLanding, renderBlog, renderLegal,renderCareers, blogPosts,renderPublic,renderAccount,publicPages,metaFor,definition } = await server.ssrLoadModule('/src/features/public/prerender.tsx')
   let html = await readFile('dist/index.html', 'utf8')
   const rendered = renderLanding()
   if (!rendered.includes('Declutter your') || !rendered.includes('application/ld+json')) throw new Error('Landing prerender is incomplete')
@@ -52,6 +52,14 @@ try {
     page=page.replace(/(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*/g, (_,prefix)=>prefix+escape(description)).replace(/(<meta (?:name|property)="(?:og:title|twitter:title)" content=")[^"]*/g,(_,prefix)=>prefix+escape(title)).replace(/(<meta property="og:url" content=")[^"]*/,'$1'+canonical).replace(/(<meta property="og:type" content=")[^"]*/,'$1'+(post?'article':'website'))
     await mkdir('dist'+path,{recursive:true});await writeFile('dist'+path+'/index.html',page)
   }
+  await mkdir('dist/careers',{recursive:true})
+  const careerPage=template.replace('<div id="root">'+rendered+'</div>','<div id="root">'+renderCareers()+'</div>').replace(/<title>.*?<\/title>/,'<title>Careers at Vimbre</title>').replace(/(<link rel="canonical" href=")[^"]*/,'$1https://vimbre.com/careers').replace(/(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*/g,'$1No open roles right now. Tell Vimbre about your work and your interest in future opportunities.').replace(/(<meta (?:name|property)="(?:og:title|twitter:title)" content=")[^"]*/g,'$1Careers at Vimbre').replace(/(<meta property="og:url" content=")[^"]*/,'$1https://vimbre.com/careers')
+  await writeFile('dist/careers/index.html',careerPage)
+  await mkdir('api/generated',{recursive:true})
+  const shell=(await readFile('dist/blog/index.html','utf8')).replace(/<main class="rs-section">[\s\S]*?<\/main>/,'<main class="rs-section"><div class="rs-container rf-blog"><!--VIMBRE_BLOG_CONTENT--></div></main>')
+  if(!shell.includes('<!--VIMBRE_BLOG_CONTENT-->'))throw Error('Blog shell marker missing')
+  await writeFile('api/generated/blog-shell.html',shell)
+  await writeFile('api/generated/sitemap-base.json',JSON.stringify(['/',...Object.keys(publicPages),'/blog','/careers','/privacy','/terms']))
   const legalStyles=Object.entries(manifest).filter(([key])=>key.includes('LegalPage')).flatMap(([,item])=>item.css??[]).map(file=>'<link rel="stylesheet" href="/'+file+'">').join('')
   for (const [name,title] of [['privacy','Vimbre Privacy Policy'],['terms','Vimbre Terms and Conditions'],['competition','Stars and competition terms']]) {
     const path = name==='competition'?'/competition-terms':'/'+name
@@ -60,7 +68,7 @@ try {
     page=page.replace('</head>',legalStyles+'</head>').replace(/<title>.*?<\/title>/,()=>'<title>'+escape(title)+'</title>').replace(/<link rel="canonical"[^>]*>/,'<link rel="canonical" href="'+canonical+'" />').replace(/(<meta property="og:url" content=")[^"]*/,'$1'+canonical).replace(/(<meta (?:name|property)="(?:og:title|twitter:title)" content=")[^"]*/g,(_,prefix)=>prefix+escape(title)).replace(/(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*/g,(_,prefix)=>prefix+escape(title+' for the Vimbre service.'))
     await mkdir('dist'+path,{recursive:true});await writeFile('dist'+path+'/index.html',page)
   }
-  const urls=['/',...Object.keys(publicPages),'/blog','/privacy','/terms',...blogPosts.map(post=>'/blog/'+post.slug)]
+  const urls=['/careers','/',...Object.keys(publicPages),'/blog','/privacy','/terms',...blogPosts.map(post=>'/blog/'+post.slug)]
   await writeFile('dist/sitemap.xml','<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(path=>'<url><loc>https://vimbre.com'+path+'</loc></url>').join('')+'</urlset>')
   // Vite copies public/robots.txt; preserve its AI crawler and private-route rules.
   console.log('Homepage prerendered with full content, FAQs and matching JSON LD.')

@@ -1,3 +1,4 @@
+import {CareersPage}from '../features/public/CareersPage'
 import {publicPages,metaFor} from '../features/public/public-content'
 import {WorkspaceThemeRoute} from '../features/appearance/WorkspaceTheme'
 import {AnalyticsConsent} from '../features/analytics/AnalyticsConsent'
@@ -146,7 +147,7 @@ export function App() {
       <Route path="/handover-share" element={<SharedHandoverPage/>}/>
           <Route path="/" element={<HomePage />} />
           <Route path="/tour" element={<Navigate replace to="/#product-demo"/>}/>{Object.keys(publicPages).map(path=><Route key={path} path={path} element={<PublicPage/>}/>)}
-          <Route path="/blog" element={<BlogRoute/>}/>
+          <Route path="/careers" element={<CareersPage/>}/><Route path="/blog" element={<BlogRoute/>}/>
           <Route path="/blog/:slug" element={<BlogRoute/>}/>
           <Route path="/privacy" element={<LegalPage page="privacy" />} />
           <Route path="/terms" element={<LegalPage page="terms" />} />
