@@ -9,19 +9,19 @@ export function HeroHeadline() {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let timer: number | undefined
     function sync() {
-      window.clearInterval(timer)
+      window.clearTimeout(timer)
       if (motion.matches || document.hidden) return
-      timer = window.setInterval(() => setIndex(current => (current + 1) % walkthrough.length), 6000)
+      timer = window.setTimeout(() => setIndex((index + 1) % walkthrough.length), index === 0 ? 1700 : 2600)
     }
     sync()
     motion.addEventListener('change', sync)
     document.addEventListener('visibilitychange', sync)
     return () => {
-      window.clearInterval(timer)
+      window.clearTimeout(timer)
       motion.removeEventListener('change', sync)
       document.removeEventListener('visibilitychange', sync)
     }
-  }, [])
+  }, [index])
 
   return <h1 id="hero-title" tabIndex={-1}>
     <span className="sr-only">{headline}</span>

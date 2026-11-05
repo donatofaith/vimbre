@@ -34,22 +34,25 @@ export function PublicFrame({children,authenticated=false,loading=false}:{childr
 }
 
 const footerGroups = [
-  { label: 'Product', links: [['Product', '/how-it-works'], ['Pricing', '/pricing'], ['FAQ', '/faq'], ['Integrations', '/integrations']] },
-  { label: 'Who Vimbre is for', links: [['Individuals', '/for-individuals'], ['Founders', '/for-founders'], ['Companies', '/for-companies']] },
+  { label: 'Explore', links: [['Product', '/how-it-works'], ['Pricing', '/pricing'], ['FAQ', '/faq'], ['Integrations', '/integrations']] },
+  { label: 'Vimbre for', links: [['Individuals', '/for-individuals'], ['Founders', '/for-founders'], ['Companies', '/for-companies']] },
   { label: 'Company', links: [['Blog', '/blog'], ['Careers', '/careers'], ['Contact', '/#contact']] },
 ]
 
 function PublicFooter() {
-  return <footer className="rs-footer public-footer">
+  return <footer className="rs-footer marketing-footer">
     <div className="rs-container">
       <div className="rs-footer-top">
         <Link className="rs-footer-brand" to="/" aria-label="Vimbre home">
           <img src="/vimbre-lockup-compact-light.svg" width={153} height={48} alt="" decoding="async"/>
         </Link>
         <nav className="public-footer-links" aria-label="Footer">
-          {footerGroups.map(group => <ul key={group.label} aria-label={group.label}>
+          {footerGroups.map(group => <div className="public-footer-group" key={group.label}>
+            <h2>{group.label}</h2>
+            <ul aria-label={group.label}>
             {group.links.map(([label, to]) => <li key={to}><Link to={to}>{label}</Link></li>)}
-          </ul>)}
+            </ul>
+          </div>)}
         </nav>
       </div>
       <div className="public-footer-bottom">
