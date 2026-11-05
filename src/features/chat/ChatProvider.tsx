@@ -50,6 +50,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               !latest || item.id > latest.id ? item : latest, undefined)
             if (newest && latestId !== undefined && newest.id > latestId && !document.hidden) {
               setArrival({ owner, notice: newest })
+            } else {
+              setArrival(current => current?.owner === owner &&
+                !items.some(item => item.id === current.notice.id) ? null : current)
             }
             latestId = Math.max(latestId ?? 0, newest?.id ?? 0)
           }

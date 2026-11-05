@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import './support-layout.css'
+import {pendingSupportNoticeIds, readSupportNotices} from '../notifications/useServiceNotifications'
 import {SupportApproval}from './SupportApproval'
 import {WorkspaceIcon} from '../../components/ui/WorkspaceIcon'
 
@@ -69,9 +70,14 @@ export function HelpPage() {
     let live = true
     setDetail(null)
     setDetailError('')
-    void call('detail', { ticket_id: selected }).then(result => {
+    void pendingSupportNoticeIds(selected).then(async ids => {
       if (!live) return
-      if (result.ok) setDetail(result.data as Detail)
+      const result = await call('detail', { ticket_id: selected })
+      if (!live) return
+      if (result.ok) {
+        setDetail(result.data as Detail)
+        if (!document.hidden) void readSupportNotices(ids)
+      }
       else setDetailError(errors[result.code ?? ''] ?? 'Could not load this conversation.')
     }).catch(() => { if (live) setDetailError('Could not load this conversation. Please retry.') })
     return () => { live = false }

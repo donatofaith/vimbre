@@ -435,6 +435,7 @@ function ConversationPanel({
   const scroll = useRef<HTMLDivElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
   const lastRead = useRef(0)
+  const readingThrough = useRef(0)
   const initial = useRef(true)
   const previousAnchor = useRef(anchor)
   const latestSeq = useRef(0)
@@ -505,11 +506,15 @@ function ConversationPanel({
         if (shouldScroll)
           requestAnimationFrame(() => {
             if (alive) {
-              if (scroll.current && window.getSelection()?.isCollapsed) scroll.current.scrollTop = scroll.current.scrollHeight
-              setUnseen(0)
+              const currentSelection = window.getSelection()
+              if (scroll.current && (!currentSelection || currentSelection.isCollapsed)) {
+                scroll.current.scrollTop = scroll.current.scrollHeight
+                setUnseen(0)
+              }
+              setLoadVersion((n) => n + 1)
             }
           })
-        setLoadVersion((n) => n + 1)
+        else setLoadVersion((n) => n + 1)
       })
     return () => {
       alive = false
@@ -525,17 +530,19 @@ function ConversationPanel({
   async function newer(){if(!result||paging.current||!newerAvailable)return;paging.current=true;setLoadingNewer(true);try{const r=await supabase.rpc('chat_after',{p_conversation:id,p_after:result.messages.at(-1)?.seq??0});if(r.error)throw r.error;const detail=r.data as unknown as ChatDetail;setResult(old=>old?{...old,messages:mergeMessages(old.messages,detail.messages)}:old);latestSeq.current=Math.max(latestSeq.current,detail.messages.at(-1)?.seq??0);setNewerAvailable(Boolean(detail.has_newer))}catch{setError('Newer messages could not be loaded. Retry or go to latest messages.')}finally{paging.current=false;setLoadingNewer(false)}}
   // Mark only loaded messages at the visible bottom; an older anchor never clears newer messages.
   useEffect(() => {
-    if (!result || document.hidden || !document.hasFocus()) return
+    if (!result || document.hidden) return
     const max = result.messages.at(-1)?.seq ?? 0
     const el = scroll.current
-    if (el && el.scrollHeight - el.scrollTop - el.clientHeight > 120) return
-    if (max <= lastRead.current) return
+    if (!el || el.clientHeight === 0 || el.scrollHeight - el.scrollTop - el.clientHeight > 8) return
+    if (max <= Math.max(lastRead.current, readingThrough.current)) return
+    readingThrough.current = max
     void supabase
       .rpc('chat_read', { p_conversation: id, p_through: max })
       .then(({ error }) => {
+        if (readingThrough.current === max) readingThrough.current = 0
         setReadError(Boolean(error))
         if (!error) {
-          lastRead.current = max
+          lastRead.current = Math.max(lastRead.current, max)
           refresh()
         }
       })

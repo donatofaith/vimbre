@@ -1,9 +1,8 @@
 // Public product copy and pricing. Keep capability claims aligned with the shipped product.
-export const landingTitle = 'Vimbre | Declutter your work'
-export {definition} from './public-content'
-import {definition,features} from './public-content'
+export {definition,landingTitle} from './public-content'
+import {definition,features,searchTagline} from './public-content'
 export const heroCopy = {
-  headline: 'Understand the why',
+  headline: searchTagline,
   supporting: 'Bring in conversations from your connected tools or paste them into Vimbre. Review suggested tasks and decisions, then keep the work and its context together so your team knows what happened, why and what needs attention next.',
 }
 export const storySummary = 'Example: paste a conversation, request task and decision drafts, accept the details, save the reviewed drafts, then select work for a handover and submit it to a manager.'
