@@ -30,4 +30,36 @@ export function PublicFrame({children,authenticated=false,loading=false}:{childr
     main.current.querySelectorAll(cards).forEach(card => observer.observe(card))
     return () => { observer.disconnect(); stop(); media.removeEventListener('change', stop) }
   }, [pathname])
-  return <div className="rs-site" data-theme="light"><a className="skip-link" href="#rs-main">Skip to content</a><LandingHeader authenticated={authenticated} loading={loading}/><main id="rs-main" ref={main}>{children}</main><footer className="rs-footer"><div className="rs-container"><div className="rs-footer-top"><Link className="rs-footer-brand" to="/" aria-label="Vimbre home"><img src="/vimbre-lockup-compact-light.svg" width={153} height={48} alt="" decoding="async"/></Link><nav aria-label="Footer">{[['Product','/how-it-works'],['Pricing','/pricing'],['FAQ','/faq'],['Integrations','/integrations'],['Individuals','/for-individuals'],['Founders','/for-founders'],['Companies','/for-companies'],['Blog','/blog'],['Careers','/careers'],['Contact','/#contact'],['Privacy','/privacy'],['Terms','/terms']].map(([name,to])=><Link key={to} to={to}>{name}</Link>)}<CookieSettingsLink/></nav></div><p>© 2026 Genade Global Service Limited.</p></div></footer></div>}
+  return <div className="rs-site" data-theme="light"><a className="skip-link" href="#rs-main">Skip to content</a><LandingHeader authenticated={authenticated} loading={loading}/><main id="rs-main" ref={main}>{children}</main><PublicFooter/></div>
+}
+
+const footerGroups = [
+  { label: 'Product', links: [['Product', '/how-it-works'], ['Pricing', '/pricing'], ['FAQ', '/faq'], ['Integrations', '/integrations']] },
+  { label: 'Who Vimbre is for', links: [['Individuals', '/for-individuals'], ['Founders', '/for-founders'], ['Companies', '/for-companies']] },
+  { label: 'Company', links: [['Blog', '/blog'], ['Careers', '/careers'], ['Contact', '/#contact']] },
+]
+
+function PublicFooter() {
+  return <footer className="rs-footer public-footer">
+    <div className="rs-container">
+      <div className="rs-footer-top">
+        <Link className="rs-footer-brand" to="/" aria-label="Vimbre home">
+          <img src="/vimbre-lockup-compact-light.svg" width={153} height={48} alt="" decoding="async"/>
+        </Link>
+        <nav className="public-footer-links" aria-label="Footer">
+          {footerGroups.map(group => <ul key={group.label} aria-label={group.label}>
+            {group.links.map(([label, to]) => <li key={to}><Link to={to}>{label}</Link></li>)}
+          </ul>)}
+        </nav>
+      </div>
+      <div className="public-footer-bottom">
+        <p>© 2026 Genade Global Service Limited.</p>
+        <nav aria-label="Legal and privacy">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+          <CookieSettingsLink/>
+        </nav>
+      </div>
+    </div>
+  </footer>
+}

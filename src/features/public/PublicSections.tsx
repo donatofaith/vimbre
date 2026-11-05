@@ -1,7 +1,22 @@
 import {Link} from 'react-router-dom'
+import {CaptureSourceLogo} from '../capture/CaptureSourceLogo'
 import {faq,plans,pricingDisclosure} from './landing-content'
 import {integrations} from './public-content'
 import {trackMarketing} from './marketing-analytics'
 export function FAQ(){return <div className="rs-faq-list public-faq">{faq.map(([question,answer],i)=><details key={question} onToggle={e=>{if(e.currentTarget.open)trackMarketing('faq_open',{question})}}><summary id={'faq-'+i}>{question}<svg className="public-faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></summary><p>{answer}</p></details>)}</div>}
 export function Pricing({authenticated=false,showNotes=true}:{authenticated?:boolean;showNotes?:boolean}){return <><div className="rs-pricing">{plans.map(plan=><article key={plan.name} id={'plan-'+plan.name.toLowerCase()} className={'rs-plan '+(plan.name==='Growth'?'rs-plan-featured':'')}><h3>{plan.name}</h3><div className="rs-plan-price">{plan.price}{plan.amount!==null&&<span>per workspace / month</span>}</div><p>{plan.size}</p><p>{plan.positioning}</p><ul>{plan.items.map(item=><li key={item}>{item}</li>)}</ul><Link className="rs-button rs-button-outline" onClick={()=>trackMarketing('cta_click',{location:'pricing'})} to={plan.amount===null?'/#contact':authenticated?'/app/billing?plan='+plan.name.toLowerCase():'/signup?plan='+plan.name.toLowerCase()}>{plan.amount===null?'Contact us':plan.amount===0?'Get started':'Start free trial'}</Link></article>)}</div>{showNotes&&<><p className="rf-pricing-disclosure">{pricingDisclosure}</p><p className="public-pricing-note">The paid-plan trial lasts 3 days and requires a card. You are charged when it ends unless you cancel. The Free plan needs no card.</p></>}</>}
-export function IntegrationList(){return <div className="public-integrations">{integrations.map(tool=><article key={tool.id}><h3>{tool.name}</h3><span className="public-integration-tag">{tool.id==='yahoo'?'Paste into Capture':'Connect'}</span><p>{tool.detail}</p></article>)}</div>}
+export function IntegrationList() {
+  return <div className="public-integrations">{integrations.map(tool => (
+    <article key={tool.id}>
+      <div className="public-integration-brand">
+        <CaptureSourceLogo provider={tool.id}/>
+        <h3>{tool.name}</h3>
+        {tool.id === 'yahoo' && <span className="public-gmail-mark" role="img" aria-label="Gmail" title="Gmail">
+          <CaptureSourceLogo provider="gmail"/>
+        </span>}
+      </div>
+      <span className="public-integration-tag">{tool.id === 'yahoo' ? 'Paste into Capture' : 'Connect'}</span>
+      <p>{tool.detail}</p>
+    </article>
+  ))}</div>
+}
