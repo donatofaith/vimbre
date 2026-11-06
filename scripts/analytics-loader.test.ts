@@ -16,10 +16,12 @@ it('does not load Google scripts before consent or after rejection',()=>{
  b.w.vimbreAnalytics.choose('declined');expect(b.scripts).toEqual([])
  expect(b.w.dataLayer.some((v:unknown)=>(v as {event?:string}).event==='gtm.js')).toBe(false)
 })
-it('loads one shared Google tag after acceptance and configures both supplied destinations',()=>{
+it('loads the shared Google tag and Tag Manager once after marketing consent',()=>{
  const b=boot(null,'accepted');b.w.vimbreAnalytics.choose('accepted');b.w.vimbreAnalytics.choose('accepted')
  runInNewContext(source,{window:b.w,document:b.d,Event,Date})
- expect(b.scripts).toHaveLength(1)
+ expect(b.scripts).toHaveLength(2)
+ expect(b.scripts[1]).toEqual({async:true,referrerPolicy:'origin',src:'https://www.googletagmanager.com/gtm.js?id=GTM-KTXM87CG'})
+ expect(b.w.dataLayer.filter(v=>(v as {event?:string}).event==='gtm.js')).toHaveLength(1)
  expect(b.scripts[0]).toEqual({async:true,referrerPolicy:'origin',src:'https://www.googletagmanager.com/gtag/js?id=AW-18551891096'})
  const commands=b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>))
  expect(commands.filter(v=>v[0]==='config').map(v=>v[1])).toEqual(['AW-18551891096','G-E599PM5PBE'])
@@ -36,6 +38,7 @@ it('queues the exact GBP conversion only with consent',()=>{
  const b=boot();const report=(b.w as unknown as {gtag_report_conversion:()=>boolean}).gtag_report_conversion
  report();expect(b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).filter(v=>v[1]==='conversion')).toHaveLength(0)
  b.w.vimbreAnalytics.choose('accepted');report()
+ expect(b.scripts.map(script=>script.src)).toEqual(['https://www.googletagmanager.com/gtag/js?id=G-E599PM5PBE'])
  expect(b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).filter(v=>v[1]==='conversion')).toHaveLength(0)
  b.w.localStorage.setItem('vimbre:marketing-consent:v1','accepted');b.w.dispatchEvent(new Event('vimbre:marketing-consent'));report()
  const conversion=b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).find(v=>v[1]==='conversion')

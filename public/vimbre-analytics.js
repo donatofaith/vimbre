@@ -1,12 +1,13 @@
 /* One consent-gated Google tag, shared by GA4 and Google Ads. */
 (function (w, d) {
   if (w.vimbreAnalytics) return;
-  var choice = null, loaded = false, analyticsConfigured = false, adsConfigured = false;
+  var choice = null, loaded = false, analyticsConfigured = false, adsConfigured = false, containerLoaded = false;
   var marketingKey = 'vimbre:marketing-consent:v1';
   var marketing = null;
   var storageKey = 'vimbre:analytics-consent:v1';
   var measurement = 'G-E599PM5PBE';
   var ads = 'AW-18551891096';
+  var container = 'GTM-KTXM87CG';
   w.dataLayer = w.dataLayer || [];
   function command() { try { w.dataLayer.push(arguments); } catch (_) {} }
   // Safe defaults also prevent callback URLs, tokens and document titles being measured.
@@ -31,6 +32,16 @@
     if (marketing === 'accepted' && !adsConfigured) {
       adsConfigured = true;
       command('config', ads, {send_page_view: false});
+    }
+    if (marketing === 'accepted' && !containerLoaded) {
+      containerLoaded = true;
+      try {
+        w.dataLayer.push({'gtm.start': Date.now(), event: 'gtm.js'});
+        var manager = d.createElement('script');
+        manager.async = true; manager.referrerPolicy = 'origin';
+        manager.src = 'https://www.googletagmanager.com/gtm.js?id=' + container;
+        d.head.appendChild(manager);
+      } catch (_) { containerLoaded = false; }
     }
   }
   function updateConsent() {
