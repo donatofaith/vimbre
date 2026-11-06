@@ -867,7 +867,37 @@ function MessageComposer({
         ref={messageInput}
         id="chat-message-input"
         aria-controls={showMentions?"chat-mention-choices":undefined}
-        onKeyDown={e=>{if(!showMentions)return;if(e.key==='Escape'){e.preventDefault();setShowMentions(false)}else if(candidates.length&&e.key==='ArrowDown'){e.preventDefault();setMentionIndex(i=>(i+1)%candidates.length)}else if(candidates.length&&e.key==='ArrowUp'){e.preventDefault();setMentionIndex(i=>(i+candidates.length-1)%candidates.length)}else if(candidates.length&&e.key==='Enter'){e.preventDefault();chooseMention(candidates[Math.min(mentionIndex,candidates.length-1)])}}}
+        onPaste={event => {
+          const pastedFiles = Array.from(event.clipboardData.files)
+          if (!pastedFiles.length || event.clipboardData.getData('text/plain')) return
+          event.preventDefault()
+          void chooseFiles(pastedFiles)
+        }}
+        onKeyDown={event => {
+          if (event.nativeEvent.isComposing || event.keyCode === 229 ||
+              event.ctrlKey || event.metaKey || event.altKey) return
+          if (showMentions) {
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              setShowMentions(false)
+              return
+            }
+            if (candidates.length && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+              event.preventDefault()
+              const direction = event.key === 'ArrowDown' ? 1 : -1
+              setMentionIndex(i => (i + direction + candidates.length) % candidates.length)
+              return
+            }
+          }
+          if (event.key !== 'Enter' || event.shiftKey) return
+          event.preventDefault()
+          if (event.repeat) return
+          if (showMentions && candidates.length) {
+            chooseMention(candidates[Math.min(mentionIndex, candidates.length - 1)])
+          } else {
+            event.currentTarget.form?.requestSubmit()
+          }
+        }}
         value={body}
         onChange={(e) => {
           setBody(e.target.value)

@@ -20,9 +20,9 @@
  .rs-site .public-role-picker{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:2px;padding:4px;border:1px solid #dde5ef;border-radius:12px;background:#eef3f9;margin:22px auto 18px;max-width:360px}
  .rs-site .public-role-picker button{min-width:0;min-height:44px;border:0;border-radius:8px;padding:8px 4px;font-size:13px;font-weight:500;white-space:nowrap;background:transparent;color:#617086;box-shadow:none}
  .rs-site .public-role-picker button[aria-pressed=true]{color:#245db8;background:#fff;box-shadow:0 1px 4px #102a4312}
- .rs-site .public-hero .rs-actions{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;margin:0 auto;max-width:360px}
- .rs-site .public-hero .rs-actions .rs-button{width:100%;min-height:46px;padding:12px 16px;font-size:15px;border-radius:10px;box-shadow:0 3px 10px #225fb71a}
- .rs-site .public-hero .rs-actions .rs-text-link{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;font-size:14px}
+ .rs-site .public-hero .rs-actions{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;margin:0 auto;max-width:360px}
+ .rs-site .public-hero .rs-actions .rs-button{width:auto;min-height:44px;padding:10px 12px;font-size:13px;border-radius:10px;box-shadow:0 3px 10px #225fb71a}
+ .rs-site .public-hero .rs-actions .rs-text-link{display:flex;align-items:center;justify-content:center;min-height:44px;padding:6px;font-size:13px}
  .rs-site .public-hero-card{margin-top:22px;border-radius:12px;box-shadow:0 8px 24px #163d6d0c}
  .rs-site .public-card-bar{gap:8px;padding:4px 12px;font-size:11px;min-height:44px}
  .rs-site .public-card-bar button{font-size:12px;padding:4px;min-height:36px}
@@ -62,7 +62,7 @@
 
 #product-demo{scroll-margin-top:0}.public-tour-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;color:#637487;font-size:13px}.public-tour-controls button{font:inherit;font-weight:600;min-height:44px;padding:8px 18px;border:1px solid #cddcef;border-radius:8px;color:#245db8;background:#fff;cursor:pointer}.public-tour-controls+.public-step-tabs{margin-top:12px}@media(max-width:767px){#product-demo{scroll-margin-top:0}}
 
-.public-signup-cta{display:grid;justify-items:center;gap:7px}.rs-site .public-signup-cta>small{font-size:12px;line-height:1.4;color:#637487;font-weight:400}.rs-site .public-hero .rs-actions{align-items:start}.rs-site .public-hero .rs-actions>.rs-text-link{align-self:start;min-height:44px;display:inline-flex;align-items:center}@media(max-width:767px){.rs-site .public-hero .rs-actions{align-items:stretch}.public-signup-cta{width:100%}.rs-site .public-hero .rs-actions>.rs-text-link{align-self:stretch}}
+.rs-site .public-hero .rs-actions{align-items:center;flex-direction:row;flex-wrap:nowrap}.rs-site .public-hero .rs-actions>.rs-text-link{min-height:44px;display:inline-flex;align-items:center}.rs-site .public-card-requirement{display:block;text-align:center;margin-top:6px;font-size:12px;line-height:1.4;color:#637487;font-weight:400}
 
 .rs-site .careers-invitation {
   padding-block: clamp(32px, 5vw, 60px);
