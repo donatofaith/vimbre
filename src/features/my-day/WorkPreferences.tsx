@@ -105,7 +105,7 @@ export function WorkPreferences() {
           </label>
           {!prefs.email_delivery_ready && (
             <p className="notice">
-              Email delivery is not enabled for this workspace. Reminders appear in Notifications.
+              Email delivery is currently off for task reminders. You can save your email preference. Reminders still appear in Notifications.
             </p>
           )}
           <Button type="submit" disabled={busy}>

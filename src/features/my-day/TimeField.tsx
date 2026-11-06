@@ -7,9 +7,9 @@ export function TimeField({value,onChange,disabled}:{value:string;onChange:(time
  const [hours,setHours]=useState(value.split(':')[0]||'')
  const [minutes,setMinutes]=useState(value.split(':')[1]||'')
  function update(h:string,m:string){onChange(h||m?`${h.padStart(2,'0')}:${m.padStart(2,'0')}`:'')}
- return <fieldset className="md-task-time" disabled={disabled}><legend>Time (optional)</legend><div className="md-task-time-fields">
-  <label htmlFor={`${id}-hours`}>Hours (00–23)<input id={`${id}-hours`} type="text" inputMode="numeric" autoComplete="off" maxLength={2} pattern="([01]?[0-9]|2[0-3])" required={Boolean(minutes)} value={hours} onChange={e=>{setHours(e.target.value);update(e.target.value,minutes)}}/></label>
-  <label htmlFor={`${id}-minutes`}>Minutes (00–59)<input id={`${id}-minutes`} type="text" inputMode="numeric" autoComplete="off" maxLength={2} pattern="[0-5]?[0-9]" required={Boolean(hours)} value={minutes} onChange={e=>{setMinutes(e.target.value);update(hours,e.target.value)}}/></label>
+ return <fieldset className="md-task-time" disabled={disabled}><legend>Due time (optional)</legend><div className="md-task-time-fields">
+  <label htmlFor={`${id}-hours`}>Hour<input id={`${id}-hours`} type="text" inputMode="numeric" autoComplete="off" maxLength={2} placeholder="00" pattern="([01]?[0-9]|2[0-3])" required={Boolean(minutes)} value={hours} onChange={e=>{setHours(e.target.value);update(e.target.value,minutes)}}/></label>
+  <label htmlFor={`${id}-minutes`}>Minute<input id={`${id}-minutes`} type="text" inputMode="numeric" autoComplete="off" maxLength={2} placeholder="00" pattern="[0-5]?[0-9]" required={Boolean(hours)} value={minutes} onChange={e=>{setMinutes(e.target.value);update(hours,e.target.value)}}/></label>
   <Button variant="secondary" onClick={()=>{setHours('');setMinutes('');onChange('')}}>Clear time</Button>
  </div></fieldset>
 }
