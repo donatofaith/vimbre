@@ -1,4 +1,4 @@
-import {useLocation} from 'react-router-dom'
+import {Link, useLocation} from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -42,9 +42,10 @@ export function HelpPage() {
   const [requestDraft, setRequestDraft] = useState({subject: '', category: 'how_to', message: ''})
   const [refresh, setRefresh] = useState(0)
   const [newRequestOpen, setNewRequestOpen] = useState(false)
+  const [messagesOpen, setMessagesOpen] = useState(false)
   const [search,setSearch]=useState('')
   const [view,setView]=useState('all')
-  useEffect(()=>{const id=new URLSearchParams(location.search).get('ticket')||'';if(/^[a-f0-9-]{36}$/i.test(id)){setSelected(id);setNewRequestOpen(false)}},[location.search,location.key])
+  useEffect(()=>{const id=new URLSearchParams(location.search).get('ticket')||'';if(/^[a-f0-9-]{36}$/i.test(id)){setSelected(id);setNewRequestOpen(false);setMessagesOpen(true)}},[location.search,location.key])
 
   async function call(action: string, payload: Record<string, unknown> = {}) {
     const { data, error: failure } = await supabase.rpc('customer_support', { p_action: action, p_payload: payload as import('../../lib/database.types').Json })
@@ -97,10 +98,13 @@ export function HelpPage() {
       const result = await call('submit', { subject, category, body })
       if (!result.ok) { setError(errors[result.code ?? ''] ?? 'Your request could not be submitted. Please retry.'); return }
       setTicketNumber(result.ticket_number ?? null)
-      setNotice('Your request has been sent. You can follow the conversation below.')
+      setNotice('Request sent. Check your requests for replies.')
       formElement.reset()
       setRequestDraft({subject: '', category: 'how_to', message: ''})
       setNewRequestOpen(false)
+      setMessagesOpen(true)
+      setSearch('')
+      setView('all')
       setRefresh(n => n + 1)
     } catch { setError('Support is temporarily unavailable. Please retry in a moment.') }
     finally { sending.current=false;setBusy(false) }
@@ -138,18 +142,45 @@ export function HelpPage() {
   const activeTicket = tickets.find(ticket => ticket.id === selected)
   const visibleTickets=tickets.filter(t=>t.subject.toLowerCase().includes(search.toLowerCase())&&(view==='all'||view==='active'&&!['resolved','closed'].includes(t.status)||view==='resolved'&&['resolved','closed'].includes(t.status)))
 
+  const showHome = !messagesOpen && !selected && !newRequestOpen
+  const startRequest = () => {
+    setNewRequestOpen(true)
+    setSelected('')
+    setError('')
+    setNotice('')
+    setTicketNumber(null)
+  }
+
   return <div className="support-page">
     <div className="page-heading support-page-heading">
       <div className="support-title"><span className="support-brand-icon"><WorkspaceIcon name="support"/></span><h1 tabIndex={-1}>Help and support</h1></div>
+      {!showHome && <Button variant="secondary" disabled={busy} onClick={() => {
+        setSelected('')
+        setNewRequestOpen(false)
+        setMessagesOpen(false)
+        setError('')
+      }}>Help home</Button>}
     </div>
 
     {ticketNumber !== null && <p className="notice" role="status">Request received. Your ticket number is #{ticketNumber}.</p>}
     {notice && ticketNumber === null && <p className="notice" role="status">{notice}</p>}
     {error && <div className="support-error"><p className="field-error" role="alert">{error}</p><Button variant="secondary" disabled={busy || loading} onClick={() => setRefresh(n => n + 1)}>Retry</Button></div>}
-    <section className={'support-workspace' + (selected || newRequestOpen ? ' support-panel-open' : '')} aria-label="Support inbox">
+    {showHome ? <div className="support-home">
+      <div className="support-home-content">
+        <section className="support-home-intro" aria-labelledby="support-home-title">
+          <h2 id="support-home-title">How can we help?</h2>
+          <p>Get an answer, contact our team, or check a request you’ve already sent.</p>
+          <Button disabled={busy} onClick={startRequest}>Contact support</Button>
+        </section>
+        <div className="support-home-links">
+          <Link to="/faq"><strong>Browse common questions</strong><span>Find answers about getting started and using Vimbre.</span></Link>
+          <button type="button" onClick={() => { setMessagesOpen(true); setRefresh(n => n + 1) }}><strong>View my requests</strong><span>Read replies and follow up in the same conversation.</span></button>
+        </div>
+      </div>
+    </div> : <section className={'support-workspace' + (selected || newRequestOpen ? ' support-panel-open' : '') + (newRequestOpen ? ' support-composing' : '')} aria-label="Support inbox">
       <aside className="support-sidebar" aria-label="Support requests">
-        <div className="support-list-heading"><h2>Messages</h2><Button variant="secondary" disabled={busy || loading} onClick={() => setRefresh(n => n + 1)}>{loading ? 'Refreshing…' : 'Refresh'}</Button></div>
-        <Button className="support-new-request" disabled={busy} onClick={() => { setNewRequestOpen(true); setSelected(''); setError(''); setNotice(''); setTicketNumber(null) }}>New request</Button>
+        <div className="support-list-heading"><h2>My requests</h2><Button variant="secondary" disabled={busy || loading} onClick={() => setRefresh(n => n + 1)}>{loading ? 'Refreshing…' : 'Refresh'}</Button></div>
+        <Button className="support-new-request" disabled={busy} onClick={startRequest}>New request</Button>
         <div className="support-request-filters"><label className="sr-only" htmlFor="request-search">Search requests</label><input id="request-search" placeholder="Search requests" value={search} onChange={e=>setSearch(e.target.value)}/><label className="sr-only" htmlFor="request-view">Request status</label><select id="request-view" value={view} onChange={e=>setView(e.target.value)}><option value="all">All requests</option><option value="active">Active requests</option><option value="resolved">Closed conversations</option></select></div>
         <div className="support-ticket-list" aria-busy={loading}>
           {!tickets.length ? <p className="support-list-empty" role="status">{loading ? 'Loading requests…' : error ? 'Requests could not be loaded.' : 'No requests yet. Contact support to start a conversation.'}</p> : visibleTickets.map(ticket => <button type="button" key={ticket.id} className={'ticket-row' + (selected === ticket.id ? ' ticket-row-active' : '')} aria-current={selected === ticket.id ? 'true' : undefined} disabled={busy} onClick={() => { setSelected(ticket.id); setError(''); setNotice(''); setTicketNumber(null); setNewRequestOpen(false) }}>
@@ -174,8 +205,8 @@ export function HelpPage() {
               <textarea id="support-message" name="message" disabled={busy} value={requestDraft.message} onChange={event => setRequestDraft(current => ({...current, message: event.target.value}))} required maxLength={10000} rows={5} placeholder="Describe the problem and what you expected to happen…" />
             </div>
             <p className="muted">Do not include passwords or sensitive personal information. Up to three tickets per day.</p>
-            </div><div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>Back to messages</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
-          </form> : !selected ? <div className="support-empty-thread"><span className="support-empty-icon" aria-hidden="true"><WorkspaceIcon name="support"/></span><h2>Support messages</h2><p>Select a request to read replies, or start a new request.</p></div> : <>
+            </div><div className="support-form-actions"><Button variant="secondary" disabled={busy} onClick={() => setNewRequestOpen(false)}>{messagesOpen ? 'Back to requests' : 'Cancel'}</Button><Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button></div>
+          </form> : !selected ? <div className="support-empty-thread"><span className="support-empty-icon" aria-hidden="true"><WorkspaceIcon name="support"/></span><h2>Your support conversations</h2><p>Select a request to read replies, or start a new request.</p></div> : <>
           <header className="support-chat-header"><div className="support-chat-title"><span className="eyebrow">Request #{detail?.ticket.ticket_number ?? activeTicket?.ticket_number ?? ''}</span><h2>{detail?.ticket.subject ?? activeTicket?.subject ?? 'Support conversation'}</h2>{detail && <span className={'ticket-status status-' + detail.ticket.status}>{statusLabel(detail.ticket.status)}</span>}</div><div className="support-chat-actions"><Button variant="secondary" disabled={busy} aria-label="Back to messages" onClick={() => { setSelected(''); setDetail(null); setError(''); setNotice('') }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></Button></div></header>
           {detailError ? <div className="support-empty-thread"><p className="field-error" role="alert">{detailError}</p><Button variant="secondary" onClick={() => setRefresh(n => n + 1)}>Retry conversation</Button></div> : !detail ? <p className="support-loading" role="status">Loading conversation…</p> : <>
             <SupportApproval key={selected} ticket={selected}/><div className="support-chat-thread" role="region" aria-label="Support conversation" tabIndex={0}>
@@ -187,9 +218,9 @@ export function HelpPage() {
           </>}
         </>}
       </div>
-    </section>
-    <details className="support-email-options"><summary>Contact by email</summary>
+    </section>}
+    {showHome && <details className="support-email-options"><summary>Contact by email</summary>
     <div className="support-contact-options"><a href="mailto:support@vimbre.com?subject=Vimbre%20support"><strong>Account and workspace support</strong><span>support@vimbre.com</span></a><a href="mailto:hello@vimbre.com"><strong>General enquiries</strong><span>hello@vimbre.com</span></a></div>
-    </details>
+    </details>}
   </div>
 }
