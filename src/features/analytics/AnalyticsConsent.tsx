@@ -13,7 +13,10 @@ export function AnalyticsConsent(){
  useEffect(()=>{window.vimbreMeta?.pageView(pathname)},[pathname,marketing])
  useEffect(()=>{if(settings&&dialog.current&&!dialog.current.open)dialog.current.showModal()},[settings])
  function close(){setSettings(false);previousFocus.current?.focus()}
- function save(analytics:boolean,ads:boolean){if(!window.vimbreAnalytics||!window.vimbreMeta){setError('Cookie settings could not be saved. Reload this page and try again.');return}window.vimbreAnalytics.choose(analytics?'accepted':'declined');window.vimbreMeta.choose(ads?'accepted':'declined');setError('');close()}
+ function save(analytics:boolean,ads:boolean){if(!window.vimbreAnalytics||!window.vimbreMeta){setError('Cookie settings could not be saved. Reload this page and try again.');return}// The first consent grant selects the shared Google script URL.
+ window.vimbreMeta.choose(ads?'accepted':'declined')
+ window.vimbreAnalytics.choose(analytics?'accepted':'declined')
+ setError('');close()}
  const controls=<div className="cookie-actions"><button type="button"onClick={()=>save(false,false)}>Reject optional</button><button type="button"onClick={()=>window.dispatchEvent(new Event('vimbre:cookie-settings'))}>Choose cookies</button><button type="button"onClick={()=>save(true,true)}>Accept all</button></div>
  // Existing analytics acceptance does not silently opt anyone into advertising.
  const publicPage=!pathname.startsWith('/app')&&!['/auth/callback','/reset-password','/join'].includes(pathname)
