@@ -1,4 +1,4 @@
-/* One consent-gated Google tag, shared by GA4 and Google Ads. */
+/* One Google tag shared by GA4 and Google Ads. */
 (function (w, d) {
   if (w.vimbreAnalytics) return;
   var choice = null, loaded = false, analyticsConfigured = false, adsConfigured = false, containerLoaded = false;
@@ -8,20 +8,23 @@
   var measurement = 'G-E599PM5PBE';
   var ads = 'AW-18551891096';
   var container = 'GTM-KTXM87CG';
+  var detectAdsOnArrival = w.location.pathname === '/' && !w.location.hash;
   w.dataLayer = w.dataLayer || [];
   function command() { try { w.dataLayer.push(arguments); } catch (_) {} }
   // Safe defaults also prevent callback URLs, tokens and document titles being measured.
   command('set', {page_location: 'https://vimbre.com/', page_title: 'Vimbre', page_referrer: '', send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false});
   command('consent', 'default', {analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied'});
+  command('set', 'ads_data_redaction', true);
   function load() {
-    if (choice !== 'accepted' && marketing !== 'accepted') return;
+    var loadAds = detectAdsOnArrival || marketing === 'accepted';
+    if (choice !== 'accepted' && !loadAds) return;
     if (!loaded) {
       loaded = true;
       try {
         command('js', new Date());
         var script = d.createElement('script');
         script.async = true; script.referrerPolicy = 'origin';
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + (marketing === 'accepted' ? ads : measurement);
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + (loadAds ? ads : measurement);
         d.head.appendChild(script);
       } catch (_) { loaded = false; return; }
     }
@@ -29,7 +32,7 @@
       analyticsConfigured = true;
       command('config', measurement, {send_page_view: false});
     }
-    if (marketing === 'accepted' && !adsConfigured) {
+    if (loadAds && !adsConfigured) {
       adsConfigured = true;
       command('config', ads, {send_page_view: false});
     }

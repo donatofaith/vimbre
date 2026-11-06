@@ -2,11 +2,11 @@ import {readFileSync} from 'node:fs'
 import {runInNewContext} from 'node:vm'
 import {expect,it} from 'vitest'
 const source=readFileSync(new URL('../public/vimbre-analytics.js',import.meta.url),'utf8')
-function boot(saved:string|null=null, marketing:string|null=null){
+function boot(saved:string|null=null, marketing:string|null=null, pathname='/pricing', hash=''){
  const scripts:Record<string,unknown>[]=[],removed:string[]=[]
  const values=new Map<string,string>();if(saved)values.set('vimbre:analytics-consent:v1',saved);if(marketing)values.set('vimbre:marketing-consent:v1',marketing)
  const listeners=new Map<string,()=>void>()
- const w={dataLayer:[] as unknown[],location:{hostname:'vimbre.com'},localStorage:{getItem:(key:string)=>values.get(key)??null,setItem:(key:string,v:string)=>values.set(key,v)},dispatchEvent:(e:Event)=>listeners.get(e.type)?.(),addEventListener:(name:string,fn:()=>void)=>listeners.set(name,fn)}
+ const w={dataLayer:[] as unknown[],location:{hostname:'vimbre.com',pathname,hash},localStorage:{getItem:(key:string)=>values.get(key)??null,setItem:(key:string,v:string)=>values.set(key,v)},dispatchEvent:(e:Event)=>listeners.get(e.type)?.(),addEventListener:(name:string,fn:()=>void)=>listeners.set(name,fn)}
  const d={querySelector:()=>null,createElement:()=>({}),head:{appendChild:(script:Record<string,unknown>)=>scripts.push(script)},get cookie(){return '_ga=private; sb-auth-token=secure'},set cookie(value:string){removed.push(value)}}
  runInNewContext(source,{window:w,document:d,Event,Date})
  return {w:w as typeof w & {vimbreAnalytics:{consent:string;choose:(value:string)=>void}},d,scripts,removed}
@@ -15,6 +15,28 @@ it('does not load Google scripts before consent or after rejection',()=>{
  const b=boot();expect(b.scripts).toEqual([])
  b.w.vimbreAnalytics.choose('declined');expect(b.scripts).toEqual([])
  expect(b.w.dataLayer.some((v:unknown)=>(v as {event?:string}).event==='gtm.js')).toBe(false)
+})
+it('makes the Ads tag detectable on the homepage with denied consent defaults',()=>{
+ const b=boot(null,null,'/')
+ expect(b.scripts.map(script=>script.src)).toEqual(['https://www.googletagmanager.com/gtag/js?id=AW-18551891096'])
+ const commands=b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>))
+ const consent=commands.findIndex(v=>v[0]==='consent'&&v[1]==='default')
+ const config=commands.findIndex(v=>v[0]==='config')
+ expect(consent).toBeGreaterThanOrEqual(0)
+ expect(consent).toBeLessThan(config)
+ expect(commands[consent][2]).toMatchObject({analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'})
+ expect(commands[config][1]).toBe('AW-18551891096')
+ b.w.localStorage.setItem('vimbre:marketing-consent:v1','accepted')
+ b.w.dispatchEvent(new Event('vimbre:marketing-consent'))
+ expect(b.scripts.map(script=>script.src)).toEqual([
+  'https://www.googletagmanager.com/gtag/js?id=AW-18551891096',
+  'https://www.googletagmanager.com/gtm.js?id=GTM-KTXM87CG',
+ ])
+ expect(b.w.dataLayer.map(v=>Array.from(v as ArrayLike<unknown>)).filter(v=>v[0]==='config'&&v[1]==='AW-18551891096')).toHaveLength(1)
+})
+it('keeps the early Ads tag off authenticated routes and fragment URLs',()=>{
+ expect(boot(null,null,'/app/chat').scripts).toEqual([])
+ expect(boot(null,null,'/','#access_token=fixture').scripts).toEqual([])
 })
 it('loads the shared Google tag and Tag Manager once after marketing consent',()=>{
  const b=boot(null,'accepted');b.w.vimbreAnalytics.choose('accepted');b.w.vimbreAnalytics.choose('accepted')
