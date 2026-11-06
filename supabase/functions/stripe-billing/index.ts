@@ -17,7 +17,7 @@ const key=Deno.env.get(sandbox?'STRIPE_SECRET_KEY':'STRIPE_LIVE_SECRET_KEY')??''
 const stripe=key.startsWith(sandbox?'rk_test_':'rk_live_')?new Stripe(key,{apiVersion:'2026-08-26.dahlia',httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:2,timeout:15000}):null
 type BillingAccount={company_id:string;company_name:string;customer_id:string|null;subscription_id:string|null;trial_ends_at:string;members:number;checkout_token:string;trial_consumed?:boolean}
 async function backend(operation:string,data:Record<string,unknown>){const r=await service.rpc(backendName,{p_operation:operation,p_data:data});if(r.error)throw r.error;return r.data}
-const acceptedEvents=new Set(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed','invoice.paid','invoice.payment_failed'])
+const acceptedEvents=new Set(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed','invoice.paid','invoice.payment_failed','invoice.finalized','invoice.voided','invoice.marked_uncollectible'])
 async function syncSubscription(subscriptionId:string,event:{id:string;type:string;created?:number},invoice?:Stripe.Invoice){
  if(!stripe)throw Error('not_configured')
  const syncedAt=new Date().toISOString()

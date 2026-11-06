@@ -22,6 +22,20 @@ afterEach(()=>vi.unstubAllGlobals())
 const request=(path='live-webhook')=>new Request('https://fixture.invalid/stripe-billing/'+path,{method:'POST',body:'signed fixture',headers:{'stripe-signature':'fixture'}})
 describe('billing webhook bridge',()=>{
  it('syncs customer billing before the staff copy',async()=>{expect((await handler(request())).status).toBe(200);expect(mocks.rpc.mock.calls.map(call=>call[0])).toEqual(['billing_live_backend','console_billing_sync'])})
+ it.each([
+  ['invoice.finalized','open'],
+  ['invoice.voided','void'],
+  ['invoice.marked_uncollectible','uncollectible'],
+ ])('projects %s as %s',async(type,status)=>{
+  mocks.verify.mockResolvedValue({id:'evt_fixture',type,created:1793577600,livemode:true,data:{object:{
+   id:'in_fixture',livemode:true,customer:'cus_fixture',currency:'gbp',amount_due:2900,
+   amount_paid:0,status,attempt_count:0,status_transitions:{paid_at:null},parent:{subscription_details:{subscription:'sub_fixture'}},
+  }}})
+  expect((await handler(request())).status).toBe(200)
+  expect(mocks.rpc).toHaveBeenLastCalledWith('console_billing_sync',{p_payload:expect.objectContaining({
+   invoice:expect.objectContaining({status,amount_due_minor:2900,amount_paid_minor:0}),
+  })})
+ })
  it('does not project an invalid signature',async()=>{mocks.verify.mockRejectedValue(Error('bad signature'));expect((await handler(request())).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled()})
  it('does not mix sandbox events into live billing',async()=>{mocks.verify.mockResolvedValue({livemode:false});expect((await handler(request())).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled()})
  it('asks Stripe to retry a failed staff projection',async()=>{mocks.rpc.mockImplementation(async(name:string)=>({data:{ok:true},error:name==='console_billing_sync'?Error('unavailable'):null}));expect((await handler(request())).status).toBe(503);expect(mocks.rpc.mock.calls[0][0]).toBe('billing_live_backend')})
