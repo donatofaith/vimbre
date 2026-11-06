@@ -52,6 +52,7 @@ function PublicFooter() {
             <h2>{group.label}</h2>
             <ul aria-label={group.label}>
             {group.links.map(([label, to]) => <li key={to}><Link to={to}>{label}</Link></li>)}
+            {group.label === 'Company' && <li><a href="https://www.linkedin.com/company/vimbrehq/">LinkedIn</a></li>}
             </ul>
           </div>)}
         </nav>
