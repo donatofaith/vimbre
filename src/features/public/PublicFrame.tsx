@@ -1,3 +1,4 @@
+import {socialProfiles} from './landing-content'
 import {homeSections} from './public-navigation'
 import {useEffect,useRef} from 'react'
 import type {ReactNode} from 'react'
@@ -44,15 +45,21 @@ function PublicFooter() {
   return <footer className="rs-footer marketing-footer">
     <div className="rs-container">
       <div className="rs-footer-top">
+        <div className="public-footer-identity">
         <Link className="rs-footer-brand" to="/" aria-label="Vimbre home">
           <img src="/vimbre-lockup-compact-light.svg" width={153} height={48} alt="" decoding="async"/>
         </Link>
+        <nav className="public-footer-socials" aria-label="Vimbre on social media">
+          {socialProfiles.map(({label, url, icon}) => <a key={url} href={url} aria-label={`Vimbre on ${label}`} title={label}>
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d={icon}/></svg>
+          </a>)}
+        </nav>
+        </div>
         <nav className="public-footer-links" aria-label="Footer">
           {footerGroups.map(group => <div className="public-footer-group" key={group.label}>
             <h2>{group.label}</h2>
             <ul aria-label={group.label}>
             {group.links.map(([label, to]) => <li key={to}><Link to={to}>{label}</Link></li>)}
-            {group.label === 'Company' && <li><a href="https://www.linkedin.com/company/vimbrehq/">LinkedIn</a></li>}
             </ul>
           </div>)}
         </nav>

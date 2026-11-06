@@ -184,6 +184,14 @@
   gap: 32px;
   margin-bottom: 24px;
 }
+.public-footer-identity { display: grid; gap: 12px; }
+.rs-site[data-theme] .marketing-footer .public-footer-socials { display: flex; flex-wrap: wrap; gap: 6px; }
+.rs-site[data-theme] .marketing-footer .public-footer-socials a {
+  display: inline-grid; place-items: center; width: 44px; height: 44px;
+  border: 1px solid rgb(255 255 255 / 24%); border-radius: 50%; color: #fff;
+}
+.rs-site[data-theme] .marketing-footer .public-footer-socials a:hover { background: rgb(255 255 255 / 12%); }
+.rs-site[data-theme] .marketing-footer .public-footer-socials a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .rs-site[data-theme] .marketing-footer .public-footer-links {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

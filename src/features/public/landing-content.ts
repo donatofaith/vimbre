@@ -31,10 +31,17 @@ export const plans = [
   { name: 'Enterprise', price: 'Custom', amount: null, seats: null, size: '250+ people', positioning: 'Discuss your team size, allowance and rollout.', items: ['Custom AI allowance and usage control', 'Rollout and access requirements review'] },
 ]
 export const pricingDisclosure = 'Subscriptions bill monthly per company. AI request ceilings are subject to daily limits, AI usage control and workspace settings. Long requests can use the allowance sooner.'
+export const socialProfiles = [
+  {label: 'LinkedIn', url: 'https://www.linkedin.com/company/vimbrehq/', icon: 'M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 10h4v11H3zm6 0h4v1.6c.7-1.1 1.9-1.9 3.7-1.9 3.4 0 4.3 2.2 4.3 5V21h-4v-5.6c0-1.5-.3-2.5-1.8-2.5-1.6 0-2.2 1.2-2.2 2.5V21H9z'},
+  {label: 'X', url: 'https://x.com/Vimbrehq', icon: 'M18.9 2H22l-6.8 7.8L23.2 22H17l-4.9-7.3L5.7 22H2.5l7.3-8.4L2 2h6.4l4.4 6.6L18.9 2ZM17.8 20h1.7L7.5 4H5.7z'},
+  {label: 'Instagram', url: 'https://www.instagram.com/vimbrehq/', icon: 'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.5-3a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z'},
+  {label: 'TikTok', url: 'https://www.tiktok.com/@vimbrehq', icon: 'M14 2h3c.2 2.4 1.6 4 4 4.3v3.1a8 8 0 0 1-4-1.3v7.6A6.3 6.3 0 1 1 11 9.4v3.2a3.2 3.2 0 1 0 3 3.1V2Z'},
+] as const
+
 export const schema = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'Organization', '@id': 'https://vimbre.com/#organization', name: 'Vimbre', legalName: 'Genade Global Services Ltd', url: 'https://vimbre.com/', logo: 'https://vimbre.com/favicon-192.png', sameAs: ['https://x.com/Vimbrehq', 'https://www.instagram.com/vimbrehq/', 'https://www.tiktok.com/@vimbrehq'] },
+    { '@type': 'Organization', '@id': 'https://vimbre.com/#organization', name: 'Vimbre', legalName: 'Genade Global Services Ltd', url: 'https://vimbre.com/', logo: 'https://vimbre.com/favicon-192.png', sameAs: socialProfiles.map(profile => profile.url) },
     { '@type': 'WebSite', '@id': 'https://vimbre.com/#website', name: 'Vimbre', url: 'https://vimbre.com/', publisher: { '@id': 'https://vimbre.com/#organization' } },
     { '@type': 'SoftwareApplication', name: 'Vimbre', url: 'https://vimbre.com/', featureList:features, applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
       description: definition,
