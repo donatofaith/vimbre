@@ -26,6 +26,7 @@
     "../supabase/functions/myday-calendar/index.ts",
     "../supabase/functions/myday-device/index.ts",
     "../supabase/functions/capture-worker/index.ts",
+    "../supabase/functions/capture-transcribe/index.ts",
     "../supabase/functions/myday-push/index.ts",
     "../supabase/functions/website-careers/index.ts"
   ]

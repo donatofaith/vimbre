@@ -52,3 +52,8 @@ entrypoint = "./functions/website-careers/index.ts"
 # The handler authenticates the caller and checks the existing per-bucket ownership rules.
 verify_jwt = false
 entrypoint = "./functions/validated-upload/index.ts"
+
+[functions.capture-transcribe]
+# Verify the user with Auth before allowing transcription.
+verify_jwt = false
+entrypoint = "./functions/capture-transcribe/index.ts"

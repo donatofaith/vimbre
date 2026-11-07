@@ -21,9 +21,13 @@ describe('frontend credential boundary', () => {
     expect(() => assertPublicEnvironment({ VITE_TURNSTILE_SECRET_KEY: 'server-only' })).toThrow('Unapproved VITE_')
   })
   it('rejects unapproved public variables including innocuous names', () => {
-    for (const name of ['VITE_ANTHROPIC_API_KEY', 'VITE_STRIPE_SECRET_KEY', 'VITE_OTHER']) {
+    for (const name of ['VITE_ANTHROPIC_API_KEY', 'VITE_ELEVENLABS_API_KEY', 'VITE_STRIPE_SECRET_KEY', 'VITE_OTHER']) {
       expect(() => assertPublicEnvironment({ [name]: 'private_fixture' })).toThrow('Unapproved VITE_')
     }
+  })
+  it('only permits a boolean value for the recording switch', () => {
+    expect(() => assertPublicEnvironment({ VITE_CAPTURE_RECORDING_ENABLED: 'true' })).not.toThrow()
+    expect(() => assertPublicEnvironment({ VITE_CAPTURE_RECORDING_ENABLED: 'private_fixture' })).toThrow('Invalid public Capture recording switch')
   })
   it('rejects credential-bearing public URLs', () => {
     for (const url of ['https://user:password@project.supabase.co', 'https://project.supabase.co?token=private', 'https://project.supabase.co#private']) {

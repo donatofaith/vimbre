@@ -1,12 +1,15 @@
 import { relative, resolve } from 'node:path'
 import { validatePublicConfig } from '../src/lib/env.ts'
 
-const publicNames = new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_TURNSTILE_SITE_KEY'])
+const publicNames = new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_TURNSTILE_SITE_KEY', 'VITE_CAPTURE_RECORDING_ENABLED'])
 
 /** Fail before Vite transforms client modules. Never echo supplied values. */
 export function assertPublicEnvironment(env: Record<string, string | undefined>) {
   if (Object.keys(env).some(name => name.startsWith('VITE_') && !publicNames.has(name))) {
     throw new Error('Unapproved VITE_ variable. Keep credentials in server environment variables.')
+  }
+  if (env.VITE_CAPTURE_RECORDING_ENABLED && !['true', 'false'].includes(env.VITE_CAPTURE_RECORDING_ENABLED)) {
+    throw new Error('Invalid public Capture recording switch.')
   }
   if (env.VITE_TURNSTILE_SITE_KEY?.trim() && !/^[013]x[0-9A-Za-z_-]{22}$/.test(env.VITE_TURNSTILE_SITE_KEY.trim())) {
     throw new Error('Invalid public Turnstile site key.')
