@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict')
+const { randomUUID } = require('node:crypto')
 const { start } = require('./capture-browser-fixture.cjs')
 
 async function run() {
@@ -6,8 +7,15 @@ async function run() {
   const { page, state, close } = await start()
   try {
     let posts = 0
+    const access = Promise.withResolvers()
+    for (let index = 1; index <= 12; index++) {
+      state.sources.push({ id: randomUUID(), title: `Capture ${index}`, status: 'saved', source_date: '2026-10-26', channel: 'paste' })
+    }
     await page.route('**/functions/v1/capture-transcribe', async route => {
-      if (route.request().method() === 'GET') return route.fulfill({ json: { available: true } })
+      if (route.request().method() === 'GET') {
+        await access.promise
+        return route.fulfill({ json: { available: true } })
+      }
       posts++
       assert.match(route.request().headers()['content-type'], /^audio\//)
       assert.ok(route.request().postDataBuffer().length > 16)
@@ -33,6 +41,10 @@ async function run() {
     await page.setViewportSize({ width: 320, height: 700 })
     await page.getByRole('button', { name: 'Record meeting' }).click()
     const dialog = page.getByRole('dialog', { name: 'Record an in-person meeting' })
+    await dialog.getByText('Checking recording access…').waitFor()
+    assert.equal(await dialog.getByRole('button', { name: 'Start recording' }).count(), 0)
+    access.resolve()
+    await dialog.getByRole('checkbox').waitFor()
     assert.equal(await dialog.getByText(/ElevenLabs/).count(), 0)
     assert.ok(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth))
     assert.ok(await dialog.getByRole('button', { name: 'Start recording' }).isDisabled())
@@ -77,6 +89,19 @@ async function run() {
     page.once('dialog', browserDialog => browserDialog.accept())
     await dialog.getByRole('button', { name: 'Discard recording' }).click()
     await dialog.waitFor({ state: 'hidden' })
+    const cookieChoice = page.getByRole('button', { name: 'Reject optional' })
+    if (await cookieChoice.isVisible()) await cookieChoice.click()
+    const history = page.locator('.vc-history')
+    const captures = history.locator('.vc-source-list > li')
+    assert.equal(await captures.count(), 5)
+    await history.getByRole('button', { name: 'Show more' }).click()
+    assert.equal(await captures.count(), 10)
+    await history.getByRole('button', { name: 'Show less' }).click()
+    assert.equal(await captures.count(), 5)
+    await history.getByRole('button', { name: 'Show more' }).click()
+    await history.getByRole('button', { name: 'Saved', exact: true }).click()
+    await captures.first().waitFor()
+    assert.equal(await captures.count(), 5)
     console.log('Capture recorder: consent, denied permission, audio, auto-stop, retry, transcript limit and explicit meeting draft passed.')
   } finally {
     await close()

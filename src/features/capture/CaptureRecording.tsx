@@ -19,33 +19,38 @@ const messages: Record<string, string> = {
 const duration = (seconds: number) => [Math.floor(seconds / 60), seconds % 60].map(n => String(n).padStart(2, '0')).join(':')
 
 export function CaptureRecording({ disabled, onTranscript }: { disabled: boolean; onTranscript: (text: string) => void }) {
-  const [status, setStatus] = useState<Status>({})
+  const [status, setStatus] = useState<Status | null>(null)
+  const [statusAttempt, setStatusAttempt] = useState(0)
   const [open, setOpen] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (import.meta.env.VITE_CAPTURE_RECORDING_ENABLED !== 'true') return
     const controller = new AbortController()
     void supabase.functions.invoke<Status>('capture-transcribe', {
-      method: 'GET', signal: controller.signal,
-    }).then(({ data }) => {
-      if (!controller.signal.aborted && data) setStatus(data)
+      method: 'GET', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(8000)]),
+    }).then(({ data, error }) => {
+      if (!controller.signal.aborted) setStatus(error || !data ? { code: 'status_unavailable' } : data)
     })
     return () => controller.abort()
-  }, [])
-  if (!status.available && status.code !== 'recording_limit') return null
+  }, [statusAttempt])
+  if (import.meta.env.VITE_CAPTURE_RECORDING_ENABLED !== 'true') return null
   return <>
     <button ref={trigger} type="button" disabled={disabled} onClick={() => setOpen(true)}>
       <svg className="vc-source-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1m-7 8v3m-3 0h6"/></svg>
       Record meeting
     </button>
-    {open && <Recorder limited={status.code === 'recording_limit'} close={() => {
+    {open && <Recorder status={status} retryStatus={() => {
+      setStatus(null)
+      setStatusAttempt(attempt => attempt + 1)
+    }} close={() => {
       setOpen(false)
       trigger.current?.focus()
     }} onLimit={() => setStatus({ code: 'recording_limit' })} onTranscript={onTranscript} />}
   </>
 }
 
-function Recorder({ limited, close, onLimit, onTranscript }: { limited: boolean; close: () => void; onLimit: () => void; onTranscript: (text: string) => void }) {
+function Recorder({ status, retryStatus, close, onLimit, onTranscript }: { status: Status | null; retryStatus: () => void; close: () => void; onLimit: () => void; onTranscript: (text: string) => void }) {
+  const limited = status?.code === 'recording_limit'
   const dialog = useRef<HTMLDialogElement>(null)
   const media = useRef<MediaRecorder | null>(null)
   const stream = useRef<MediaStream | null>(null)
@@ -212,7 +217,11 @@ function Recorder({ limited, close, onLimit, onTranscript }: { limited: boolean;
   }}>
     <h2 id="vc-record-title">Record an in-person meeting</h2>
     {phase === 'ready' && <>
-      {limited ? <p role="status">{messages.recording_limit}</p> : needsReload
+      {!status ? <p role="status">Checking recording access…</p>
+        : limited ? <p role="status">{messages.recording_limit}</p>
+        : status.code === 'status_unavailable' ? <p role="alert">Couldn’t check recording access. Try again.</p>
+        : !status.available ? <p role="status">Recording is unavailable for your workspace right now. You can still paste meeting notes in Capture.</p>
+        : needsReload
         ? <p role="status">Reload Capture to enable the microphone. Copy any unsaved notes before reloading.</p> : !supported
         ? <p role="status">Microphone recording is unavailable in this browser. Open Capture in a supported browser or paste your meeting notes.</p>
         : <>
@@ -235,7 +244,8 @@ function Recorder({ limited, close, onLimit, onTranscript }: { limited: boolean;
     {error && <p role="alert" className="vc-error">{error}</p>}
     {phase === 'transcribing' && <p role="status">Transcribing the recording. Keep this tab open.</p>}
     <div className="form-actions">
-      {phase === 'ready' && supported && !limited && !needsReload && <Button disabled={!agreed} onClick={() => void start()}>Start recording</Button>}
+      {phase === 'ready' && status?.code === 'status_unavailable' && <Button variant="secondary" onClick={retryStatus}>Try again</Button>}
+      {phase === 'ready' && status?.available && supported && !limited && !needsReload && <Button disabled={!agreed} onClick={() => void start()}>Start recording</Button>}
       {phase === 'recording' && <Button variant="danger" onClick={stop}>Stop recording</Button>}
       {phase === 'review' && <Button disabled={limited} onClick={() => void transcribe()}>Transcribe recording</Button>}
       {phase !== 'transcribing' && phase !== 'stopping' && <Button variant="secondary" onClick={discard}>{protectedPhase ? 'Discard recording' : 'Close'}</Button>}
