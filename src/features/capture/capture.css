@@ -687,6 +687,8 @@
 .vc-record-dialog .form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
 .vc-record-consent{display:flex;align-items:baseline;gap:10px;padding-block:8px}
 .vc-record-meter{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-block:12px;font-variant-numeric:tabular-nums}
+.vc-record-status{display:inline-flex;align-items:center;gap:8px}
+.vc-record-dot{width:10px;height:10px;flex:none;border-radius:50%;background:#dc2638}
 .vc-record-playback{display:grid;gap:8px}
 .vc-record-playback audio{width:100%}
 @media(max-width:640px){.vc-record-dialog{padding:16px}.vc-record-dialog .button{min-height:44px}}

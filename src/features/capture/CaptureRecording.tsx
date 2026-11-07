@@ -216,14 +216,15 @@ function Recorder({ limited, close, onLimit, onTranscript }: { limited: boolean;
         ? <p role="status">Reload Capture to enable the microphone. Copy any unsaved notes before reloading.</p> : !supported
         ? <p role="status">Microphone recording is unavailable in this browser. Open Capture in a supported browser or paste your meeting notes.</p>
         : <>
-          <p>Record up to 30 minutes with this device’s microphone. Keep this tab open and the screen awake.</p>
-          <p>When you choose Transcribe recording, Vimbre sends the audio to ElevenLabs and returns the transcript here.</p>
+          <p>Record up to 30 minutes. Keep this tab open and your screen awake.</p>
           <label className="vc-record-consent"><input type="checkbox" checked={agreed} onChange={event => setAgreed(event.target.checked)}/>Everyone in the meeting agreed to be recorded.</label>
         </>}
     </>}
     {phase === 'permission' && <p role="status">Allow microphone access when your browser asks.</p>}
     {(phase === 'recording' || phase === 'stopping') && <div className="vc-record-meter">
-      <strong role="status">{phase === 'recording' ? '● Recording' : 'Finishing recording…'}</strong>
+      <strong role="status" className="vc-record-status">{phase === 'recording'
+        ? <><span className="vc-record-dot" aria-hidden="true"/>Recording</>
+        : 'Finishing recording…'}</strong>
       <span role="timer">{duration(elapsed)} / 30:00</span>
     </div>}
     {notice && <p role="status">{notice}</p>}
