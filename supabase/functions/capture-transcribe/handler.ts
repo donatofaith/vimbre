@@ -22,10 +22,9 @@ export async function transcribeRequest(req: Request, env: (name: string) => str
   const anon = env('SUPABASE_ANON_KEY')
   const service = env('SUPABASE_SERVICE_ROLE_KEY')
   const key = env('ELEVENLABS_API_KEY')
-  const pilot = new Set(env('CAPTURE_RECORDING_PILOT_USERS')?.split(',').map(id => id.trim()).filter(Boolean))
   const authorization = req.headers.get('authorization')
   if (!authorization?.startsWith('Bearer ')) return reply(401, 'sign_in_required')
-  if (!url || !anon || !service || !key || !pilot.size) return reply(503, 'recording_disabled')
+  if (!url || !anon || !service || !key) return reply(503, 'recording_disabled')
 
   try {
     const userResponse = await fetcher(url + '/auth/v1/user', {
@@ -33,7 +32,7 @@ export async function transcribeRequest(req: Request, env: (name: string) => str
     })
     if (!userResponse.ok) return reply(userResponse.status >= 500 ? 503 : 401, 'sign_in_required')
     const user = await userResponse.json()
-    if (user.is_anonymous || !pilot.has(user.id)) return reply(403, 'access_denied')
+    if (user.is_anonymous || typeof user.id !== 'string') return reply(403, 'access_denied')
 
     const allowance = async (consume: boolean) => {
       const response = await fetcher(url + '/rest/v1/rpc/capture_recording_allowance', {
@@ -45,10 +44,11 @@ export async function transcribeRequest(req: Request, env: (name: string) => str
       if (!response.ok) throw new Error('allowance_unavailable')
       return await response.json()
     }
+    const availability = await allowance(false)
     if (req.method === 'GET') {
-      const status = await allowance(false)
-      return Response.json({ available: status === 'allowed', code: status }, { headers })
+      return Response.json({ available: availability === 'allowed', code: availability }, { headers })
     }
+    if (availability !== 'allowed') return reply(availability === 'recording_limit' ? 429 : 403, availability)
 
     const mime = req.headers.get('content-type') ?? ''
     if (!/^audio\/(webm|mp4|ogg)(?:;|$)/i.test(mime)) return reply(415, 'unsupported_audio')
